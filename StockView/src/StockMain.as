@@ -1,9 +1,11 @@
 package  
 {
+	import laya.maths.MathUtil;
 	import laya.net.Loader;
 	import laya.utils.Handler;
 	import stock.PathConfig;
 	import stock.StockBasicInfo;
+	import stock.views.KLine;
 	import view.StockView;
 	/**
 	 * ...
@@ -20,17 +22,40 @@ package
 			loads = [];
 			loads.push( { url:PathConfig.stockBasic, type:Loader.TEXT } );
 			loads.push({ url:"res/atlas/comp.json", type:Loader.ATLAS });
-			Laya.loader.load(loads, new Handler(this, begin), null);
+			Laya.loader.load(loads, new Handler(this, start), null);
+		}
+		private function start():void
+		{
+			//begin();
+			testKLine();
 		}
 		private function begin():void
 		{
 			StockBasicInfo.I.init(Loader.getRes(PathConfig.stockBasic));
 			trace(StockBasicInfo.I.stockList);
+			StockBasicInfo.I.stockList.sort(MathUtil.sortByKey("totals", false, true));
 			var view:StockView;
 			view = new StockView();
 			view.init();
 			view.left = view.right = view.top = view.bottom = 10;
 			Laya.stage.addChild(view);
+			
+			
+		}
+		private function testKLine():void
+		{
+			var kLine:KLine;
+			kLine = new KLine();
+			var stock:String;
+			stock = "300383";
+			//stock = "000546";
+			//stock = "000725";
+			//stock = "002064";
+			//stock = "600139";
+			kLine.setStock(stock);
+			kLine.pos(200, 500);
+			//kLine.scaleX = 0.5;
+			Laya.stage.addChild(kLine);
 		}
 	}
 
