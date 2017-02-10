@@ -893,7 +893,7 @@ var Laya=window.Laya=(function(window,document){
 		__class(StockMain,'StockMain');
 		var __proto=StockMain.prototype;
 		__proto.start=function(){
-			this.testKLine();
+			this.testKlineView();
 		}
 
 		__proto.begin=function(){
@@ -912,10 +912,16 @@ var Laya=window.Laya=(function(window,document){
 			kLine=new KLine();
 			var stock;
 			stock="300383";
-			stock="600139";
+			stock="002064";
 			kLine.setStock(stock);
 			kLine.pos(200,500);
 			Laya.stage.addChild(kLine);
+		}
+
+		__proto.testKlineView=function(){
+			var kView;
+			kView=new KLineView();
+			Laya.stage.addChild(kView);
 		}
 
 		return StockMain;
@@ -13393,6 +13399,7 @@ var Laya=window.Laya=(function(window,document){
 			this.stockData=stockData;
 			this.dataList=stockData.dataList;
 			this.drawdata();
+			this.tLen=10;
 			Laya.timer.loop(10,this,this.timeEffect);
 		}
 
@@ -23921,6 +23928,28 @@ var Laya=window.Laya=(function(window,document){
 	})(FrameAnimation)
 
 
+	//class ui.KLineViewUI extends laya.ui.View
+	var KLineViewUI=(function(_super){
+		function KLineViewUI(){
+			this.stockSelect=null;
+			this.playBtn=null;
+			KLineViewUI.__super.call(this);
+		}
+
+		__class(KLineViewUI,'ui.KLineViewUI',_super);
+		var __proto=KLineViewUI.prototype;
+		__proto.createChildren=function(){
+			laya.ui.Component.prototype.createChildren.call(this);
+			this.createView(KLineViewUI.uiView);
+		}
+
+		__static(KLineViewUI,
+		['uiView',function(){return this.uiView={"type":"View","props":{"width":445,"height":400},"child":[{"type":"ComboBox","props":{"y":9,"x":8,"var":"stockSelect","skin":"comp/combobox.png","labels":"000233,600322"}},{"type":"Button","props":{"y":9,"x":114,"var":"playBtn","skin":"comp/button.png","label":"play"}}]};}
+		]);
+		return KLineViewUI;
+	})(View)
+
+
 	//class ui.StockViewUI extends laya.ui.View
 	var StockViewUI=(function(_super){
 		function StockViewUI(){
@@ -24455,6 +24484,48 @@ var Laya=window.Laya=(function(window,document){
 
 		return TextArea;
 	})(TextInput)
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class view.KLineView extends ui.KLineViewUI
+	var KLineView=(function(_super){
+		function KLineView(){
+			this.kLine=null;
+			KLineView.__super.call(this);
+			this.kLine=new KLine();
+			this.addChild(this.kLine);
+			var stock;
+			stock="300383";
+			stock="002064";
+			this.kLine.pos(0,this.kLine.lineHeight+90);
+			this.init();
+		}
+
+		__class(KLineView,'view.KLineView',_super);
+		var __proto=KLineView.prototype;
+		__proto.init=function(){
+			this.stockSelect.labels="300383,000546,000725,002064,600139";
+			this.stockSelect.selectedIndex=0;
+			this.stockSelect.selectHandler=new Handler(this,this.onSelect);
+			this.playBtn.on("mousedown",this,this.onPlayBtn);
+			var stock;
+			stock="300383";
+			this.kLine.setStock(stock);
+		}
+
+		__proto.onSelect=function(){
+			this.kLine.setStock(this.stockSelect.selectedLabel);
+		}
+
+		__proto.onPlayBtn=function(){
+			this.kLine.setStock(this.stockSelect.selectedLabel);
+		}
+
+		return KLineView;
+	})(KLineViewUI)
 
 
 	/**
