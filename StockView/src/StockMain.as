@@ -6,6 +6,7 @@ package
 	import stock.PathConfig;
 	import stock.StockBasicInfo;
 	import stock.views.KLine;
+	import view.KLineView;
 	import view.StockView;
 	/**
 	 * ...
@@ -27,7 +28,8 @@ package
 		private function start():void
 		{
 			//begin();
-			testKLine();
+			//testKLine();
+			testKlineView();
 		}
 		private function begin():void
 		{
@@ -50,12 +52,18 @@ package
 			stock = "300383";
 			//stock = "000546";
 			//stock = "000725";
-			//stock = "002064";
+			stock = "002064";
 			//stock = "600139";
 			kLine.setStock(stock);
 			kLine.pos(200, 500);
 			//kLine.scaleX = 0.5;
 			Laya.stage.addChild(kLine);
+		}
+		private function testKlineView():void
+		{
+			var kView:KLineView;
+			kView = new KLineView();
+			Laya.stage.addChild(kView);
 		}
 	}
 

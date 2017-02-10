@@ -37,6 +37,7 @@ package stock.views
 			dataList = stockData.dataList;
 			//drawdata();
 			drawdata();
+			tLen = 10;
 			Laya.timer.loop(10, this, timeEffect);
 		}
 		public var tLen:int=10;
