@@ -20,8 +20,11 @@ package stock.views
 		{
 			Laya.timer.clear(this, timeEffect);
 			this.graphics.clear();
-			showMsg("loadingData:"+stock);
-			Laya.loader.load("res/stockdata/" + stock + ".csv", Handler.create(this, dataLoaded), null, Loader.TEXT);
+			showMsg("loadingData:" + stock);
+			var stockUrl:String;
+			stockUrl = "https://onewaymyway.github.io/stockdata/stockdatas/" + stock + ".csv";
+			//stockUrl = "res/stockdata/" + stock + ".csv";
+			Laya.loader.load(stockUrl, Handler.create(this, dataLoaded), null, Loader.TEXT);
 		}
 		private function dataErr():void
 		{

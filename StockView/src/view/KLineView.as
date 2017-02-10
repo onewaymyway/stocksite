@@ -2,6 +2,7 @@ package view
 {
 	import laya.events.Event;
 	import laya.utils.Handler;
+	import stock.StockBasicInfo;
 	import stock.views.KLine;
 	import ui.KLineViewUI;
 	/**
@@ -32,11 +33,16 @@ package view
 		}
 		public function init():void
 		{
-			stockSelect.labels = "300383,000546,000725,002064,600139";
+			//stockSelect.labels = "300383,000546,000725,002064,600139";
+			var tLabel:String;
+			tLabel = StockBasicInfo.I.stockCodeList.join(",");
+			trace("tLabel",tLabel);
+			stockSelect.labels = tLabel;
 			stockSelect.selectedIndex = 0;
 			stockSelect.selectHandler = new Handler(this, onSelect);
 			
 			playBtn.on(Event.MOUSE_DOWN, this, onPlayBtn);
+			playInputBtn.on(Event.MOUSE_DOWN, this, onPlayInput);
 			var stock:String;
 			stock = "300383";
 			kLine.setStock(stock);
@@ -55,6 +61,10 @@ package view
 		private function onPlayBtn():void
 		{
 			kLine.setStock(stockSelect.selectedLabel);
+		}
+		private function onPlayInput():void
+		{
+			kLine.setStock(stockInput.text);
 		}
 	}
 
