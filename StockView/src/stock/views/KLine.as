@@ -19,14 +19,30 @@ package stock.views
 		public function setStock(stock:String):void
 		{
 			Laya.timer.clear(this, timeEffect);
+			this.graphics.clear();
+			showMsg("loadingData:"+stock);
 			Laya.loader.load("res/stockdata/" + stock + ".csv", Handler.create(this, dataLoaded), null, Loader.TEXT);
+		}
+		private function dataErr():void
+		{
+			showMsg("dataErr");
 		}
 		private function dataLoaded(data:String):void
 		{
+			if (!data)
+			{
+				dataErr();
+				return;
+			}
+			showMsg("dataLoaded");
 			var stockData:StockData;
 			stockData = new StockData();
 			stockData.init(data);
 			setStockData(stockData);
+		}
+		public function showMsg(msg:String):void
+		{
+			event("msg",msg);
 		}
 		public var stockData:StockData;
 		public var dataList:Array;
@@ -38,13 +54,19 @@ package stock.views
 			//drawdata();
 			drawdata();
 			tLen = 10;
+			showMsg("playing K-line Animation");
 			Laya.timer.loop(10, this, timeEffect);
 		}
 		public var tLen:int=10;
 		public function timeEffect():void
 		{
 			tLen++;
-			if (tLen >= dataList.length) return;
+			if (tLen >= dataList.length)
+			{
+				showMsg("Animation End");
+				Laya.timer.clear(this, timeEffect);
+				return;
+			} 
 			drawdata(0, tLen);
 		}
 		public var lineHeight:Number = 400;

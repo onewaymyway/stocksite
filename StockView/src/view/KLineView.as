@@ -22,8 +22,13 @@ package view
 			stock = "002064";
 			//stock = "600139";
 			
-			kLine.pos(0, kLine.lineHeight+90);
+			kLine.pos(0, kLine.lineHeight + 90);
+			kLine.on("msg", this, onKlineMsg);
 			init();
+		}
+		private function onKlineMsg(msg:String):void
+		{
+			infoTxt.text = msg;
 		}
 		public function init():void
 		{
@@ -35,6 +40,13 @@ package view
 			var stock:String;
 			stock = "300383";
 			kLine.setStock(stock);
+		}
+		override protected function changeSize():void 
+		{
+			super.changeSize();
+			kLine.lineHeight = this.height - 100;
+			kLine.lineWidth = this.width - 20;
+			kLine.pos(0, kLine.lineHeight + 90);
 		}
 		private function onSelect():void
 		{

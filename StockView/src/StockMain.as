@@ -7,6 +7,7 @@ package
 	import stock.StockBasicInfo;
 	import stock.views.KLine;
 	import view.KLineView;
+	import view.MainView;
 	import view.StockView;
 	/**
 	 * ...
@@ -29,13 +30,15 @@ package
 		{
 			//begin();
 			//testKLine();
-			testKlineView();
+			//testKlineView();
+			StockBasicInfo.I.init(Loader.getRes(PathConfig.stockBasic));
+			trace(StockBasicInfo.I.stockList);
+			//StockBasicInfo.I.stockList.sort(MathUtil.sortByKey("totals", false, true));
+			testMainView();
 		}
 		private function begin():void
 		{
-			StockBasicInfo.I.init(Loader.getRes(PathConfig.stockBasic));
-			trace(StockBasicInfo.I.stockList);
-			StockBasicInfo.I.stockList.sort(MathUtil.sortByKey("totals", false, true));
+			
 			var view:StockView;
 			view = new StockView();
 			view.init();
@@ -64,6 +67,13 @@ package
 			var kView:KLineView;
 			kView = new KLineView();
 			Laya.stage.addChild(kView);
+		}
+		private function testMainView():void
+		{
+			var mainView:MainView;
+			mainView = new MainView();
+			mainView.left = mainView.right = mainView.top = mainView.bottom = 10;
+			Laya.stage.addChild(mainView);
 		}
 	}
 
