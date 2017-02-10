@@ -2,7 +2,7 @@
     "x":0,
     "type":"View",
     "selectedBox":1,
-    "selecteID":4,
+    "selecteID":3,
     "props":{"width":445,"sceneColor":"#000000","height":400},
     "nodeParent":-1,
     "label":"View",
@@ -21,17 +21,17 @@
     "child":[
         {
             "x":15,
-            "type":"ComboBox",
-            "props":{"y":9,"x":8,"var":"stockSelect","skin":"comp/combobox.png","labels":"000233,600322"},
+            "type":"Tab",
+            "props":{"y":4,"x":4,"var":"typeSelect","skin":"comp/tab.png","selectedIndex":0,"labels":"股票列表,K线动画"},
             "nodeParent":1,
-            "label":"ComboBox(stockSelect)",
+            "label":"Tab(typeSelect)",
             "isDirectory":false,
             "isAniNode":true,
             "hasChild":false,
             "frames":[
                 {
                     "type":1,
-                    "props":{"y":85,"x":99,"skin":"comp/combobox.png","labels":"label1,label2"},
+                    "props":{"y":58,"x":105,"skin":"comp/tab.png","labels":"label1,label2"},
                     "frame":0,
                     "__InPool":false
                 }],
@@ -41,17 +41,18 @@
         },
         {
             "x":15,
-            "type":"Button",
-            "props":{"y":9,"x":114,"var":"playBtn","skin":"comp/button.png","label":"play"},
+            "type":"UIView",
+            "source":"StockView.ui",
+            "props":{"var":"stockListView","top":40,"runtime":"view.StockView","right":10,"left":10,"bottom":10},
             "nodeParent":1,
-            "label":"Button(playBtn)",
+            "label":"UIView(stockListView)",
             "isDirectory":false,
             "isAniNode":true,
             "hasChild":false,
             "frames":[
                 {
                     "type":1,
-                    "props":{"y":18,"x":121,"skin":"comp/button.png","label":"label"},
+                    "props":{"y":93,"x":47},
                     "frame":0,
                     "__InPool":false
                 }],
@@ -61,17 +62,18 @@
         },
         {
             "x":15,
-            "type":"Label",
-            "props":{"y":13,"x":225,"width":147,"var":"infoTxt","text":"label","styleSkin":"comp/label.png","height":20,"color":"#5be330"},
+            "type":"UIView",
+            "source":"KLineView.ui",
+            "props":{"var":"kLineView","top":40,"runtime":"view.KLineView","right":10,"left":10,"bottom":10},
             "nodeParent":1,
-            "label":"Label(infoTxt)",
+            "label":"UIView(kLineView)",
             "isDirectory":false,
             "isAniNode":true,
             "hasChild":false,
             "frames":[
                 {
                     "type":1,
-                    "props":{"y":21,"x":225,"text":"label","styleSkin":"comp/label.png"},
+                    "props":{"y":100,"x":47},
                     "frame":0,
                     "__InPool":false
                 }],
