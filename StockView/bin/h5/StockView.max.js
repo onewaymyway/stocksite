@@ -912,6 +912,7 @@ var Laya=window.Laya=(function(window,document){
 			kLine=new KLine();
 			var stock;
 			stock="300383";
+			stock="600139";
 			kLine.setStock(stock);
 			kLine.pos(200,500);
 			Laya.stage.addChild(kLine);
