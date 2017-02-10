@@ -8552,6 +8552,7 @@ var Laya=window.Laya=(function(window,document){
 	var StockBasicInfo=(function(_super){
 		function StockBasicInfo(){
 			this.stockList=null;
+			this.stockCodeList=null;
 			StockBasicInfo.__super.call(this);
 		}
 
@@ -8560,6 +8561,12 @@ var Laya=window.Laya=(function(window,document){
 		__proto.init=function(csvStr){
 			_super.prototype.init.call(this,csvStr);
 			this.stockList=this.dataList;
+			var i=0,len=0;
+			len=this.stockList.length;
+			this.stockCodeList=[];
+			for (i=0;i < len;i++){
+				this.stockCodeList.push(this.stockList[i]["code"]);
+			}
 		}
 
 		__static(StockBasicInfo,
@@ -13393,7 +13400,9 @@ var Laya=window.Laya=(function(window,document){
 			Laya.timer.clear(this,this.timeEffect);
 			this.graphics.clear();
 			this.showMsg("loadingData:"+stock);
-			Laya.loader.load("res/stockdata/"+stock+".csv",Handler.create(this,this.dataLoaded),null,"text");
+			var stockUrl;
+			stockUrl="https://onewaymyway.github.io/stockdata/stockdatas/"+stock+".csv";
+			Laya.loader.load(stockUrl,Handler.create(this,this.dataLoaded),null,"text");
 		}
 
 		__proto.dataErr=function(){
@@ -23960,6 +23969,8 @@ var Laya=window.Laya=(function(window,document){
 			this.stockSelect=null;
 			this.playBtn=null;
 			this.infoTxt=null;
+			this.stockInput=null;
+			this.playInputBtn=null;
 			KLineViewUI.__super.call(this);
 		}
 
@@ -23971,7 +23982,7 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		__static(KLineViewUI,
-		['uiView',function(){return this.uiView={"type":"View","props":{"width":445,"height":400},"child":[{"type":"ComboBox","props":{"y":9,"x":8,"var":"stockSelect","skin":"comp/combobox.png","labels":"000233,600322"}},{"type":"Button","props":{"y":9,"x":114,"var":"playBtn","skin":"comp/button.png","label":"play"}},{"type":"Label","props":{"y":13,"x":225,"width":147,"var":"infoTxt","text":"label","height":20,"color":"#5be330"}}]};}
+		['uiView',function(){return this.uiView={"type":"View","props":{"width":445,"height":400},"child":[{"type":"ComboBox","props":{"y":9,"x":8,"var":"stockSelect","skin":"comp/combobox.png","scrollBarSkin":"comp/vscroll.png","labels":"000233,600322"}},{"type":"Button","props":{"y":9,"x":114,"var":"playBtn","skin":"comp/button.png","label":"play"}},{"type":"Label","props":{"y":13,"x":225,"width":147,"var":"infoTxt","text":"label","height":20,"color":"#5be330"}},{"type":"TextInput","props":{"y":43,"x":8,"width":90,"var":"stockInput","text":"002234","skin":"comp/textinput.png","height":22}},{"type":"Button","props":{"y":42,"x":114,"var":"playInputBtn","skin":"comp/button.png","label":"play"}}]};}
 		]);
 		return KLineViewUI;
 	})(View)
@@ -24564,10 +24575,14 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		__proto.init=function(){
-			this.stockSelect.labels="300383,000546,000725,002064,600139";
+			var tLabel;
+			tLabel=StockBasicInfo.I.stockCodeList.join(",");
+			console.log("tLabel",tLabel);
+			this.stockSelect.labels=tLabel;
 			this.stockSelect.selectedIndex=0;
 			this.stockSelect.selectHandler=new Handler(this,this.onSelect);
 			this.playBtn.on("mousedown",this,this.onPlayBtn);
+			this.playInputBtn.on("mousedown",this,this.onPlayInput);
 			var stock;
 			stock="300383";
 			this.kLine.setStock(stock);
@@ -24586,6 +24601,10 @@ var Laya=window.Laya=(function(window,document){
 
 		__proto.onPlayBtn=function(){
 			this.kLine.setStock(this.stockSelect.selectedLabel);
+		}
+
+		__proto.onPlayInput=function(){
+			this.kLine.setStock(this.stockInput.text);
 		}
 
 		return KLineView;
