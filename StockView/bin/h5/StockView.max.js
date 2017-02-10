@@ -893,13 +893,12 @@ var Laya=window.Laya=(function(window,document){
 		__class(StockMain,'StockMain');
 		var __proto=StockMain.prototype;
 		__proto.start=function(){
-			this.testKlineView();
+			StockBasicInfo.I.init(Loader.getRes(PathConfig.stockBasic));
+			console.log(StockBasicInfo.I.stockList);
+			this.testMainView();
 		}
 
 		__proto.begin=function(){
-			StockBasicInfo.I.init(Loader.getRes(PathConfig.stockBasic));
-			console.log(StockBasicInfo.I.stockList);
-			StockBasicInfo.I.stockList.sort(MathUtil.sortByKey("totals",false,true));
 			var view;
 			view=new StockView();
 			view.init();
@@ -922,6 +921,13 @@ var Laya=window.Laya=(function(window,document){
 			var kView;
 			kView=new KLineView();
 			Laya.stage.addChild(kView);
+		}
+
+		__proto.testMainView=function(){
+			var mainView;
+			mainView=new MainView();
+			mainView.left=mainView.right=mainView.top=mainView.bottom=10;
+			Laya.stage.addChild(mainView);
 		}
 
 		return StockMain;
@@ -13385,14 +13391,29 @@ var Laya=window.Laya=(function(window,document){
 		var __proto=KLine.prototype;
 		__proto.setStock=function(stock){
 			Laya.timer.clear(this,this.timeEffect);
+			this.graphics.clear();
+			this.showMsg("loadingData:"+stock);
 			Laya.loader.load("res/stockdata/"+stock+".csv",Handler.create(this,this.dataLoaded),null,"text");
 		}
 
+		__proto.dataErr=function(){
+			this.showMsg("dataErr");
+		}
+
 		__proto.dataLoaded=function(data){
+			if (!data){
+				this.dataErr();
+				return;
+			}
+			this.showMsg("dataLoaded");
 			var stockData;
 			stockData=new StockData();
 			stockData.init(data);
 			this.setStockData(stockData);
+		}
+
+		__proto.showMsg=function(msg){
+			this.event("msg",msg);
 		}
 
 		__proto.setStockData=function(stockData){
@@ -13400,12 +13421,17 @@ var Laya=window.Laya=(function(window,document){
 			this.dataList=stockData.dataList;
 			this.drawdata();
 			this.tLen=10;
+			this.showMsg("playing K-line Animation");
 			Laya.timer.loop(10,this,this.timeEffect);
 		}
 
 		__proto.timeEffect=function(){
 			this.tLen++;
-			if (this.tLen >=this.dataList.length)return;
+			if (this.tLen >=this.dataList.length){
+				this.showMsg("Animation End");
+				Laya.timer.clear(this,this.timeEffect);
+				return;
+			}
 			this.drawdata(0,this.tLen);
 		}
 
@@ -23933,6 +23959,7 @@ var Laya=window.Laya=(function(window,document){
 		function KLineViewUI(){
 			this.stockSelect=null;
 			this.playBtn=null;
+			this.infoTxt=null;
 			KLineViewUI.__super.call(this);
 		}
 
@@ -23944,9 +23971,34 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		__static(KLineViewUI,
-		['uiView',function(){return this.uiView={"type":"View","props":{"width":445,"height":400},"child":[{"type":"ComboBox","props":{"y":9,"x":8,"var":"stockSelect","skin":"comp/combobox.png","labels":"000233,600322"}},{"type":"Button","props":{"y":9,"x":114,"var":"playBtn","skin":"comp/button.png","label":"play"}}]};}
+		['uiView',function(){return this.uiView={"type":"View","props":{"width":445,"height":400},"child":[{"type":"ComboBox","props":{"y":9,"x":8,"var":"stockSelect","skin":"comp/combobox.png","labels":"000233,600322"}},{"type":"Button","props":{"y":9,"x":114,"var":"playBtn","skin":"comp/button.png","label":"play"}},{"type":"Label","props":{"y":13,"x":225,"width":147,"var":"infoTxt","text":"label","height":20,"color":"#5be330"}}]};}
 		]);
 		return KLineViewUI;
+	})(View)
+
+
+	//class ui.MainViewUI extends laya.ui.View
+	var MainViewUI=(function(_super){
+		function MainViewUI(){
+			this.typeSelect=null;
+			this.stockListView=null;
+			this.kLineView=null;
+			MainViewUI.__super.call(this);
+		}
+
+		__class(MainViewUI,'ui.MainViewUI',_super);
+		var __proto=MainViewUI.prototype;
+		__proto.createChildren=function(){
+			View.regComponent("view.StockView",StockView);
+			View.regComponent("view.KLineView",KLineView);
+			laya.ui.Component.prototype.createChildren.call(this);
+			this.createView(MainViewUI.uiView);
+		}
+
+		__static(MainViewUI,
+		['uiView',function(){return this.uiView={"type":"View","props":{"width":445,"height":400},"child":[{"type":"Tab","props":{"y":4,"x":4,"var":"typeSelect","skin":"comp/tab.png","selectedIndex":0,"labels":"股票列表,K线动画"}},{"type":"StockView","props":{"var":"stockListView","top":40,"runtime":"view.StockView","right":10,"left":10,"bottom":10}},{"type":"KLineView","props":{"var":"kLineView","top":40,"runtime":"view.KLineView","right":10,"left":10,"bottom":10}}]};}
+		]);
+		return MainViewUI;
 	})(View)
 
 
@@ -24501,11 +24553,16 @@ var Laya=window.Laya=(function(window,document){
 			stock="300383";
 			stock="002064";
 			this.kLine.pos(0,this.kLine.lineHeight+90);
+			this.kLine.on("msg",this,this.onKlineMsg);
 			this.init();
 		}
 
 		__class(KLineView,'view.KLineView',_super);
 		var __proto=KLineView.prototype;
+		__proto.onKlineMsg=function(msg){
+			this.infoTxt.text=msg;
+		}
+
 		__proto.init=function(){
 			this.stockSelect.labels="300383,000546,000725,002064,600139";
 			this.stockSelect.selectedIndex=0;
@@ -24514,6 +24571,13 @@ var Laya=window.Laya=(function(window,document){
 			var stock;
 			stock="300383";
 			this.kLine.setStock(stock);
+		}
+
+		__proto.changeSize=function(){
+			laya.ui.Component.prototype.changeSize.call(this);
+			this.kLine.lineHeight=this.height-100;
+			this.kLine.lineWidth=this.width-20;
+			this.kLine.pos(0,this.kLine.lineHeight+90);
 		}
 
 		__proto.onSelect=function(){
@@ -24526,6 +24590,45 @@ var Laya=window.Laya=(function(window,document){
 
 		return KLineView;
 	})(KLineViewUI)
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class view.MainView extends ui.MainViewUI
+	var MainView=(function(_super){
+		function MainView(){
+			this.views=null;
+			MainView.__super.call(this);
+			this.init();
+		}
+
+		__class(MainView,'view.MainView',_super);
+		var __proto=MainView.prototype;
+		__proto.init=function(){
+			this.views=[this.stockListView,this.kLineView];
+			this.typeSelect.selectHandler=new Handler(this,this.updateSelect);
+			this.updateSelect();
+			this.stockListView.init();
+		}
+
+		__proto.updateSelect=function(){
+			var i=0,len=0;
+			len=this.views.length;
+			var tV;
+			for (i=0;i < len;i++){
+				tV=this.views[i];
+				if (i !=this.typeSelect.selectedIndex){
+					tV.visible=false;
+					}else{
+					tV.visible=true;
+				}
+			}
+		}
+
+		return MainView;
+	})(MainViewUI)
 
 
 	/**
