@@ -2,7 +2,7 @@
     "x":0,
     "type":"View",
     "selectedBox":1,
-    "selecteID":4,
+    "selecteID":5,
     "props":{"width":445,"sceneColor":"#000000","height":400},
     "nodeParent":-1,
     "label":"View",
@@ -22,7 +22,7 @@
         {
             "x":15,
             "type":"ComboBox",
-            "props":{"y":9,"x":8,"var":"stockSelect","skin":"comp/combobox.png","labels":"000233,600322"},
+            "props":{"y":9,"x":8,"var":"stockSelect","skin":"comp/combobox.png","scrollBarSkin":"comp/vscroll.png","labels":"000233,600322"},
             "nodeParent":1,
             "label":"ComboBox(stockSelect)",
             "isDirectory":false,
@@ -76,6 +76,46 @@
                     "__InPool":false
                 }],
             "compId":4,
+            "child":[
+                ]
+        },
+        {
+            "x":15,
+            "type":"TextInput",
+            "props":{"y":43,"x":8,"width":90,"var":"stockInput","text":"002234","skin":"comp/textinput.png","height":22},
+            "nodeParent":1,
+            "label":"TextInput(stockInput)",
+            "isDirectory":false,
+            "isAniNode":true,
+            "hasChild":false,
+            "frames":[
+                {
+                    "type":1,
+                    "props":{"y":55,"x":31,"text":"TextInput","skin":"comp/textinput.png"},
+                    "frame":0,
+                    "__InPool":false
+                }],
+            "compId":5,
+            "child":[
+                ]
+        },
+        {
+            "x":15,
+            "type":"Button",
+            "props":{"y":42,"x":114,"var":"playInputBtn","skin":"comp/button.png","label":"play"},
+            "nodeParent":1,
+            "label":"Button(playInputBtn)",
+            "isDirectory":false,
+            "isAniNode":true,
+            "hasChild":false,
+            "frames":[
+                {
+                    "type":1,
+                    "props":{"y":18,"x":121,"skin":"comp/button.png","label":"label"},
+                    "frame":0,
+                    "__InPool":false
+                }],
+            "compId":6,
             "child":[
                 ]
         }],
