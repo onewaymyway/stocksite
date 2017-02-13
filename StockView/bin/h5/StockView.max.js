@@ -512,6 +512,24 @@ var Laya=window.Laya=(function(window,document){
 	*...
 	*@author ww
 	*/
+	//class laya.math.GraphicUtils
+	var GraphicUtils=(function(){
+		function GraphicUtils(){}
+		__class(GraphicUtils,'laya.math.GraphicUtils');
+		GraphicUtils.pointOfLine=function(px,py,x0,y0,x1,y1){
+			var y=NaN;
+			y=y0+(px-x0)*(y1-y0)/ (x1-x0);
+			return y-py;
+		}
+
+		return GraphicUtils;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
 	//class stock.CSVParser
 	var CSVParser=(function(){
 		function CSVParser(){
@@ -13521,10 +13539,15 @@ var Laya=window.Laya=(function(window,document){
 			}
 			len=mins.length;
 			var preData;
+			var tUnderCount=0;
 			for (i=1;i < len;i++){
 				preData=dataList[mins[i-1]];
 				tData=dataList[mins[i]];
 				this.graphics.drawLine(this.getAdptXV(mins[i-1] *3),this.getAdptYV(preData["low"]),this.getAdptXV(mins[i] *3),this.getAdptYV(tData["low"]),"#ff0000");
+				tUnderCount=this.hasUnders(this.getAdptXV(mins[i-1] *3),this.getAdptYV(preData["low"]),this.getAdptXV(mins[i] *3),this.getAdptYV(tData["low"]),mins[i-1],mins[i],dataList);
+				if (tUnderCount > 3){
+					this.graphics.fillText(""+preData["date"]+":Buy",this.getAdptXV(mins[i] *3),this.getAdptYV(tData["low"])+30,null,"#ff0000","center");
+				}
 			}
 			len=maxs.length;
 			for (i=1;i < len;i++){
@@ -13532,6 +13555,25 @@ var Laya=window.Laya=(function(window,document){
 				tData=dataList[maxs[i]];
 				this.graphics.drawLine(this.getAdptXV(maxs[i-1] *3),this.getAdptYV(preData["high"]),this.getAdptXV(maxs[i] *3),this.getAdptYV(tData["high"]),"#ff0000");
 			}
+		}
+
+		__proto.hasUnders=function(x0,y0,x1,y1,startI,endI,datas){
+			var i=0,len=0;
+			var tData;
+			var tX=NaN;
+			var tY=NaN;
+			var rst=0;
+			rst=0;
+			for (i=startI+1;i < endI;i++){
+				tData=datas[i];
+				tX=this.getAdptXV(i*3);
+				tY=this.getAdptYV(tData["low"]);
+				if (GraphicUtils.pointOfLine(tX,tY,x0,y0,x1,y1)< 0){
+					this.graphics.drawCircle(tX,tY,5,"#ff0000");
+					rst++;
+				}
+			}
+			return rst;
 		}
 
 		__proto.drawPoint=function(i,text,y,dy,color){
