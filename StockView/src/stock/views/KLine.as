@@ -2,6 +2,7 @@ package stock.views
 {
 	import laya.display.Sprite;
 	import laya.math.DataUtils;
+	import laya.math.GraphicUtils;
 	import laya.net.Loader;
 	import laya.utils.Handler;
 	import stock.StockData;
@@ -160,11 +161,17 @@ package stock.views
 			}
 			len = mins.length;
 			var preData:Object;
+			var tUnderCount:int;
 			for (i = 1; i < len; i++)
 			{
 				preData = dataList[mins[i - 1]];
 				tData = dataList[mins[i]];
 				this.graphics.drawLine(getAdptXV(mins[i - 1] * 3), getAdptYV(preData["low"]), getAdptXV(mins[i] * 3), getAdptYV(tData["low"]), "#ff0000");
+				tUnderCount=hasUnders(getAdptXV(mins[i - 1] * 3), getAdptYV(preData["low"]), getAdptXV(mins[i] * 3), getAdptYV(tData["low"]), mins[i - 1], mins[i], dataList);
+				if (tUnderCount > 3)
+				{
+					this.graphics.fillText("" + preData["date"] + ":Buy", getAdptXV(mins[i] * 3), getAdptYV(tData["low"])+30, null, "#ff0000", "center");
+				}
 			}
 			
 			len = maxs.length;
@@ -174,6 +181,27 @@ package stock.views
 				tData = dataList[maxs[i]];
 				this.graphics.drawLine(getAdptXV(maxs[i - 1] * 3), getAdptYV(preData["high"]), getAdptXV(maxs[i] * 3), getAdptYV(tData["high"]), "#ff0000");
 			}
+		}
+		public function hasUnders(x0:Number, y0:Number, x1:Number, y1:Number,startI:int,endI:int,datas:Array):int
+		{
+			var i:int, len:int;
+			var tData:Object;
+			var tX:Number;
+			var tY:Number;
+			var rst:int;
+			rst = 0;
+			for (i = startI + 1; i < endI; i++)
+			{
+				tData = datas[i];
+				tX = getAdptXV(i*3);
+				tY = getAdptYV(tData["low"]);
+				if (GraphicUtils.pointOfLine(tX, tY, x0, y0, x1, y1) < 0)
+				{
+					this.graphics.drawCircle(tX, tY, 5, "#ff0000") ;
+					rst++;
+				}
+			}
+			return rst;
 		}
 		public function drawPoint(i:int, text:String, y:Number,dy:Number=10,color:String="#ffff00"):void
 		{
