@@ -20,11 +20,13 @@ package stock.views
 		}
 		public var analyser:KLineAnalyser;
 		public var autoPlay:Boolean = false;
+		public var tStock:String;
 		public function setStock(stock:String):void
 		{
 			Laya.timer.clear(this, timeEffect);
 			this.graphics.clear();
 			showMsg("loadingData:" + stock);
+			tStock = stock;
 			var stockUrl:String;
 			stockUrl = "https://onewaymyway.github.io/stockdata/stockdatas/" + stock + ".csv";
 			//stockUrl = "res/stockdata/" + stock + ".csv";

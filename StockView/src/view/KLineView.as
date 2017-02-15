@@ -1,6 +1,7 @@
 package view 
 {
 	import laya.events.Event;
+	import laya.tools.WebTools;
 	import laya.utils.Handler;
 	import stock.StockBasicInfo;
 	import stock.views.KLine;
@@ -51,6 +52,8 @@ package view
 			var stock:String;
 			stock = "300383";
 			kLine.setStock(stock);
+			
+			detailBtn.on(Event.MOUSE_DOWN, this, onDetail);
 		}
 		override protected function changeSize():void 
 		{
@@ -58,6 +61,10 @@ package view
 			kLine.lineHeight = this.height - 100;
 			kLine.lineWidth = this.width - 20;
 			kLine.pos(0, kLine.lineHeight + 90);
+		}
+		private function onDetail():void
+		{
+			WebTools.openStockDetail(kLine.tStock);
 		}
 		private function onSelect():void
 		{
