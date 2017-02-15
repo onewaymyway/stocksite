@@ -18,6 +18,7 @@ package laya.math
 			if (isNaN(rst)) return 0;
 			return rst;
 		}
+		
 		public static function getKeyMax(datas:Array, key:String):Number
 		{
 			var i:int, len:int;

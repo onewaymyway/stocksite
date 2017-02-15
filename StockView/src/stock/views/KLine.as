@@ -4,6 +4,7 @@ package stock.views
 	import laya.math.DataUtils;
 	import laya.math.GraphicUtils;
 	import laya.net.Loader;
+	import laya.stock.analysers.KLineAnalyser;
 	import laya.utils.Handler;
 	import stock.StockData;
 	/**
@@ -15,8 +16,10 @@ package stock.views
 		
 		public function KLine() 
 		{
-			
+			analyser = new KLineAnalyser();
 		}
+		public var analyser:KLineAnalyser;
+		public var autoPlay:Boolean = false;
 		public function setStock(stock:String):void
 		{
 			Laya.timer.clear(this, timeEffect);
@@ -39,10 +42,15 @@ package stock.views
 				return;
 			}
 			showMsg("dataLoaded");
+			initByStrData(data);
+		}
+		public function initByStrData(data:String):void
+		{
 			var stockData:StockData;
 			stockData = new StockData();
 			stockData.init(data);
 			setStockData(stockData);
+			
 		}
 		public function showMsg(msg:String):void
 		{
@@ -59,7 +67,10 @@ package stock.views
 			drawdata();
 			tLen = 10;
 			showMsg("playing K-line Animation");
+			if(autoPlay)
 			Laya.timer.loop(10, this, timeEffect);
+			analyser.analyser(stockData);
+			trace(analyser);
 		}
 		public var tLen:int=10;
 		public function timeEffect():void
@@ -170,7 +181,7 @@ package stock.views
 				tUnderCount=hasUnders(getAdptXV(mins[i - 1] * 3), getAdptYV(preData["low"]), getAdptXV(mins[i] * 3), getAdptYV(tData["low"]), mins[i - 1], mins[i], dataList);
 				if (tUnderCount > 3)
 				{
-					this.graphics.fillText("" + preData["date"] + ":Buy", getAdptXV(mins[i] * 3), getAdptYV(tData["low"])+30, null, "#ff0000", "center");
+					this.graphics.fillText("" + tData["date"] + ":Buy", getAdptXV(mins[i] * 3), getAdptYV(tData["low"])+30, null, "#ff0000", "center");
 				}
 			}
 			
