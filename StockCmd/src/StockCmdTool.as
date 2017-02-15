@@ -1,11 +1,15 @@
 package {
-	import laya.ide.config.SystemSetting;
-	import laya.ide.devices.Device;
-	import laya.ide.devices.FileTools;
-	import laya.ide.devices.OSInfo;
-	import laya.ide.managers.FileManager;
+	import laya.debug.tools.DTrace;
+	import laya.maths.MathUtil;
 	import laya.stock.analysers.KLineAnalyser;
 	import laya.utils.Browser;
+	import nodetools.devices.Device;
+	import nodetools.devices.FileManager;
+	import nodetools.devices.FileTools;
+	import nodetools.devices.NodeJSTools;
+	import nodetools.devices.OSInfo;
+	import nodetools.devices.SystemSetting;
+	import stockcmd.RunConfig;
 	
 	/**
 	 * ...
@@ -14,21 +18,45 @@ package {
 	public class StockCmdTool {
 		
 		public function StockCmdTool() {
-			init();
-			test();
+			init();	
+			parseCMD(NodeJSTools.getArgv());
+			DTrace.timeStart("StockCmdTool");
+			work();
+			DTrace.timeEnd("StockCmdTool");
 		}
 		
 		private function init():void {
-			Device.Buffer = __JS__("Buffer");
+			Device.init();
 			SystemSetting.isCMDVer = true;
 			OSInfo.init();
-			Browser.userAgent = OSInfo.type;
 			//CMDShell.init();
 			//Device.init();
 			//初始化文件系统
 			FileTools.init2();
 		}
-		
+		private function parseCMD(args:Array):void {
+			scriptPath = args[1];
+			if (args[2]) {
+				RunConfig.filePath = args[2];
+			}
+			
+			NodeJSTools.parseArgToObj(args, 3, RunConfig);
+		}
+		public function work():void
+		{
+			if (!FileTools.exist(RunConfig.filePath))
+			{
+				trace("file not found:",RunConfig.filePath);
+				return;
+			}
+			if (FileTools.isDirectory(RunConfig.filePath))
+			{
+				workDir(RunConfig.filePath);
+			}else
+			{
+				analyserAFile(RunConfig.filePath);
+			}
+		}
 		public function test():void {
 			//analyserAFile("res/stockdata/000546.csv");
 			//workDir("res/stockdata/");
@@ -45,8 +73,9 @@ package {
 				//trace("file:", fileList[i]);
 				analyserAFile(fileList[i],dirInfos);
 			}
-			trace("okFiles:", dirInfos);
-			FileManager.createJSONFile("lastBuys.json", dirInfos);
+			//trace("okFiles:", dirInfos);
+			dirInfos.sort(MathUtil.sortByKey("lastDate", true, false));
+			FileManager.createJSONFile(RunConfig.outFile, dirInfos);
 		}
 		public var analyser:KLineAnalyser;
 		
@@ -59,22 +88,22 @@ package {
 			}
 			
 			analyser.initByStrData(data);
-			trace("analyser:", analyser);
+			//trace("analyser:", analyser);
 			var lastUnder:Object;
-			lastUnder = analyser.getLastUnderLine(3);
-			trace("lastUnder", lastUnder);
+			lastUnder = analyser.getLastUnderLine(RunConfig.minUnderDay);
+			//trace("lastUnder", lastUnder);
 			if (!lastUnder)
 				return;
 			var lastStock:Object;
 			lastStock = analyser.getDataByI(lastUnder[2]);
-			trace("lastStock:", lastStock);
+			//trace("lastStock:", lastStock);
 			if (rst)
 			{
 				if (lastStock)
 				{
 					var tData:Object;
 					tData = { };
-					tData.path = path;
+					tData.path = FileManager.getFileName(path);
 					tData.data = lastStock;
 					tData.lastDate = lastStock["date"];
 					rst.push(tData);

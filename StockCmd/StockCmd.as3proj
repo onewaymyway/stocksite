@@ -20,8 +20,6 @@
     <class path="E:\wangwei\codes\laya\libs\LayaAir\core\jsc" />
     <class path="E:\wangwei\codes\laya\libs\LayaAir\plugins\debugtool\src" />
     <class path="E:\wangwei\codes\laya\libs\LayaAir\ui\src" />
-    <class path="E:\wangwei\codes\LayaAir\trank\Editor\renders\editor\src" />
-    <class path="E:\wangwei\codes\LayaAir\trank\Editor\LayaAirEditor\src" />
     <class path="..\StockView\src" />
   </classpaths>
   <!-- Build options -->
