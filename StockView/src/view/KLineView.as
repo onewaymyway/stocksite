@@ -56,17 +56,17 @@ package view
 		}
 		private function onSelect():void
 		{
-			kLine.autoPlay = false;
+			kLine.autoPlay = enableAnimation.selected;
 			kLine.setStock(stockSelect.selectedLabel);
 		}
 		private function onPlayBtn():void
 		{
-			kLine.autoPlay = true;
+			kLine.autoPlay = enableAnimation.selected;
 			kLine.setStock(stockSelect.selectedLabel);
 		}
 		private function onPlayInput():void
 		{
-			kLine.autoPlay = false;
+			kLine.autoPlay = enableAnimation.selected;
 			kLine.setStock(stockInput.text);
 		}
 	}
