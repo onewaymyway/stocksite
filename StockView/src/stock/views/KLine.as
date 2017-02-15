@@ -66,9 +66,16 @@ package stock.views
 			//drawdata();
 			drawdata();
 			tLen = 10;
-			showMsg("playing K-line Animation");
-			if(autoPlay)
-			Laya.timer.loop(10, this, timeEffect);
+			
+			if (autoPlay)
+			{
+				showMsg("playing K-line Animation");
+				Laya.timer.loop(10, this, timeEffect);
+			}else
+			{
+				showMsg("K-line Showed");
+			}
+			
 			analyser.analyser(stockData);
 			trace(analyser);
 		}

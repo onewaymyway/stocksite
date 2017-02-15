@@ -1,7 +1,9 @@
 package view 
 {
+	import laya.debug.tools.Notice;
 	import laya.display.Sprite;
 	import laya.utils.Handler;
+	import msgs.MsgConst;
 	import ui.MainViewUI;
 	
 	/**
@@ -18,12 +20,18 @@ package view
 		public var views:Array;
 		public function init():void
 		{
-			views = [stockListView,kLineView];
+			views = [stockListView,kLineView,selectView];
 			typeSelect.selectHandler = new Handler(this,updateSelect);
 			updateSelect();
 			stockListView.init();
+			Notice.listen(MsgConst.Show_Stock_KLine, this, onShowStockKline);
 		}
 		
+		private function onShowStockKline(stock:String):void
+		{
+			typeSelect.selectedIndex = 1;
+			kLineView.showStockKline(stock);
+		}
 		private function updateSelect():void
 		{
 			var i:int, len:int;

@@ -27,6 +27,11 @@ package view
 			kLine.on("msg", this, onKlineMsg);
 			init();
 		}
+		public function showStockKline(stock:String):void
+		{
+			stockInput.text = stock;
+			onPlayInput();
+		}
 		private function onKlineMsg(msg:String):void
 		{
 			infoTxt.text = msg;
