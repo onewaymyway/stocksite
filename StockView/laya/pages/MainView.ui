@@ -2,7 +2,7 @@
     "x":0,
     "type":"View",
     "selectedBox":1,
-    "selecteID":3,
+    "selecteID":5,
     "props":{"width":445,"sceneColor":"#000000","height":400},
     "nodeParent":-1,
     "label":"View",
@@ -10,31 +10,17 @@
     "isDirectory":true,
     "isAniNode":true,
     "hasChild":true,
-    "frames":[
-        {
-            "type":1,
-            "props":{"width":445,"sceneColor":"#000000","height":400},
-            "frame":0,
-            "__InPool":false
-        }],
     "compId":1,
     "child":[
         {
             "x":15,
             "type":"Tab",
-            "props":{"y":4,"x":4,"var":"typeSelect","skin":"comp/tab.png","selectedIndex":0,"labels":"股票列表,K线动画"},
+            "props":{"y":4,"x":4,"var":"typeSelect","skin":"comp/tab.png","selectedIndex":0,"labels":"股票列表,K线动画,选股"},
             "nodeParent":1,
             "label":"Tab(typeSelect)",
             "isDirectory":false,
             "isAniNode":true,
             "hasChild":false,
-            "frames":[
-                {
-                    "type":1,
-                    "props":{"y":58,"x":105,"skin":"comp/tab.png","labels":"label1,label2"},
-                    "frame":0,
-                    "__InPool":false
-                }],
             "compId":2,
             "child":[
                 ]
@@ -49,13 +35,6 @@
             "isDirectory":false,
             "isAniNode":true,
             "hasChild":false,
-            "frames":[
-                {
-                    "type":1,
-                    "props":{"y":93,"x":47},
-                    "frame":0,
-                    "__InPool":false
-                }],
             "compId":3,
             "child":[
                 ]
@@ -70,14 +49,21 @@
             "isDirectory":false,
             "isAniNode":true,
             "hasChild":false,
-            "frames":[
-                {
-                    "type":1,
-                    "props":{"y":100,"x":47},
-                    "frame":0,
-                    "__InPool":false
-                }],
             "compId":4,
+            "child":[
+                ]
+        },
+        {
+            "x":15,
+            "type":"UIView",
+            "source":"SelectStockView.ui",
+            "props":{"var":"selectView","top":40,"runtime":"view.SelectStockView","right":10,"left":10,"bottom":10},
+            "nodeParent":1,
+            "label":"UIView(selectView)",
+            "isDirectory":false,
+            "isAniNode":true,
+            "hasChild":false,
+            "compId":5,
             "child":[
                 ]
         }],
