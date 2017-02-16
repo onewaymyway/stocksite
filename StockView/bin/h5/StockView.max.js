@@ -530,23 +530,38 @@ var Laya=window.Laya=(function(window,document){
 	*...
 	*@author ww
 	*/
-	//class laya.stock.analysers.KLineAnalyser
-	var KLineAnalyser=(function(){
-		function KLineAnalyser(){
+	//class laya.stock.analysers.AnalyserBase
+	var AnalyserBase=(function(){
+		function AnalyserBase(){
 			this.stockData=null;
 			this.dataList=null;
 			this.disDataList=null;
 			this.resultData=null;
-			this.leftLimit=10;
-			this.rightLimit=25;
+			this.paramkeys=null;
 		}
 
-		__class(KLineAnalyser,'laya.stock.analysers.KLineAnalyser');
-		var __proto=KLineAnalyser.prototype;
-		__proto.analyser=function(stockData){
+		__class(AnalyserBase,'laya.stock.analysers.AnalyserBase');
+		var __proto=AnalyserBase.prototype;
+		__proto.getParam=function(){
+			var rst;
+			if (this.paramkeys){
+				var i=0,len=0;
+				len=this.paramkeys.length;
+				var tKey;
+				for (i=0;i < len;i++){
+					tKey=this.paramkeys[i];
+					rst[tKey]=this[tKey];
+				}
+			}
+			return rst;
+		}
+
+		__proto.analyser=function(stockData,start,end){
+			(start===void 0)&& (start=0);
+			(end===void 0)&& (end=-1);
 			this.stockData=stockData;
 			this.dataList=stockData.dataList;
-			this.analyserData();
+			this.analyserData(start,end);
 		}
 
 		__proto.initByStrData=function(data){
@@ -565,107 +580,16 @@ var Laya=window.Laya=(function(window,document){
 			this.analyseWork();
 		}
 
-		__proto.analyseWork=function(){
-			this.workMaxValues();
-			this.drawMaxs();
-		}
-
-		__proto.workMaxValues=function(){
-			var dataList;
-			dataList=this.disDataList;
-			var maxI=0;
-			maxI=DataUtils.getKeyMaxI(dataList,"high");
-			var minI=0;
-			minI=DataUtils.getKeyMinI(dataList,"low");
-			var xPos=NaN;
-			this.resultData["high"]=maxI;
-			this.resultData["low"]=minI;
-		}
-
-		__proto.drawMaxs=function(){
-			var dataList;
-			dataList=this.disDataList;
-			var maxList;
-			maxList=DataUtils.getMaxInfo(dataList);
-			var i=0,len=0;
-			len=maxList.length;
-			var tData;
-			var mins;
-			var maxs;
-			mins=[];
-			maxs=[];
-			for (i=0;i < len;i++){
-				tData=maxList[i];
-				if ((tData["highL"] > this.rightLimit)&&tData["highR"] > this.leftLimit){
-					maxs.push(i);
-				}
-				if ((tData["lowL"] > this.rightLimit)&&tData["lowR"] > this.leftLimit){
-					mins.push(i);
-				}
-			}
-			len=mins.length;
-			var preData;
-			var tUnderCount=0;
-			var minUnders;
-			minUnders=[];
-			for (i=1;i < len;i++){
-				preData=dataList[mins[i-1]];
-				tData=dataList[mins[i]];
-				tUnderCount=this.hasUnders(mins[i-1],preData["low"],mins[i],tData["low"],mins[i-1],mins[i],dataList);
-				if (tUnderCount > 0){
-					minUnders.push([tUnderCount,mins[i-1],mins[i]]);
-				}
-			}
-			len=maxs.length;
-			for (i=1;i < len;i++){
-				preData=dataList[maxs[i-1]];
-				tData=dataList[maxs[i]];
-			}
-			this.resultData["mins"]=mins;
-			this.resultData["maxs"]=maxs;
-			this.resultData["minUnders"]=minUnders;
-		}
-
-		__proto.getLastUnderLine=function(minCount){
-			(minCount===void 0)&& (minCount=3);
-			if (!this.resultData)return null;
-			var minUnders;
-			minUnders=this.resultData["minUnders"];
-			var i=0,len=0;
-			len=minUnders.length;
-			var tData;
-			for (i=len-1;i >=0;i--){
-				tData=minUnders[i];
-				if (tData[0] >=minCount){
-					return tData;
-				}
-			}
-			return null;
-		}
-
 		__proto.getDataByI=function(i){
 			return this.disDataList[i];
 		}
 
-		__proto.hasUnders=function(x0,y0,x1,y1,startI,endI,datas){
-			var i=0,len=0;
-			var tData;
-			var tX=NaN;
-			var tY=NaN;
-			var rst=0;
-			rst=0;
-			for (i=startI+1;i < endI;i++){
-				tData=datas[i];
-				tX=i;
-				tY=tData["low"];
-				if (GraphicUtils.pointOfLine(tX,tY,x0,y0,x1,y1)> 0){
-					rst++;
-				}
-			}
-			return rst;
+		__proto.analyseWork=function(){}
+		__proto.getDrawCmds=function(){
+			return null;
 		}
 
-		return KLineAnalyser;
+		return AnalyserBase;
 	})()
 
 
@@ -8744,6 +8668,146 @@ var Laya=window.Laya=(function(window,document){
 	*...
 	*@author ww
 	*/
+	//class laya.stock.analysers.KLineAnalyser extends laya.stock.analysers.AnalyserBase
+	var KLineAnalyser=(function(_super){
+		function KLineAnalyser(){
+			this.leftLimit=10;
+			this.rightLimit=25;
+			this.buyMinUnder=3;
+			KLineAnalyser.__super.call(this);
+			this.paramkeys=["leftLimit","rightLimit","buyMinUnder"];
+		}
+
+		__class(KLineAnalyser,'laya.stock.analysers.KLineAnalyser',_super);
+		var __proto=KLineAnalyser.prototype;
+		__proto.analyseWork=function(){
+			this.workMaxValues();
+			this.drawMaxs();
+		}
+
+		__proto.workMaxValues=function(){
+			var dataList;
+			dataList=this.disDataList;
+			var maxI=0;
+			maxI=DataUtils.getKeyMaxI(dataList,"high");
+			var minI=0;
+			minI=DataUtils.getKeyMinI(dataList,"low");
+			var xPos=NaN;
+			this.resultData["high"]=maxI;
+			this.resultData["low"]=minI;
+		}
+
+		__proto.drawMaxs=function(){
+			var dataList;
+			dataList=this.disDataList;
+			var maxList;
+			maxList=DataUtils.getMaxInfo(dataList);
+			var i=0,len=0;
+			len=maxList.length;
+			var tData;
+			var mins;
+			var maxs;
+			mins=[];
+			maxs=[];
+			for (i=0;i < len;i++){
+				tData=maxList[i];
+				if ((tData["highL"] > this.rightLimit)&&tData["highR"] > this.leftLimit){
+					maxs.push(i);
+				}
+				if ((tData["lowL"] > this.rightLimit)&&tData["lowR"] > this.leftLimit){
+					mins.push(i);
+				}
+			}
+			len=mins.length;
+			var preData;
+			var tUnderCount=0;
+			var minUnders;
+			minUnders=[];
+			var underIs;
+			underIs=[];
+			var tUnders;
+			var buys;
+			buys=[];
+			for (i=1;i < len;i++){
+				preData=dataList[mins[i-1]];
+				tData=dataList[mins[i]];
+				tUnders=this.hasUnders(mins[i-1],preData["low"],mins[i],tData["low"],mins[i-1],mins[i],dataList);
+				tUnderCount=tUnders.length;
+				if (tUnderCount > 0){
+					minUnders.push([tUnderCount,mins[i-1],mins[i]]);
+					underIs=Utils.concatArray(underIs,tUnders);
+				}
+				if (tUnderCount > this.buyMinUnder){
+					buys.push([tData["date"]+":Buy",mins[i]]);
+				}
+			}
+			len=maxs.length;
+			for (i=1;i < len;i++){
+				preData=dataList[maxs[i-1]];
+				tData=dataList[maxs[i]];
+			}
+			this.resultData["mins"]=mins;
+			this.resultData["maxs"]=maxs;
+			this.resultData["minUnders"]=minUnders;
+			this.resultData["underPoints"]=underIs;
+			this.resultData["buys"]=buys;
+		}
+
+		__proto.getDrawCmds=function(){
+			var rst;
+			rst=[];
+			rst.push(["drawPointsLine",[ this.resultData["maxs"],"high",-20]]);
+			rst.push(["drawPointsLine",[ this.resultData["mins"],"low",20]]);
+			rst.push(["drawPoints",[this.resultData["underPoints"],"low",3,"#ffff00"]]);
+			rst.push(["drawTexts",[this.resultData["buys"],"low",30,"#00ff00",true,"#00ff00"]]);
+			return rst;
+		}
+
+		__proto.getLastUnderLine=function(minCount){
+			(minCount===void 0)&& (minCount=3);
+			if (!this.resultData)return null;
+			var minUnders;
+			minUnders=this.resultData["minUnders"];
+			var i=0,len=0;
+			len=minUnders.length;
+			var tData;
+			for (i=len-1;i >=0;i--){
+				tData=minUnders[i];
+				if (tData[0] >=minCount){
+					return tData;
+				}
+			}
+			return null;
+		}
+
+		__proto.hasUnders=function(x0,y0,x1,y1,startI,endI,datas){
+			var resultArr=[];
+			var i=0,len=0;
+			var tData;
+			var tX=NaN;
+			var tY=NaN;
+			var rst=0;
+			rst=0;
+			for (i=startI+1;i < endI;i++){
+				tData=datas[i];
+				tX=i;
+				tY=tData["low"];
+				if (GraphicUtils.pointOfLine(tX,tY,x0,y0,x1,y1)> 0){
+					resultArr.push(i);
+					rst++;
+				}
+			}
+			return resultArr;
+		}
+
+		return KLineAnalyser;
+	})(AnalyserBase)
+
+
+	/**
+	*...
+	*@author ww
+	*/
 	//class stock.StockBasicInfo extends stock.CSVParser
 	var StockBasicInfo=(function(_super){
 		function StockBasicInfo(){
@@ -13611,12 +13675,11 @@ var Laya=window.Laya=(function(window,document){
 	//class stock.views.KLine extends laya.display.Sprite
 	var KLine=(function(_super){
 		function KLine(){
-			this.analyser=null;
+			this.analysers=null;
 			this.autoPlay=false;
 			this.tStock=null;
-			this.leftLimit=10;
-			this.rightLimit=25;
 			this.stockUrl=null;
+			this.gridWidth=3;
 			this.stockData=null;
 			this.dataList=null;
 			this.disDataList=null;
@@ -13626,7 +13689,8 @@ var Laya=window.Laya=(function(window,document){
 			this.yRate=NaN;
 			this.xRate=NaN;
 			KLine.__super.call(this);
-			this.analyser=new KLineAnalyser();
+			this.analysers=[];
+			this.analysers.push(new KLineAnalyser());
 		}
 
 		__class(KLine,'stock.views.KLine',_super);
@@ -13677,8 +13741,6 @@ var Laya=window.Laya=(function(window,document){
 				}else{
 				this.showMsg("K-line Showed");
 			}
-			this.analyser.analyser(stockData);
-			console.log(this.analyser);
 		}
 
 		__proto.timeEffect=function(){
@@ -13691,13 +13753,28 @@ var Laya=window.Laya=(function(window,document){
 			this.drawdata(0,this.tLen);
 		}
 
+		__proto.analysersDoAnalyse=function(start,end){
+			(start===void 0)&& (start=0);
+			(end===void 0)&& (end=-1);
+			var i=0,len=0;
+			len=this.analysers.length;
+			var tAnalyser;
+			for (i=0;i < len;i++){
+				tAnalyser=this.analysers[i];
+				tAnalyser.analyser(this.stockData,start,end);
+			}
+		}
+
 		__proto.drawdata=function(start,end){
 			(start===void 0)&& (start=0);
 			(end===void 0)&& (end=-1);
+			this.analysersDoAnalyse(start,end);
 			this.graphics.clear();
 			if (end < start)end=this.dataList.length-1;
 			this.disDataList=this.dataList.slice(start,end);
 			this.drawStockKLine();
+			this.drawGrid();
+			this.drawAnalysers();
 		}
 
 		__proto.drawStockKLine=function(){
@@ -13710,21 +13787,19 @@ var Laya=window.Laya=(function(window,document){
 			max=DataUtils.getKeyMax(dataList,"close");
 			this.yRate=this.lineHeight / max;
 			var tColor;
-			this.xRate=this.lineWidth / (len *3);
+			this.xRate=this.lineWidth / (len *this.gridWidth);
 			for (i=0;i < len;i++){
 				tData=dataList[i];
 				var pos=NaN;
-				pos=this.getAdptXV(i *3);
+				pos=this.getAdptXV(i *this.gridWidth);
 				if (tData["close"] > tData["open"]){
 					tColor="#ff0000";
 					}else{
 					tColor="#00ffff";
 				}
 				this.graphics.drawLine(pos,this.getAdptYV(tData["high"]),pos,this.getAdptYV(tData["low"]),tColor,1*this.xRate);
-				this.graphics.drawLine(pos,this.getAdptYV(tData["open"]),pos,this.getAdptYV(tData["close"]),tColor,3*this.xRate);
+				this.graphics.drawLine(pos,this.getAdptYV(tData["open"]),pos,this.getAdptYV(tData["close"]),tColor,this.gridWidth*this.xRate);
 			}
-			this.drawGrid();
-			this.drawMaxs();
 		}
 
 		__proto.drawGrid=function(){
@@ -13735,79 +13810,120 @@ var Laya=window.Laya=(function(window,document){
 			var minI=0;
 			minI=DataUtils.getKeyMinI(dataList,"low");
 			var xPos=NaN;
-			this.drawPoint(maxI,"high:"+dataList[maxI]["high"],dataList[maxI]["high"],-10);
-			this.drawPoint(minI,"low:"+dataList[minI]["low"],dataList[minI]["low"],10);
+			this.drawPoint(maxI,dataList[maxI]["high"],"high:"+dataList[maxI]["high"],-10);
+			this.drawPoint(minI,dataList[minI]["low"],"low:"+dataList[minI]["low"],10);
 		}
 
-		__proto.drawMaxs=function(){
+		__proto.drawAnalysers=function(){
+			var i=0,len=0;
+			len=this.analysers.length;
+			var tAnalyser;
+			for (i=0;i < len;i++){
+				tAnalyser=this.analysers[i];
+				this.drawAnalyser(tAnalyser);
+			}
+		}
+
+		//tAnalyser.analyser(stockData,start,end);
+		__proto.drawAnalyser=function(analyser){
+			var cmds;
+			cmds=analyser.getDrawCmds();
+			if (!cmds)return;
+			var i=0,len=0;
+			len=cmds.length;
+			var tCmdArr;
+			var tFunSign;
+			for (i=0;i < len;i++){
+				tCmdArr=cmds[i];
+				tFunSign=tCmdArr[0];
+				if ((typeof (this[tFunSign])=='function')){
+					this[tFunSign].apply(this,tCmdArr[1]);
+				}
+			}
+		}
+
+		__proto.drawTexts=function(texts,sign,dy,color,withLine,lineColor){
+			(dy===void 0)&& (dy=0);
+			(color===void 0)&& (color="#ff0000");
+			(withLine===void 0)&& (withLine=false);
+			/*no*/this.len=texts.length;
+			var tArr;
+			for (/*no*/this.i=0;/*no*/this.i < /*no*/this.len;/*no*/this.i++){
+				tArr=texts[/*no*/this.i];
+				this.drawText(tArr[0],tArr[1],sign,dy,color,withLine,lineColor);
+			}
+		}
+
+		__proto.drawText=function(text,i,sign,dY,color,withLine,lineColor){
+			(dY===void 0)&& (dY=0);
+			(color===void 0)&& (color="#ff0000");
+			(withLine===void 0)&& (withLine=false);
+			this.graphics.fillText(text,this.getAdptXV(i *this.gridWidth),this.getAdptYV(this.dataList[i][sign])+dY,null,color,"center");
+			if (withLine){
+				if (!lineColor)lineColor=color;
+				this.graphics.drawLine(this.getAdptXV(i *this.gridWidth),this.getAdptYV(this.dataList[i][sign])+dY,this.getAdptXV(i *this.gridWidth),this.getAdptYV(this.dataList[i][sign]),lineColor);
+			}
+		}
+
+		__proto.drawPointsLine=function(iList,sign,dY){
+			(sign===void 0)&& (sign="high");
+			(dY===void 0)&& (dY=-20);
 			var dataList;
 			dataList=this.disDataList;
-			var maxList;
-			maxList=DataUtils.getMaxInfo(dataList);
+			var tI=0;
 			var i=0,len=0;
-			len=maxList.length;
-			var tData;
-			var mins;
-			var maxs;
-			mins=[];
-			maxs=[];
-			for (i=0;i < len;i++){
-				tData=maxList[i];
-				if ((tData["highL"] > this.rightLimit)&&tData["highR"] > this.leftLimit){
-					maxs.push(i);
-					this.drawPoint(i,dataList[i]["high"],dataList[i]["high"],-20,"#ff00ff");
-				}
-				if ((tData["lowL"] > this.rightLimit)&&tData["lowR"] > this.leftLimit){
-					mins.push(i);
-					this.drawPoint(i,dataList[i]["low"],dataList[i]["low"],20,"#ffff00");
-				}
-			}
-			len=mins.length;
 			var preData;
-			var tUnderCount=0;
-			for (i=1;i < len;i++){
-				preData=dataList[mins[i-1]];
-				tData=dataList[mins[i]];
-				this.graphics.drawLine(this.getAdptXV(mins[i-1] *3),this.getAdptYV(preData["low"]),this.getAdptXV(mins[i] *3),this.getAdptYV(tData["low"]),"#ff0000");
-				tUnderCount=this.hasUnders(this.getAdptXV(mins[i-1] *3),this.getAdptYV(preData["low"]),this.getAdptXV(mins[i] *3),this.getAdptYV(tData["low"]),mins[i-1],mins[i],dataList);
-				if (tUnderCount > 3){
-					this.graphics.fillText(""+tData["date"]+":Buy",this.getAdptXV(mins[i] *3),this.getAdptYV(tData["low"])+30,null,"#ff0000","center");
-				}
-			}
-			len=maxs.length;
-			for (i=1;i < len;i++){
-				preData=dataList[maxs[i-1]];
-				tData=dataList[maxs[i]];
-				this.graphics.drawLine(this.getAdptXV(maxs[i-1] *3),this.getAdptYV(preData["high"]),this.getAdptXV(maxs[i] *3),this.getAdptYV(tData["high"]),"#ff0000");
-			}
-		}
-
-		__proto.hasUnders=function(x0,y0,x1,y1,startI,endI,datas){
-			var i=0,len=0;
 			var tData;
-			var tX=NaN;
-			var tY=NaN;
-			var rst=0;
-			rst=0;
-			for (i=startI+1;i < endI;i++){
-				tData=datas[i];
-				tX=this.getAdptXV(i*3);
-				tY=this.getAdptYV(tData["low"]);
-				if (GraphicUtils.pointOfLine(tX,tY,x0,y0,x1,y1)< 0){
-					this.graphics.drawCircle(tX,tY,5,"#ff0000");
-					rst++;
-				}
+			len=iList.length;
+			for (i=0;i < len;i++){
+				tI=iList[i];
+				tData=dataList[tI];
+				this.drawPoint(tI,tData[sign],tData[sign],dY,"#ff00ff");
 			}
-			return rst;
+			for (i=1;i < len;i++){
+				preData=dataList[iList[i-1]];
+				tData=dataList[iList[i]];
+				this.drawLine(iList[i-1],preData[sign],iList[i],tData[sign],"#ff0000");
+			}
 		}
 
-		__proto.drawPoint=function(i,text,y,dy,color){
+		__proto.drawPoints=function(iList,sign,r,color){
+			(r===void 0)&& (r=2);
+			(color===void 0)&& (color="#ff0000");
+			var dataList;
+			dataList=this.disDataList;
+			var tI=0;
+			var i=0,len=0;
+			var preData;
+			var tData;
+			len=iList.length;
+			for (i=0;i < len;i++){
+				tI=iList[i];
+				tData=dataList[tI];
+				this.drawCircle(tI,tData[sign],r,color);
+			}
+		}
+
+		__proto.drawCircle=function(i,y,r,color){
+			(r===void 0)&& (r=2);
+			(color===void 0)&& (color="#ff0000");
+			this.graphics.drawCircle(this.getAdptXV(i *this.gridWidth),this.getAdptYV(y),r,color);
+		}
+
+		__proto.drawPoint=function(i,y,text,dy,color){
 			(dy===void 0)&& (dy=10);
 			(color===void 0)&& (color="#ffff00");
 			var xPos=NaN;
-			xPos=this.getAdptXV(i *3);
+			xPos=this.getAdptXV(i *this.gridWidth);
 			this.graphics.drawCircle(xPos,this.getAdptYV(y),2,color);
-			this.graphics.fillText(text,xPos,this.getAdptYV(y)+dy,null,color,"center");
+			if (text){
+				this.graphics.fillText(text,xPos,this.getAdptYV(y)+dy,null,color,"center");
+			}
+		}
+
+		__proto.drawLine=function(startI,startY,endI,endY,color){
+			(color===void 0)&& (color="#ff0000");
+			this.graphics.drawLine(this.getAdptXV(startI *this.gridWidth),this.getAdptYV(startY),this.getAdptXV(endI *this.gridWidth),this.getAdptYV(endY),color);
 		}
 
 		__proto.getAdptYV=function(v){
@@ -24242,6 +24358,8 @@ var Laya=window.Laya=(function(window,document){
 			this.detailBtn=null;
 			this.preBtn=null;
 			this.nextBtn=null;
+			this.leftInput=null;
+			this.rightInput=null;
 			KLineViewUI.__super.call(this);
 		}
 
@@ -24253,7 +24371,7 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		__static(KLineViewUI,
-		['uiView',function(){return this.uiView={"type":"View","props":{"width":600,"height":400},"child":[{"type":"ComboBox","props":{"y":9,"x":8,"var":"stockSelect","skin":"comp/combobox.png","scrollBarSkin":"comp/vscroll.png","labels":"000233,600322"}},{"type":"Button","props":{"y":9,"x":114,"var":"playBtn","skin":"comp/button.png","label":"play"}},{"type":"Label","props":{"y":13,"x":225,"width":147,"var":"infoTxt","text":"label","height":20,"color":"#5be330"}},{"type":"TextInput","props":{"y":43,"x":8,"width":90,"var":"stockInput","text":"002234","skin":"comp/textinput.png","height":22}},{"type":"Button","props":{"y":42,"x":114,"var":"playInputBtn","skin":"comp/button.png","label":"play"}},{"type":"CheckBox","props":{"y":45,"x":226,"var":"enableAnimation","skin":"comp/checkbox.png","selected":true,"label":"开启动画"}},{"type":"Button","props":{"y":39,"x":301,"var":"detailBtn","skin":"comp/button.png","label":"详情"}},{"type":"Button","props":{"y":80,"x":11,"var":"preBtn","skin":"comp/button.png","label":"pre"}},{"type":"Button","props":{"y":80,"x":100,"var":"nextBtn","skin":"comp/button.png","label":"next"}}]};}
+		['uiView',function(){return this.uiView={"type":"View","props":{"width":600,"height":400},"child":[{"type":"ComboBox","props":{"y":9,"x":8,"var":"stockSelect","skin":"comp/combobox.png","scrollBarSkin":"comp/vscroll.png","labels":"000233,600322"}},{"type":"Button","props":{"y":9,"x":114,"var":"playBtn","skin":"comp/button.png","label":"play"}},{"type":"Label","props":{"y":13,"x":225,"width":147,"var":"infoTxt","text":"label","height":20,"color":"#5be330"}},{"type":"TextInput","props":{"y":43,"x":8,"width":90,"var":"stockInput","text":"002234","skin":"comp/textinput.png","height":22}},{"type":"Button","props":{"y":42,"x":114,"var":"playInputBtn","skin":"comp/button.png","label":"play"}},{"type":"CheckBox","props":{"y":45,"x":226,"var":"enableAnimation","skin":"comp/checkbox.png","selected":true,"label":"开启动画"}},{"type":"Button","props":{"y":39,"x":301,"var":"detailBtn","skin":"comp/button.png","label":"详情"}},{"type":"Button","props":{"y":80,"x":11,"var":"preBtn","skin":"comp/button.png","label":"pre"}},{"type":"Button","props":{"y":80,"x":100,"var":"nextBtn","skin":"comp/button.png","label":"next"}},{"type":"TextInput","props":{"y":83,"x":198,"width":90,"var":"leftInput","text":"10","skin":"comp/textinput.png","height":22}},{"type":"TextInput","props":{"y":83,"x":299,"width":90,"var":"rightInput","text":"25","skin":"comp/textinput.png","height":22}}]};}
 		]);
 		return KLineViewUI;
 	})(View)
@@ -24851,8 +24969,13 @@ var Laya=window.Laya=(function(window,document){
 	var KLineView=(function(_super){
 		function KLineView(){
 			this.kLine=null;
+			this.kLineAnalyser=null;
 			KLineView.__super.call(this);
+			this.kLineAnalyser=new KLineAnalyser();
+			this.kLineAnalyser.leftLimit=15;
+			this.kLineAnalyser.rightLimit=20;
 			this.kLine=new KLine();
+			this.kLine.analysers=[this.kLineAnalyser];
 			this.addChild(this.kLine);
 			var stock;
 			stock="300383";
@@ -24902,18 +25025,22 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		__proto.onSelect=function(){
-			this.kLine.autoPlay=this.enableAnimation.selected;
-			this.kLine.setStock(this.stockSelect.selectedLabel);
+			this.showKline(this.stockSelect.selectedLabel);
 		}
 
 		__proto.onPlayBtn=function(){
-			this.kLine.autoPlay=this.enableAnimation.selected;
-			this.kLine.setStock(this.stockSelect.selectedLabel);
+			this.showKline(this.stockSelect.selectedLabel);
 		}
 
 		__proto.onPlayInput=function(){
+			this.showKline(this.stockInput.text);
+		}
+
+		__proto.showKline=function(stock){
+			this.kLineAnalyser.leftLimit=DataUtils.mParseFloat(this.leftInput.text);
+			this.kLineAnalyser.rightLimit=DataUtils.mParseFloat(this.rightInput.text);
 			this.kLine.autoPlay=this.enableAnimation.selected;
-			this.kLine.setStock(this.stockInput.text);
+			this.kLine.setStock(stock);
 		}
 
 		__proto.onPre=function(){
@@ -25100,3 +25227,13 @@ var Laya=window.Laya=(function(window,document){
 	new StockMain();
 
 })(window,document,Laya);
+
+
+/*
+1 file:///D:/stocksite.git/trunk/StockView/src/stock/views/KLine.as (202):warning:len This variable is not defined.
+2 file:///D:/stocksite.git/trunk/StockView/src/stock/views/KLine.as (204):warning:i This variable is not defined.
+3 file:///D:/stocksite.git/trunk/StockView/src/stock/views/KLine.as (204):warning:i This variable is not defined.
+4 file:///D:/stocksite.git/trunk/StockView/src/stock/views/KLine.as (204):warning:len This variable is not defined.
+5 file:///D:/stocksite.git/trunk/StockView/src/stock/views/KLine.as (204):warning:i This variable is not defined.
+6 file:///D:/stocksite.git/trunk/StockView/src/stock/views/KLine.as (206):warning:i This variable is not defined.
+*/
