@@ -537,6 +537,8 @@ var Laya=window.Laya=(function(window,document){
 			this.dataList=null;
 			this.disDataList=null;
 			this.resultData=null;
+			this.leftLimit=10;
+			this.rightLimit=25;
 		}
 
 		__class(KLineAnalyser,'laya.stock.analysers.KLineAnalyser');
@@ -592,16 +594,12 @@ var Laya=window.Laya=(function(window,document){
 			var maxs;
 			mins=[];
 			maxs=[];
-			var leftLimit=0;
-			var rightLimit=0;
-			leftLimit=10;
-			rightLimit=25;
 			for (i=0;i < len;i++){
 				tData=maxList[i];
-				if ((tData["highL"] > rightLimit)&&tData["highR"] > leftLimit){
+				if ((tData["highL"] > this.rightLimit)&&tData["highR"] > this.leftLimit){
 					maxs.push(i);
 				}
-				if ((tData["lowL"] > rightLimit)&&tData["lowR"] > leftLimit){
+				if ((tData["lowL"] > this.rightLimit)&&tData["lowR"] > this.leftLimit){
 					mins.push(i);
 				}
 			}
@@ -700,6 +698,8 @@ var Laya=window.Laya=(function(window,document){
 		function MsgConst(){}
 		__class(MsgConst,'msgs.MsgConst');
 		MsgConst.Show_Stock_KLine="Show_Stock_KLine";
+		MsgConst.Show_Next_Select="Show_Next_Select";
+		MsgConst.Show_Pre_Select="Show_Pre_Select";
 		return MsgConst;
 	})()
 
@@ -13614,6 +13614,9 @@ var Laya=window.Laya=(function(window,document){
 			this.analyser=null;
 			this.autoPlay=false;
 			this.tStock=null;
+			this.leftLimit=10;
+			this.rightLimit=25;
+			this.stockUrl=null;
 			this.stockData=null;
 			this.dataList=null;
 			this.disDataList=null;
@@ -13633,16 +13636,17 @@ var Laya=window.Laya=(function(window,document){
 			this.graphics.clear();
 			this.showMsg("loadingData:"+stock);
 			this.tStock=stock;
-			var stockUrl;
-			stockUrl="https://onewaymyway.github.io/stockdata/stockdatas/"+stock+".csv";
-			Laya.loader.load(stockUrl,Handler.create(this,this.dataLoaded),null,"text");
+			this.stockUrl="https://onewaymyway.github.io/stockdata/stockdatas/"+stock+".csv";
+			Laya.loader.load(this.stockUrl,Handler.create(this,this.dataLoaded),null,"text");
 		}
 
 		__proto.dataErr=function(){
 			this.showMsg("dataErr");
 		}
 
-		__proto.dataLoaded=function(data){
+		__proto.dataLoaded=function(){
+			var data;
+			data=Loader.getRes(this.stockUrl);
 			if (!data){
 				this.dataErr();
 				return;
@@ -13747,17 +13751,13 @@ var Laya=window.Laya=(function(window,document){
 			var maxs;
 			mins=[];
 			maxs=[];
-			var leftLimit=0;
-			var rightLimit=0;
-			leftLimit=10;
-			rightLimit=25;
 			for (i=0;i < len;i++){
 				tData=maxList[i];
-				if ((tData["highL"] > rightLimit)&&tData["highR"] > leftLimit){
+				if ((tData["highL"] > this.rightLimit)&&tData["highR"] > this.leftLimit){
 					maxs.push(i);
 					this.drawPoint(i,dataList[i]["high"],dataList[i]["high"],-20,"#ff00ff");
 				}
-				if ((tData["lowL"] > rightLimit)&&tData["lowR"] > leftLimit){
+				if ((tData["lowL"] > this.rightLimit)&&tData["lowR"] > this.leftLimit){
 					mins.push(i);
 					this.drawPoint(i,dataList[i]["low"],dataList[i]["low"],20,"#ffff00");
 				}
@@ -24240,6 +24240,8 @@ var Laya=window.Laya=(function(window,document){
 			this.playInputBtn=null;
 			this.enableAnimation=null;
 			this.detailBtn=null;
+			this.preBtn=null;
+			this.nextBtn=null;
 			KLineViewUI.__super.call(this);
 		}
 
@@ -24251,7 +24253,7 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		__static(KLineViewUI,
-		['uiView',function(){return this.uiView={"type":"View","props":{"width":445,"height":400},"child":[{"type":"ComboBox","props":{"y":9,"x":8,"var":"stockSelect","skin":"comp/combobox.png","scrollBarSkin":"comp/vscroll.png","labels":"000233,600322"}},{"type":"Button","props":{"y":9,"x":114,"var":"playBtn","skin":"comp/button.png","label":"play"}},{"type":"Label","props":{"y":13,"x":225,"width":147,"var":"infoTxt","text":"label","height":20,"color":"#5be330"}},{"type":"TextInput","props":{"y":43,"x":8,"width":90,"var":"stockInput","text":"002234","skin":"comp/textinput.png","height":22}},{"type":"Button","props":{"y":42,"x":114,"var":"playInputBtn","skin":"comp/button.png","label":"play"}},{"type":"CheckBox","props":{"y":45,"x":226,"var":"enableAnimation","skin":"comp/checkbox.png","selected":true,"label":"开启动画"}},{"type":"Button","props":{"y":39,"x":301,"var":"detailBtn","skin":"comp/button.png","label":"详情"}}]};}
+		['uiView',function(){return this.uiView={"type":"View","props":{"width":600,"height":400},"child":[{"type":"ComboBox","props":{"y":9,"x":8,"var":"stockSelect","skin":"comp/combobox.png","scrollBarSkin":"comp/vscroll.png","labels":"000233,600322"}},{"type":"Button","props":{"y":9,"x":114,"var":"playBtn","skin":"comp/button.png","label":"play"}},{"type":"Label","props":{"y":13,"x":225,"width":147,"var":"infoTxt","text":"label","height":20,"color":"#5be330"}},{"type":"TextInput","props":{"y":43,"x":8,"width":90,"var":"stockInput","text":"002234","skin":"comp/textinput.png","height":22}},{"type":"Button","props":{"y":42,"x":114,"var":"playInputBtn","skin":"comp/button.png","label":"play"}},{"type":"CheckBox","props":{"y":45,"x":226,"var":"enableAnimation","skin":"comp/checkbox.png","selected":true,"label":"开启动画"}},{"type":"Button","props":{"y":39,"x":301,"var":"detailBtn","skin":"comp/button.png","label":"详情"}},{"type":"Button","props":{"y":80,"x":11,"var":"preBtn","skin":"comp/button.png","label":"pre"}},{"type":"Button","props":{"y":80,"x":100,"var":"nextBtn","skin":"comp/button.png","label":"next"}}]};}
 		]);
 		return KLineViewUI;
 	})(View)
@@ -24884,6 +24886,8 @@ var Laya=window.Laya=(function(window,document){
 			stock="300383";
 			this.kLine.setStock(stock);
 			this.detailBtn.on("mousedown",this,this.onDetail);
+			this.preBtn.on("mousedown",this,this.onPre);
+			this.nextBtn.on("mousedown",this,this.onNext);
 		}
 
 		__proto.changeSize=function(){
@@ -24910,6 +24914,14 @@ var Laya=window.Laya=(function(window,document){
 		__proto.onPlayInput=function(){
 			this.kLine.autoPlay=this.enableAnimation.selected;
 			this.kLine.setStock(this.stockInput.text);
+		}
+
+		__proto.onPre=function(){
+			Notice.notify("Show_Pre_Select");
+		}
+
+		__proto.onNext=function(){
+			Notice.notify("Show_Next_Select");
 		}
 
 		return KLineView;
@@ -24969,6 +24981,7 @@ var Laya=window.Laya=(function(window,document){
 	var SelectStockView=(function(_super){
 		function SelectStockView(){
 			this.dataUrl="last.json";
+			this.tI=0;
 			SelectStockView.__super.call(this);
 			this.init();
 		}
@@ -24981,6 +24994,8 @@ var Laya=window.Laya=(function(window,document){
 			this.list.mouseHandler=new Handler(this,this.onMouseList);
 			this.list.scrollBar.touchScrollEnable=false;
 			Laya.loader.load(this.dataUrl,new Handler(this,this.dataLoaded),null,"json");
+			Notice.listen("Show_Next_Select",this,this.next);
+			Notice.listen("Show_Pre_Select",this,this.pre);
 		}
 
 		__proto.dataLoaded=function(){
@@ -25001,10 +25016,36 @@ var Laya=window.Laya=(function(window,document){
 			if (e.type=="mousedown"){
 				var tData;
 				tData=this.list.array[index];
-				if (!tData)return;
+				this.tI=index;
+				if (!tData)
+					return;
 				console.log(tData);
 				Notice.notify("Show_Stock_KLine",tData.path);
 			}
+		}
+
+		__proto.next=function(){
+			this.tI++;
+			this.showI(this.tI);
+		}
+
+		__proto.pre=function(){
+			this.tI--;
+			this.showI(this.tI);
+		}
+
+		__proto.showI=function(i){
+			var index=0;
+			index=i;
+			if (index < 0)index=this.list.array.length-1;
+			index=index % this.list.array.length;
+			var tData;
+			tData=this.list.array[index];
+			this.tI=index;
+			if (!tData)
+				return;
+			console.log(tData);
+			Notice.notify("Show_Stock_KLine",tData.path);
 		}
 
 		return SelectStockView;
