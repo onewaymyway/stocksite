@@ -2,45 +2,26 @@ package laya.stock.analysers
 {
 	import laya.math.DataUtils;
 	import laya.math.GraphicUtils;
+	import laya.utils.Utils;
 	import stock.StockData;
 	/**
 	 * ...
 	 * @author ww
 	 */
-	public class KLineAnalyser 
+	public class KLineAnalyser extends AnalyserBase
 	{
 		
 		public function KLineAnalyser() 
 		{
-			
+			paramkeys = ["leftLimit","rightLimit","buyMinUnder"];
 		}
-		public var stockData:StockData;
-		public var dataList:Array;
-		public var disDataList:Array;
-		public var resultData:Object;
+		
 		public var leftLimit:int=10;
-		public var rightLimit:int=25;
-		public function analyser(stockData:StockData):void
-		{
-			this.stockData = stockData;
-			dataList = stockData.dataList;
-			analyserData();
-		}
-		public function initByStrData(data:String):void
-		{
-			var stockData:StockData;
-			stockData = new StockData();
-			stockData.init(data);
-			analyser(stockData);			
-		}
-		public function analyserData(start:int = 0, end:int = -1):void
-		{
-			if (end < start) end = dataList.length - 1;
-			disDataList = dataList.slice(start, end);
-			resultData = { };
-			analyseWork();
-		}
-		public function analyseWork():void
+		public var rightLimit:int = 25;
+		public var buyMinUnder:int = 3;
+		
+	
+		override public function analyseWork():void
 		{
 			workMaxValues();
 			drawMaxs();
@@ -70,10 +51,6 @@ package laya.stock.analysers
 			var maxs:Array;
 			mins = [];
 			maxs = [];
-			//var leftLimit:int;
-			//var rightLimit:int;
-			//leftLimit = 10;
-			//rightLimit = 25;
 			for (i = 0; i < len; i++)
 			{
 				tData = maxList[i];
@@ -91,14 +68,25 @@ package laya.stock.analysers
 			var tUnderCount:int;
 			var minUnders:Array;
 			minUnders = [];
+			var underIs:Array;
+			underIs = [];
+			var tUnders:Array;
+			var buys:Array;
+			buys = [];
 			for (i = 1; i < len; i++)
 			{
 				preData = dataList[mins[i - 1]];
 				tData = dataList[mins[i]];
-				tUnderCount=hasUnders(mins[i - 1], preData["low"], mins[i], tData["low"], mins[i - 1], mins[i], dataList);
+				tUnders=hasUnders(mins[i - 1], preData["low"], mins[i], tData["low"], mins[i - 1], mins[i], dataList);
+				tUnderCount = tUnders.length;
 				if (tUnderCount > 0)
 				{
-					minUnders.push([tUnderCount,mins[i - 1],mins[i]]);
+					minUnders.push([tUnderCount, mins[i - 1], mins[i]]);
+					underIs = Utils.concatArray(underIs, tUnders);
+				}
+				if (tUnderCount > buyMinUnder)
+				{
+					buys.push([tData["date"] + ":Buy",mins[i]]);
 				}
 			}
 			
@@ -111,6 +99,18 @@ package laya.stock.analysers
 			resultData["mins"] = mins;
 			resultData["maxs"] = maxs;
 			resultData["minUnders"] = minUnders;
+			resultData["underPoints"] = underIs;
+			resultData["buys"] = buys;
+		}
+		override public function getDrawCmds():Array
+		{
+			var rst:Array;
+			rst = [];
+			rst.push(["drawPointsLine",[ resultData["maxs"], "high", -20]]);
+			rst.push(["drawPointsLine",[ resultData["mins"], "low", 20]]);
+			rst.push(["drawPoints", [resultData["underPoints"], "low", 3, "#ffff00"]]);
+			rst.push(["drawTexts", [resultData["buys"], "low", 30, "#00ff00",true,"#00ff00"]]);
+			return rst;
 		}
 		public function getLastUnderLine(minCount:int = 3):Object
 		{
@@ -130,12 +130,10 @@ package laya.stock.analysers
 			}
 			return null;
 		}
-		public function getDataByI(i:int):Object
+
+		public function hasUnders(x0:Number, y0:Number, x1:Number, y1:Number,startI:int,endI:int,datas:Array):Array
 		{
-			return disDataList[i];
-		}
-		public function hasUnders(x0:Number, y0:Number, x1:Number, y1:Number,startI:int,endI:int,datas:Array):int
-		{
+			var resultArr:Array = [];
 			var i:int, len:int;
 			var tData:Object;
 			var tX:Number;
@@ -149,10 +147,12 @@ package laya.stock.analysers
 				tY = tData["low"];
 				if (GraphicUtils.pointOfLine(tX, tY, x0, y0, x1, y1) > 0)
 				{
+
+					resultArr.push(i);
 					rst++;
 				}
 			}
-			return rst;
+			return resultArr;
 		}
 	}
 

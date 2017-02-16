@@ -2,6 +2,8 @@ package view
 {
 	import laya.debug.tools.Notice;
 	import laya.events.Event;
+	import laya.math.DataUtils;
+	import laya.stock.analysers.KLineAnalyser;
 	import laya.tools.WebTools;
 	import laya.utils.Handler;
 	import msgs.MsgConst;
@@ -15,9 +17,14 @@ package view
 	public class KLineView extends KLineViewUI
 	{
 		public var kLine:KLine;
+		public var kLineAnalyser:KLineAnalyser;
 		public function KLineView() 
 		{
+			kLineAnalyser = new KLineAnalyser();
+			kLineAnalyser.leftLimit = 15;
+			kLineAnalyser.rightLimit = 20;
 			kLine = new KLine();
+			kLine.analysers = [kLineAnalyser];
 			addChild(kLine);
 			var stock:String;
 			stock = "300383";
@@ -72,18 +79,25 @@ package view
 		}
 		private function onSelect():void
 		{
-			kLine.autoPlay = enableAnimation.selected;
-			kLine.setStock(stockSelect.selectedLabel);
+			//kLine.autoPlay = enableAnimation.selected;
+			showKline(stockSelect.selectedLabel);
 		}
 		private function onPlayBtn():void
 		{
-			kLine.autoPlay = enableAnimation.selected;
-			kLine.setStock(stockSelect.selectedLabel);
+			//kLine.autoPlay = enableAnimation.selected;
+			showKline(stockSelect.selectedLabel);
 		}
 		private function onPlayInput():void
 		{
+			//kLine.autoPlay = enableAnimation.selected;
+			showKline(stockInput.text);
+		}
+		public function showKline(stock:String):void
+		{
+			kLineAnalyser.leftLimit = DataUtils.mParseFloat(leftInput.text);
+			kLineAnalyser.rightLimit = DataUtils.mParseFloat(rightInput.text);
 			kLine.autoPlay = enableAnimation.selected;
-			kLine.setStock(stockInput.text);
+			kLine.setStock(stock);
 		}
 		private function onPre():void
 		{

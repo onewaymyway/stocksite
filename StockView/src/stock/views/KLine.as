@@ -4,6 +4,7 @@ package stock.views
 	import laya.math.DataUtils;
 	import laya.math.GraphicUtils;
 	import laya.net.Loader;
+	import laya.stock.analysers.AnalyserBase;
 	import laya.stock.analysers.KLineAnalyser;
 	import laya.utils.Handler;
 	import stock.StockData;
@@ -16,14 +17,18 @@ package stock.views
 		
 		public function KLine() 
 		{
-			analyser = new KLineAnalyser();
+			analysers = [];
+			
+			//analyser = new KLineAnalyser();
+			
+			analysers.push(new KLineAnalyser());
 		}
-		public var analyser:KLineAnalyser;
+		public var analysers:Array;
+		//public var analyser:KLineAnalyser;
 		public var autoPlay:Boolean = false;
 		public var tStock:String;
-		public var leftLimit:int=10;
-		public var rightLimit:int = 25;
 		public var stockUrl:String;
+		public var gridWidth:int = 3;
 		public function setStock(stock:String):void
 		{
 			Laya.timer.clear(this, timeEffect);
@@ -70,6 +75,7 @@ package stock.views
 			this.stockData = stockData;
 			dataList = stockData.dataList;
 			//drawdata();
+			
 			drawdata();
 			tLen = 10;
 			
@@ -82,8 +88,7 @@ package stock.views
 				showMsg("K-line Showed");
 			}
 			
-			analyser.analyser(stockData);
-			trace(analyser);
+			
 		}
 		public var tLen:int=10;
 		public function timeEffect():void
@@ -99,14 +104,32 @@ package stock.views
 		}
 		public var lineHeight:Number = 400;
 		public var lineWidth:Number = 800;
+		
+		public function analysersDoAnalyse(start:int=0, end:int=-1):void
+		{
+			var i:int, len:int;
+			len = analysers.length;
+			var tAnalyser:AnalyserBase;
+			for (i = 0; i < len; i++)
+			{
+				tAnalyser = analysers[i];
+				tAnalyser.analyser(stockData, start, end);
+			}
+		}
 		public function drawdata(start:int=0, end:int=-1 ):void
 		{
+			
+			analysersDoAnalyse(start,end);
+			//trace(analyser);
 			this.graphics.clear();
 			if (end < start) end = dataList.length - 1;
 			disDataList = dataList.slice(start, end);
 			
 			drawStockKLine();
+			drawGrid();
+			drawAnalysers();
 		}
+		
 		public function drawStockKLine():void
 		{
 			var i:int, len:int;
@@ -118,12 +141,12 @@ package stock.views
 			max = DataUtils.getKeyMax(dataList, "close");
 			yRate = lineHeight / max;
 			var tColor:String;
-			xRate = lineWidth / (len * 3);
+			xRate = lineWidth / (len * gridWidth);
 			for (i = 0; i < len; i++)
 			{
 				tData = dataList[i];
 				var pos:Number;
-				pos = getAdptXV(i * 3);
+				pos = getAdptXV(i * gridWidth);
 				if (tData["close"] > tData["open"])
 				{
 					tColor = "#ff0000";
@@ -132,13 +155,10 @@ package stock.views
 					tColor = "#00ffff";
 				}
 				this.graphics.drawLine(pos, getAdptYV(tData["high"]), pos, getAdptYV(tData["low"]), tColor,1*xRate);
-				this.graphics.drawLine(pos, getAdptYV(tData["open"]), pos, getAdptYV(tData["close"]), tColor, 3*xRate);
-				
-		
-				//this.graphics.drawCircle(i*2, getAdptV(tData["close"]), 2, "#ff0000");
+				this.graphics.drawLine(pos, getAdptYV(tData["open"]), pos, getAdptYV(tData["close"]), tColor, gridWidth*xRate);
 			}
-			drawGrid();
-			drawMaxs();
+			
+			
 		}
 		public function drawGrid():void
 		{
@@ -149,90 +169,123 @@ package stock.views
 			var minI:int;
 			minI = DataUtils.getKeyMinI(dataList, "low");
 			var xPos:Number;
-			drawPoint(maxI, "high:" + dataList[maxI]["high"], dataList[maxI]["high"], -10);		
-			drawPoint(minI, "low:" + dataList[minI]["low"], dataList[minI]["low"], 10);
+			drawPoint(maxI, dataList[maxI]["high"],"high:" + dataList[maxI]["high"],  -10);		
+			drawPoint(minI, dataList[minI]["low"], "low:" + dataList[minI]["low"], 10);
 		}
-		public function drawMaxs():void
+		public function drawAnalysers():void
+		{
+			var i:int, len:int;
+			len = analysers.length;
+			var tAnalyser:AnalyserBase;
+			for (i = 0; i < len; i++)
+			{
+				tAnalyser = analysers[i];
+				drawAnalyser(tAnalyser);
+				//tAnalyser.analyser(stockData, start, end);
+			}
+			
+		}
+		public function drawAnalyser(analyser:AnalyserBase):void
+		{
+			var cmds:Array;
+			cmds = analyser.getDrawCmds();
+			if (!cmds) return;
+			var i:int, len:int;
+			len = cmds.length;
+			var tCmdArr:Array;
+			var tFunSign:String;
+			for (i = 0; i < len; i++) 
+			{
+				tCmdArr = cmds[i];
+				tFunSign = tCmdArr[0];
+				if (this[tFunSign] is Function)
+				{
+					this[tFunSign].apply(this, tCmdArr[1]);
+				}
+			}
+		}
+		public function drawTexts(texts:Array,sign:String,dy:Number=0,color:String="#ff0000",withLine:Boolean=false, lineColor:String = null ):void
+		{
+			len = texts.length;
+			var tArr:Array;
+			for (i = 0; i < len; i++)
+			{
+				tArr = texts[i];
+				drawText(tArr[0], tArr[1], sign, dy, color,withLine,lineColor);
+			}
+		}
+		public function drawText(text:String, i:int, sign:String, dY:Number = 0, color:String = "#ff0000", withLine:Boolean = false, lineColor:String = null ):void
+		{
+			//var tData:Object;
+			//tData=dataList[i];
+			this.graphics.fillText(text, getAdptXV(i * gridWidth), getAdptYV(dataList[i][sign]) + dY, null, color, "center");
+			if (withLine)
+			{
+				if (!lineColor) lineColor = color;
+				this.graphics.drawLine(getAdptXV(i * gridWidth), getAdptYV(dataList[i][sign]) + dY, getAdptXV(i * gridWidth), getAdptYV(dataList[i][sign]) , lineColor);
+			}
+		}
+		public function drawPointsLine(iList:Array, sign:String="high",dY:Number=-20):void
 		{
 			var dataList:Array;
 			dataList = disDataList;
-		    var maxList:Array;
-			maxList = DataUtils.getMaxInfo(dataList);
+			var tI:int;
 			var i:int, len:int;
-			len = maxList.length;
+			var preData:Object;
 			var tData:Object;
-			var mins:Array;
-			var maxs:Array;
-			mins = [];
-			maxs = [];
-			//var leftLimit:int;
-			//var rightLimit:int;
-			//leftLimit = 10;
-			//rightLimit = 25;
+			len = iList.length;
 			for (i = 0; i < len; i++)
 			{
-				tData = maxList[i];
-				if ((tData["highL"] > rightLimit)&&tData["highR"] > leftLimit)
-				{
-					maxs.push(i);
-					drawPoint(i, dataList[i]["high"], dataList[i]["high"], -20,"#ff00ff");
-				}
-				if ((tData["lowL"] > rightLimit)&&tData["lowR"] > leftLimit)
-				{
-					mins.push(i);
-					drawPoint(i, dataList[i]["low"], dataList[i]["low"], 20,"#ffff00");
-				}
+				tI = iList[i];
+				tData = dataList[tI];
+
+				drawPoint(tI, tData[sign], tData[sign], dY,"#ff00ff");
 			}
-			len = mins.length;
-			var preData:Object;
-			var tUnderCount:int;
 			for (i = 1; i < len; i++)
 			{
-				preData = dataList[mins[i - 1]];
-				tData = dataList[mins[i]];
-				this.graphics.drawLine(getAdptXV(mins[i - 1] * 3), getAdptYV(preData["low"]), getAdptXV(mins[i] * 3), getAdptYV(tData["low"]), "#ff0000");
-				tUnderCount=hasUnders(getAdptXV(mins[i - 1] * 3), getAdptYV(preData["low"]), getAdptXV(mins[i] * 3), getAdptYV(tData["low"]), mins[i - 1], mins[i], dataList);
-				if (tUnderCount > 3)
-				{
-					this.graphics.fillText("" + tData["date"] + ":Buy", getAdptXV(mins[i] * 3), getAdptYV(tData["low"])+30, null, "#ff0000", "center");
-				}
-			}
-			
-			len = maxs.length;
-			for (i = 1; i < len; i++)
-			{
-				preData = dataList[maxs[i - 1]];
-				tData = dataList[maxs[i]];
-				this.graphics.drawLine(getAdptXV(maxs[i - 1] * 3), getAdptYV(preData["high"]), getAdptXV(maxs[i] * 3), getAdptYV(tData["high"]), "#ff0000");
+				preData = dataList[iList[i - 1]];
+				tData = dataList[iList[i]];
+				drawLine(iList[i - 1], preData[sign], iList[i], tData[sign], "#ff0000");
 			}
 		}
-		public function hasUnders(x0:Number, y0:Number, x1:Number, y1:Number,startI:int,endI:int,datas:Array):int
+		public function drawPoints(iList:Array, sign:String, r:Number = 2, color:String = "#ff0000"):void
 		{
+			var dataList:Array;
+			dataList = disDataList;
+			var tI:int;
 			var i:int, len:int;
+			var preData:Object;
 			var tData:Object;
-			var tX:Number;
-			var tY:Number;
-			var rst:int;
-			rst = 0;
-			for (i = startI + 1; i < endI; i++)
+			len = iList.length;
+			for (i = 0; i < len; i++)
 			{
-				tData = datas[i];
-				tX = getAdptXV(i*3);
-				tY = getAdptYV(tData["low"]);
-				if (GraphicUtils.pointOfLine(tX, tY, x0, y0, x1, y1) < 0)
-				{
-					this.graphics.drawCircle(tX, tY, 5, "#ff0000") ;
-					rst++;
-				}
+				tI = iList[i];
+				tData = dataList[tI];
+
+				drawCircle(tI, tData[sign], r,color);
 			}
-			return rst;
 		}
-		public function drawPoint(i:int, text:String, y:Number,dy:Number=10,color:String="#ffff00"):void
+		
+		public function drawCircle(i:int, y:Number, r:Number=2, color:String = "#ff0000"):void
+		{
+			this.graphics.drawCircle(getAdptXV(i * gridWidth), getAdptYV(y), r, color) ;
+		}
+		
+		public function drawPoint(i:int, y:Number,text:String,dy:Number=10,color:String="#ffff00"):void
 		{
 			var xPos:Number;
-			xPos = getAdptXV(i * 3);
+			xPos = getAdptXV(i * gridWidth);
 			this.graphics.drawCircle(xPos, getAdptYV(y), 2, color);
-			this.graphics.fillText(text, xPos, getAdptYV(y) + dy, null, color, "center");
+			if (text)
+			{
+				this.graphics.fillText(text, xPos, getAdptYV(y) + dy, null, color, "center");
+			}
+			
+		}
+		
+		public function drawLine(startI:int, startY:Number, endI:int, endY:Number, color:String = "#ff0000"):void
+		{
+			this.graphics.drawLine(getAdptXV(startI * gridWidth), getAdptYV(startY), getAdptXV(endI * gridWidth), getAdptYV(endY), color);
 		}
 		public var yRate:Number;
 		public var xRate:Number;
