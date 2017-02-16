@@ -2,7 +2,7 @@
     "x":0,
     "type":"View",
     "selectedBox":1,
-    "selecteID":10,
+    "selecteID":12,
     "props":{"width":600,"sceneColor":"#000000","height":400},
     "nodeParent":-1,
     "label":"View",
@@ -126,6 +126,32 @@
             "isAniNode":true,
             "hasChild":false,
             "compId":10,
+            "child":[
+                ]
+        },
+        {
+            "x":15,
+            "type":"TextInput",
+            "props":{"y":83,"x":198,"width":90,"var":"leftInput","text":"10","skin":"comp/textinput.png","height":22},
+            "nodeParent":1,
+            "label":"TextInput(leftInput)",
+            "isDirectory":false,
+            "isAniNode":true,
+            "hasChild":false,
+            "compId":11,
+            "child":[
+                ]
+        },
+        {
+            "x":15,
+            "type":"TextInput",
+            "props":{"y":83,"x":299,"width":90,"var":"rightInput","text":"25","skin":"comp/textinput.png","height":22},
+            "nodeParent":1,
+            "label":"TextInput(rightInput)",
+            "isDirectory":false,
+            "isAniNode":true,
+            "hasChild":false,
+            "compId":12,
             "child":[
                 ]
         }],
