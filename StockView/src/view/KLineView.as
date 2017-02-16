@@ -1,8 +1,10 @@
 package view 
 {
+	import laya.debug.tools.Notice;
 	import laya.events.Event;
 	import laya.tools.WebTools;
 	import laya.utils.Handler;
+	import msgs.MsgConst;
 	import stock.StockBasicInfo;
 	import stock.views.KLine;
 	import ui.KLineViewUI;
@@ -54,6 +56,8 @@ package view
 			kLine.setStock(stock);
 			
 			detailBtn.on(Event.MOUSE_DOWN, this, onDetail);
+			preBtn.on(Event.MOUSE_DOWN, this, onPre);
+			nextBtn.on(Event.MOUSE_DOWN, this, onNext);
 		}
 		override protected function changeSize():void 
 		{
@@ -80,6 +84,14 @@ package view
 		{
 			kLine.autoPlay = enableAnimation.selected;
 			kLine.setStock(stockInput.text);
+		}
+		private function onPre():void
+		{
+			Notice.notify(MsgConst.Show_Pre_Select);
+		}
+		private function onNext():void
+		{
+			Notice.notify(MsgConst.Show_Next_Select);
 		}
 	}
 

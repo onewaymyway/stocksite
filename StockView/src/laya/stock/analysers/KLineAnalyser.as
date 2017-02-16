@@ -18,6 +18,8 @@ package laya.stock.analysers
 		public var dataList:Array;
 		public var disDataList:Array;
 		public var resultData:Object;
+		public var leftLimit:int=10;
+		public var rightLimit:int=25;
 		public function analyser(stockData:StockData):void
 		{
 			this.stockData = stockData;
@@ -68,10 +70,10 @@ package laya.stock.analysers
 			var maxs:Array;
 			mins = [];
 			maxs = [];
-			var leftLimit:int;
-			var rightLimit:int;
-			leftLimit = 10;
-			rightLimit = 25;
+			//var leftLimit:int;
+			//var rightLimit:int;
+			//leftLimit = 10;
+			//rightLimit = 25;
 			for (i = 0; i < len; i++)
 			{
 				tData = maxList[i];

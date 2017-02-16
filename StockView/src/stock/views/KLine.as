@@ -21,13 +21,15 @@ package stock.views
 		public var analyser:KLineAnalyser;
 		public var autoPlay:Boolean = false;
 		public var tStock:String;
+		public var leftLimit:int=10;
+		public var rightLimit:int = 25;
+		public var stockUrl:String;
 		public function setStock(stock:String):void
 		{
 			Laya.timer.clear(this, timeEffect);
 			this.graphics.clear();
 			showMsg("loadingData:" + stock);
 			tStock = stock;
-			var stockUrl:String;
 			stockUrl = "https://onewaymyway.github.io/stockdata/stockdatas/" + stock + ".csv";
 			//stockUrl = "res/stockdata/" + stock + ".csv";
 			Laya.loader.load(stockUrl, Handler.create(this, dataLoaded), null, Loader.TEXT);
@@ -36,8 +38,10 @@ package stock.views
 		{
 			showMsg("dataErr");
 		}
-		private function dataLoaded(data:String):void
+		private function dataLoaded():void
 		{
+			var data:String;
+			data = Loader.getRes(stockUrl);
 			if (!data)
 			{
 				dataErr();
@@ -161,10 +165,10 @@ package stock.views
 			var maxs:Array;
 			mins = [];
 			maxs = [];
-			var leftLimit:int;
-			var rightLimit:int;
-			leftLimit = 10;
-			rightLimit = 25;
+			//var leftLimit:int;
+			//var rightLimit:int;
+			//leftLimit = 10;
+			//rightLimit = 25;
 			for (i = 0; i < len; i++)
 			{
 				tData = maxList[i];
