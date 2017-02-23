@@ -84,6 +84,39 @@ package laya.math
 			}
 			return tI;
 		}
+		public static function getBreakInfo(datas:Array):Array
+		{
+			var rst:Array;
+			rst = [];
+			var i:int, len:int;
+			len = datas.length;
+			if (len < 1) return rst;
+			var preData:Object;
+			var tData:Object;
+			preData = datas[0];
+			var tBreak:Object;
+			for (i = 1; i < len; i++)
+			{
+				tData = datas[i];
+				if (tData["high"] < preData["low"])
+				{
+					tBreak = { };
+					tBreak["index"] = i;
+					tBreak["type"] = "down";
+					rst.push(tBreak);
+				}
+				if (tData["low"] > preData["high"])
+				{
+					tBreak = { };
+					tBreak["index"] = i;
+					tBreak["type"] = "up";
+					rst.push(tBreak);
+				}
+				preData = tData;
+			}
+			
+			return rst;
+		}
 		public static function getMaxInfo(datas:Array):Array
 		{
 			var rst:Array;
