@@ -206,6 +206,7 @@ package stock.views
 		}
 		public function drawTexts(texts:Array,sign:String,dy:Number=0,color:String="#ff0000",withLine:Boolean=false, lineColor:String = null ):void
 		{
+			var i:int, len:int;
 			len = texts.length;
 			var tArr:Array;
 			for (i = 0; i < len; i++)
@@ -216,6 +217,7 @@ package stock.views
 		}
 		public function drawText(text:String, i:int, sign:String, dY:Number = 0, color:String = "#ff0000", withLine:Boolean = false, lineColor:String = null ):void
 		{
+
 			//var tData:Object;
 			//tData=dataList[i];
 			this.graphics.fillText(text, getAdptXV(i * gridWidth), getAdptYV(dataList[i][sign]) + dY, null, color, "center");
