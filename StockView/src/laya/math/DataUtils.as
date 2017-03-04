@@ -117,7 +117,7 @@ package laya.math
 			
 			return rst;
 		}
-		public static function getMaxInfo(datas:Array):Array
+		public static function getMaxInfo(datas:Array,allowEdge:Boolean=true):Array
 		{
 			var rst:Array;
 			rst = [];
@@ -125,11 +125,46 @@ package laya.math
 			len = datas.length;
 			for (i = 0; i < len; i++)
 			{
-				rst.push(getIMaxInfo(i, datas));
+				rst.push(getIMaxInfo(i, datas,allowEdge));
 			}
 			return rst;
 		}
-		public static function getIMaxInfo(index:int,datas:Array):Object
+		public static function getMaxs(maxList:Array, leftLimit:int=15, rightLimit:int=10):Array
+		{
+			var i:int, len:int;
+			len = maxList.length;
+			var tData:Object;
+			var rst:Array;
+			rst = [];
+			for (i = 0; i < len; i++)
+			{
+				tData = maxList[i];
+				if ((tData["highL"] > leftLimit)&&tData["highR"] > rightLimit)
+				{
+					rst.push(i);
+				}
+			}
+			return rst;
+		}
+		
+		public static function getMins(maxList:Array,leftLimit:int=15, rightLimit:int=10):Array
+		{
+			var i:int, len:int;
+			len = maxList.length;
+			var tData:Object;
+			var mins:Array;
+			mins = [];
+			for (i = 0; i < len; i++)
+			{
+				tData = maxList[i];
+				if ((tData["lowL"] > leftLimit)&&tData["lowR"] > rightLimit)
+				{
+					mins.push(i);
+				}
+			}
+			return mins;
+		}
+		public static function getIMaxInfo(index:int,datas:Array,allowEdge:Boolean=true):Object
 		{
 			var i:int, len:int;
 			len = datas.length;
@@ -140,7 +175,7 @@ package laya.math
 			
 			i = index;
 			while (i > 0 && datas[i - 1]["high"] < mValue) i--;
-			if (i==0)
+			if (i==0&&allowEdge)
 			{
 				i = -99;
 			}
@@ -148,7 +183,7 @@ package laya.math
 			
 			i = index;
 			while (i < len - 1 && datas[i + 1]["high"] < mValue) i++;
-			if (i==len-1)
+			if (i==len-1&&allowEdge)
 			{
 				i = len+99;
 			}
@@ -160,7 +195,7 @@ package laya.math
 			mValue = datas[index]["low"];
 			i = index;
 			while (i > 0 && datas[i - 1]["low"] > mValue) i--;
-			if (i==0)
+			if (i==0&&allowEdge)
 			{
 				i = -99;
 			}
@@ -168,7 +203,7 @@ package laya.math
 			
 			i = index;
 			while (i < len - 1 && datas[i + 1]["low"] > mValue) i++;
-			if (i==len-1)
+			if (i==len-1&&allowEdge)
 			{
 				i = len+99;
 			}
@@ -177,6 +212,32 @@ package laya.math
 			rst["lowM"] = Math.max(rst["lowL"], rst["lowR"]);
 			
 			return rst;
+		}
+		public static function isBigThenBefore(index:int, dataList:Array, priceSign:String="close",count:int = 3):Boolean
+		{
+			var tPrice:Number;
+			tPrice = dataList[index][priceSign];
+			var tI:int;
+			var i:int, len:int;
+			len = count;
+			for (i = 1; i <= len; i++)
+			{
+				tI = index - i;
+				if (!dataList[tI] || dataList[tI][priceSign] > tPrice) return false;
+			}
+			
+			return true;
+			
+		}
+		public static function findFirstUp(startI:int,dataList:Array, priceSign:String="close", minLen:int = 3):int
+		{
+			var i:int, len:int;
+			len = dataList.length;
+			for (i = startI + 1; i < len; i++)
+			{
+				if (isBigThenBefore(i, dataList, priceSign, minLen)) return i;
+			}
+			return -1;
 		}
 	}
 

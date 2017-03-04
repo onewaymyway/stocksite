@@ -3,6 +3,8 @@ package view
 	import laya.debug.tools.Notice;
 	import laya.events.Event;
 	import laya.math.DataUtils;
+	import laya.stock.analysers.AnalyserBase;
+	import laya.stock.analysers.BottomAnalyser;
 	import laya.stock.analysers.BreakAnalyser;
 	import laya.stock.analysers.KLineAnalyser;
 	import laya.tools.WebTools;
@@ -20,6 +22,7 @@ package view
 		public var kLine:KLine;
 		public var kLineAnalyser:KLineAnalyser;
 		public var breakAnalyser:BreakAnalyser;
+		public var tAnalyser:AnalyserBase;
 		public function KLineView() 
 		{
 			kLineAnalyser = new KLineAnalyser();
@@ -30,6 +33,10 @@ package view
 			
 			breakAnalyser = new BreakAnalyser();
 			kLine.analysers = [breakAnalyser];
+			
+			tAnalyser = new BottomAnalyser();
+			kLine.analysers = [tAnalyser];
+			
 			addChild(kLine);
 			var stock:String;
 			stock = "300383";
