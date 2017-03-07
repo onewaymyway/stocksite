@@ -1,8 +1,8 @@
 {
     "x":0,
     "type":"View",
-    "selectedBox":1,
-    "selecteID":2,
+    "selectedBox":2,
+    "selecteID":3,
     "props":{"width":445,"sceneColor":"#f1dcdc","height":400},
     "nodeParent":-1,
     "label":"View",
@@ -27,7 +27,7 @@
                 {
                     "x":30,
                     "type":"Box",
-                    "props":{"y":0,"x":0,"width":157,"name":"render","height":30},
+                    "props":{"y":0,"x":0,"width":112,"name":"render","height":36},
                     "nodeParent":2,
                     "label":"Box(render)",
                     "isOpen":true,
@@ -39,7 +39,7 @@
                         {
                             "x":45,
                             "type":"Label",
-                            "props":{"y":5,"x":2,"width":78,"text":"this is a list","skin":"comp/label.png","name":"label","height":20,"fontSize":14,"color":"#83e726"},
+                            "props":{"y":5,"x":2,"wordWrap":true,"width":108,"text":"this is a list","skin":"comp/label.png","name":"label","height":29,"fontSize":14,"color":"#83e726"},
                             "nodeParent":3,
                             "label":"Label(label)",
                             "isDirectory":false,

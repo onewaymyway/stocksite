@@ -42,7 +42,7 @@ package view {
 			var item:Object = cell.dataSource;
 			var label:Label;
 			label = cell.getChildByName("label");
-			label.text = item.path + ":" + item.lastDate;
+			label.text = item.path+":"+Math.floor(item.changePercent*100)+"%" + "\n" + item.lastDate;
 		}
 		public var tI:int = 0;
 		

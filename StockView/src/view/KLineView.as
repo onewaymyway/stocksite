@@ -31,11 +31,11 @@ package view
 			kLine = new KLine();
 			kLine.analysers = [kLineAnalyser];
 			
-			breakAnalyser = new BreakAnalyser();
-			kLine.analysers = [breakAnalyser];
-			
-			tAnalyser = new BottomAnalyser();
-			kLine.analysers = [tAnalyser];
+			//breakAnalyser = new BreakAnalyser();
+			//kLine.analysers = [breakAnalyser];
+			//
+			//tAnalyser = new BottomAnalyser();
+			//kLine.analysers = [tAnalyser];
 			
 			addChild(kLine);
 			var stock:String;
