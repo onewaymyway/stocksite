@@ -106,6 +106,11 @@ package {
 					tData.path = FileManager.getFileName(path);
 					tData.data = lastStock;
 					tData.lastDate = lastStock["date"];
+					var tPrice:Number;
+					tPrice = analyser.dataList[analyser.dataList.length - 1]["high"];
+					var buyPrice:Number;
+					buyPrice = lastStock["high"];
+					tData.changePercent = (tPrice-buyPrice) / buyPrice;
 					rst.push(tData);
 				}
 			}

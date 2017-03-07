@@ -41,6 +41,11 @@ package nodetools.devices
 				}
 			}
 		}
+		
+		public static function getMyPath():String
+		{
+			return __JS__("__dirname");
+		}
 	}
 
 }
