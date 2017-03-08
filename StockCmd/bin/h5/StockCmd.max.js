@@ -1419,11 +1419,7 @@ var Laya=window.Laya=(function(window,document){
 					tData.path=FileManager.getFileName(path);
 					tData.data=lastStock;
 					tData.lastDate=lastStock["date"];
-					var tPrice=NaN;
-					tPrice=this.analyser.dataList[this.analyser.dataList.length-1]["high"];
-					var buyPrice=NaN;
-					buyPrice=lastStock["high"];
-					tData.changePercent=(tPrice-buyPrice)/ buyPrice;
+					StockTools.getBuyStaticInfos(lastUnder[2],this.analyser.disDataList,tData);
 					rst.push(tData);
 				}
 			}
@@ -15361,6 +15357,61 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		return Trend;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class laya.stock.StockTools
+	var StockTools=(function(){
+		function StockTools(){}
+		__class(StockTools,'laya.stock.StockTools');
+		StockTools.getBuyStaticInfos=function(buyI,dataList,rst){
+			var priceLast=NaN;
+			var len=0;
+			var i=0;
+			len=dataList.length;
+			priceLast=dataList[len-1]["close"];
+			var priceBuy=NaN;
+			priceBuy=dataList[buyI]["high"];
+			rst.changePercent=(priceLast-priceBuy)/ priceBuy;
+			var priceHigh=NaN;
+			priceHigh=-1;
+			for (i=buyI+1;i < len;i++){
+				if (dataList[i]["high"] > priceHigh){
+					priceHigh=dataList[i]["high"];
+				}
+			}
+			rst.highPercent=(priceHigh-priceBuy)/ priceBuy;
+			len=StockTools.highDays.length;
+			var tDayCount=0;
+			for (i=0;i < len;i++){
+				tDayCount=StockTools.highDays[i];
+				priceHigh=StockTools.getHighInDays(buyI+1,tDayCount,dataList);
+				rst["high"+tDayCount]=(priceHigh-priceBuy)/ priceBuy;
+			}
+		}
+
+		StockTools.getHighInDays=function(start,days,dataList){
+			var i=0,len=0;
+			var priceHigh=NaN;
+			priceHigh=-1;
+			len=days+start;
+			if (len > dataList.length)len=dataList.length;
+			for (i=start;i < len;i++){
+				if (dataList[i]["high"] > priceHigh){
+					priceHigh=dataList[i]["high"];
+				}
+			}
+			return priceHigh;
+		}
+
+		__static(StockTools,
+		['highDays',function(){return this.highDays=[7,15,30,45,60];}
+		]);
+		return StockTools;
 	})()
 
 
@@ -35090,7 +35141,7 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		__static(SelectStockViewUI,
-		['uiView',function(){return this.uiView={"type":"View","props":{"width":445,"height":400},"child":[{"type":"List","props":{"var":"list","vScrollBarSkin":"comp/vscroll.png","top":10,"right":10,"left":10,"bottom":10},"child":[{"type":"Box","props":{"y":0,"x":0,"width":157,"name":"render","height":30},"child":[{"type":"Label","props":{"y":5,"x":2,"width":78,"text":"this is a list","skin":"comp/label.png","name":"label","height":20,"fontSize":14,"color":"#83e726"}}]}]}]};}
+		['uiView',function(){return this.uiView={"type":"View","props":{"width":445,"height":400},"child":[{"type":"List","props":{"var":"list","vScrollBarSkin":"comp/vscroll.png","top":10,"right":10,"left":10,"bottom":10},"child":[{"type":"Box","props":{"y":0,"x":0,"width":112,"name":"render","height":36},"child":[{"type":"Label","props":{"y":5,"x":2,"wordWrap":true,"width":108,"text":"this is a list","skin":"comp/label.png","name":"label","height":29,"fontSize":14,"color":"#83e726"}}]}]}]};}
 		]);
 		return SelectStockViewUI;
 	})(View)
@@ -36295,10 +36346,6 @@ var Laya=window.Laya=(function(window,document){
 			this.kLineAnalyser.rightLimit=20;
 			this.kLine=new KLine();
 			this.kLine.analysers=[this.kLineAnalyser];
-			this.breakAnalyser=new BreakAnalyser();
-			this.kLine.analysers=[this.breakAnalyser];
-			this.tAnalyser=new BottomAnalyser();
-			this.kLine.analysers=[this.tAnalyser];
 			this.addChild(this.kLine);
 			var stock;
 			stock="300383";
@@ -36459,7 +36506,7 @@ var Laya=window.Laya=(function(window,document){
 			var item=cell.dataSource;
 			var label;
 			label=cell.getChildByName("label");
-			label.text=item.path+":"+item.lastDate;
+			label.text=item.path+":"+Math.floor(item.changePercent*100)+"%"+"\n"+item.lastDate;
 		}
 
 		__proto.onMouseList=function(e,index){
@@ -36558,5 +36605,5 @@ var Laya=window.Laya=(function(window,document){
 3 file:///D:/stocksite.git/trunk/StockCmd/src/nodetools/devices/FileTools.as (82):warning:Browser.window.location.href This variable is not defined.
 4 file:///D:/stocksite.git/trunk/StockCmd/src/nodetools/devices/FileTools.as (82):warning:Browser.window.location.href This variable is not defined.
 5 file:///D:/stocksite.git/trunk/StockCmd/src/nodetools/devices/FileTools.as (642):warning:Alert.show This variable is not defined.
-6 file:///D:/stocksite.git/trunk/StockCmd/src/StockCmdTool.as (34):warning:scriptPath This variable is not defined.
+6 file:///D:/stocksite.git/trunk/StockCmd/src/StockCmdTool.as (35):warning:scriptPath This variable is not defined.
 */
