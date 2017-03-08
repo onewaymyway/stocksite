@@ -24891,7 +24891,7 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		__static(SelectStockViewUI,
-		['uiView',function(){return this.uiView={"type":"View","props":{"width":445,"height":400},"child":[{"type":"List","props":{"var":"list","vScrollBarSkin":"comp/vscroll.png","top":10,"right":10,"left":10,"bottom":10},"child":[{"type":"Box","props":{"y":0,"x":0,"width":112,"name":"render","height":36},"child":[{"type":"Label","props":{"y":5,"x":2,"wordWrap":true,"width":108,"text":"this is a list","skin":"comp/label.png","name":"label","height":29,"fontSize":14,"color":"#83e726"}}]}]}]};}
+		['uiView',function(){return this.uiView={"type":"View","props":{"width":445,"height":400},"child":[{"type":"List","props":{"var":"list","vScrollBarSkin":"comp/vscroll.png","top":10,"right":10,"left":10,"bottom":10},"child":[{"type":"Box","props":{"y":0,"x":0,"width":168,"name":"render","height":61},"child":[{"type":"Label","props":{"wordWrap":true,"top":0,"text":"this is a list","skin":"comp/label.png","right":0,"name":"label","left":0,"fontSize":14,"color":"#83e726","bottom":0}}]}]}]};}
 		]);
 		return SelectStockViewUI;
 	})(View)
@@ -25606,11 +25606,24 @@ var Laya=window.Laya=(function(window,document){
 			this.list.array=data;
 		}
 
+		__proto.getStockChanges=function(stockO){
+			var i=0,len=0;
+			len=SelectStockView.signList.length;
+			var rst;
+			rst=[];
+			var tSign;
+			for (i=0;i < len;i++){
+				tSign=SelectStockView.signList[i];
+				rst.push(Math.floor(stockO[tSign]*100)+"%")
+			}
+			return rst;
+		}
+
 		__proto.stockRender=function(cell,index){
 			var item=cell.dataSource;
 			var label;
 			label=cell.getChildByName("label");
-			label.text=item.path+":"+Math.floor(item.changePercent*100)+"%"+":"+Math.floor(item.highPercent*100)+"%"+"\n"+item.lastDate;
+			label.text=item.path+":"+Math.floor(item.changePercent*100)+"%"+":"+Math.floor(item.highPercent*100)+"%"+"\n"+this.getStockChanges(item).join(",")+"\n"+item.lastDate;
 		}
 
 		__proto.onMouseList=function(e,index){
@@ -25649,6 +25662,9 @@ var Laya=window.Laya=(function(window,document){
 			Notice.notify("Show_Stock_KLine",tData.path);
 		}
 
+		__static(SelectStockView,
+		['signList',function(){return this.signList=["high7","high15","high30","high45"];}
+		]);
 		return SelectStockView;
 	})(SelectStockViewUI)
 

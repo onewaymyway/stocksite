@@ -44,6 +44,7 @@ package laya.stock
 			}
 			
 		}
+		
 		public static function getHighInDays(start:int,days:int, dataList:Array):Number
 		{
 			var i:int, len:int;
