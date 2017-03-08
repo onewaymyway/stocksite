@@ -24880,6 +24880,7 @@ var Laya=window.Laya=(function(window,document){
 	var SelectStockViewUI=(function(_super){
 		function SelectStockViewUI(){
 			this.list=null;
+			this.tip=null;
 			SelectStockViewUI.__super.call(this);
 		}
 
@@ -24891,7 +24892,7 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		__static(SelectStockViewUI,
-		['uiView',function(){return this.uiView={"type":"View","props":{"width":445,"height":400},"child":[{"type":"List","props":{"var":"list","vScrollBarSkin":"comp/vscroll.png","top":10,"right":10,"left":10,"bottom":10},"child":[{"type":"Box","props":{"y":0,"x":0,"width":168,"name":"render","height":61},"child":[{"type":"Label","props":{"wordWrap":true,"top":0,"text":"this is a list","skin":"comp/label.png","right":0,"name":"label","left":0,"fontSize":14,"color":"#83e726","bottom":0}}]}]}]};}
+		['uiView',function(){return this.uiView={"type":"View","props":{"width":445,"height":400},"child":[{"type":"List","props":{"var":"list","vScrollBarSkin":"comp/vscroll.png","top":10,"right":10,"left":10,"bottom":10},"child":[{"type":"Box","props":{"y":0,"x":0,"width":168,"name":"render","height":61},"child":[{"type":"Label","props":{"wordWrap":true,"top":0,"text":"this is a list","skin":"comp/label.png","right":0,"name":"label","left":0,"fontSize":14,"color":"#83e726","bottom":0}}]}]},{"type":"Label","props":{"y":-41,"width":271,"var":"tip","text":"股票代码:当前盈利:最高盈利","right":40,"height":42,"color":"#f33713"}}]};}
 		]);
 		return SelectStockViewUI;
 	})(View)
@@ -25597,6 +25598,7 @@ var Laya=window.Laya=(function(window,document){
 			Laya.loader.load(this.dataUrl,new Handler(this,this.dataLoaded),null,"json");
 			Notice.listen("Show_Next_Select",this,this.next);
 			Notice.listen("Show_Pre_Select",this,this.pre);
+			this.tip.text="股票:当前盈利:最高盈利\n7天最大盈利,15天最大盈利,30天最大盈利,45天最大盈利\n买入日期";
 		}
 
 		__proto.dataLoaded=function(){

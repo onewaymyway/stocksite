@@ -29,6 +29,7 @@ package view {
 			
 			Notice.listen(MsgConst.Show_Next_Select, this, next);
 			Notice.listen(MsgConst.Show_Pre_Select, this, pre);
+			tip.text = "股票:当前盈利:最高盈利\n7天最大盈利,15天最大盈利,30天最大盈利,45天最大盈利\n买入日期";
 		}
 		
 		private function dataLoaded():void {
