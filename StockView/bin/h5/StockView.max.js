@@ -25610,7 +25610,7 @@ var Laya=window.Laya=(function(window,document){
 			var item=cell.dataSource;
 			var label;
 			label=cell.getChildByName("label");
-			label.text=item.path+":"+Math.floor(item.changePercent*100)+"%"+"\n"+item.lastDate;
+			label.text=item.path+":"+Math.floor(item.changePercent*100)+"%"+":"+Math.floor(item.highPercent*100)+"%"+"\n"+item.lastDate;
 		}
 
 		__proto.onMouseList=function(e,index){
