@@ -2,6 +2,7 @@ package {
 	import laya.debug.tools.DTrace;
 	import laya.maths.MathUtil;
 	import laya.stock.analysers.KLineAnalyser;
+	import laya.stock.StockTools;
 	import laya.utils.Browser;
 	import nodetools.devices.Device;
 	import nodetools.devices.FileManager;
@@ -106,11 +107,12 @@ package {
 					tData.path = FileManager.getFileName(path);
 					tData.data = lastStock;
 					tData.lastDate = lastStock["date"];
-					var tPrice:Number;
-					tPrice = analyser.dataList[analyser.dataList.length - 1]["high"];
-					var buyPrice:Number;
-					buyPrice = lastStock["high"];
-					tData.changePercent = (tPrice-buyPrice) / buyPrice;
+					//var tPrice:Number;
+					//tPrice = analyser.dataList[analyser.dataList.length - 1]["high"];
+					//var buyPrice:Number;
+					//buyPrice = lastStock["high"];
+					//tData.changePercent = (tPrice-buyPrice) / buyPrice;
+					StockTools.getBuyStaticInfos(lastUnder[2], analyser.disDataList, tData);
 					rst.push(tData);
 				}
 			}
