@@ -1,5 +1,6 @@
 package stock 
 {
+	import laya.debug.tools.StringTool;
 	import laya.math.DataUtils;
 	/**
 	 * ...
@@ -31,12 +32,13 @@ package stock
 			for (i = 0; i < len; i++)
 			{
 				tKey = numKeys[i];
+				//debugger;
 				data[tKey] = DataUtils.mParseFloat(data[tKey]);
 			}
 		}
 		public function init(csvStr:String):void
 		{
-			
+			csvStr = StringTool.getReplace(csvStr, "\r", "");
 			var lines:Array;
 			lines = csvStr.split("\n");
 			var keys:Array;

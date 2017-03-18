@@ -38,7 +38,7 @@ package laya.stock.analysers
 			{
 				tKey = paramkeys[i];
 				tValue = this[tKey];
-				debugger;
+				//debugger;
 				if (tValue is String)
 				{
 					paramDes.push([tKey,ParamTypes.STRING]);

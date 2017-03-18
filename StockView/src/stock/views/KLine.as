@@ -90,7 +90,8 @@ package stock.views
 			
 			
 		}
-		public var tLen:int=10;
+		public var tLen:int = 10;
+		public var maxShowCount:int = -1;
 		public function timeEffect():void
 		{
 			tLen++;
@@ -99,8 +100,16 @@ package stock.views
 				showMsg("Animation End");
 				Laya.timer.clear(this, timeEffect);
 				return;
-			} 
-			drawdata(0, tLen);
+			}
+			var start:int = 0;
+			if (maxShowCount > 0)
+			{
+				if (tLen > maxShowCount)
+				{
+					start = tLen - maxShowCount;
+				}
+			}
+			drawdata(start, tLen);
 		}
 		public var lineHeight:Number = 400;
 		public var lineWidth:Number = 800;
@@ -126,6 +135,7 @@ package stock.views
 			disDataList = dataList.slice(start, end);
 			
 			drawStockKLine();
+			drawAmounts();
 			drawGrid();
 			drawAnalysers();
 		}
@@ -156,9 +166,29 @@ package stock.views
 				}
 				this.graphics.drawLine(pos, getAdptYV(tData["high"]), pos, getAdptYV(tData["low"]), tColor,1*xRate);
 				this.graphics.drawLine(pos, getAdptYV(tData["open"]), pos, getAdptYV(tData["close"]), tColor, gridWidth*xRate);
+			}	
+		}
+		public function drawAmounts():void
+		{
+			var sign:String;
+			sign = "amount";
+			sign = "volume";
+			var i:int, len:int;
+			var dataList:Array;
+			dataList = disDataList;
+			len = dataList.length;
+			var tData:Object;
+			var max:Number;
+			max = DataUtils.getKeyMax(dataList, sign);
+			var MRate:Number;
+			MRate = 100 / max;
+			var barsData:Array;
+			barsData = [];
+			for (i = 0; i < len; i++)
+			{
+				barsData.push([i,-dataList[i][sign]*MRate]);
 			}
-			
-			
+			drawBars(barsData, 0);
 		}
 		public function drawGrid():void
 		{
@@ -248,6 +278,22 @@ package stock.views
 				preData = dataList[iList[i - 1]];
 				tData = dataList[iList[i]];
 				drawLine(iList[i - 1], preData[sign], iList[i], tData[sign], "#ff0000");
+			}
+		}
+		public function drawBars(barList:Array, yZero:Number = 0 , color:String = "#ffff00"):void
+		{
+			var i:int, len:int;
+			len = barList.length;
+			var tData:Array;
+			var tX:Number;
+			var tV:Number;
+			for (i = 0; i < len; i++)
+			{
+				tData = barList[i];
+				tX = tData[0];
+				tV = tData[1];
+				this.graphics.drawLine(getAdptXV(tX * gridWidth), yZero + tV, getAdptXV(tX * gridWidth), yZero, color, gridWidth * xRate);
+				//this.graphics.drawLine(getAdptXV(tX * gridWidth), yZero+tV, getAdptXV(tX * gridWidth),yZero, "#ff0000",5);
 			}
 		}
 		public function drawLines(pointList:Array,color:String="#ff0000"):void
