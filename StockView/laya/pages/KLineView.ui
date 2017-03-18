@@ -2,7 +2,7 @@
     "x":0,
     "type":"View",
     "selectedBox":1,
-    "selecteID":13,
+    "selecteID":15,
     "props":{"width":600,"sceneColor":"#000000","height":400},
     "nodeParent":-1,
     "label":"View",
@@ -131,32 +131,6 @@
         },
         {
             "x":15,
-            "type":"TextInput",
-            "props":{"y":83,"x":198,"width":90,"var":"leftInput","text":"10","skin":"comp/textinput.png","height":22},
-            "nodeParent":1,
-            "label":"TextInput(leftInput)",
-            "isDirectory":false,
-            "isAniNode":true,
-            "hasChild":false,
-            "compId":11,
-            "child":[
-                ]
-        },
-        {
-            "x":15,
-            "type":"TextInput",
-            "props":{"y":83,"x":299,"width":90,"var":"rightInput","text":"25","skin":"comp/textinput.png","height":22},
-            "nodeParent":1,
-            "label":"TextInput(rightInput)",
-            "isDirectory":false,
-            "isAniNode":true,
-            "hasChild":false,
-            "compId":12,
-            "child":[
-                ]
-        },
-        {
-            "x":15,
             "type":"UIView",
             "source":"plugins/AnalyserList.ui",
             "props":{"var":"analyserList","top":10,"runtime":"view.plugins.AnalyserList","right":10},
@@ -168,6 +142,21 @@
             "compId":13,
             "child":[
                 ]
+        },
+        {
+            "x":15,
+            "type":"UIView",
+            "source":"prop/PropPanel.ui",
+            "props":{"y":0,"var":"propPanel","runtime":"stock.prop.PropPanel","right":180},
+            "nodeParent":1,
+            "label":"UIView(propPanel)",
+            "isDirectory":false,
+            "isAniNode":true,
+            "hasChild":false,
+            "compId":15,
+            "child":[
+                ],
+            "$HIDDEN":false
         }],
     "animations":[
         {
