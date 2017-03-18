@@ -239,6 +239,33 @@ package laya.math
 			}
 			return -1;
 		}
+		
+		public static function getAverage(dataList:Array,dayCount:int=5, priceSign:String = "close"):Array
+		{
+			var i:int, len:int;
+			len = dataList.length;
+			var rst:Array;
+			rst = [];
+			var tSum:Number;
+			if (!dataList.length) return rst;
+			tSum = dayCount * dataList[0][priceSign];
+			var preI:int;
+			preI = 0;
+			var tV:Number;
+			for (i = 0; i < len; i++)
+			{
+				tV = dataList[i][priceSign];
+				tSum = tSum - dataList[preI][priceSign];
+				tSum += tV;
+				rst.push(tSum / dayCount);
+				if (i >= dayCount)
+				{
+					preI++;
+				}
+				
+			}
+			return rst;
+		}
 	}
 
 }

@@ -7,6 +7,7 @@ package view
 	import laya.stock.analysers.BottomAnalyser;
 	import laya.stock.analysers.BreakAnalyser;
 	import laya.stock.analysers.KLineAnalyser;
+	import laya.stock.analysers.lines.AverageLine;
 	import laya.tools.WebTools;
 	import laya.utils.Handler;
 	import msgs.MsgConst;
@@ -42,6 +43,7 @@ package view
 			analyserClassList.push(KLineAnalyser);
 			analyserClassList.push(BreakAnalyser);
 			analyserClassList.push(BottomAnalyser);
+			analyserClassList.push(AverageLine);
 			
 			analyserList.initAnalysers(analyserClassList);
 			addChild(kLine);

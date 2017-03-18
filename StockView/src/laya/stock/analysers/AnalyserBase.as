@@ -30,13 +30,15 @@ package laya.stock.analysers
 		private function initParamDes():void
 		{
 			paramDes.length = 0;
+			var i:int, len:int;
 			var tKey:String;
 			var tValue:*;
 			len = paramkeys.length;
 			for (i = 0; i < len; i++)
 			{
 				tKey = paramkeys[i];
-				tValue = this[tkey];
+				tValue = this[tKey];
+				debugger;
 				if (tValue is String)
 				{
 					paramDes.push([tKey,ParamTypes.STRING]);

@@ -250,6 +250,16 @@ package stock.views
 				drawLine(iList[i - 1], preData[sign], iList[i], tData[sign], "#ff0000");
 			}
 		}
+		public function drawLines(pointList:Array,color:String="#ff0000"):void
+		{
+			var i:int, len:int;
+			len = pointList.length;
+			
+			for (i = 1; i < len; i++)
+			{
+				drawLine(pointList[i - 1][0], pointList[i - 1][1], pointList[i][0], pointList[i][1], color);
+			}
+		}
 		public function drawPoints(iList:Array, sign:String, r:Number = 2, color:String = "#ff0000"):void
 		{
 			var dataList:Array;
