@@ -10,8 +10,8 @@ package laya.stock.analysers
 	 */
 	public class KLineAnalyser extends AnalyserBase
 	{
-		public var leftLimit:int=10;
-		public var rightLimit:int = 25;
+		public var leftLimit:int=25;
+		public var rightLimit:int = 10;
 		public var buyMinUnder:int = 3;
 		
 		public function KLineAnalyser() 
