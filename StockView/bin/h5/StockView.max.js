@@ -637,6 +637,31 @@ var Laya=window.Laya=(function(window,document){
 			return-1;
 		}
 
+		DataUtils.getAverage=function(dataList,dayCount,priceSign){
+			(dayCount===void 0)&& (dayCount=5);
+			(priceSign===void 0)&& (priceSign="close");
+			var i=0,len=0;
+			len=dataList.length;
+			var rst;
+			rst=[];
+			var tSum=NaN;
+			if (!dataList.length)return rst;
+			tSum=dayCount *dataList[0][priceSign];
+			var preI=0;
+			preI=0;
+			var tV=NaN;
+			for (i=0;i < len;i++){
+				tV=dataList[i][priceSign];
+				tSum=tSum-dataList[preI][priceSign];
+				tSum+=tV;
+				rst.push(tSum / dayCount);
+				if (i >=dayCount){
+					preI++;
+				}
+			}
+			return rst;
+		}
+
 		return DataUtils;
 	})()
 
@@ -703,12 +728,14 @@ var Laya=window.Laya=(function(window,document){
 
 		__proto.initParamDes=function(){
 			this.paramDes.length=0;
+			var i=0,len=0;
 			var tKey;
 			var tValue;
-			/*no*/this.len=this.paramkeys.length;
-			for (/*no*/this.i=0;/*no*/this.i < /*no*/this.len;/*no*/this.i++){
-				tKey=this.paramkeys[/*no*/this.i];
-				tValue=this[/*no*/this.tkey];
+			len=this.paramkeys.length;
+			for (i=0;i < len;i++){
+				tKey=this.paramkeys[i];
+				tValue=this[tKey];
+				debugger;
 				if ((typeof tValue=='string')){
 					this.paramDes.push([tKey,"STRING"]);
 					}else{
@@ -14663,6 +14690,91 @@ var Laya=window.Laya=(function(window,document){
 	*...
 	*@author ww
 	*/
+	//class laya.stock.analysers.lines.AverageLine extends laya.stock.analysers.AnalyserBase
+	var AverageLine=(function(_super){
+		function AverageLine(){
+			this.days="12,26";
+			this.colors="#00ffff,#ffff00";
+			this.priceType="close";
+			AverageLine.__super.call(this);
+		}
+
+		__class(AverageLine,'laya.stock.analysers.lines.AverageLine',_super);
+		var __proto=AverageLine.prototype;
+		__proto.initParamKeys=function(){
+			this.paramkeys=["days","colors","priceType"];
+		}
+
+		__proto.analyseWork=function(){
+			this.doAverages();
+		}
+
+		__proto.getDays=function(){
+			var daysArr;
+			daysArr=this.days.split(",");
+			var i=0,len=0;
+			var rst;
+			rst=[];
+			len=daysArr.length;
+			var tDay=0;
+			for (i=0;i < len;i++){
+				tDay=Math.floor(ValueTools.mParseFloat(daysArr[i]));
+				if (tDay > 0){
+					rst.push(tDay);
+				}
+			}
+			return rst;
+		}
+
+		__proto.doAverages=function(){
+			var avgs;
+			avgs=[];
+			var daysList;
+			daysList=this.getDays();
+			var i=0,len=0;
+			len=daysList.length;
+			var colorList;
+			colorList=this.colors.split(",");
+			for (i=0;i < len;i++){
+				avgs.push(this.getAverageData(daysList[i],colorList[i%colorList.length]));
+			}
+			this.resultData["averages"]=avgs;
+		}
+
+		__proto.getAverageData=function(dayCount,color){
+			var avList;
+			avList=DataUtils.getAverage(this.disDataList,dayCount,this.priceType);
+			var avPoints
+			avPoints=[];
+			var i=0,len=0;
+			len=avList.length;
+			for (i=0;i < len;i++){
+				avPoints.push([i,avList[i]]);
+			}
+			return [avPoints,color];
+		}
+
+		__proto.getDrawCmds=function(){
+			var rst;
+			rst=[];
+			var avgs;
+			avgs=this.resultData["averages"];
+			var i=0,len=0;
+			len=avgs.length;
+			for (i=0;i < len;i++){
+				rst.push(["drawLines",avgs[i]]);
+			}
+			return rst;
+		}
+
+		return AverageLine;
+	})(AnalyserBase)
+
+
+	/**
+	*...
+	*@author ww
+	*/
 	//class laya.stock.models.DownList extends laya.stock.models.OrdedList
 	var DownList=(function(_super){
 		function DownList(){
@@ -20330,6 +20442,15 @@ var Laya=window.Laya=(function(window,document){
 				preData=dataList[iList[i-1]];
 				tData=dataList[iList[i]];
 				this.drawLine(iList[i-1],preData[sign],iList[i],tData[sign],"#ff0000");
+			}
+		}
+
+		__proto.drawLines=function(pointList,color){
+			(color===void 0)&& (color="#ff0000");
+			var i=0,len=0;
+			len=pointList.length;
+			for (i=1;i < len;i++){
+				this.drawLine(pointList[i-1][0],pointList[i-1][1],pointList[i][0],pointList[i][1],color);
 			}
 		}
 
@@ -32506,107 +32627,6 @@ var Laya=window.Laya=(function(window,document){
 
 
 	/**
-	*使用 <code>VSlider</code> 控件，用户可以通过在滑块轨道的终点之间移动滑块来选择值。
-	*<p> <code>VSlider</code> 控件采用垂直方向。滑块轨道从下往上扩展，而标签位于轨道的左右两侧。</p>
-	*
-	*@example 以下示例代码，创建了一个 <code>VSlider</code> 实例。
-	*<listing version="3.0">
-	*package
-	*{
-		*import laya.ui.HSlider;
-		*import laya.ui.VSlider;
-		*import laya.utils.Handler;
-		*public class VSlider_Example
-		*{
-			*private var vSlider:VSlider;
-			*public function VSlider_Example()
-			*{
-				*Laya.init(640,800);//设置游戏画布宽高。
-				*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
-				*Laya.loader.load(["resource/ui/vslider.png","resource/ui/vslider$bar.png"],Handler.create(this,onLoadComplete));//加载资源。
-				*}
-			*private function onLoadComplete():void
-			*{
-				*vSlider=new VSlider();//创建一个 VSlider 类的实例对象 vSlider 。
-				*vSlider.skin="resource/ui/vslider.png";//设置 vSlider 的皮肤。
-				*vSlider.min=0;//设置 vSlider 最低位置值。
-				*vSlider.max=10;//设置 vSlider 最高位置值。
-				*vSlider.value=2;//设置 vSlider 当前位置值。
-				*vSlider.tick=1;//设置 vSlider 刻度值。
-				*vSlider.x=100;//设置 vSlider 对象的属性 x 的值，用于控制 vSlider 对象的显示位置。
-				*vSlider.y=100;//设置 vSlider 对象的属性 y 的值，用于控制 vSlider 对象的显示位置。
-				*vSlider.changeHandler=new Handler(this,onChange);//设置 vSlider 位置变化处理器。
-				*Laya.stage.addChild(vSlider);//把 vSlider 添加到显示列表。
-				*}
-			*private function onChange(value:Number):void
-			*{
-				*trace("滑块的位置： value="+value);
-				*}
-			*}
-		*}
-	*</listing>
-	*<listing version="3.0">
-	*Laya.init(640,800);//设置游戏画布宽高
-	*Laya.stage.bgColor="#efefef";//设置画布的背景颜色
-	*var vSlider;
-	*Laya.loader.load(["resource/ui/vslider.png","resource/ui/vslider$bar.png"],laya.utils.Handler.create(this,onLoadComplete));//加载资源。
-	*function onLoadComplete(){
-		*vSlider=new laya.ui.VSlider();//创建一个 VSlider 类的实例对象 vSlider 。
-		*vSlider.skin="resource/ui/vslider.png";//设置 vSlider 的皮肤。
-		*vSlider.min=0;//设置 vSlider 最低位置值。
-		*vSlider.max=10;//设置 vSlider 最高位置值。
-		*vSlider.value=2;//设置 vSlider 当前位置值。
-		*vSlider.tick=1;//设置 vSlider 刻度值。
-		*vSlider.x=100;//设置 vSlider 对象的属性 x 的值，用于控制 vSlider 对象的显示位置。
-		*vSlider.y=100;//设置 vSlider 对象的属性 y 的值，用于控制 vSlider 对象的显示位置。
-		*vSlider.changeHandler=new laya.utils.Handler(this,onChange);//设置 vSlider 位置变化处理器。
-		*Laya.stage.addChild(vSlider);//把 vSlider 添加到显示列表。
-		*}
-	*function onChange(value){
-		*console.log("滑块的位置： value="+value);
-		*}
-	*</listing>
-	*<listing version="3.0">
-	*import HSlider=laya.ui.HSlider;
-	*import VSlider=laya.ui.VSlider;
-	*import Handler=laya.utils.Handler;
-	*class VSlider_Example {
-		*private vSlider:VSlider;
-		*constructor(){
-			*Laya.init(640,800);//设置游戏画布宽高。
-			*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
-			*Laya.loader.load(["resource/ui/vslider.png","resource/ui/vslider$bar.png"],Handler.create(this,this.onLoadComplete));//加载资源。
-			*}
-		*private onLoadComplete():void {
-			*this.vSlider=new VSlider();//创建一个 VSlider 类的实例对象 vSlider 。
-			*this.vSlider.skin="resource/ui/vslider.png";//设置 vSlider 的皮肤。
-			*this.vSlider.min=0;//设置 vSlider 最低位置值。
-			*this.vSlider.max=10;//设置 vSlider 最高位置值。
-			*this.vSlider.value=2;//设置 vSlider 当前位置值。
-			*this.vSlider.tick=1;//设置 vSlider 刻度值。
-			*this.vSlider.x=100;//设置 vSlider 对象的属性 x 的值，用于控制 vSlider 对象的显示位置。
-			*this.vSlider.y=100;//设置 vSlider 对象的属性 y 的值，用于控制 vSlider 对象的显示位置。
-			*this.vSlider.changeHandler=new Handler(this,this.onChange);//设置 vSlider 位置变化处理器。
-			*Laya.stage.addChild(this.vSlider);//把 vSlider 添加到显示列表。
-			*}
-		*private onChange(value:number):void {
-			*console.log("滑块的位置： value="+value);
-			*}
-		*}
-	*</listing>
-	*@see laya.ui.Slider
-	*/
-	//class laya.ui.VSlider extends laya.ui.Slider
-	var VSlider=(function(_super){
-		function VSlider(){VSlider.__super.call(this);;
-		};
-
-		__class(VSlider,'laya.ui.VSlider',_super);
-		return VSlider;
-	})(Slider)
-
-
-	/**
 	*<code>TextInput</code> 类用于创建显示对象以显示和输入文本。
 	*
 	*@example 以下示例代码，创建了一个 <code>TextInput</code> 实例。
@@ -32919,6 +32939,107 @@ var Laya=window.Laya=(function(window,document){
 
 		return TextInput;
 	})(Label)
+
+
+	/**
+	*使用 <code>VSlider</code> 控件，用户可以通过在滑块轨道的终点之间移动滑块来选择值。
+	*<p> <code>VSlider</code> 控件采用垂直方向。滑块轨道从下往上扩展，而标签位于轨道的左右两侧。</p>
+	*
+	*@example 以下示例代码，创建了一个 <code>VSlider</code> 实例。
+	*<listing version="3.0">
+	*package
+	*{
+		*import laya.ui.HSlider;
+		*import laya.ui.VSlider;
+		*import laya.utils.Handler;
+		*public class VSlider_Example
+		*{
+			*private var vSlider:VSlider;
+			*public function VSlider_Example()
+			*{
+				*Laya.init(640,800);//设置游戏画布宽高。
+				*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
+				*Laya.loader.load(["resource/ui/vslider.png","resource/ui/vslider$bar.png"],Handler.create(this,onLoadComplete));//加载资源。
+				*}
+			*private function onLoadComplete():void
+			*{
+				*vSlider=new VSlider();//创建一个 VSlider 类的实例对象 vSlider 。
+				*vSlider.skin="resource/ui/vslider.png";//设置 vSlider 的皮肤。
+				*vSlider.min=0;//设置 vSlider 最低位置值。
+				*vSlider.max=10;//设置 vSlider 最高位置值。
+				*vSlider.value=2;//设置 vSlider 当前位置值。
+				*vSlider.tick=1;//设置 vSlider 刻度值。
+				*vSlider.x=100;//设置 vSlider 对象的属性 x 的值，用于控制 vSlider 对象的显示位置。
+				*vSlider.y=100;//设置 vSlider 对象的属性 y 的值，用于控制 vSlider 对象的显示位置。
+				*vSlider.changeHandler=new Handler(this,onChange);//设置 vSlider 位置变化处理器。
+				*Laya.stage.addChild(vSlider);//把 vSlider 添加到显示列表。
+				*}
+			*private function onChange(value:Number):void
+			*{
+				*trace("滑块的位置： value="+value);
+				*}
+			*}
+		*}
+	*</listing>
+	*<listing version="3.0">
+	*Laya.init(640,800);//设置游戏画布宽高
+	*Laya.stage.bgColor="#efefef";//设置画布的背景颜色
+	*var vSlider;
+	*Laya.loader.load(["resource/ui/vslider.png","resource/ui/vslider$bar.png"],laya.utils.Handler.create(this,onLoadComplete));//加载资源。
+	*function onLoadComplete(){
+		*vSlider=new laya.ui.VSlider();//创建一个 VSlider 类的实例对象 vSlider 。
+		*vSlider.skin="resource/ui/vslider.png";//设置 vSlider 的皮肤。
+		*vSlider.min=0;//设置 vSlider 最低位置值。
+		*vSlider.max=10;//设置 vSlider 最高位置值。
+		*vSlider.value=2;//设置 vSlider 当前位置值。
+		*vSlider.tick=1;//设置 vSlider 刻度值。
+		*vSlider.x=100;//设置 vSlider 对象的属性 x 的值，用于控制 vSlider 对象的显示位置。
+		*vSlider.y=100;//设置 vSlider 对象的属性 y 的值，用于控制 vSlider 对象的显示位置。
+		*vSlider.changeHandler=new laya.utils.Handler(this,onChange);//设置 vSlider 位置变化处理器。
+		*Laya.stage.addChild(vSlider);//把 vSlider 添加到显示列表。
+		*}
+	*function onChange(value){
+		*console.log("滑块的位置： value="+value);
+		*}
+	*</listing>
+	*<listing version="3.0">
+	*import HSlider=laya.ui.HSlider;
+	*import VSlider=laya.ui.VSlider;
+	*import Handler=laya.utils.Handler;
+	*class VSlider_Example {
+		*private vSlider:VSlider;
+		*constructor(){
+			*Laya.init(640,800);//设置游戏画布宽高。
+			*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
+			*Laya.loader.load(["resource/ui/vslider.png","resource/ui/vslider$bar.png"],Handler.create(this,this.onLoadComplete));//加载资源。
+			*}
+		*private onLoadComplete():void {
+			*this.vSlider=new VSlider();//创建一个 VSlider 类的实例对象 vSlider 。
+			*this.vSlider.skin="resource/ui/vslider.png";//设置 vSlider 的皮肤。
+			*this.vSlider.min=0;//设置 vSlider 最低位置值。
+			*this.vSlider.max=10;//设置 vSlider 最高位置值。
+			*this.vSlider.value=2;//设置 vSlider 当前位置值。
+			*this.vSlider.tick=1;//设置 vSlider 刻度值。
+			*this.vSlider.x=100;//设置 vSlider 对象的属性 x 的值，用于控制 vSlider 对象的显示位置。
+			*this.vSlider.y=100;//设置 vSlider 对象的属性 y 的值，用于控制 vSlider 对象的显示位置。
+			*this.vSlider.changeHandler=new Handler(this,this.onChange);//设置 vSlider 位置变化处理器。
+			*Laya.stage.addChild(this.vSlider);//把 vSlider 添加到显示列表。
+			*}
+		*private onChange(value:number):void {
+			*console.log("滑块的位置： value="+value);
+			*}
+		*}
+	*</listing>
+	*@see laya.ui.Slider
+	*/
+	//class laya.ui.VSlider extends laya.ui.Slider
+	var VSlider=(function(_super){
+		function VSlider(){VSlider.__super.call(this);;
+		};
+
+		__class(VSlider,'laya.ui.VSlider',_super);
+		return VSlider;
+	})(Slider)
 
 
 	/**
@@ -34481,6 +34602,7 @@ var Laya=window.Laya=(function(window,document){
 			analyserClassList.push(KLineAnalyser);
 			analyserClassList.push(BreakAnalyser);
 			analyserClassList.push(BottomAnalyser);
+			analyserClassList.push(AverageLine);
 			this.analyserList.initAnalysers(analyserClassList);
 			this.addChild(this.kLine);
 			var stock;
@@ -34929,25 +35051,6 @@ var Laya=window.Laya=(function(window,document){
 	*...
 	*@author ww
 	*/
-	//class laya.debug.view.nodeInfo.nodetree.FindNodeSmall extends laya.debug.ui.debugui.FindNodeSmallUI
-	var FindNodeSmall=(function(_super){
-		function FindNodeSmall(){
-			FindNodeSmall.__super.call(this);
-			Base64AtlasManager.replaceRes(FindNodeSmallUI.uiView);
-			this.createView(FindNodeSmallUI.uiView);
-		}
-
-		__class(FindNodeSmall,'laya.debug.view.nodeInfo.nodetree.FindNodeSmall',_super);
-		var __proto=FindNodeSmall.prototype;
-		__proto.createChildren=function(){}
-		return FindNodeSmall;
-	})(FindNodeSmallUI)
-
-
-	/**
-	*...
-	*@author ww
-	*/
 	//class laya.debug.view.nodeInfo.nodetree.FindNode extends laya.debug.ui.debugui.FindNodeUI
 	var FindNode=(function(_super){
 		function FindNode(){
@@ -34964,6 +35067,25 @@ var Laya=window.Laya=(function(window,document){
 
 		return FindNode;
 	})(FindNodeUI)
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class laya.debug.view.nodeInfo.nodetree.FindNodeSmall extends laya.debug.ui.debugui.FindNodeSmallUI
+	var FindNodeSmall=(function(_super){
+		function FindNodeSmall(){
+			FindNodeSmall.__super.call(this);
+			Base64AtlasManager.replaceRes(FindNodeSmallUI.uiView);
+			this.createView(FindNodeSmallUI.uiView);
+		}
+
+		__class(FindNodeSmall,'laya.debug.view.nodeInfo.nodetree.FindNodeSmall',_super);
+		var __proto=FindNodeSmall.prototype;
+		__proto.createChildren=function(){}
+		return FindNodeSmall;
+	})(FindNodeSmallUI)
 
 
 	/**
@@ -35491,14 +35613,3 @@ var Laya=window.Laya=(function(window,document){
 	new StockMain();
 
 })(window,document,Laya);
-
-
-/*
-1 file:///D:/stocksite.git/trunk/StockView/src/laya/stock/analysers/AnalyserBase.as (34):warning:len This variable is not defined.
-2 file:///D:/stocksite.git/trunk/StockView/src/laya/stock/analysers/AnalyserBase.as (35):warning:i This variable is not defined.
-3 file:///D:/stocksite.git/trunk/StockView/src/laya/stock/analysers/AnalyserBase.as (35):warning:i This variable is not defined.
-4 file:///D:/stocksite.git/trunk/StockView/src/laya/stock/analysers/AnalyserBase.as (35):warning:len This variable is not defined.
-5 file:///D:/stocksite.git/trunk/StockView/src/laya/stock/analysers/AnalyserBase.as (35):warning:i This variable is not defined.
-6 file:///D:/stocksite.git/trunk/StockView/src/laya/stock/analysers/AnalyserBase.as (37):warning:i This variable is not defined.
-7 file:///D:/stocksite.git/trunk/StockView/src/laya/stock/analysers/AnalyserBase.as (38):warning:tkey This variable is not defined.
-*/
