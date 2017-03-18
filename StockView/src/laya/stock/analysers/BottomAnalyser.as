@@ -10,23 +10,26 @@ package laya.stock.analysers {
 	public class BottomAnalyser extends AnalyserBase {
 		
 		public function BottomAnalyser() {
-			paramkeys = [];
+			
 		
 		}
-		
+		public var rightMin:int = 5;
+		public var leftMin:int = 15;
+		override public function initParamKeys():void 
+		{
+			paramkeys = ["leftMin","rightMin"];
+		}
 		override public function analyseWork():void {
 			myCalculate();
 		}
 		
 		public function myCalculate():void {
-			var rightMin:int;
-			rightMin = 5;
 			var maxList:Array;
 			maxList = DataUtils.getMaxInfo(disDataList, false);
 			var maxs:Array;
 			var mins:Array;
-			maxs = DataUtils.getMaxs(maxList, 15, rightMin);
-			mins = DataUtils.getMins(maxList, 15, rightMin);
+			maxs = DataUtils.getMaxs(maxList, leftMin, rightMin);
+			mins = DataUtils.getMins(maxList, leftMin, rightMin);
 			
 			resultData["mins"] = mins;
 			resultData["maxs"] = maxs;

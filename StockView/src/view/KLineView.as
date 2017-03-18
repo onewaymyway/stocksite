@@ -10,6 +10,7 @@ package view
 	import laya.tools.WebTools;
 	import laya.utils.Handler;
 	import msgs.MsgConst;
+	import stock.prop.PropPanel;
 	import stock.StockBasicInfo;
 	import stock.views.KLine;
 	import ui.KLineViewUI;
@@ -54,13 +55,24 @@ package view
 			kLine.pos(0, kLine.lineHeight + 90);
 			kLine.on("msg", this, onKlineMsg);
 			init();
+			propPanel.visible = false;
 			Notice.listen(MsgConst.AnalyserListChange, this, analysersChanged);
+			Notice.listen(MsgConst.Show_Analyser_Prop, this, showAnalyserProp);
+			propPanel.on(PropPanel.MakeChange, this, refreshKLine);
 		}
-		
+		public function refreshKLine():void
+		{
+			showKline(kLine.tStock);
+		}
+		private function showAnalyserProp(desArr:Array, dataO:Object):void
+		{
+			propPanel.visible = true;
+			propPanel.initByData(desArr, dataO);
+		}
 		private function analysersChanged(analysers:Array):void
 		{
 			kLine.analysers = analysers;
-			showKline(kLine.tStock);
+			refreshKLine();
 		}
 		public function showStockKline(stock:String):void
 		{
@@ -119,8 +131,6 @@ package view
 		}
 		public function showKline(stock:String):void
 		{
-			kLineAnalyser.leftLimit = DataUtils.mParseFloat(leftInput.text);
-			kLineAnalyser.rightLimit = DataUtils.mParseFloat(rightInput.text);
 			kLine.autoPlay = enableAnimation.selected;
 			kLine.setStock(stock);
 		}

@@ -2,6 +2,8 @@ package view.plugins
 {
 	import laya.debug.tools.ClassTool;
 	import laya.debug.tools.Notice;
+	import laya.events.Event;
+	import laya.stock.analysers.AnalyserBase;
 	import laya.ui.Box;
 	import laya.ui.CheckBox;
 	import laya.ui.Label;
@@ -52,10 +54,18 @@ package view.plugins
 			check = cell.getChildByName("ifShow");
 			label.text = item.name;
 			check.selected = item.enabled;
+			cell.off(Event.CLICK, this, onAnalyserDoubleDown);
+			cell.on(Event.CLICK, this, onAnalyserDoubleDown,[item]);
 			//check["tar"] = item;
 			check.clickHandler = new Handler(this, onCheckChange,[check,item]);
 		}
-		
+		private function onAnalyserDoubleDown(item:Object):void
+		{
+			var tAnalyser:AnalyserBase;
+			tAnalyser = item.Analyser;
+			trace("tAnalyser", tAnalyser);
+			Notice.notify(MsgConst.Show_Analyser_Prop, [tAnalyser.paramDes,tAnalyser]);
+		}
 		private function onCheckChange(check:CheckBox,item:Object):void
 		{
 			item.enabled = check.selected;

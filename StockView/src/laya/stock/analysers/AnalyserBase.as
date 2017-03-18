@@ -2,6 +2,7 @@ package laya.stock.analysers
 {
 	import laya.math.DataUtils;
 	import laya.math.GraphicUtils;
+	import laya.stock.consts.ParamTypes;
 	import laya.utils.Utils;
 	import stock.StockData;
 	/**
@@ -13,13 +14,38 @@ package laya.stock.analysers
 		
 		public function AnalyserBase() 
 		{
-			
+			initParamKeys();
+			initParamDes();
+		}
+		public function initParamKeys():void
+		{
+			paramkeys = [];
 		}
 		public var stockData:StockData;
 		public var dataList:Array;
 		public var disDataList:Array;
 		public var resultData:Object;
 		public var paramkeys:Array;
+		public var paramDes:Array=[];
+		private function initParamDes():void
+		{
+			paramDes.length = 0;
+			var tKey:String;
+			var tValue:*;
+			len = paramkeys.length;
+			for (i = 0; i < len; i++)
+			{
+				tKey = paramkeys[i];
+				tValue = this[tkey];
+				if (tValue is String)
+				{
+					paramDes.push([tKey,ParamTypes.STRING]);
+				}else
+				{
+					paramDes.push([tKey,ParamTypes.NUMBER]);
+				}
+			}
+		}
 		
 		public function getParam():Object
 		{
@@ -36,6 +62,23 @@ package laya.stock.analysers
 				}
 			}
 			return rst;
+		}
+		public function setByParam(params:Object):void
+		{
+			if (paramkeys)
+			{
+				var i:int, len:int;
+				len = paramkeys.length;
+				var tKey:String;
+				for (i = 0; i < len; i++)
+				{
+					tKey = paramkeys[i];
+					if (params[tKey])
+					{
+						this[tKey]=params[tKey] ;
+					}		
+				}
+			}
 		}
 		public function analyser(stockData:StockData,start:int = 0, end:int = -1):void
 		{

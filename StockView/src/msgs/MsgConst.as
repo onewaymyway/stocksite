@@ -17,6 +17,8 @@ package msgs
 		public static const Show_Pre_Select:String = "Show_Pre_Select";
 		
 		public static const AnalyserListChange:String = "AnalyserListChange";
+		
+		public static const Show_Analyser_Prop:String = "Show_Analyser_Prop";
 	}
 
 }

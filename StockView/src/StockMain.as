@@ -1,5 +1,6 @@
 package  
 {
+	import laya.debug.DebugTool;
 	import laya.maths.MathUtil;
 	import laya.net.Loader;
 	import laya.utils.Handler;
@@ -25,6 +26,7 @@ package
 			loads.push( { url:PathConfig.stockBasic, type:Loader.TEXT } );
 			loads.push({ url:"res/atlas/comp.json", type:Loader.ATLAS });
 			Laya.loader.load(loads, new Handler(this, start), null);
+			//DebugTool.init();
 		}
 		private function start():void
 		{

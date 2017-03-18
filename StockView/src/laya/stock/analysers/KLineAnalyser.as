@@ -10,15 +10,21 @@ package laya.stock.analysers
 	 */
 	public class KLineAnalyser extends AnalyserBase
 	{
+		public var leftLimit:int=10;
+		public var rightLimit:int = 25;
+		public var buyMinUnder:int = 3;
 		
 		public function KLineAnalyser() 
+		{
+			
+		}
+		
+		
+		override public function initParamKeys():void 
 		{
 			paramkeys = ["leftLimit","rightLimit","buyMinUnder"];
 		}
 		
-		public var leftLimit:int=10;
-		public var rightLimit:int = 25;
-		public var buyMinUnder:int = 3;
 		
 	
 		override public function analyseWork():void
@@ -54,11 +60,11 @@ package laya.stock.analysers
 			for (i = 0; i < len; i++)
 			{
 				tData = maxList[i];
-				if ((tData["highL"] > rightLimit)&&tData["highR"] > leftLimit)
+				if ((tData["highR"] > rightLimit)&&tData["highL"] > leftLimit)
 				{
 					maxs.push(i);
 				}
-				if ((tData["lowL"] > rightLimit)&&tData["lowR"] > leftLimit)
+				if ((tData["lowR"] > rightLimit)&&tData["lowL"] > leftLimit)
 				{
 					mins.push(i);
 				}
