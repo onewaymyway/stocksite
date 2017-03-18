@@ -878,6 +878,7 @@ var Laya=window.Laya=(function(window,document){
 		MsgConst.Show_Stock_KLine="Show_Stock_KLine";
 		MsgConst.Show_Next_Select="Show_Next_Select";
 		MsgConst.Show_Pre_Select="Show_Pre_Select";
+		MsgConst.AnalyserListChange="AnalyserListChange";
 		return MsgConst;
 	})()
 
@@ -2234,6 +2235,69 @@ var Laya=window.Laya=(function(window,document){
 		['_tempMatrix',function(){return this._tempMatrix=new Matrix();},'_initMatrix',function(){return this._initMatrix=new Matrix();}
 		]);
 		return Graphics;
+	})()
+
+
+	/**
+	*
+	*@author ww
+	*@version 1.0
+	*
+	*@created 2015-10-23 下午2:24:04
+	*/
+	//class laya.debug.tools.ClassTool
+	var ClassTool=(function(){
+		function ClassTool(){}
+		__class(ClassTool,'laya.debug.tools.ClassTool');
+		ClassTool.defineProperty=function(obj,name,des){
+			Object.defineProperty(obj,name,des);;
+		}
+
+		ClassTool.getOwnPropertyDescriptor=function(obj,name){
+			var rst;
+			rst=Object.getOwnPropertyDescriptor(obj,name);;
+			return rst;
+		}
+
+		ClassTool.getOwnPropertyNames=function(obj){
+			var rst;
+			rst=Object.getOwnPropertyNames(obj);;
+			return rst;
+		}
+
+		ClassTool.getClassName=function(tar){
+			if ((typeof tar=='function'))return tar.name;
+			return tar["constructor"].name;
+		}
+
+		ClassTool.getNodeClassAndName=function(tar){
+			if (!tar)return "null";
+			var rst;
+			if (tar.name){
+				rst=ClassTool.getClassName(tar)+"("+tar.name+")";
+				}else{
+				rst=ClassTool.getClassName(tar);
+			}
+			return rst;
+		}
+
+		ClassTool.getClassNameByClz=function(clz){
+			return clz["name"];
+		}
+
+		ClassTool.getClassByName=function(className){
+			var rst;
+			rst=eval(className);
+			return rst;
+		}
+
+		ClassTool.createObjByName=function(className){
+			var clz;
+			clz=ClassTool.getClassByName(className);
+			return new clz();
+		}
+
+		return ClassTool;
 	})()
 
 
@@ -14140,277 +14204,6 @@ var Laya=window.Laya=(function(window,document){
 
 
 	/**
-	*...
-	*@author ww
-	*/
-	//class stock.views.KLine extends laya.display.Sprite
-	var KLine=(function(_super){
-		function KLine(){
-			this.analysers=null;
-			this.autoPlay=false;
-			this.tStock=null;
-			this.stockUrl=null;
-			this.gridWidth=3;
-			this.stockData=null;
-			this.dataList=null;
-			this.disDataList=null;
-			this.tLen=10;
-			this.lineHeight=400;
-			this.lineWidth=800;
-			this.yRate=NaN;
-			this.xRate=NaN;
-			KLine.__super.call(this);
-			this.analysers=[];
-			this.analysers.push(new KLineAnalyser());
-		}
-
-		__class(KLine,'stock.views.KLine',_super);
-		var __proto=KLine.prototype;
-		__proto.setStock=function(stock){
-			Laya.timer.clear(this,this.timeEffect);
-			this.graphics.clear();
-			this.showMsg("loadingData:"+stock);
-			this.tStock=stock;
-			this.stockUrl="https://onewaymyway.github.io/stockdata/stockdatas/"+stock+".csv";
-			Laya.loader.load(this.stockUrl,Handler.create(this,this.dataLoaded),null,"text");
-		}
-
-		__proto.dataErr=function(){
-			this.showMsg("dataErr");
-		}
-
-		__proto.dataLoaded=function(){
-			var data;
-			data=Loader.getRes(this.stockUrl);
-			if (!data){
-				this.dataErr();
-				return;
-			}
-			this.showMsg("dataLoaded");
-			this.initByStrData(data);
-		}
-
-		__proto.initByStrData=function(data){
-			var stockData;
-			stockData=new StockData();
-			stockData.init(data);
-			this.setStockData(stockData);
-		}
-
-		__proto.showMsg=function(msg){
-			this.event("msg",msg);
-		}
-
-		__proto.setStockData=function(stockData){
-			this.stockData=stockData;
-			this.dataList=stockData.dataList;
-			this.drawdata();
-			this.tLen=10;
-			if (this.autoPlay){
-				this.showMsg("playing K-line Animation");
-				Laya.timer.loop(10,this,this.timeEffect);
-				}else{
-				this.showMsg("K-line Showed");
-			}
-		}
-
-		__proto.timeEffect=function(){
-			this.tLen++;
-			if (this.tLen >=this.dataList.length){
-				this.showMsg("Animation End");
-				Laya.timer.clear(this,this.timeEffect);
-				return;
-			}
-			this.drawdata(0,this.tLen);
-		}
-
-		__proto.analysersDoAnalyse=function(start,end){
-			(start===void 0)&& (start=0);
-			(end===void 0)&& (end=-1);
-			var i=0,len=0;
-			len=this.analysers.length;
-			var tAnalyser;
-			for (i=0;i < len;i++){
-				tAnalyser=this.analysers[i];
-				tAnalyser.analyser(this.stockData,start,end);
-			}
-		}
-
-		__proto.drawdata=function(start,end){
-			(start===void 0)&& (start=0);
-			(end===void 0)&& (end=-1);
-			this.analysersDoAnalyse(start,end);
-			this.graphics.clear();
-			if (end < start)end=this.dataList.length-1;
-			this.disDataList=this.dataList.slice(start,end);
-			this.drawStockKLine();
-			this.drawGrid();
-			this.drawAnalysers();
-		}
-
-		__proto.drawStockKLine=function(){
-			var i=0,len=0;
-			var dataList;
-			dataList=this.disDataList;
-			len=dataList.length;
-			var tData;
-			var max=NaN;
-			max=DataUtils.getKeyMax(dataList,"close");
-			this.yRate=this.lineHeight / max;
-			var tColor;
-			this.xRate=this.lineWidth / (len *this.gridWidth);
-			for (i=0;i < len;i++){
-				tData=dataList[i];
-				var pos=NaN;
-				pos=this.getAdptXV(i *this.gridWidth);
-				if (tData["close"] > tData["open"]){
-					tColor="#ff0000";
-					}else{
-					tColor="#00ffff";
-				}
-				this.graphics.drawLine(pos,this.getAdptYV(tData["high"]),pos,this.getAdptYV(tData["low"]),tColor,1*this.xRate);
-				this.graphics.drawLine(pos,this.getAdptYV(tData["open"]),pos,this.getAdptYV(tData["close"]),tColor,this.gridWidth*this.xRate);
-			}
-		}
-
-		__proto.drawGrid=function(){
-			var dataList;
-			dataList=this.disDataList;
-			var maxI=0;
-			maxI=DataUtils.getKeyMaxI(dataList,"high");
-			var minI=0;
-			minI=DataUtils.getKeyMinI(dataList,"low");
-			var xPos=NaN;
-			this.drawPoint(maxI,dataList[maxI]["high"],"high:"+dataList[maxI]["high"],-10);
-			this.drawPoint(minI,dataList[minI]["low"],"low:"+dataList[minI]["low"],10);
-		}
-
-		__proto.drawAnalysers=function(){
-			var i=0,len=0;
-			len=this.analysers.length;
-			var tAnalyser;
-			for (i=0;i < len;i++){
-				tAnalyser=this.analysers[i];
-				this.drawAnalyser(tAnalyser);
-			}
-		}
-
-		//tAnalyser.analyser(stockData,start,end);
-		__proto.drawAnalyser=function(analyser){
-			var cmds;
-			cmds=analyser.getDrawCmds();
-			if (!cmds)return;
-			var i=0,len=0;
-			len=cmds.length;
-			var tCmdArr;
-			var tFunSign;
-			for (i=0;i < len;i++){
-				tCmdArr=cmds[i];
-				tFunSign=tCmdArr[0];
-				if ((typeof (this[tFunSign])=='function')){
-					this[tFunSign].apply(this,tCmdArr[1]);
-				}
-			}
-		}
-
-		__proto.drawTexts=function(texts,sign,dy,color,withLine,lineColor){
-			(dy===void 0)&& (dy=0);
-			(color===void 0)&& (color="#ff0000");
-			(withLine===void 0)&& (withLine=false);
-			var i=0,len=0;
-			len=texts.length;
-			var tArr;
-			for (i=0;i < len;i++){
-				tArr=texts[i];
-				this.drawText(tArr[0],tArr[1],sign,dy,color,withLine,lineColor);
-			}
-		}
-
-		__proto.drawText=function(text,i,sign,dY,color,withLine,lineColor){
-			(dY===void 0)&& (dY=0);
-			(color===void 0)&& (color="#ff0000");
-			(withLine===void 0)&& (withLine=false);
-			this.graphics.fillText(text,this.getAdptXV(i *this.gridWidth),this.getAdptYV(this.dataList[i][sign])+dY,null,color,"center");
-			if (withLine){
-				if (!lineColor)lineColor=color;
-				this.graphics.drawLine(this.getAdptXV(i *this.gridWidth),this.getAdptYV(this.dataList[i][sign])+dY,this.getAdptXV(i *this.gridWidth),this.getAdptYV(this.dataList[i][sign]),lineColor);
-			}
-		}
-
-		__proto.drawPointsLine=function(iList,sign,dY){
-			(sign===void 0)&& (sign="high");
-			(dY===void 0)&& (dY=-20);
-			var dataList;
-			dataList=this.disDataList;
-			var tI=0;
-			var i=0,len=0;
-			var preData;
-			var tData;
-			len=iList.length;
-			for (i=0;i < len;i++){
-				tI=iList[i];
-				tData=dataList[tI];
-				this.drawPoint(tI,tData[sign],tData[sign],dY,"#ff00ff");
-			}
-			for (i=1;i < len;i++){
-				preData=dataList[iList[i-1]];
-				tData=dataList[iList[i]];
-				this.drawLine(iList[i-1],preData[sign],iList[i],tData[sign],"#ff0000");
-			}
-		}
-
-		__proto.drawPoints=function(iList,sign,r,color){
-			(r===void 0)&& (r=2);
-			(color===void 0)&& (color="#ff0000");
-			var dataList;
-			dataList=this.disDataList;
-			var tI=0;
-			var i=0,len=0;
-			var preData;
-			var tData;
-			len=iList.length;
-			for (i=0;i < len;i++){
-				tI=iList[i];
-				tData=dataList[tI];
-				this.drawCircle(tI,tData[sign],r,color);
-			}
-		}
-
-		__proto.drawCircle=function(i,y,r,color){
-			(r===void 0)&& (r=2);
-			(color===void 0)&& (color="#ff0000");
-			this.graphics.drawCircle(this.getAdptXV(i *this.gridWidth),this.getAdptYV(y),r,color);
-		}
-
-		__proto.drawPoint=function(i,y,text,dy,color){
-			(dy===void 0)&& (dy=10);
-			(color===void 0)&& (color="#ffff00");
-			var xPos=NaN;
-			xPos=this.getAdptXV(i *this.gridWidth);
-			this.graphics.drawCircle(xPos,this.getAdptYV(y),2,color);
-			if (text){
-				this.graphics.fillText(text,xPos,this.getAdptYV(y)+dy,null,color,"center");
-			}
-		}
-
-		__proto.drawLine=function(startI,startY,endI,endY,color){
-			(color===void 0)&& (color="#ff0000");
-			this.graphics.drawLine(this.getAdptXV(startI *this.gridWidth),this.getAdptYV(startY),this.getAdptXV(endI *this.gridWidth),this.getAdptYV(endY),color);
-		}
-
-		__proto.getAdptYV=function(v){
-			return-DataUtils.mParseFloat(v)*this.yRate;
-		}
-
-		__proto.getAdptXV=function(v){
-			return DataUtils.mParseFloat(v)*this.xRate;
-		}
-
-		return KLine;
-	})(Sprite)
-
-
-	/**
 	*<code>Component</code> 是ui控件类的基类。
 	*<p>生命周期：preinitialize > createChildren > initialize > 组件构造函数</p>
 	*/
@@ -14885,6 +14678,277 @@ var Laya=window.Laya=(function(window,document){
 		});
 
 		return Component;
+	})(Sprite)
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class stock.views.KLine extends laya.display.Sprite
+	var KLine=(function(_super){
+		function KLine(){
+			this.analysers=null;
+			this.autoPlay=false;
+			this.tStock=null;
+			this.stockUrl=null;
+			this.gridWidth=3;
+			this.stockData=null;
+			this.dataList=null;
+			this.disDataList=null;
+			this.tLen=10;
+			this.lineHeight=400;
+			this.lineWidth=800;
+			this.yRate=NaN;
+			this.xRate=NaN;
+			KLine.__super.call(this);
+			this.analysers=[];
+			this.analysers.push(new KLineAnalyser());
+		}
+
+		__class(KLine,'stock.views.KLine',_super);
+		var __proto=KLine.prototype;
+		__proto.setStock=function(stock){
+			Laya.timer.clear(this,this.timeEffect);
+			this.graphics.clear();
+			this.showMsg("loadingData:"+stock);
+			this.tStock=stock;
+			this.stockUrl="https://onewaymyway.github.io/stockdata/stockdatas/"+stock+".csv";
+			Laya.loader.load(this.stockUrl,Handler.create(this,this.dataLoaded),null,"text");
+		}
+
+		__proto.dataErr=function(){
+			this.showMsg("dataErr");
+		}
+
+		__proto.dataLoaded=function(){
+			var data;
+			data=Loader.getRes(this.stockUrl);
+			if (!data){
+				this.dataErr();
+				return;
+			}
+			this.showMsg("dataLoaded");
+			this.initByStrData(data);
+		}
+
+		__proto.initByStrData=function(data){
+			var stockData;
+			stockData=new StockData();
+			stockData.init(data);
+			this.setStockData(stockData);
+		}
+
+		__proto.showMsg=function(msg){
+			this.event("msg",msg);
+		}
+
+		__proto.setStockData=function(stockData){
+			this.stockData=stockData;
+			this.dataList=stockData.dataList;
+			this.drawdata();
+			this.tLen=10;
+			if (this.autoPlay){
+				this.showMsg("playing K-line Animation");
+				Laya.timer.loop(10,this,this.timeEffect);
+				}else{
+				this.showMsg("K-line Showed");
+			}
+		}
+
+		__proto.timeEffect=function(){
+			this.tLen++;
+			if (this.tLen >=this.dataList.length){
+				this.showMsg("Animation End");
+				Laya.timer.clear(this,this.timeEffect);
+				return;
+			}
+			this.drawdata(0,this.tLen);
+		}
+
+		__proto.analysersDoAnalyse=function(start,end){
+			(start===void 0)&& (start=0);
+			(end===void 0)&& (end=-1);
+			var i=0,len=0;
+			len=this.analysers.length;
+			var tAnalyser;
+			for (i=0;i < len;i++){
+				tAnalyser=this.analysers[i];
+				tAnalyser.analyser(this.stockData,start,end);
+			}
+		}
+
+		__proto.drawdata=function(start,end){
+			(start===void 0)&& (start=0);
+			(end===void 0)&& (end=-1);
+			this.analysersDoAnalyse(start,end);
+			this.graphics.clear();
+			if (end < start)end=this.dataList.length-1;
+			this.disDataList=this.dataList.slice(start,end);
+			this.drawStockKLine();
+			this.drawGrid();
+			this.drawAnalysers();
+		}
+
+		__proto.drawStockKLine=function(){
+			var i=0,len=0;
+			var dataList;
+			dataList=this.disDataList;
+			len=dataList.length;
+			var tData;
+			var max=NaN;
+			max=DataUtils.getKeyMax(dataList,"close");
+			this.yRate=this.lineHeight / max;
+			var tColor;
+			this.xRate=this.lineWidth / (len *this.gridWidth);
+			for (i=0;i < len;i++){
+				tData=dataList[i];
+				var pos=NaN;
+				pos=this.getAdptXV(i *this.gridWidth);
+				if (tData["close"] > tData["open"]){
+					tColor="#ff0000";
+					}else{
+					tColor="#00ffff";
+				}
+				this.graphics.drawLine(pos,this.getAdptYV(tData["high"]),pos,this.getAdptYV(tData["low"]),tColor,1*this.xRate);
+				this.graphics.drawLine(pos,this.getAdptYV(tData["open"]),pos,this.getAdptYV(tData["close"]),tColor,this.gridWidth*this.xRate);
+			}
+		}
+
+		__proto.drawGrid=function(){
+			var dataList;
+			dataList=this.disDataList;
+			var maxI=0;
+			maxI=DataUtils.getKeyMaxI(dataList,"high");
+			var minI=0;
+			minI=DataUtils.getKeyMinI(dataList,"low");
+			var xPos=NaN;
+			this.drawPoint(maxI,dataList[maxI]["high"],"high:"+dataList[maxI]["high"],-10);
+			this.drawPoint(minI,dataList[minI]["low"],"low:"+dataList[minI]["low"],10);
+		}
+
+		__proto.drawAnalysers=function(){
+			var i=0,len=0;
+			len=this.analysers.length;
+			var tAnalyser;
+			for (i=0;i < len;i++){
+				tAnalyser=this.analysers[i];
+				this.drawAnalyser(tAnalyser);
+			}
+		}
+
+		//tAnalyser.analyser(stockData,start,end);
+		__proto.drawAnalyser=function(analyser){
+			var cmds;
+			cmds=analyser.getDrawCmds();
+			if (!cmds)return;
+			var i=0,len=0;
+			len=cmds.length;
+			var tCmdArr;
+			var tFunSign;
+			for (i=0;i < len;i++){
+				tCmdArr=cmds[i];
+				tFunSign=tCmdArr[0];
+				if ((typeof (this[tFunSign])=='function')){
+					this[tFunSign].apply(this,tCmdArr[1]);
+				}
+			}
+		}
+
+		__proto.drawTexts=function(texts,sign,dy,color,withLine,lineColor){
+			(dy===void 0)&& (dy=0);
+			(color===void 0)&& (color="#ff0000");
+			(withLine===void 0)&& (withLine=false);
+			var i=0,len=0;
+			len=texts.length;
+			var tArr;
+			for (i=0;i < len;i++){
+				tArr=texts[i];
+				this.drawText(tArr[0],tArr[1],sign,dy,color,withLine,lineColor);
+			}
+		}
+
+		__proto.drawText=function(text,i,sign,dY,color,withLine,lineColor){
+			(dY===void 0)&& (dY=0);
+			(color===void 0)&& (color="#ff0000");
+			(withLine===void 0)&& (withLine=false);
+			this.graphics.fillText(text,this.getAdptXV(i *this.gridWidth),this.getAdptYV(this.dataList[i][sign])+dY,null,color,"center");
+			if (withLine){
+				if (!lineColor)lineColor=color;
+				this.graphics.drawLine(this.getAdptXV(i *this.gridWidth),this.getAdptYV(this.dataList[i][sign])+dY,this.getAdptXV(i *this.gridWidth),this.getAdptYV(this.dataList[i][sign]),lineColor);
+			}
+		}
+
+		__proto.drawPointsLine=function(iList,sign,dY){
+			(sign===void 0)&& (sign="high");
+			(dY===void 0)&& (dY=-20);
+			var dataList;
+			dataList=this.disDataList;
+			var tI=0;
+			var i=0,len=0;
+			var preData;
+			var tData;
+			len=iList.length;
+			for (i=0;i < len;i++){
+				tI=iList[i];
+				tData=dataList[tI];
+				this.drawPoint(tI,tData[sign],tData[sign],dY,"#ff00ff");
+			}
+			for (i=1;i < len;i++){
+				preData=dataList[iList[i-1]];
+				tData=dataList[iList[i]];
+				this.drawLine(iList[i-1],preData[sign],iList[i],tData[sign],"#ff0000");
+			}
+		}
+
+		__proto.drawPoints=function(iList,sign,r,color){
+			(r===void 0)&& (r=2);
+			(color===void 0)&& (color="#ff0000");
+			var dataList;
+			dataList=this.disDataList;
+			var tI=0;
+			var i=0,len=0;
+			var preData;
+			var tData;
+			len=iList.length;
+			for (i=0;i < len;i++){
+				tI=iList[i];
+				tData=dataList[tI];
+				this.drawCircle(tI,tData[sign],r,color);
+			}
+		}
+
+		__proto.drawCircle=function(i,y,r,color){
+			(r===void 0)&& (r=2);
+			(color===void 0)&& (color="#ff0000");
+			this.graphics.drawCircle(this.getAdptXV(i *this.gridWidth),this.getAdptYV(y),r,color);
+		}
+
+		__proto.drawPoint=function(i,y,text,dy,color){
+			(dy===void 0)&& (dy=10);
+			(color===void 0)&& (color="#ffff00");
+			var xPos=NaN;
+			xPos=this.getAdptXV(i *this.gridWidth);
+			this.graphics.drawCircle(xPos,this.getAdptYV(y),2,color);
+			if (text){
+				this.graphics.fillText(text,xPos,this.getAdptYV(y)+dy,null,color,"center");
+			}
+		}
+
+		__proto.drawLine=function(startI,startY,endI,endY,color){
+			(color===void 0)&& (color="#ff0000");
+			this.graphics.drawLine(this.getAdptXV(startI *this.gridWidth),this.getAdptYV(startY),this.getAdptXV(endI *this.gridWidth),this.getAdptYV(endY),color);
+		}
+
+		__proto.getAdptYV=function(v){
+			return-DataUtils.mParseFloat(v)*this.yRate;
+		}
+
+		__proto.getAdptXV=function(v){
+			return DataUtils.mParseFloat(v)*this.xRate;
+		}
+
+		return KLine;
 	})(Sprite)
 
 
@@ -21131,6 +21195,323 @@ var Laya=window.Laya=(function(window,document){
 
 
 	/**
+	*<code>Panel</code> 是一个面板容器类。
+	*/
+	//class laya.ui.Panel extends laya.ui.Box
+	var Panel=(function(_super){
+		function Panel(){
+			this._content=null;
+			this._vScrollBar=null;
+			this._hScrollBar=null;
+			this._scrollChanged=false;
+			Panel.__super.call(this);
+			this.width=this.height=100;
+			this._content.optimizeScrollRect=true;
+		}
+
+		__class(Panel,'laya.ui.Panel',_super);
+		var __proto=Panel.prototype;
+		/**@inheritDoc */
+		__proto.destroy=function(destroyChild){
+			(destroyChild===void 0)&& (destroyChild=true);
+			laya.ui.Component.prototype.destroy.call(this,destroyChild);
+			this._content && this._content.destroy(destroyChild);
+			this._vScrollBar && this._vScrollBar.destroy(destroyChild);
+			this._hScrollBar && this._hScrollBar.destroy(destroyChild);
+			this._vScrollBar=null;
+			this._hScrollBar=null;
+			this._content=null;
+		}
+
+		/**@inheritDoc */
+		__proto.destroyChildren=function(){
+			this._content.destroyChildren();
+		}
+
+		/**@inheritDoc */
+		__proto.createChildren=function(){
+			laya.display.Node.prototype.addChild.call(this,this._content=new Box());
+		}
+
+		/**@inheritDoc */
+		__proto.addChild=function(child){
+			child.on("resize",this,this.onResize);
+			this._setScrollChanged();
+			return this._content.addChild(child);
+		}
+
+		/**
+		*@private
+		*子对象的 <code>Event.RESIZE</code> 事件侦听处理函数。
+		*/
+		__proto.onResize=function(){
+			this._setScrollChanged();
+		}
+
+		/**@inheritDoc */
+		__proto.addChildAt=function(child,index){
+			child.on("resize",this,this.onResize);
+			this._setScrollChanged();
+			return this._content.addChildAt(child,index);
+		}
+
+		/**@inheritDoc */
+		__proto.removeChild=function(child){
+			child.off("resize",this,this.onResize);
+			this._setScrollChanged();
+			return this._content.removeChild(child);
+		}
+
+		/**@inheritDoc */
+		__proto.removeChildAt=function(index){
+			this.getChildAt(index).off("resize",this,this.onResize);
+			this._setScrollChanged();
+			return this._content.removeChildAt(index);
+		}
+
+		/**@inheritDoc */
+		__proto.removeChildren=function(beginIndex,endIndex){
+			(beginIndex===void 0)&& (beginIndex=0);
+			(endIndex===void 0)&& (endIndex=0x7fffffff);
+			for (var i=this._content.numChildren-1;i >-1;i--){
+				this._content.removeChildAt(i);
+			}
+			this._setScrollChanged();
+			return this;
+		}
+
+		/**@inheritDoc */
+		__proto.getChildAt=function(index){
+			return this._content.getChildAt(index);
+		}
+
+		/**@inheritDoc */
+		__proto.getChildByName=function(name){
+			return this._content.getChildByName(name);
+		}
+
+		/**@inheritDoc */
+		__proto.getChildIndex=function(child){
+			return this._content.getChildIndex(child);
+		}
+
+		/**@private */
+		__proto.changeScroll=function(){
+			this._scrollChanged=false;
+			var contentW=this.contentWidth;
+			var contentH=this.contentHeight;
+			var vscroll=this._vScrollBar;
+			var hscroll=this._hScrollBar;
+			var vShow=vscroll && contentH > this._height;
+			var hShow=hscroll && contentW > this._width;
+			var showWidth=vShow ? this._width-vscroll.width :this._width;
+			var showHeight=hShow ? this._height-hscroll.height :this._height;
+			if (vscroll){
+				vscroll.x=this._width-vscroll.width;
+				vscroll.y=0;
+				vscroll.height=this._height-(hShow ? hscroll.height :0);
+				vscroll.scrollSize=Math.max(this._height *0.033,1);
+				vscroll.thumbPercent=showHeight / contentH;
+				vscroll.setScroll(0,contentH-showHeight,vscroll.value);
+			}
+			if (hscroll){
+				hscroll.x=0;
+				hscroll.y=this._height-hscroll.height;
+				hscroll.width=this._width-(vShow ? vscroll.width :0);
+				hscroll.scrollSize=Math.max(this._width *0.033,1);
+				hscroll.thumbPercent=showWidth / contentW;
+				hscroll.setScroll(0,contentW-showWidth,hscroll.value);
+			}
+		}
+
+		/**@inheritDoc */
+		__proto.changeSize=function(){
+			laya.ui.Component.prototype.changeSize.call(this);
+			this.setContentSize(this._width,this._height);
+		}
+
+		/**
+		*@private
+		*设置内容的宽度、高度（以像素为单位）。
+		*@param width 宽度。
+		*@param height 高度。
+		*/
+		__proto.setContentSize=function(width,height){
+			var content=this._content;
+			content.width=width;
+			content.height=height;
+			content.scrollRect || (content.scrollRect=new Rectangle());
+			content.scrollRect.setTo(0,0,width,height);
+			content.conchModel&&content.conchModel.scrollRect(0,0,width,height);
+		}
+
+		/**
+		*@private
+		*滚动条的<code><code>Event.MOUSE_DOWN</code>事件侦听处理函数。</code>事件侦听处理函数。
+		*@param scrollBar 滚动条对象。
+		*@param e Event 对象。
+		*/
+		__proto.onScrollBarChange=function(scrollBar){
+			var rect=this._content.scrollRect;
+			if (rect){
+				var start=Math.round(scrollBar.value);
+				scrollBar.isVertical ? rect.y=start :rect.x=start;
+				this._content.conchModel&&this._content.conchModel.scrollRect(rect.x,rect.y,rect.width,rect.height);
+			}
+		}
+
+		/**
+		*<p>滚动内容容器至设定的垂直、水平方向滚动条位置。</p>
+		*@param x 水平方向滚动条属性value值。滚动条位置数字。
+		*@param y 垂直方向滚动条属性value值。滚动条位置数字。
+		*/
+		__proto.scrollTo=function(x,y){
+			(x===void 0)&& (x=0);
+			(y===void 0)&& (y=0);
+			if (this.vScrollBar)this.vScrollBar.value=y;
+			if (this.hScrollBar)this.hScrollBar.value=x;
+		}
+
+		/**
+		*刷新滚动内容。
+		*/
+		__proto.refresh=function(){
+			this.changeScroll();
+		}
+
+		__proto.onScrollStart=function(){
+			this._$P.cacheAs || (this._$P.cacheAs=_super.prototype._$get_cacheAs.call(this));
+			_super.prototype._$set_cacheAs.call(this,"none");
+			this._hScrollBar && this._hScrollBar.once("end",this,this.onScrollEnd);
+			this._vScrollBar && this._vScrollBar.once("end",this,this.onScrollEnd);
+		}
+
+		__proto.onScrollEnd=function(){
+			_super.prototype._$set_cacheAs.call(this,this._$P.cacheAs);
+		}
+
+		/**@private */
+		__proto._setScrollChanged=function(){
+			if (!this._scrollChanged){
+				this._scrollChanged=true;
+				this.callLater(this.changeScroll);
+			}
+		}
+
+		/**@inheritDoc */
+		__getset(0,__proto,'numChildren',function(){
+			return this._content.numChildren;
+		});
+
+		/**
+		*水平方向滚动条皮肤。
+		*/
+		__getset(0,__proto,'hScrollBarSkin',function(){
+			return this._hScrollBar ? this._hScrollBar.skin :null;
+			},function(value){
+			if (this._hScrollBar==null){
+				laya.display.Node.prototype.addChild.call(this,this._hScrollBar=new HScrollBar());
+				this._hScrollBar.on("change",this,this.onScrollBarChange,[this._hScrollBar]);
+				this._hScrollBar.target=this._content;
+				this._setScrollChanged();
+			}
+			this._hScrollBar.skin=value;
+		});
+
+		/**
+		*@private
+		*获取内容宽度（以像素为单位）。
+		*/
+		__getset(0,__proto,'contentWidth',function(){
+			var max=0;
+			for (var i=this._content.numChildren-1;i >-1;i--){
+				var comp=this._content.getChildAt(i);
+				max=Math.max(comp.x+comp.width *comp.scaleX,max);
+			}
+			return max;
+		});
+
+		/**
+		*@private
+		*获取内容高度（以像素为单位）。
+		*/
+		__getset(0,__proto,'contentHeight',function(){
+			var max=0;
+			for (var i=this._content.numChildren-1;i >-1;i--){
+				var comp=this._content.getChildAt(i);
+				max=Math.max(comp.y+comp.height *comp.scaleY,max);
+			}
+			return max;
+		});
+
+		/**
+		*@inheritDoc
+		*/
+		__getset(0,__proto,'width',_super.prototype._$get_width,function(value){
+			_super.prototype._$set_width.call(this,value);
+			this._setScrollChanged();
+		});
+
+		/**
+		*水平方向滚动条对象。
+		*/
+		__getset(0,__proto,'hScrollBar',function(){
+			return this._hScrollBar;
+		});
+
+		/**
+		*获取内容容器对象。
+		*/
+		__getset(0,__proto,'content',function(){
+			return this._content;
+		});
+
+		/**@inheritDoc */
+		__getset(0,__proto,'height',_super.prototype._$get_height,function(value){
+			_super.prototype._$set_height.call(this,value);
+			this._setScrollChanged();
+		});
+
+		/**
+		*垂直方向滚动条皮肤。
+		*/
+		__getset(0,__proto,'vScrollBarSkin',function(){
+			return this._vScrollBar ? this._vScrollBar.skin :null;
+			},function(value){
+			if (this._vScrollBar==null){
+				laya.display.Node.prototype.addChild.call(this,this._vScrollBar=new VScrollBar());
+				this._vScrollBar.on("change",this,this.onScrollBarChange,[this._vScrollBar]);
+				this._vScrollBar.target=this._content;
+				this._setScrollChanged();
+			}
+			this._vScrollBar.skin=value;
+		});
+
+		/**
+		*垂直方向滚动条对象。
+		*/
+		__getset(0,__proto,'vScrollBar',function(){
+			return this._vScrollBar;
+		});
+
+		/**@inheritDoc */
+		__getset(0,__proto,'cacheAs',_super.prototype._$get_cacheAs,function(value){
+			_super.prototype._$set_cacheAs.call(this,value);
+			this._$P.cacheAs=null;
+			if (value!=="none"){
+				this._hScrollBar && this._hScrollBar.on("start",this,this.onScrollStart);
+				this._vScrollBar && this._vScrollBar.on("start",this,this.onScrollStart);
+				}else {
+				this._hScrollBar && this._hScrollBar.off("start",this,this.onScrollStart);
+				this._vScrollBar && this._vScrollBar.off("start",this,this.onScrollStart);
+			}
+		});
+
+		return Panel;
+	})(Box)
+
+
+	/**
 	*<code>View</code> 是一个视图类。
 	*@internal <p><code>View</code></p>
 	*/
@@ -22834,323 +23215,6 @@ var Laya=window.Laya=(function(window,document){
 
 
 	/**
-	*<code>Panel</code> 是一个面板容器类。
-	*/
-	//class laya.ui.Panel extends laya.ui.Box
-	var Panel=(function(_super){
-		function Panel(){
-			this._content=null;
-			this._vScrollBar=null;
-			this._hScrollBar=null;
-			this._scrollChanged=false;
-			Panel.__super.call(this);
-			this.width=this.height=100;
-			this._content.optimizeScrollRect=true;
-		}
-
-		__class(Panel,'laya.ui.Panel',_super);
-		var __proto=Panel.prototype;
-		/**@inheritDoc */
-		__proto.destroy=function(destroyChild){
-			(destroyChild===void 0)&& (destroyChild=true);
-			laya.ui.Component.prototype.destroy.call(this,destroyChild);
-			this._content && this._content.destroy(destroyChild);
-			this._vScrollBar && this._vScrollBar.destroy(destroyChild);
-			this._hScrollBar && this._hScrollBar.destroy(destroyChild);
-			this._vScrollBar=null;
-			this._hScrollBar=null;
-			this._content=null;
-		}
-
-		/**@inheritDoc */
-		__proto.destroyChildren=function(){
-			this._content.destroyChildren();
-		}
-
-		/**@inheritDoc */
-		__proto.createChildren=function(){
-			laya.display.Node.prototype.addChild.call(this,this._content=new Box());
-		}
-
-		/**@inheritDoc */
-		__proto.addChild=function(child){
-			child.on("resize",this,this.onResize);
-			this._setScrollChanged();
-			return this._content.addChild(child);
-		}
-
-		/**
-		*@private
-		*子对象的 <code>Event.RESIZE</code> 事件侦听处理函数。
-		*/
-		__proto.onResize=function(){
-			this._setScrollChanged();
-		}
-
-		/**@inheritDoc */
-		__proto.addChildAt=function(child,index){
-			child.on("resize",this,this.onResize);
-			this._setScrollChanged();
-			return this._content.addChildAt(child,index);
-		}
-
-		/**@inheritDoc */
-		__proto.removeChild=function(child){
-			child.off("resize",this,this.onResize);
-			this._setScrollChanged();
-			return this._content.removeChild(child);
-		}
-
-		/**@inheritDoc */
-		__proto.removeChildAt=function(index){
-			this.getChildAt(index).off("resize",this,this.onResize);
-			this._setScrollChanged();
-			return this._content.removeChildAt(index);
-		}
-
-		/**@inheritDoc */
-		__proto.removeChildren=function(beginIndex,endIndex){
-			(beginIndex===void 0)&& (beginIndex=0);
-			(endIndex===void 0)&& (endIndex=0x7fffffff);
-			for (var i=this._content.numChildren-1;i >-1;i--){
-				this._content.removeChildAt(i);
-			}
-			this._setScrollChanged();
-			return this;
-		}
-
-		/**@inheritDoc */
-		__proto.getChildAt=function(index){
-			return this._content.getChildAt(index);
-		}
-
-		/**@inheritDoc */
-		__proto.getChildByName=function(name){
-			return this._content.getChildByName(name);
-		}
-
-		/**@inheritDoc */
-		__proto.getChildIndex=function(child){
-			return this._content.getChildIndex(child);
-		}
-
-		/**@private */
-		__proto.changeScroll=function(){
-			this._scrollChanged=false;
-			var contentW=this.contentWidth;
-			var contentH=this.contentHeight;
-			var vscroll=this._vScrollBar;
-			var hscroll=this._hScrollBar;
-			var vShow=vscroll && contentH > this._height;
-			var hShow=hscroll && contentW > this._width;
-			var showWidth=vShow ? this._width-vscroll.width :this._width;
-			var showHeight=hShow ? this._height-hscroll.height :this._height;
-			if (vscroll){
-				vscroll.x=this._width-vscroll.width;
-				vscroll.y=0;
-				vscroll.height=this._height-(hShow ? hscroll.height :0);
-				vscroll.scrollSize=Math.max(this._height *0.033,1);
-				vscroll.thumbPercent=showHeight / contentH;
-				vscroll.setScroll(0,contentH-showHeight,vscroll.value);
-			}
-			if (hscroll){
-				hscroll.x=0;
-				hscroll.y=this._height-hscroll.height;
-				hscroll.width=this._width-(vShow ? vscroll.width :0);
-				hscroll.scrollSize=Math.max(this._width *0.033,1);
-				hscroll.thumbPercent=showWidth / contentW;
-				hscroll.setScroll(0,contentW-showWidth,hscroll.value);
-			}
-		}
-
-		/**@inheritDoc */
-		__proto.changeSize=function(){
-			laya.ui.Component.prototype.changeSize.call(this);
-			this.setContentSize(this._width,this._height);
-		}
-
-		/**
-		*@private
-		*设置内容的宽度、高度（以像素为单位）。
-		*@param width 宽度。
-		*@param height 高度。
-		*/
-		__proto.setContentSize=function(width,height){
-			var content=this._content;
-			content.width=width;
-			content.height=height;
-			content.scrollRect || (content.scrollRect=new Rectangle());
-			content.scrollRect.setTo(0,0,width,height);
-			content.conchModel&&content.conchModel.scrollRect(0,0,width,height);
-		}
-
-		/**
-		*@private
-		*滚动条的<code><code>Event.MOUSE_DOWN</code>事件侦听处理函数。</code>事件侦听处理函数。
-		*@param scrollBar 滚动条对象。
-		*@param e Event 对象。
-		*/
-		__proto.onScrollBarChange=function(scrollBar){
-			var rect=this._content.scrollRect;
-			if (rect){
-				var start=Math.round(scrollBar.value);
-				scrollBar.isVertical ? rect.y=start :rect.x=start;
-				this._content.conchModel&&this._content.conchModel.scrollRect(rect.x,rect.y,rect.width,rect.height);
-			}
-		}
-
-		/**
-		*<p>滚动内容容器至设定的垂直、水平方向滚动条位置。</p>
-		*@param x 水平方向滚动条属性value值。滚动条位置数字。
-		*@param y 垂直方向滚动条属性value值。滚动条位置数字。
-		*/
-		__proto.scrollTo=function(x,y){
-			(x===void 0)&& (x=0);
-			(y===void 0)&& (y=0);
-			if (this.vScrollBar)this.vScrollBar.value=y;
-			if (this.hScrollBar)this.hScrollBar.value=x;
-		}
-
-		/**
-		*刷新滚动内容。
-		*/
-		__proto.refresh=function(){
-			this.changeScroll();
-		}
-
-		__proto.onScrollStart=function(){
-			this._$P.cacheAs || (this._$P.cacheAs=_super.prototype._$get_cacheAs.call(this));
-			_super.prototype._$set_cacheAs.call(this,"none");
-			this._hScrollBar && this._hScrollBar.once("end",this,this.onScrollEnd);
-			this._vScrollBar && this._vScrollBar.once("end",this,this.onScrollEnd);
-		}
-
-		__proto.onScrollEnd=function(){
-			_super.prototype._$set_cacheAs.call(this,this._$P.cacheAs);
-		}
-
-		/**@private */
-		__proto._setScrollChanged=function(){
-			if (!this._scrollChanged){
-				this._scrollChanged=true;
-				this.callLater(this.changeScroll);
-			}
-		}
-
-		/**@inheritDoc */
-		__getset(0,__proto,'numChildren',function(){
-			return this._content.numChildren;
-		});
-
-		/**
-		*水平方向滚动条皮肤。
-		*/
-		__getset(0,__proto,'hScrollBarSkin',function(){
-			return this._hScrollBar ? this._hScrollBar.skin :null;
-			},function(value){
-			if (this._hScrollBar==null){
-				laya.display.Node.prototype.addChild.call(this,this._hScrollBar=new HScrollBar());
-				this._hScrollBar.on("change",this,this.onScrollBarChange,[this._hScrollBar]);
-				this._hScrollBar.target=this._content;
-				this._setScrollChanged();
-			}
-			this._hScrollBar.skin=value;
-		});
-
-		/**
-		*@private
-		*获取内容宽度（以像素为单位）。
-		*/
-		__getset(0,__proto,'contentWidth',function(){
-			var max=0;
-			for (var i=this._content.numChildren-1;i >-1;i--){
-				var comp=this._content.getChildAt(i);
-				max=Math.max(comp.x+comp.width *comp.scaleX,max);
-			}
-			return max;
-		});
-
-		/**
-		*@private
-		*获取内容高度（以像素为单位）。
-		*/
-		__getset(0,__proto,'contentHeight',function(){
-			var max=0;
-			for (var i=this._content.numChildren-1;i >-1;i--){
-				var comp=this._content.getChildAt(i);
-				max=Math.max(comp.y+comp.height *comp.scaleY,max);
-			}
-			return max;
-		});
-
-		/**
-		*@inheritDoc
-		*/
-		__getset(0,__proto,'width',_super.prototype._$get_width,function(value){
-			_super.prototype._$set_width.call(this,value);
-			this._setScrollChanged();
-		});
-
-		/**
-		*水平方向滚动条对象。
-		*/
-		__getset(0,__proto,'hScrollBar',function(){
-			return this._hScrollBar;
-		});
-
-		/**
-		*获取内容容器对象。
-		*/
-		__getset(0,__proto,'content',function(){
-			return this._content;
-		});
-
-		/**@inheritDoc */
-		__getset(0,__proto,'height',_super.prototype._$get_height,function(value){
-			_super.prototype._$set_height.call(this,value);
-			this._setScrollChanged();
-		});
-
-		/**
-		*垂直方向滚动条皮肤。
-		*/
-		__getset(0,__proto,'vScrollBarSkin',function(){
-			return this._vScrollBar ? this._vScrollBar.skin :null;
-			},function(value){
-			if (this._vScrollBar==null){
-				laya.display.Node.prototype.addChild.call(this,this._vScrollBar=new VScrollBar());
-				this._vScrollBar.on("change",this,this.onScrollBarChange,[this._vScrollBar]);
-				this._vScrollBar.target=this._content;
-				this._setScrollChanged();
-			}
-			this._vScrollBar.skin=value;
-		});
-
-		/**
-		*垂直方向滚动条对象。
-		*/
-		__getset(0,__proto,'vScrollBar',function(){
-			return this._vScrollBar;
-		});
-
-		/**@inheritDoc */
-		__getset(0,__proto,'cacheAs',_super.prototype._$get_cacheAs,function(value){
-			_super.prototype._$set_cacheAs.call(this,value);
-			this._$P.cacheAs=null;
-			if (value!=="none"){
-				this._hScrollBar && this._hScrollBar.on("start",this,this.onScrollStart);
-				this._vScrollBar && this._vScrollBar.on("start",this,this.onScrollStart);
-				}else {
-				this._hScrollBar && this._hScrollBar.off("start",this,this.onScrollStart);
-				this._vScrollBar && this._vScrollBar.off("start",this,this.onScrollStart);
-			}
-		});
-
-		return Panel;
-	})(Box)
-
-
-	/**
 	*<code>Group</code> 是一个可以自动布局的项集合控件。
 	*<p> <code>Group</code> 的默认项对象为 <code>Button</code> 类实例。
 	*<code>Group</code> 是 <code>Tab</code> 和 <code>RadioGroup</code> 的基类。</p>
@@ -24163,107 +24227,6 @@ var Laya=window.Laya=(function(window,document){
 
 
 	/**
-	*使用 <code>VSlider</code> 控件，用户可以通过在滑块轨道的终点之间移动滑块来选择值。
-	*<p> <code>VSlider</code> 控件采用垂直方向。滑块轨道从下往上扩展，而标签位于轨道的左右两侧。</p>
-	*
-	*@example 以下示例代码，创建了一个 <code>VSlider</code> 实例。
-	*<listing version="3.0">
-	*package
-	*{
-		*import laya.ui.HSlider;
-		*import laya.ui.VSlider;
-		*import laya.utils.Handler;
-		*public class VSlider_Example
-		*{
-			*private var vSlider:VSlider;
-			*public function VSlider_Example()
-			*{
-				*Laya.init(640,800);//设置游戏画布宽高。
-				*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
-				*Laya.loader.load(["resource/ui/vslider.png","resource/ui/vslider$bar.png"],Handler.create(this,onLoadComplete));//加载资源。
-				*}
-			*private function onLoadComplete():void
-			*{
-				*vSlider=new VSlider();//创建一个 VSlider 类的实例对象 vSlider 。
-				*vSlider.skin="resource/ui/vslider.png";//设置 vSlider 的皮肤。
-				*vSlider.min=0;//设置 vSlider 最低位置值。
-				*vSlider.max=10;//设置 vSlider 最高位置值。
-				*vSlider.value=2;//设置 vSlider 当前位置值。
-				*vSlider.tick=1;//设置 vSlider 刻度值。
-				*vSlider.x=100;//设置 vSlider 对象的属性 x 的值，用于控制 vSlider 对象的显示位置。
-				*vSlider.y=100;//设置 vSlider 对象的属性 y 的值，用于控制 vSlider 对象的显示位置。
-				*vSlider.changeHandler=new Handler(this,onChange);//设置 vSlider 位置变化处理器。
-				*Laya.stage.addChild(vSlider);//把 vSlider 添加到显示列表。
-				*}
-			*private function onChange(value:Number):void
-			*{
-				*trace("滑块的位置： value="+value);
-				*}
-			*}
-		*}
-	*</listing>
-	*<listing version="3.0">
-	*Laya.init(640,800);//设置游戏画布宽高
-	*Laya.stage.bgColor="#efefef";//设置画布的背景颜色
-	*var vSlider;
-	*Laya.loader.load(["resource/ui/vslider.png","resource/ui/vslider$bar.png"],laya.utils.Handler.create(this,onLoadComplete));//加载资源。
-	*function onLoadComplete(){
-		*vSlider=new laya.ui.VSlider();//创建一个 VSlider 类的实例对象 vSlider 。
-		*vSlider.skin="resource/ui/vslider.png";//设置 vSlider 的皮肤。
-		*vSlider.min=0;//设置 vSlider 最低位置值。
-		*vSlider.max=10;//设置 vSlider 最高位置值。
-		*vSlider.value=2;//设置 vSlider 当前位置值。
-		*vSlider.tick=1;//设置 vSlider 刻度值。
-		*vSlider.x=100;//设置 vSlider 对象的属性 x 的值，用于控制 vSlider 对象的显示位置。
-		*vSlider.y=100;//设置 vSlider 对象的属性 y 的值，用于控制 vSlider 对象的显示位置。
-		*vSlider.changeHandler=new laya.utils.Handler(this,onChange);//设置 vSlider 位置变化处理器。
-		*Laya.stage.addChild(vSlider);//把 vSlider 添加到显示列表。
-		*}
-	*function onChange(value){
-		*console.log("滑块的位置： value="+value);
-		*}
-	*</listing>
-	*<listing version="3.0">
-	*import HSlider=laya.ui.HSlider;
-	*import VSlider=laya.ui.VSlider;
-	*import Handler=laya.utils.Handler;
-	*class VSlider_Example {
-		*private vSlider:VSlider;
-		*constructor(){
-			*Laya.init(640,800);//设置游戏画布宽高。
-			*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
-			*Laya.loader.load(["resource/ui/vslider.png","resource/ui/vslider$bar.png"],Handler.create(this,this.onLoadComplete));//加载资源。
-			*}
-		*private onLoadComplete():void {
-			*this.vSlider=new VSlider();//创建一个 VSlider 类的实例对象 vSlider 。
-			*this.vSlider.skin="resource/ui/vslider.png";//设置 vSlider 的皮肤。
-			*this.vSlider.min=0;//设置 vSlider 最低位置值。
-			*this.vSlider.max=10;//设置 vSlider 最高位置值。
-			*this.vSlider.value=2;//设置 vSlider 当前位置值。
-			*this.vSlider.tick=1;//设置 vSlider 刻度值。
-			*this.vSlider.x=100;//设置 vSlider 对象的属性 x 的值，用于控制 vSlider 对象的显示位置。
-			*this.vSlider.y=100;//设置 vSlider 对象的属性 y 的值，用于控制 vSlider 对象的显示位置。
-			*this.vSlider.changeHandler=new Handler(this,this.onChange);//设置 vSlider 位置变化处理器。
-			*Laya.stage.addChild(this.vSlider);//把 vSlider 添加到显示列表。
-			*}
-		*private onChange(value:number):void {
-			*console.log("滑块的位置： value="+value);
-			*}
-		*}
-	*</listing>
-	*@see laya.ui.Slider
-	*/
-	//class laya.ui.VSlider extends laya.ui.Slider
-	var VSlider=(function(_super){
-		function VSlider(){VSlider.__super.call(this);;
-		};
-
-		__class(VSlider,'laya.ui.VSlider',_super);
-		return VSlider;
-	})(Slider)
-
-
-	/**
 	*<code>TextInput</code> 类用于创建显示对象以显示和输入文本。
 	*
 	*@example 以下示例代码，创建了一个 <code>TextInput</code> 实例。
@@ -24579,6 +24542,107 @@ var Laya=window.Laya=(function(window,document){
 
 
 	/**
+	*使用 <code>VSlider</code> 控件，用户可以通过在滑块轨道的终点之间移动滑块来选择值。
+	*<p> <code>VSlider</code> 控件采用垂直方向。滑块轨道从下往上扩展，而标签位于轨道的左右两侧。</p>
+	*
+	*@example 以下示例代码，创建了一个 <code>VSlider</code> 实例。
+	*<listing version="3.0">
+	*package
+	*{
+		*import laya.ui.HSlider;
+		*import laya.ui.VSlider;
+		*import laya.utils.Handler;
+		*public class VSlider_Example
+		*{
+			*private var vSlider:VSlider;
+			*public function VSlider_Example()
+			*{
+				*Laya.init(640,800);//设置游戏画布宽高。
+				*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
+				*Laya.loader.load(["resource/ui/vslider.png","resource/ui/vslider$bar.png"],Handler.create(this,onLoadComplete));//加载资源。
+				*}
+			*private function onLoadComplete():void
+			*{
+				*vSlider=new VSlider();//创建一个 VSlider 类的实例对象 vSlider 。
+				*vSlider.skin="resource/ui/vslider.png";//设置 vSlider 的皮肤。
+				*vSlider.min=0;//设置 vSlider 最低位置值。
+				*vSlider.max=10;//设置 vSlider 最高位置值。
+				*vSlider.value=2;//设置 vSlider 当前位置值。
+				*vSlider.tick=1;//设置 vSlider 刻度值。
+				*vSlider.x=100;//设置 vSlider 对象的属性 x 的值，用于控制 vSlider 对象的显示位置。
+				*vSlider.y=100;//设置 vSlider 对象的属性 y 的值，用于控制 vSlider 对象的显示位置。
+				*vSlider.changeHandler=new Handler(this,onChange);//设置 vSlider 位置变化处理器。
+				*Laya.stage.addChild(vSlider);//把 vSlider 添加到显示列表。
+				*}
+			*private function onChange(value:Number):void
+			*{
+				*trace("滑块的位置： value="+value);
+				*}
+			*}
+		*}
+	*</listing>
+	*<listing version="3.0">
+	*Laya.init(640,800);//设置游戏画布宽高
+	*Laya.stage.bgColor="#efefef";//设置画布的背景颜色
+	*var vSlider;
+	*Laya.loader.load(["resource/ui/vslider.png","resource/ui/vslider$bar.png"],laya.utils.Handler.create(this,onLoadComplete));//加载资源。
+	*function onLoadComplete(){
+		*vSlider=new laya.ui.VSlider();//创建一个 VSlider 类的实例对象 vSlider 。
+		*vSlider.skin="resource/ui/vslider.png";//设置 vSlider 的皮肤。
+		*vSlider.min=0;//设置 vSlider 最低位置值。
+		*vSlider.max=10;//设置 vSlider 最高位置值。
+		*vSlider.value=2;//设置 vSlider 当前位置值。
+		*vSlider.tick=1;//设置 vSlider 刻度值。
+		*vSlider.x=100;//设置 vSlider 对象的属性 x 的值，用于控制 vSlider 对象的显示位置。
+		*vSlider.y=100;//设置 vSlider 对象的属性 y 的值，用于控制 vSlider 对象的显示位置。
+		*vSlider.changeHandler=new laya.utils.Handler(this,onChange);//设置 vSlider 位置变化处理器。
+		*Laya.stage.addChild(vSlider);//把 vSlider 添加到显示列表。
+		*}
+	*function onChange(value){
+		*console.log("滑块的位置： value="+value);
+		*}
+	*</listing>
+	*<listing version="3.0">
+	*import HSlider=laya.ui.HSlider;
+	*import VSlider=laya.ui.VSlider;
+	*import Handler=laya.utils.Handler;
+	*class VSlider_Example {
+		*private vSlider:VSlider;
+		*constructor(){
+			*Laya.init(640,800);//设置游戏画布宽高。
+			*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
+			*Laya.loader.load(["resource/ui/vslider.png","resource/ui/vslider$bar.png"],Handler.create(this,this.onLoadComplete));//加载资源。
+			*}
+		*private onLoadComplete():void {
+			*this.vSlider=new VSlider();//创建一个 VSlider 类的实例对象 vSlider 。
+			*this.vSlider.skin="resource/ui/vslider.png";//设置 vSlider 的皮肤。
+			*this.vSlider.min=0;//设置 vSlider 最低位置值。
+			*this.vSlider.max=10;//设置 vSlider 最高位置值。
+			*this.vSlider.value=2;//设置 vSlider 当前位置值。
+			*this.vSlider.tick=1;//设置 vSlider 刻度值。
+			*this.vSlider.x=100;//设置 vSlider 对象的属性 x 的值，用于控制 vSlider 对象的显示位置。
+			*this.vSlider.y=100;//设置 vSlider 对象的属性 y 的值，用于控制 vSlider 对象的显示位置。
+			*this.vSlider.changeHandler=new Handler(this,this.onChange);//设置 vSlider 位置变化处理器。
+			*Laya.stage.addChild(this.vSlider);//把 vSlider 添加到显示列表。
+			*}
+		*private onChange(value:number):void {
+			*console.log("滑块的位置： value="+value);
+			*}
+		*}
+	*</listing>
+	*@see laya.ui.Slider
+	*/
+	//class laya.ui.VSlider extends laya.ui.Slider
+	var VSlider=(function(_super){
+		function VSlider(){VSlider.__super.call(this);;
+		};
+
+		__class(VSlider,'laya.ui.VSlider',_super);
+		return VSlider;
+	})(Slider)
+
+
+	/**
 	*@private
 	*/
 	//class laya.display.GraphicAnimation extends laya.display.FrameAnimation
@@ -24832,18 +24896,20 @@ var Laya=window.Laya=(function(window,document){
 			this.nextBtn=null;
 			this.leftInput=null;
 			this.rightInput=null;
+			this.analyserList=null;
 			KLineViewUI.__super.call(this);
 		}
 
 		__class(KLineViewUI,'ui.KLineViewUI',_super);
 		var __proto=KLineViewUI.prototype;
 		__proto.createChildren=function(){
+			View.regComponent("view.plugins.AnalyserList",AnalyserList);
 			laya.ui.Component.prototype.createChildren.call(this);
 			this.createView(KLineViewUI.uiView);
 		}
 
 		__static(KLineViewUI,
-		['uiView',function(){return this.uiView={"type":"View","props":{"width":600,"height":400},"child":[{"type":"ComboBox","props":{"y":9,"x":8,"var":"stockSelect","skin":"comp/combobox.png","scrollBarSkin":"comp/vscroll.png","labels":"000233,600322"}},{"type":"Button","props":{"y":9,"x":114,"var":"playBtn","skin":"comp/button.png","label":"play"}},{"type":"Label","props":{"y":13,"x":225,"width":147,"var":"infoTxt","text":"label","height":20,"color":"#5be330"}},{"type":"TextInput","props":{"y":43,"x":8,"width":90,"var":"stockInput","text":"002234","skin":"comp/textinput.png","height":22}},{"type":"Button","props":{"y":42,"x":114,"var":"playInputBtn","skin":"comp/button.png","label":"play"}},{"type":"CheckBox","props":{"y":45,"x":226,"var":"enableAnimation","skin":"comp/checkbox.png","selected":true,"label":"开启动画"}},{"type":"Button","props":{"y":39,"x":301,"var":"detailBtn","skin":"comp/button.png","label":"详情"}},{"type":"Button","props":{"y":80,"x":11,"var":"preBtn","skin":"comp/button.png","label":"pre"}},{"type":"Button","props":{"y":80,"x":100,"var":"nextBtn","skin":"comp/button.png","label":"next"}},{"type":"TextInput","props":{"y":83,"x":198,"width":90,"var":"leftInput","text":"10","skin":"comp/textinput.png","height":22}},{"type":"TextInput","props":{"y":83,"x":299,"width":90,"var":"rightInput","text":"25","skin":"comp/textinput.png","height":22}}]};}
+		['uiView',function(){return this.uiView={"type":"View","props":{"width":600,"height":400},"child":[{"type":"ComboBox","props":{"y":9,"x":8,"var":"stockSelect","skin":"comp/combobox.png","scrollBarSkin":"comp/vscroll.png","labels":"000233,600322"}},{"type":"Button","props":{"y":9,"x":114,"var":"playBtn","skin":"comp/button.png","label":"play"}},{"type":"Label","props":{"y":13,"x":225,"width":147,"var":"infoTxt","text":"label","height":20,"color":"#5be330"}},{"type":"TextInput","props":{"y":43,"x":8,"width":90,"var":"stockInput","text":"002234","skin":"comp/textinput.png","height":22}},{"type":"Button","props":{"y":42,"x":114,"var":"playInputBtn","skin":"comp/button.png","label":"play"}},{"type":"CheckBox","props":{"y":45,"x":226,"var":"enableAnimation","skin":"comp/checkbox.png","selected":true,"label":"开启动画"}},{"type":"Button","props":{"y":39,"x":301,"var":"detailBtn","skin":"comp/button.png","label":"详情"}},{"type":"Button","props":{"y":80,"x":11,"var":"preBtn","skin":"comp/button.png","label":"pre"}},{"type":"Button","props":{"y":80,"x":100,"var":"nextBtn","skin":"comp/button.png","label":"next"}},{"type":"TextInput","props":{"y":83,"x":198,"width":90,"var":"leftInput","text":"10","skin":"comp/textinput.png","height":22}},{"type":"TextInput","props":{"y":83,"x":299,"width":90,"var":"rightInput","text":"25","skin":"comp/textinput.png","height":22}},{"type":"AnalyserList","props":{"var":"analyserList","top":10,"runtime":"view.plugins.AnalyserList","right":10}}]};}
 		]);
 		return KLineViewUI;
 	})(View)
@@ -24873,6 +24939,27 @@ var Laya=window.Laya=(function(window,document){
 		['uiView',function(){return this.uiView={"type":"View","props":{"width":445,"height":400},"child":[{"type":"Tab","props":{"y":4,"x":4,"var":"typeSelect","skin":"comp/tab.png","selectedIndex":0,"labels":"股票列表,K线动画,选股"}},{"type":"StockView","props":{"var":"stockListView","top":40,"runtime":"view.StockView","right":10,"left":10,"bottom":10}},{"type":"KLineView","props":{"var":"kLineView","top":40,"runtime":"view.KLineView","right":10,"left":10,"bottom":10}},{"type":"SelectStockView","props":{"var":"selectView","top":40,"runtime":"view.SelectStockView","right":10,"left":10,"bottom":10}}]};}
 		]);
 		return MainViewUI;
+	})(View)
+
+
+	//class ui.plugins.AnalyserListUI extends laya.ui.View
+	var AnalyserListUI=(function(_super){
+		function AnalyserListUI(){
+			this.list=null;
+			AnalyserListUI.__super.call(this);
+		}
+
+		__class(AnalyserListUI,'ui.plugins.AnalyserListUI',_super);
+		var __proto=AnalyserListUI.prototype;
+		__proto.createChildren=function(){
+			laya.ui.Component.prototype.createChildren.call(this);
+			this.createView(AnalyserListUI.uiView);
+		}
+
+		__static(AnalyserListUI,
+		['uiView',function(){return this.uiView={"type":"View","props":{},"child":[{"type":"List","props":{"y":0,"x":2,"width":160,"var":"list","vScrollBarSkin":"comp/vscroll.png","height":193},"child":[{"type":"Box","props":{"y":0,"x":0,"width":148,"renderType":"render","height":17},"child":[{"type":"Label","props":{"width":80,"text":"limittxt","name":"nameTxt","height":17,"color":"#e0211d"}},{"type":"CheckBox","props":{"x":92,"skin":"comp/checkbox.png","name":"ifShow","label":"启用"}}]}]}]};}
+		]);
+		return AnalyserListUI;
 	})(View)
 
 
@@ -25450,7 +25537,13 @@ var Laya=window.Laya=(function(window,document){
 			this.kLineAnalyser.leftLimit=15;
 			this.kLineAnalyser.rightLimit=20;
 			this.kLine=new KLine();
-			this.kLine.analysers=[this.kLineAnalyser];
+			this.kLine.analysers=[];
+			var analyserClassList;
+			analyserClassList=[];
+			analyserClassList.push(KLineAnalyser);
+			analyserClassList.push(BreakAnalyser);
+			analyserClassList.push(BottomAnalyser);
+			this.analyserList.initAnalysers(analyserClassList);
 			this.addChild(this.kLine);
 			var stock;
 			stock="300383";
@@ -25458,10 +25551,16 @@ var Laya=window.Laya=(function(window,document){
 			this.kLine.pos(0,this.kLine.lineHeight+90);
 			this.kLine.on("msg",this,this.onKlineMsg);
 			this.init();
+			Notice.listen("AnalyserListChange",this,this.analysersChanged);
 		}
 
 		__class(KLineView,'view.KLineView',_super);
 		var __proto=KLineView.prototype;
+		__proto.analysersChanged=function(analysers){
+			this.kLine.analysers=analysers;
+			this.showKline(this.kLine.tStock);
+		}
+
 		__proto.showStockKline=function(stock){
 			this.stockInput.text=stock;
 			this.onPlayInput();
@@ -25573,6 +25672,75 @@ var Laya=window.Laya=(function(window,document){
 
 		return MainView;
 	})(MainViewUI)
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class view.plugins.AnalyserList extends ui.plugins.AnalyserListUI
+	var AnalyserList=(function(_super){
+		function AnalyserList(){
+			this.dataList=null;
+			this.checkHandler=null;
+			AnalyserList.__super.call(this);
+			this.list.renderHandler=new Handler(this,this.mRender);
+			this.list.array=[];
+			this.list.scrollBar.autoHide=true;
+		}
+
+		__class(AnalyserList,'view.plugins.AnalyserList',_super);
+		var __proto=AnalyserList.prototype;
+		__proto.initAnalysers=function(analyserList){
+			this.dataList=[];
+			var i=0,len=0;
+			len=analyserList.length;
+			var tData;
+			var tAnalyserClass;
+			for (i=0;i < len;i++){
+				tAnalyserClass=analyserList[i];
+				tData={};
+				tData.name=ClassTool.getClassName(tAnalyserClass);
+				tData.Analyser=new tAnalyserClass();
+				tData.enabled=false;
+				this.dataList.push(tData);
+			}
+			this.list.array=this.dataList;
+		}
+
+		__proto.mRender=function(cell,index){
+			var item=cell.dataSource;
+			var label;
+			label=cell.getChildByName("nameTxt");
+			var check;
+			check=cell.getChildByName("ifShow");
+			label.text=item.name;
+			check.selected=item.enabled;
+			check.clickHandler=new Handler(this,this.onCheckChange,[check,item]);
+		}
+
+		__proto.onCheckChange=function(check,item){
+			item.enabled=check.selected;
+			this.noticeSelectAnalyses();
+		}
+
+		__proto.noticeSelectAnalyses=function(){
+			var analyserList;
+			analyserList=[];
+			var i=0,len=0;
+			len=this.dataList.length;
+			var tData;
+			for (i=0;i < len;i++){
+				tData=this.dataList[i];
+				if (tData.enabled){
+					analyserList.push(tData.Analyser);
+				}
+			}
+			Notice.notify("AnalyserListChange",[analyserList]);
+		}
+
+		return AnalyserList;
+	})(AnalyserListUI)
 
 
 	/**
@@ -25715,7 +25883,7 @@ var Laya=window.Laya=(function(window,document){
 	})(StockViewUI)
 
 
-	Laya.__init([EventDispatcher,LoaderManager,Browser,Render,View,LocalStorage,Timer]);
+	Laya.__init([LoaderManager,EventDispatcher,Browser,Render,View,LocalStorage,Timer]);
 	new StockMain();
 
 })(window,document,Laya);
