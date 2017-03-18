@@ -29,14 +29,20 @@ package view
 			kLineAnalyser.leftLimit = 15;
 			kLineAnalyser.rightLimit = 20;
 			kLine = new KLine();
-			kLine.analysers = [kLineAnalyser];
-			
+			//kLine.analysers = [kLineAnalyser];
+			kLine.analysers = [];
 			//breakAnalyser = new BreakAnalyser();
 			//kLine.analysers = [breakAnalyser];
 			//
 			//tAnalyser = new BottomAnalyser();
 			//kLine.analysers = [tAnalyser];
+			var analyserClassList:Array;
+			analyserClassList = [];
+			analyserClassList.push(KLineAnalyser);
+			analyserClassList.push(BreakAnalyser);
+			analyserClassList.push(BottomAnalyser);
 			
+			analyserList.initAnalysers(analyserClassList);
 			addChild(kLine);
 			var stock:String;
 			stock = "300383";
@@ -48,6 +54,13 @@ package view
 			kLine.pos(0, kLine.lineHeight + 90);
 			kLine.on("msg", this, onKlineMsg);
 			init();
+			Notice.listen(MsgConst.AnalyserListChange, this, analysersChanged);
+		}
+		
+		private function analysersChanged(analysers:Array):void
+		{
+			kLine.analysers = analysers;
+			showKline(kLine.tStock);
 		}
 		public function showStockKline(stock:String):void
 		{
