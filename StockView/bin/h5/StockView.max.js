@@ -14550,8 +14550,8 @@ var Laya=window.Laya=(function(window,document){
 	//class laya.stock.analysers.KLineAnalyser extends laya.stock.analysers.AnalyserBase
 	var KLineAnalyser=(function(_super){
 		function KLineAnalyser(){
-			this.leftLimit=10;
-			this.rightLimit=25;
+			this.leftLimit=25;
+			this.rightLimit=10;
 			this.buyMinUnder=3;
 			KLineAnalyser.__super.call(this);
 		}
