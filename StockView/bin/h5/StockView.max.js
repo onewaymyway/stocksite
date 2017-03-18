@@ -735,7 +735,6 @@ var Laya=window.Laya=(function(window,document){
 			for (i=0;i < len;i++){
 				tKey=this.paramkeys[i];
 				tValue=this[tKey];
-				debugger;
 				if ((typeof tValue=='string')){
 					this.paramDes.push([tKey,"STRING"]);
 					}else{
@@ -1013,6 +1012,7 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		__proto.init=function(csvStr){
+			csvStr=StringTool.getReplace(csvStr,"\r","");
 			var lines;
 			lines=csvStr.split("\n");
 			var keys;
@@ -20241,6 +20241,7 @@ var Laya=window.Laya=(function(window,document){
 			this.dataList=null;
 			this.disDataList=null;
 			this.tLen=10;
+			this.maxShowCount=-1;
 			this.lineHeight=400;
 			this.lineWidth=800;
 			this.yRate=NaN;
@@ -20306,8 +20307,14 @@ var Laya=window.Laya=(function(window,document){
 				this.showMsg("Animation End");
 				Laya.timer.clear(this,this.timeEffect);
 				return;
+			};
+			var start=0;
+			if (this.maxShowCount > 0){
+				if (this.tLen > this.maxShowCount){
+					start=this.tLen-this.maxShowCount;
+				}
 			}
-			this.drawdata(0,this.tLen);
+			this.drawdata(start,this.tLen);
 		}
 
 		__proto.analysersDoAnalyse=function(start,end){
@@ -20330,6 +20337,7 @@ var Laya=window.Laya=(function(window,document){
 			if (end < start)end=this.dataList.length-1;
 			this.disDataList=this.dataList.slice(start,end);
 			this.drawStockKLine();
+			this.drawAmounts();
 			this.drawGrid();
 			this.drawAnalysers();
 		}
@@ -20357,6 +20365,27 @@ var Laya=window.Laya=(function(window,document){
 				this.graphics.drawLine(pos,this.getAdptYV(tData["high"]),pos,this.getAdptYV(tData["low"]),tColor,1*this.xRate);
 				this.graphics.drawLine(pos,this.getAdptYV(tData["open"]),pos,this.getAdptYV(tData["close"]),tColor,this.gridWidth*this.xRate);
 			}
+		}
+
+		__proto.drawAmounts=function(){
+			var sign;
+			sign="amount";
+			sign="volume";
+			var i=0,len=0;
+			var dataList;
+			dataList=this.disDataList;
+			len=dataList.length;
+			var tData;
+			var max=NaN;
+			max=DataUtils.getKeyMax(dataList,sign);
+			var MRate=NaN;
+			MRate=100 / max;
+			var barsData;
+			barsData=[];
+			for (i=0;i < len;i++){
+				barsData.push([i,-dataList[i][sign]*MRate]);
+			}
+			this.drawBars(barsData,0);
 		}
 
 		__proto.drawGrid=function(){
@@ -20445,6 +20474,23 @@ var Laya=window.Laya=(function(window,document){
 			}
 		}
 
+		__proto.drawBars=function(barList,yZero,color){
+			(yZero===void 0)&& (yZero=0);
+			(color===void 0)&& (color="#ffff00");
+			var i=0,len=0;
+			len=barList.length;
+			var tData;
+			var tX=NaN;
+			var tV=NaN;
+			for (i=0;i < len;i++){
+				tData=barList[i];
+				tX=tData[0];
+				tV=tData[1];
+				this.graphics.drawLine(this.getAdptXV(tX *this.gridWidth),yZero+tV,this.getAdptXV(tX *this.gridWidth),yZero,color,this.gridWidth *this.xRate);
+			}
+		}
+
+		//this.graphics.drawLine(getAdptXV(tX *gridWidth),yZero+tV,getAdptXV(tX *gridWidth),yZero,"#ff0000",5);
 		__proto.drawLines=function(pointList,color){
 			(color===void 0)&& (color="#ff0000");
 			var i=0,len=0;
