@@ -4,6 +4,7 @@ package view
 	import laya.events.Event;
 	import laya.math.DataUtils;
 	import laya.stock.analysers.AnalyserBase;
+	import laya.stock.analysers.bars.VolumeBar;
 	import laya.stock.analysers.BottomAnalyser;
 	import laya.stock.analysers.BreakAnalyser;
 	import laya.stock.analysers.KLineAnalyser;
@@ -44,6 +45,7 @@ package view
 			analyserClassList.push(BreakAnalyser);
 			analyserClassList.push(BottomAnalyser);
 			analyserClassList.push(AverageLine);
+			analyserClassList.push(VolumeBar);
 			
 			analyserList.initAnalysers(analyserClassList);
 			addChild(kLine);

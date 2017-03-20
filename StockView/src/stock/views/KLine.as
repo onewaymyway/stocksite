@@ -135,7 +135,7 @@ package stock.views
 			disDataList = dataList.slice(start, end);
 			
 			drawStockKLine();
-			drawAmounts();
+			//drawAmounts();
 			drawGrid();
 			drawAnalysers();
 		}
