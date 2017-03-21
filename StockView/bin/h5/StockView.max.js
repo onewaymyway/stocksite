@@ -14826,6 +14826,78 @@ var Laya=window.Laya=(function(window,document){
 	*...
 	*@author ww
 	*/
+	//class laya.stock.analysers.lines.PositionLine extends laya.stock.analysers.AnalyserBase
+	var PositionLine=(function(_super){
+		function PositionLine(){
+			this.dayCount=30;
+			this.priceType="close";
+			this.color="#ff0000";
+			this.barHeight=20;
+			PositionLine.__super.call(this);
+		}
+
+		__class(PositionLine,'laya.stock.analysers.lines.PositionLine',_super);
+		var __proto=PositionLine.prototype;
+		__proto.initParamKeys=function(){
+			this.paramkeys=["barHeight","priceType","color","dayCount"];
+		}
+
+		__proto.analyseWork=function(){
+			this.doAWork();
+		}
+
+		__proto.doAWork=function(){
+			var i=0,len=0;
+			var expList;
+			expList=[];
+			len=this.dataList.length;
+			for (i=0;i < len;i++){
+				expList.push([i,this.getMaxDatas(this.dataList,this.dayCount,i)*this.barHeight]);
+			}
+			this.resultData["expList"]=expList;
+		}
+
+		__proto.getMaxDatas=function(dataList,dayCount,index){
+			var i=0,len=0;
+			var startI=0;
+			startI=index-dayCount;
+			if (startI < 0)startI=0;
+			var max=NaN;
+			var min=NaN;
+			min=max=dataList[startI][this.priceType];
+			var tValue=NaN;
+			len=index;
+			for (i=startI;i <=len;i++){
+				tValue=dataList[i][this.priceType];
+				if (min > tValue)min=tValue;
+				if (max < tValue)max=tValue;
+			}
+			tValue=dataList[index][this.priceType];
+			var loseRate=NaN;
+			loseRate=(min-tValue)/ tValue;
+			var winRate=NaN;
+			winRate=(max-tValue)/ tValue;
+			var exp=NaN;
+			exp=winRate-2 *loseRate;
+			return exp;
+		}
+
+		__proto.getDrawCmds=function(){
+			var rst;
+			rst=[];
+			debugger;
+			rst.push(["drawLinesEx",[this.resultData["expList"],this.color]]);
+			return rst;
+		}
+
+		return PositionLine;
+	})(AnalyserBase)
+
+
+	/**
+	*...
+	*@author ww
+	*/
 	//class laya.stock.models.DownList extends laya.stock.models.OrdedList
 	var DownList=(function(_super){
 		function DownList(){
@@ -14860,6 +14932,38 @@ var Laya=window.Laya=(function(window,document){
 
 		return UpList;
 	})(OrdedList)
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class stock.StockBasicInfo extends stock.CSVParser
+	var StockBasicInfo=(function(_super){
+		function StockBasicInfo(){
+			this.stockList=null;
+			this.stockCodeList=null;
+			StockBasicInfo.__super.call(this);
+		}
+
+		__class(StockBasicInfo,'stock.StockBasicInfo',_super);
+		var __proto=StockBasicInfo.prototype;
+		__proto.init=function(csvStr){
+			_super.prototype.init.call(this,csvStr);
+			this.stockList=this.dataList;
+			var i=0,len=0;
+			len=this.stockList.length;
+			this.stockCodeList=[];
+			for (i=0;i < len;i++){
+				this.stockCodeList.push(this.stockList[i]["code"]);
+			}
+		}
+
+		__static(StockBasicInfo,
+		['I',function(){return this.I=new StockBasicInfo();}
+		]);
+		return StockBasicInfo;
+	})(CSVParser)
 
 
 	/**
@@ -15288,38 +15392,6 @@ var Laya=window.Laya=(function(window,document){
 		Node.PROP_EMPTY={};
 		return Node;
 	})(EventDispatcher)
-
-
-	/**
-	*...
-	*@author ww
-	*/
-	//class stock.StockBasicInfo extends stock.CSVParser
-	var StockBasicInfo=(function(_super){
-		function StockBasicInfo(){
-			this.stockList=null;
-			this.stockCodeList=null;
-			StockBasicInfo.__super.call(this);
-		}
-
-		__class(StockBasicInfo,'stock.StockBasicInfo',_super);
-		var __proto=StockBasicInfo.prototype;
-		__proto.init=function(csvStr){
-			_super.prototype.init.call(this,csvStr);
-			this.stockList=this.dataList;
-			var i=0,len=0;
-			len=this.stockList.length;
-			this.stockCodeList=[];
-			for (i=0;i < len;i++){
-				this.stockCodeList.push(this.stockList[i]["code"]);
-			}
-		}
-
-		__static(StockBasicInfo,
-		['I',function(){return this.I=new StockBasicInfo();}
-		]);
-		return StockBasicInfo;
-	})(CSVParser)
 
 
 	/**
@@ -18104,6 +18176,68 @@ var Laya=window.Laya=(function(window,document){
 
 
 	/**
+	*...
+	*@author ww
+	*/
+	//class laya.stock.analysers.lines.WinRateLine extends laya.stock.analysers.lines.AverageLine
+	var WinRateLine=(function(_super){
+		function WinRateLine(){
+			this.lineHeight=100;
+			this.offY=10;
+			WinRateLine.__super.call(this);
+			this.priceType="rise";
+		}
+
+		__class(WinRateLine,'laya.stock.analysers.lines.WinRateLine',_super);
+		var __proto=WinRateLine.prototype;
+		__proto.initParamKeys=function(){
+			this.paramkeys=["days","colors","lineHeight","offY"];
+		}
+
+		__proto.analyseWork=function(){
+			this.doAverages();
+		}
+
+		__proto.adptDataList=function(dataList,dayCount){
+			var i=0,len=0;
+			len=dataList.length;
+			var tData;
+			for (i=0;i < len;i++){
+				tData=dataList[i];
+				if (tData["close"] > tData["open"]){
+					tData["rise"]=this.lineHeight*1;
+					}else{
+					tData["rise"]=0;
+				}
+			}
+		}
+
+		__proto.getAverageData=function(dayCount,color){
+			this.adptDataList(this.disDataList,dayCount);
+			var rst;
+			rst=_super.prototype.getAverageData.call(this,dayCount,color);
+			rst.push(this.offY);
+			return rst;
+		}
+
+		__proto.getDrawCmds=function(){
+			var rst;
+			rst=[];
+			var avgs;
+			avgs=this.resultData["averages"];
+			var i=0,len=0;
+			len=avgs.length;
+			for (i=0;i < len;i++){
+				rst.push(["drawLinesEx",avgs[i]]);
+			}
+			return rst;
+		}
+
+		return WinRateLine;
+	})(AverageLine)
+
+
+	/**
 	*<p> <code>Sprite</code> 类是基本显示列表构造块：一个可显示图形并且也可包含子项的显示列表节点。</p>
 	*
 	*@example 以下示例代码，创建了一个 <code>Text</code> 实例。
@@ -20550,6 +20684,16 @@ var Laya=window.Laya=(function(window,document){
 			}
 		}
 
+		__proto.drawLinesEx=function(pointList,color,offY){
+			(color===void 0)&& (color="#ff0000");
+			(offY===void 0)&& (offY=0);
+			var i=0,len=0;
+			len=pointList.length;
+			for (i=1;i < len;i++){
+				this.drawLineEx(pointList[i-1][0],pointList[i-1][1]+offY,pointList[i][0],pointList[i][1]+offY,color);
+			}
+		}
+
 		__proto.drawPoints=function(iList,sign,r,color){
 			(r===void 0)&& (r=2);
 			(color===void 0)&& (color="#ff0000");
@@ -20587,6 +20731,11 @@ var Laya=window.Laya=(function(window,document){
 		__proto.drawLine=function(startI,startY,endI,endY,color){
 			(color===void 0)&& (color="#ff0000");
 			this.graphics.drawLine(this.getAdptXV(startI *this.gridWidth),this.getAdptYV(startY),this.getAdptXV(endI *this.gridWidth),this.getAdptYV(endY),color);
+		}
+
+		__proto.drawLineEx=function(startI,startY,endI,endY,color){
+			(color===void 0)&& (color="#ff0000");
+			this.graphics.drawLine(this.getAdptXV(startI *this.gridWidth),-startY,this.getAdptXV(endI *this.gridWidth),-endY,color);
 		}
 
 		__proto.getAdptYV=function(v){
@@ -32723,107 +32872,6 @@ var Laya=window.Laya=(function(window,document){
 
 
 	/**
-	*使用 <code>VSlider</code> 控件，用户可以通过在滑块轨道的终点之间移动滑块来选择值。
-	*<p> <code>VSlider</code> 控件采用垂直方向。滑块轨道从下往上扩展，而标签位于轨道的左右两侧。</p>
-	*
-	*@example 以下示例代码，创建了一个 <code>VSlider</code> 实例。
-	*<listing version="3.0">
-	*package
-	*{
-		*import laya.ui.HSlider;
-		*import laya.ui.VSlider;
-		*import laya.utils.Handler;
-		*public class VSlider_Example
-		*{
-			*private var vSlider:VSlider;
-			*public function VSlider_Example()
-			*{
-				*Laya.init(640,800);//设置游戏画布宽高。
-				*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
-				*Laya.loader.load(["resource/ui/vslider.png","resource/ui/vslider$bar.png"],Handler.create(this,onLoadComplete));//加载资源。
-				*}
-			*private function onLoadComplete():void
-			*{
-				*vSlider=new VSlider();//创建一个 VSlider 类的实例对象 vSlider 。
-				*vSlider.skin="resource/ui/vslider.png";//设置 vSlider 的皮肤。
-				*vSlider.min=0;//设置 vSlider 最低位置值。
-				*vSlider.max=10;//设置 vSlider 最高位置值。
-				*vSlider.value=2;//设置 vSlider 当前位置值。
-				*vSlider.tick=1;//设置 vSlider 刻度值。
-				*vSlider.x=100;//设置 vSlider 对象的属性 x 的值，用于控制 vSlider 对象的显示位置。
-				*vSlider.y=100;//设置 vSlider 对象的属性 y 的值，用于控制 vSlider 对象的显示位置。
-				*vSlider.changeHandler=new Handler(this,onChange);//设置 vSlider 位置变化处理器。
-				*Laya.stage.addChild(vSlider);//把 vSlider 添加到显示列表。
-				*}
-			*private function onChange(value:Number):void
-			*{
-				*trace("滑块的位置： value="+value);
-				*}
-			*}
-		*}
-	*</listing>
-	*<listing version="3.0">
-	*Laya.init(640,800);//设置游戏画布宽高
-	*Laya.stage.bgColor="#efefef";//设置画布的背景颜色
-	*var vSlider;
-	*Laya.loader.load(["resource/ui/vslider.png","resource/ui/vslider$bar.png"],laya.utils.Handler.create(this,onLoadComplete));//加载资源。
-	*function onLoadComplete(){
-		*vSlider=new laya.ui.VSlider();//创建一个 VSlider 类的实例对象 vSlider 。
-		*vSlider.skin="resource/ui/vslider.png";//设置 vSlider 的皮肤。
-		*vSlider.min=0;//设置 vSlider 最低位置值。
-		*vSlider.max=10;//设置 vSlider 最高位置值。
-		*vSlider.value=2;//设置 vSlider 当前位置值。
-		*vSlider.tick=1;//设置 vSlider 刻度值。
-		*vSlider.x=100;//设置 vSlider 对象的属性 x 的值，用于控制 vSlider 对象的显示位置。
-		*vSlider.y=100;//设置 vSlider 对象的属性 y 的值，用于控制 vSlider 对象的显示位置。
-		*vSlider.changeHandler=new laya.utils.Handler(this,onChange);//设置 vSlider 位置变化处理器。
-		*Laya.stage.addChild(vSlider);//把 vSlider 添加到显示列表。
-		*}
-	*function onChange(value){
-		*console.log("滑块的位置： value="+value);
-		*}
-	*</listing>
-	*<listing version="3.0">
-	*import HSlider=laya.ui.HSlider;
-	*import VSlider=laya.ui.VSlider;
-	*import Handler=laya.utils.Handler;
-	*class VSlider_Example {
-		*private vSlider:VSlider;
-		*constructor(){
-			*Laya.init(640,800);//设置游戏画布宽高。
-			*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
-			*Laya.loader.load(["resource/ui/vslider.png","resource/ui/vslider$bar.png"],Handler.create(this,this.onLoadComplete));//加载资源。
-			*}
-		*private onLoadComplete():void {
-			*this.vSlider=new VSlider();//创建一个 VSlider 类的实例对象 vSlider 。
-			*this.vSlider.skin="resource/ui/vslider.png";//设置 vSlider 的皮肤。
-			*this.vSlider.min=0;//设置 vSlider 最低位置值。
-			*this.vSlider.max=10;//设置 vSlider 最高位置值。
-			*this.vSlider.value=2;//设置 vSlider 当前位置值。
-			*this.vSlider.tick=1;//设置 vSlider 刻度值。
-			*this.vSlider.x=100;//设置 vSlider 对象的属性 x 的值，用于控制 vSlider 对象的显示位置。
-			*this.vSlider.y=100;//设置 vSlider 对象的属性 y 的值，用于控制 vSlider 对象的显示位置。
-			*this.vSlider.changeHandler=new Handler(this,this.onChange);//设置 vSlider 位置变化处理器。
-			*Laya.stage.addChild(this.vSlider);//把 vSlider 添加到显示列表。
-			*}
-		*private onChange(value:number):void {
-			*console.log("滑块的位置： value="+value);
-			*}
-		*}
-	*</listing>
-	*@see laya.ui.Slider
-	*/
-	//class laya.ui.VSlider extends laya.ui.Slider
-	var VSlider=(function(_super){
-		function VSlider(){VSlider.__super.call(this);;
-		};
-
-		__class(VSlider,'laya.ui.VSlider',_super);
-		return VSlider;
-	})(Slider)
-
-
-	/**
 	*<code>TextInput</code> 类用于创建显示对象以显示和输入文本。
 	*
 	*@example 以下示例代码，创建了一个 <code>TextInput</code> 实例。
@@ -33136,6 +33184,107 @@ var Laya=window.Laya=(function(window,document){
 
 		return TextInput;
 	})(Label)
+
+
+	/**
+	*使用 <code>VSlider</code> 控件，用户可以通过在滑块轨道的终点之间移动滑块来选择值。
+	*<p> <code>VSlider</code> 控件采用垂直方向。滑块轨道从下往上扩展，而标签位于轨道的左右两侧。</p>
+	*
+	*@example 以下示例代码，创建了一个 <code>VSlider</code> 实例。
+	*<listing version="3.0">
+	*package
+	*{
+		*import laya.ui.HSlider;
+		*import laya.ui.VSlider;
+		*import laya.utils.Handler;
+		*public class VSlider_Example
+		*{
+			*private var vSlider:VSlider;
+			*public function VSlider_Example()
+			*{
+				*Laya.init(640,800);//设置游戏画布宽高。
+				*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
+				*Laya.loader.load(["resource/ui/vslider.png","resource/ui/vslider$bar.png"],Handler.create(this,onLoadComplete));//加载资源。
+				*}
+			*private function onLoadComplete():void
+			*{
+				*vSlider=new VSlider();//创建一个 VSlider 类的实例对象 vSlider 。
+				*vSlider.skin="resource/ui/vslider.png";//设置 vSlider 的皮肤。
+				*vSlider.min=0;//设置 vSlider 最低位置值。
+				*vSlider.max=10;//设置 vSlider 最高位置值。
+				*vSlider.value=2;//设置 vSlider 当前位置值。
+				*vSlider.tick=1;//设置 vSlider 刻度值。
+				*vSlider.x=100;//设置 vSlider 对象的属性 x 的值，用于控制 vSlider 对象的显示位置。
+				*vSlider.y=100;//设置 vSlider 对象的属性 y 的值，用于控制 vSlider 对象的显示位置。
+				*vSlider.changeHandler=new Handler(this,onChange);//设置 vSlider 位置变化处理器。
+				*Laya.stage.addChild(vSlider);//把 vSlider 添加到显示列表。
+				*}
+			*private function onChange(value:Number):void
+			*{
+				*trace("滑块的位置： value="+value);
+				*}
+			*}
+		*}
+	*</listing>
+	*<listing version="3.0">
+	*Laya.init(640,800);//设置游戏画布宽高
+	*Laya.stage.bgColor="#efefef";//设置画布的背景颜色
+	*var vSlider;
+	*Laya.loader.load(["resource/ui/vslider.png","resource/ui/vslider$bar.png"],laya.utils.Handler.create(this,onLoadComplete));//加载资源。
+	*function onLoadComplete(){
+		*vSlider=new laya.ui.VSlider();//创建一个 VSlider 类的实例对象 vSlider 。
+		*vSlider.skin="resource/ui/vslider.png";//设置 vSlider 的皮肤。
+		*vSlider.min=0;//设置 vSlider 最低位置值。
+		*vSlider.max=10;//设置 vSlider 最高位置值。
+		*vSlider.value=2;//设置 vSlider 当前位置值。
+		*vSlider.tick=1;//设置 vSlider 刻度值。
+		*vSlider.x=100;//设置 vSlider 对象的属性 x 的值，用于控制 vSlider 对象的显示位置。
+		*vSlider.y=100;//设置 vSlider 对象的属性 y 的值，用于控制 vSlider 对象的显示位置。
+		*vSlider.changeHandler=new laya.utils.Handler(this,onChange);//设置 vSlider 位置变化处理器。
+		*Laya.stage.addChild(vSlider);//把 vSlider 添加到显示列表。
+		*}
+	*function onChange(value){
+		*console.log("滑块的位置： value="+value);
+		*}
+	*</listing>
+	*<listing version="3.0">
+	*import HSlider=laya.ui.HSlider;
+	*import VSlider=laya.ui.VSlider;
+	*import Handler=laya.utils.Handler;
+	*class VSlider_Example {
+		*private vSlider:VSlider;
+		*constructor(){
+			*Laya.init(640,800);//设置游戏画布宽高。
+			*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
+			*Laya.loader.load(["resource/ui/vslider.png","resource/ui/vslider$bar.png"],Handler.create(this,this.onLoadComplete));//加载资源。
+			*}
+		*private onLoadComplete():void {
+			*this.vSlider=new VSlider();//创建一个 VSlider 类的实例对象 vSlider 。
+			*this.vSlider.skin="resource/ui/vslider.png";//设置 vSlider 的皮肤。
+			*this.vSlider.min=0;//设置 vSlider 最低位置值。
+			*this.vSlider.max=10;//设置 vSlider 最高位置值。
+			*this.vSlider.value=2;//设置 vSlider 当前位置值。
+			*this.vSlider.tick=1;//设置 vSlider 刻度值。
+			*this.vSlider.x=100;//设置 vSlider 对象的属性 x 的值，用于控制 vSlider 对象的显示位置。
+			*this.vSlider.y=100;//设置 vSlider 对象的属性 y 的值，用于控制 vSlider 对象的显示位置。
+			*this.vSlider.changeHandler=new Handler(this,this.onChange);//设置 vSlider 位置变化处理器。
+			*Laya.stage.addChild(this.vSlider);//把 vSlider 添加到显示列表。
+			*}
+		*private onChange(value:number):void {
+			*console.log("滑块的位置： value="+value);
+			*}
+		*}
+	*</listing>
+	*@see laya.ui.Slider
+	*/
+	//class laya.ui.VSlider extends laya.ui.Slider
+	var VSlider=(function(_super){
+		function VSlider(){VSlider.__super.call(this);;
+		};
+
+		__class(VSlider,'laya.ui.VSlider',_super);
+		return VSlider;
+	})(Slider)
 
 
 	/**
@@ -34684,13 +34833,8 @@ var Laya=window.Laya=(function(window,document){
 	var KLineView=(function(_super){
 		function KLineView(){
 			this.kLine=null;
-			this.kLineAnalyser=null;
-			this.breakAnalyser=null;
 			this.tAnalyser=null;
 			KLineView.__super.call(this);
-			this.kLineAnalyser=new KLineAnalyser();
-			this.kLineAnalyser.leftLimit=15;
-			this.kLineAnalyser.rightLimit=20;
 			this.kLine=new KLine();
 			this.kLine.analysers=[];
 			var analyserClassList;
@@ -34700,6 +34844,8 @@ var Laya=window.Laya=(function(window,document){
 			analyserClassList.push(BottomAnalyser);
 			analyserClassList.push(AverageLine);
 			analyserClassList.push(VolumeBar);
+			analyserClassList.push(WinRateLine);
+			analyserClassList.push(PositionLine);
 			this.analyserList.initAnalysers(analyserClassList);
 			this.addChild(this.kLine);
 			var stock;
