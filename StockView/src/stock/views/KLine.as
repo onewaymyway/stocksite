@@ -306,6 +306,16 @@ package stock.views
 				drawLine(pointList[i - 1][0], pointList[i - 1][1], pointList[i][0], pointList[i][1], color);
 			}
 		}
+		public function drawLinesEx(pointList:Array,color:String="#ff0000",offY:Number=0):void
+		{
+			var i:int, len:int;
+			len = pointList.length;
+			
+			for (i = 1; i < len; i++)
+			{
+				drawLineEx(pointList[i - 1][0], pointList[i - 1][1]+offY, pointList[i][0], pointList[i][1]+offY, color);
+			}
+		}
 		public function drawPoints(iList:Array, sign:String, r:Number = 2, color:String = "#ff0000"):void
 		{
 			var dataList:Array;
@@ -344,6 +354,10 @@ package stock.views
 		public function drawLine(startI:int, startY:Number, endI:int, endY:Number, color:String = "#ff0000"):void
 		{
 			this.graphics.drawLine(getAdptXV(startI * gridWidth), getAdptYV(startY), getAdptXV(endI * gridWidth), getAdptYV(endY), color);
+		}
+		public function drawLineEx(startI:int, startY:Number, endI:int, endY:Number, color:String = "#ff0000"):void
+		{
+			this.graphics.drawLine(getAdptXV(startI * gridWidth), -startY, getAdptXV(endI * gridWidth), -endY, color);
 		}
 		public var yRate:Number;
 		public var xRate:Number;

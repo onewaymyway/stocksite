@@ -9,6 +9,7 @@ package view
 	import laya.stock.analysers.BreakAnalyser;
 	import laya.stock.analysers.KLineAnalyser;
 	import laya.stock.analysers.lines.AverageLine;
+	import laya.stock.analysers.lines.WinRateLine;
 	import laya.tools.WebTools;
 	import laya.utils.Handler;
 	import msgs.MsgConst;
@@ -23,22 +24,11 @@ package view
 	public class KLineView extends KLineViewUI
 	{
 		public var kLine:KLine;
-		public var kLineAnalyser:KLineAnalyser;
-		public var breakAnalyser:BreakAnalyser;
 		public var tAnalyser:AnalyserBase;
 		public function KLineView() 
 		{
-			kLineAnalyser = new KLineAnalyser();
-			kLineAnalyser.leftLimit = 15;
-			kLineAnalyser.rightLimit = 20;
 			kLine = new KLine();
-			//kLine.analysers = [kLineAnalyser];
 			kLine.analysers = [];
-			//breakAnalyser = new BreakAnalyser();
-			//kLine.analysers = [breakAnalyser];
-			//
-			//tAnalyser = new BottomAnalyser();
-			//kLine.analysers = [tAnalyser];
 			var analyserClassList:Array;
 			analyserClassList = [];
 			analyserClassList.push(KLineAnalyser);
@@ -46,6 +36,7 @@ package view
 			analyserClassList.push(BottomAnalyser);
 			analyserClassList.push(AverageLine);
 			analyserClassList.push(VolumeBar);
+			analyserClassList.push(WinRateLine);
 			
 			analyserList.initAnalysers(analyserClassList);
 			addChild(kLine);

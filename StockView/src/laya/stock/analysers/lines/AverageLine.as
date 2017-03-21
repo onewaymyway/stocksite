@@ -63,7 +63,7 @@ package laya.stock.analysers.lines
 			
 			resultData["averages"] = avgs;
 		}
-		private function getAverageData(dayCount:int,color:String):Array
+		protected function getAverageData(dayCount:int,color:String):Array
 		{
 			var avList:Array;
 			avList = DataUtils.getAverage(disDataList, dayCount, priceType);

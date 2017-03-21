@@ -266,6 +266,7 @@ package laya.math
 			}
 			return rst;
 		}
+		
 	}
 
 }
