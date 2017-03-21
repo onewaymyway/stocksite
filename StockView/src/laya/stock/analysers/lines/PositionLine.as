@@ -15,7 +15,7 @@ package laya.stock.analysers.lines
 		public var dayCount:int = 130;
 		public var priceType:String = "close";
 		public var color:String = "#ff0000";
-		public var barHeight:Number = 20;
+		public var barHeight:Number = 50;
 		override public function initParamKeys():void 
 		{
 			paramkeys = ["barHeight","priceType","color","dayCount"];
