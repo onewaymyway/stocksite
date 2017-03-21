@@ -14829,10 +14829,10 @@ var Laya=window.Laya=(function(window,document){
 	//class laya.stock.analysers.lines.PositionLine extends laya.stock.analysers.AnalyserBase
 	var PositionLine=(function(_super){
 		function PositionLine(){
-			this.dayCount=30;
+			this.dayCount=130;
 			this.priceType="close";
 			this.color="#ff0000";
-			this.barHeight=20;
+			this.barHeight=50;
 			PositionLine.__super.call(this);
 		}
 
