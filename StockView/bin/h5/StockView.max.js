@@ -676,6 +676,7 @@ var Laya=window.Laya=(function(window,document){
 
 		DataUtils.getExpDatas=function(dataList,dayCount,index,priceType){
 			(priceType===void 0)&& (priceType="close");
+			if (dataList.length <=index)return 0;
 			var i=0,len=0;
 			var startI=0;
 			startI=index-dayCount;
@@ -33744,6 +33745,7 @@ var Laya=window.Laya=(function(window,document){
 		function SelectStockViewUI(){
 			this.list=null;
 			this.tip=null;
+			this.typeSelect=null;
 			SelectStockViewUI.__super.call(this);
 		}
 
@@ -33755,7 +33757,7 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		__static(SelectStockViewUI,
-		['uiView',function(){return this.uiView={"type":"View","props":{"width":445,"height":400},"child":[{"type":"List","props":{"var":"list","vScrollBarSkin":"comp/vscroll.png","top":10,"right":10,"left":10,"bottom":10},"child":[{"type":"Box","props":{"y":0,"x":0,"width":168,"name":"render","height":61},"child":[{"type":"Label","props":{"wordWrap":true,"top":0,"text":"this is a list","skin":"comp/label.png","right":0,"name":"label","left":0,"fontSize":14,"color":"#83e726","bottom":0}}]}]},{"type":"Label","props":{"y":-41,"width":271,"var":"tip","text":"股票代码:当前盈利:最高盈利","right":40,"height":42,"color":"#f33713"}}]};}
+		['uiView',function(){return this.uiView={"type":"View","props":{"width":445,"height":400},"child":[{"type":"List","props":{"var":"list","vScrollBarSkin":"comp/vscroll.png","top":30,"right":10,"left":10,"bottom":10},"child":[{"type":"Box","props":{"y":0,"x":0,"width":168,"name":"render","height":61},"child":[{"type":"Label","props":{"wordWrap":true,"top":0,"text":"this is a list","skin":"comp/label.png","right":0,"name":"label","left":0,"fontSize":14,"color":"#83e726","bottom":0}}]}]},{"type":"Label","props":{"y":-41,"width":271,"var":"tip","text":"股票代码:当前盈利:最高盈利","right":40,"height":42,"color":"#f33713"}},{"type":"ComboBox","props":{"y":3,"var":"typeSelect","skin":"comp/combobox.png","selectedIndex":0,"right":20,"labels":"KLine,Position"}}]};}
 		]);
 		return SelectStockViewUI;
 	})(View)
@@ -35181,6 +35183,8 @@ var Laya=window.Laya=(function(window,document){
 	var SelectStockView=(function(_super){
 		function SelectStockView(){
 			this.dataUrl="last.json";
+			this.tType=0;
+			this.tDatas=null;
 			this.tI=0;
 			SelectStockView.__super.call(this);
 			this.init();
@@ -35197,13 +35201,30 @@ var Laya=window.Laya=(function(window,document){
 			Notice.listen("Show_Next_Select",this,this.next);
 			Notice.listen("Show_Pre_Select",this,this.pre);
 			this.tip.text="股票:当前盈利:最高盈利\n7天最大盈利,15天最大盈利,30天最大盈利,45天最大盈利\n买入日期";
+			this.typeSelect.on("change",this,this.onTypeChange);
+		}
+
+		__proto.onTypeChange=function(){
+			this.tType=this.typeSelect.selectedIndex;
+			this.refreshData();
 		}
 
 		__proto.dataLoaded=function(){
 			var data;
-			data=Loader.getRes(this.dataUrl);
-			console.log("lastInfo:",data);
-			this.list.array=data;
+			this.tDatas=Loader.getRes(this.dataUrl);;
+			this.refreshData();
+		}
+
+		__proto.refreshData=function(){
+			if (!this.tDatas)return;
+			switch(this.tType){
+				case 1:
+					this.tDatas.sort(MathUtil.sortByKey("exp",true,true));
+					break ;
+				default :
+					this.tDatas.sort(MathUtil.sortByKey("lastDate",true,false));
+				}
+			this.list.array=this.tDatas;
 		}
 
 		__proto.getStockChanges=function(stockO){
