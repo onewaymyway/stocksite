@@ -1,5 +1,6 @@
 package {
 	import laya.debug.tools.DTrace;
+	import laya.math.DataUtils;
 	import laya.maths.MathUtil;
 	import laya.stock.analysers.KLineAnalyser;
 	import laya.stock.StockTools;
@@ -113,6 +114,7 @@ package {
 					//buyPrice = lastStock["high"];
 					//tData.changePercent = (tPrice-buyPrice) / buyPrice;
 					StockTools.getBuyStaticInfos(lastUnder[2], analyser.disDataList, tData);
+					tData.exp = DataUtils.getExpDatas(analyser.disDataList, 130, analyser.disDataList.length - 1);
 					rst.push(tData);
 				}
 			}
