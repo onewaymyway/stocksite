@@ -15180,8 +15180,48 @@ var Laya=window.Laya=(function(window,document){
 			var winRate=NaN;
 			winRate=(max-tValue)/ tValue;
 			var exp=NaN;
-			exp=winRate-2 *loseRate;
+			exp=winRate+2 *loseRate;
 			return exp;
+		}
+
+		DataUtils.getMinMaxInfo=function(dataList,dayCount,index,priceType){
+			(priceType===void 0)&& (priceType="close");
+			if (dataList.length <=index)return null;
+			var i=0,len=0;
+			var startI=0;
+			startI=index-dayCount;
+			if (startI < 0)startI=0;
+			var max=NaN;
+			var min=NaN;
+			min=max=dataList[startI][priceType];
+			var tValue=NaN;
+			len=index;
+			for (i=startI;i <=len;i++){
+				tValue=dataList[i][priceType];
+				if (min > tValue)min=tValue;
+				if (max < tValue)max=tValue;
+			}
+			tValue=dataList[index][priceType];
+			return [min,max,tValue]
+		}
+
+		DataUtils.getWinLoseInfo=function(dataList,dayCount,index,priceType){
+			(priceType===void 0)&& (priceType="close");
+			if (dataList.length <=index)return null;
+			var datas;
+			datas=DataUtils.getMinMaxInfo(dataList,dayCount,index,priceType);
+			if (!datas || datas.length < 3)return null;
+			var min=NaN,max=NaN,tValue=NaN;
+			min=datas[0];
+			max=datas[1];
+			tValue=datas[2];
+			var loseRate=NaN;
+			loseRate=(min-tValue)/ tValue;
+			var winRate=NaN;
+			winRate=(max-tValue)/ tValue;
+			var exp=NaN;
+			exp=winRate+2 *loseRate;
+			return [loseRate,winRate,exp]
 		}
 
 		return DataUtils;
@@ -15542,7 +15582,7 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		WebTools.openStockDetail=function(stock){
-			WebTools.openUrl("http://stockhtm.finance.qq.com/sstock/ggcx/"+stock+".shtml");
+			WebTools.openUrl("http://q.stock.sohu.com/cn/"+stock+"/");
 		}
 
 		return WebTools;
@@ -19500,6 +19540,9 @@ var Laya=window.Laya=(function(window,document){
 			this.dayCount=130;
 			this.priceType="close";
 			this.color="#ffff00";
+			this.winColor="#ff0000";
+			this.loseColor="#00ff00";
+			this.expColor="#ffff00";
 			this.barHeight=50;
 			this.gridLineValue="0,0.5,1,1.5,2,2.5";
 			PositionLine.__super.call(this);
@@ -19521,11 +19564,23 @@ var Laya=window.Laya=(function(window,document){
 			var i=0,len=0;
 			var expList;
 			expList=[];
+			var winList;
+			winList=[];
+			var loseList;
+			loseList=[];
+			var tDatas;
 			len=dataList.length;
 			for (i=0;i < len;i++){
-				expList.push([i,DataUtils.getExpDatas(dataList,this.dayCount,i)*this.barHeight]);
+				tDatas=DataUtils.getWinLoseInfo(dataList,this.dayCount,i);
+				if (tDatas){
+					loseList.push([i,tDatas[0] *this.barHeight]);
+					winList.push([i,tDatas[1] *this.barHeight]);
+					expList.push([i,tDatas[2] *this.barHeight]);
+				}
 			}
 			this.resultData["expList"]=expList;
+			this.resultData["winList"]=winList;
+			this.resultData["loseList"]=loseList;
 			var gridLine;
 			var gridValue=NaN;
 			gridValue=this.barHeight *this.gridLineValue;
@@ -19540,35 +19595,12 @@ var Laya=window.Laya=(function(window,document){
 			this.resultData["gridLine"]=gridLine;
 		}
 
-		__proto.getMaxDatas=function(dataList,dayCount,index){
-			var i=0,len=0;
-			var startI=0;
-			startI=index-dayCount;
-			if (startI < 0)startI=0;
-			var max=NaN;
-			var min=NaN;
-			min=max=dataList[startI][this.priceType];
-			var tValue=NaN;
-			len=index;
-			for (i=startI;i <=len;i++){
-				tValue=dataList[i][this.priceType];
-				if (min > tValue)min=tValue;
-				if (max < tValue)max=tValue;
-			}
-			tValue=dataList[index][this.priceType];
-			var loseRate=NaN;
-			loseRate=(min-tValue)/ tValue;
-			var winRate=NaN;
-			winRate=(max-tValue)/ tValue;
-			var exp=NaN;
-			exp=winRate-2 *loseRate;
-			return exp;
-		}
-
 		__proto.getDrawCmds=function(){
 			var rst;
 			rst=[];
-			rst.push(["drawLinesEx",[this.resultData["expList"],this.color]]);
+			rst.push(["drawLinesEx",[this.resultData["expList"],this.expColor]]);
+			rst.push(["drawLinesEx",[this.resultData["winList"],this.winColor]]);
+			rst.push(["drawLinesEx",[this.resultData["loseList"],this.loseColor]]);
 			rst.push(["drawGridLineEx",this.resultData["gridLine"]]);
 			return rst;
 		}
@@ -36037,6 +36069,7 @@ var Laya=window.Laya=(function(window,document){
 		function SelectStockViewUI(){
 			this.list=null;
 			this.tip=null;
+			this.typeSelect=null;
 			SelectStockViewUI.__super.call(this);
 		}
 
@@ -36048,7 +36081,7 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		__static(SelectStockViewUI,
-		['uiView',function(){return this.uiView={"type":"View","props":{"width":445,"height":400},"child":[{"type":"List","props":{"var":"list","vScrollBarSkin":"comp/vscroll.png","top":10,"right":10,"left":10,"bottom":10},"child":[{"type":"Box","props":{"y":0,"x":0,"width":168,"name":"render","height":61},"child":[{"type":"Label","props":{"wordWrap":true,"top":0,"text":"this is a list","skin":"comp/label.png","right":0,"name":"label","left":0,"fontSize":14,"color":"#83e726","bottom":0}}]}]},{"type":"Label","props":{"y":-41,"width":271,"var":"tip","text":"股票代码:当前盈利:最高盈利","right":40,"height":42,"color":"#f33713"}}]};}
+		['uiView',function(){return this.uiView={"type":"View","props":{"width":445,"height":400},"child":[{"type":"List","props":{"var":"list","vScrollBarSkin":"comp/vscroll.png","top":30,"right":10,"left":10,"bottom":10},"child":[{"type":"Box","props":{"y":0,"x":0,"width":168,"name":"render","height":61},"child":[{"type":"Label","props":{"wordWrap":true,"top":0,"text":"this is a list","skin":"comp/label.png","right":0,"name":"label","left":0,"fontSize":14,"color":"#83e726","bottom":0}}]}]},{"type":"Label","props":{"y":-41,"width":271,"var":"tip","text":"股票代码:当前盈利:最高盈利","right":40,"height":42,"color":"#f33713"}},{"type":"ComboBox","props":{"y":3,"var":"typeSelect","skin":"comp/combobox.png","selectedIndex":0,"right":20,"labels":"KLine,Position"}}]};}
 		]);
 		return SelectStockViewUI;
 	})(View)
@@ -37564,6 +37597,8 @@ var Laya=window.Laya=(function(window,document){
 	var SelectStockView=(function(_super){
 		function SelectStockView(){
 			this.dataUrl="last.json";
+			this.tType=0;
+			this.tDatas=null;
 			this.tI=0;
 			SelectStockView.__super.call(this);
 			this.init();
@@ -37580,13 +37615,30 @@ var Laya=window.Laya=(function(window,document){
 			Notice.listen("Show_Next_Select",this,this.next);
 			Notice.listen("Show_Pre_Select",this,this.pre);
 			this.tip.text="股票:当前盈利:最高盈利\n7天最大盈利,15天最大盈利,30天最大盈利,45天最大盈利\n买入日期";
+			this.typeSelect.on("change",this,this.onTypeChange);
+		}
+
+		__proto.onTypeChange=function(){
+			this.tType=this.typeSelect.selectedIndex;
+			this.refreshData();
 		}
 
 		__proto.dataLoaded=function(){
 			var data;
-			data=Loader.getRes(this.dataUrl);
-			console.log("lastInfo:",data);
-			this.list.array=data;
+			this.tDatas=Loader.getRes(this.dataUrl);;
+			this.refreshData();
+		}
+
+		__proto.refreshData=function(){
+			if (!this.tDatas)return;
+			switch(this.tType){
+				case 1:
+					this.tDatas.sort(MathUtil.sortByKey("exp",true,true));
+					break ;
+				default :
+					this.tDatas.sort(MathUtil.sortByKey("lastDate",true,false));
+				}
+			this.list.array=this.tDatas;
 		}
 
 		__proto.getStockChanges=function(stockO){
@@ -37686,9 +37738,10 @@ var Laya=window.Laya=(function(window,document){
 			if (e.type=="mousedown"){
 				var tData;
 				tData=this.stockList.array[index];
-				if (!tData)return;
+				if (!tData)
+					return;
 				console.log(tData);
-				this.openUrl("http://stockhtm.finance.qq.com/sstock/ggcx/"+tData.code+".shtml");
+				WebTools.openStockDetail(tData.code);
 			}
 		}
 
