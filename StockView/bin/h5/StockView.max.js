@@ -697,8 +697,48 @@ var Laya=window.Laya=(function(window,document){
 			var winRate=NaN;
 			winRate=(max-tValue)/ tValue;
 			var exp=NaN;
-			exp=winRate-2 *loseRate;
+			exp=winRate+2 *loseRate;
 			return exp;
+		}
+
+		DataUtils.getMinMaxInfo=function(dataList,dayCount,index,priceType){
+			(priceType===void 0)&& (priceType="close");
+			if (dataList.length <=index)return null;
+			var i=0,len=0;
+			var startI=0;
+			startI=index-dayCount;
+			if (startI < 0)startI=0;
+			var max=NaN;
+			var min=NaN;
+			min=max=dataList[startI][priceType];
+			var tValue=NaN;
+			len=index;
+			for (i=startI;i <=len;i++){
+				tValue=dataList[i][priceType];
+				if (min > tValue)min=tValue;
+				if (max < tValue)max=tValue;
+			}
+			tValue=dataList[index][priceType];
+			return [min,max,tValue]
+		}
+
+		DataUtils.getWinLoseInfo=function(dataList,dayCount,index,priceType){
+			(priceType===void 0)&& (priceType="close");
+			if (dataList.length <=index)return null;
+			var datas;
+			datas=DataUtils.getMinMaxInfo(dataList,dayCount,index,priceType);
+			if (!datas || datas.length < 3)return null;
+			var min=NaN,max=NaN,tValue=NaN;
+			min=datas[0];
+			max=datas[1];
+			tValue=datas[2];
+			var loseRate=NaN;
+			loseRate=(min-tValue)/ tValue;
+			var winRate=NaN;
+			winRate=(max-tValue)/ tValue;
+			var exp=NaN;
+			exp=winRate+2 *loseRate;
+			return [loseRate,winRate,exp]
 		}
 
 		return DataUtils;
@@ -14880,6 +14920,9 @@ var Laya=window.Laya=(function(window,document){
 			this.dayCount=130;
 			this.priceType="close";
 			this.color="#ffff00";
+			this.winColor="#ff0000";
+			this.loseColor="#00ff00";
+			this.expColor="#ffff00";
 			this.barHeight=50;
 			this.gridLineValue="0,0.5,1,1.5,2,2.5";
 			PositionLine.__super.call(this);
@@ -14901,11 +14944,23 @@ var Laya=window.Laya=(function(window,document){
 			var i=0,len=0;
 			var expList;
 			expList=[];
+			var winList;
+			winList=[];
+			var loseList;
+			loseList=[];
+			var tDatas;
 			len=dataList.length;
 			for (i=0;i < len;i++){
-				expList.push([i,DataUtils.getExpDatas(dataList,this.dayCount,i)*this.barHeight]);
+				tDatas=DataUtils.getWinLoseInfo(dataList,this.dayCount,i);
+				if (tDatas){
+					loseList.push([i,tDatas[0] *this.barHeight]);
+					winList.push([i,tDatas[1] *this.barHeight]);
+					expList.push([i,tDatas[2] *this.barHeight]);
+				}
 			}
 			this.resultData["expList"]=expList;
+			this.resultData["winList"]=winList;
+			this.resultData["loseList"]=loseList;
 			var gridLine;
 			var gridValue=NaN;
 			gridValue=this.barHeight *this.gridLineValue;
@@ -14920,35 +14975,12 @@ var Laya=window.Laya=(function(window,document){
 			this.resultData["gridLine"]=gridLine;
 		}
 
-		__proto.getMaxDatas=function(dataList,dayCount,index){
-			var i=0,len=0;
-			var startI=0;
-			startI=index-dayCount;
-			if (startI < 0)startI=0;
-			var max=NaN;
-			var min=NaN;
-			min=max=dataList[startI][this.priceType];
-			var tValue=NaN;
-			len=index;
-			for (i=startI;i <=len;i++){
-				tValue=dataList[i][this.priceType];
-				if (min > tValue)min=tValue;
-				if (max < tValue)max=tValue;
-			}
-			tValue=dataList[index][this.priceType];
-			var loseRate=NaN;
-			loseRate=(min-tValue)/ tValue;
-			var winRate=NaN;
-			winRate=(max-tValue)/ tValue;
-			var exp=NaN;
-			exp=winRate-2 *loseRate;
-			return exp;
-		}
-
 		__proto.getDrawCmds=function(){
 			var rst;
 			rst=[];
-			rst.push(["drawLinesEx",[this.resultData["expList"],this.color]]);
+			rst.push(["drawLinesEx",[this.resultData["expList"],this.expColor]]);
+			rst.push(["drawLinesEx",[this.resultData["winList"],this.winColor]]);
+			rst.push(["drawLinesEx",[this.resultData["loseList"],this.loseColor]]);
 			rst.push(["drawGridLineEx",this.resultData["gridLine"]]);
 			return rst;
 		}
