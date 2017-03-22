@@ -18,7 +18,8 @@ package laya.tools
 		}
 		public static function openStockDetail(stock:String):void
 		{
-			openUrl("http://stockhtm.finance.qq.com/sstock/ggcx/"+stock+".shtml");
+			openUrl("http://q.stock.sohu.com/cn/"+stock+"/");
+			//openUrl("http://stockhtm.finance.qq.com/sstock/ggcx/"+stock+".shtml");
 		}
 	}
 
