@@ -1,5 +1,6 @@
 package laya.stock.analysers.lines 
 {
+	import laya.math.DataUtils;
 	import laya.math.ValueTools;
 	import laya.stock.analysers.AnalyserBase;
 	/**
@@ -28,13 +29,15 @@ package laya.stock.analysers.lines
 		}
 		public function doAWork():void
 		{
+			var dataList:Array;
+			dataList = disDataList;
 			var i:int, len:int;
 			var expList:Array;
 			expList = [];
 			len = dataList.length;
 			for (i = 0; i < len; i++)
 			{
-				expList.push([i, getMaxDatas(dataList, dayCount, i)*barHeight]);
+				expList.push([i, DataUtils.getExpDatas(dataList, dayCount, i)*barHeight]);
 			}
 			resultData["expList"] = expList;
 			var gridLine:Array;

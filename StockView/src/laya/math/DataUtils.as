@@ -281,6 +281,33 @@ package laya.math
 			return rst;
 		}
 		
+		public static function getExpDatas(dataList:Array, dayCount:int, index:int,priceType:String="close"):Number
+		{
+			var i:int, len:int;
+			var startI:int;
+			startI = index - dayCount;
+			if (startI < 0) startI = 0;
+			var max:Number;
+			var min:Number;
+			min = max = dataList[startI][priceType];
+			var tValue:Number;
+			len = index;
+			for (i = startI; i <= len; i++)
+			{
+				tValue = dataList[i][priceType];
+				if (min > tValue) min = tValue;
+				if (max < tValue) max = tValue;
+			}
+			tValue=dataList[index][priceType];
+			var loseRate:Number;
+			loseRate = (min - tValue) / tValue;
+			var winRate:Number;
+			winRate = (max - tValue) / tValue;
+			var exp:Number;
+			exp = winRate-2 * loseRate;
+			return exp;
+		}
+		
 	}
 
 }
