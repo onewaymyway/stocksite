@@ -674,6 +674,32 @@ var Laya=window.Laya=(function(window,document){
 			return rst;
 		}
 
+		DataUtils.getExpDatas=function(dataList,dayCount,index,priceType){
+			(priceType===void 0)&& (priceType="close");
+			var i=0,len=0;
+			var startI=0;
+			startI=index-dayCount;
+			if (startI < 0)startI=0;
+			var max=NaN;
+			var min=NaN;
+			min=max=dataList[startI][priceType];
+			var tValue=NaN;
+			len=index;
+			for (i=startI;i <=len;i++){
+				tValue=dataList[i][priceType];
+				if (min > tValue)min=tValue;
+				if (max < tValue)max=tValue;
+			}
+			tValue=dataList[index][priceType];
+			var loseRate=NaN;
+			loseRate=(min-tValue)/ tValue;
+			var winRate=NaN;
+			winRate=(max-tValue)/ tValue;
+			var exp=NaN;
+			exp=winRate-2 *loseRate;
+			return exp;
+		}
+
 		return DataUtils;
 	})()
 
@@ -14869,12 +14895,14 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		__proto.doAWork=function(){
+			var dataList;
+			dataList=this.disDataList;
 			var i=0,len=0;
 			var expList;
 			expList=[];
-			len=this.dataList.length;
+			len=dataList.length;
 			for (i=0;i < len;i++){
-				expList.push([i,this.getMaxDatas(this.dataList,this.dayCount,i)*this.barHeight]);
+				expList.push([i,DataUtils.getExpDatas(dataList,this.dayCount,i)*this.barHeight]);
 			}
 			this.resultData["expList"]=expList;
 			var gridLine;
@@ -14887,7 +14915,7 @@ var Laya=window.Laya=(function(window,document){
 			for (i=0;i < len;i++){
 				values[i]=ValueTools.mParseFloat(values[i])*this.barHeight;
 			}
-			gridLine.push(0,this.dataList.length-1,values,this.color,this.gridLineValue.split(","));
+			gridLine.push(0,dataList.length-1,values,this.color,this.gridLineValue.split(","));
 			this.resultData["gridLine"]=gridLine;
 		}
 
