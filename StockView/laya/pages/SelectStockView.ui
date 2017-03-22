@@ -2,7 +2,7 @@
     "x":0,
     "type":"View",
     "selectedBox":1,
-    "selecteID":5,
+    "selecteID":6,
     "props":{"width":445,"sceneColor":"#f1dcdc","height":400},
     "nodeParent":-1,
     "label":"View",
@@ -15,7 +15,7 @@
         {
             "x":15,
             "type":"List",
-            "props":{"var":"list","vScrollBarSkin":"comp/vscroll.png","top":10,"right":10,"left":10,"bottom":10},
+            "props":{"var":"list","vScrollBarSkin":"comp/vscroll.png","top":30,"right":10,"left":10,"bottom":10},
             "nodeParent":1,
             "label":"List(list)",
             "isOpen":true,
@@ -61,6 +61,19 @@
             "isAniNode":true,
             "hasChild":false,
             "compId":5,
+            "child":[
+                ]
+        },
+        {
+            "x":15,
+            "type":"ComboBox",
+            "props":{"y":3,"var":"typeSelect","skin":"comp/combobox.png","selectedIndex":0,"right":20,"labels":"KLine,Position"},
+            "nodeParent":1,
+            "label":"ComboBox(typeSelect)",
+            "isDirectory":false,
+            "isAniNode":true,
+            "hasChild":false,
+            "compId":6,
             "child":[
                 ]
         }],
