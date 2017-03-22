@@ -283,6 +283,7 @@ package laya.math
 		
 		public static function getExpDatas(dataList:Array, dayCount:int, index:int,priceType:String="close"):Number
 		{
+			if (dataList.length <= index) return 0;
 			var i:int, len:int;
 			var startI:int;
 			startI = index - dayCount;

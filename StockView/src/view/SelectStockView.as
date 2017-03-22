@@ -1,6 +1,7 @@
 package view {
 	import laya.debug.tools.Notice;
 	import laya.events.Event;
+	import laya.maths.MathUtil;
 	import laya.net.Loader;
 	import laya.ui.Box;
 	import laya.ui.Label;
@@ -18,7 +19,7 @@ package view {
 			init();
 		}
 		public var dataUrl:String = "last.json";
-		
+		public var tType:int = 0;
 		public function init():void {
 			list.renderHandler = new Handler(this, stockRender);
 			list.array = [];
@@ -30,16 +31,33 @@ package view {
 			Notice.listen(MsgConst.Show_Next_Select, this, next);
 			Notice.listen(MsgConst.Show_Pre_Select, this, pre);
 			tip.text = "股票:当前盈利:最高盈利\n7天最大盈利,15天最大盈利,30天最大盈利,45天最大盈利\n买入日期";
+			typeSelect.on(Event.CHANGE, this, onTypeChange);
 		}
 		
-		
+		private function onTypeChange():void
+		{
+			tType = typeSelect.selectedIndex;
+			refreshData();
+		}
+		private var tDatas:Array;
 		private function dataLoaded():void {
 			var data:Array;
-			data = Loader.getRes(dataUrl);
-			trace("lastInfo:", data);
-			list.array = data;
+			tDatas = Loader.getRes(dataUrl);;
+			refreshData();
 		}
-		
+		private function refreshData():void
+		{
+			if (!tDatas) return;
+			switch(tType)
+			{
+				case 1:
+					tDatas.sort(MathUtil.sortByKey("exp", true, true));
+					break;
+				default:
+					tDatas.sort(MathUtil.sortByKey("lastDate", true, false));
+			}
+			list.array = tDatas;
+		}
 		public static var signList:Array = ["high7","high15","high30","high45"];
 		public function getStockChanges(stockO:Object):Array
 		{

@@ -61,6 +61,8 @@ package laya.stock
 			}
 			return priceHigh;
 		}
+		
+		
 	}
 
 }
