@@ -1,5 +1,6 @@
 package laya.stock.analysers.lines 
 {
+	import laya.math.ValueTools;
 	import laya.stock.analysers.AnalyserBase;
 	/**
 	 * ...
@@ -14,11 +15,12 @@ package laya.stock.analysers.lines
 		}
 		public var dayCount:int = 130;
 		public var priceType:String = "close";
-		public var color:String = "#ff0000";
+		public var color:String = "#ffff00";
 		public var barHeight:Number = 50;
+		public var gridLineValue:String = "0,0.5,1,1.5,2,2.5";
 		override public function initParamKeys():void 
 		{
-			paramkeys = ["barHeight","priceType","color","dayCount"];
+			paramkeys = ["barHeight","priceType","color","dayCount","gridLineValue"];
 		}
 		override public function analyseWork():void 
 		{
@@ -35,6 +37,19 @@ package laya.stock.analysers.lines
 				expList.push([i, getMaxDatas(dataList, dayCount, i)*barHeight]);
 			}
 			resultData["expList"] = expList;
+			var gridLine:Array;
+			var gridValue:Number;
+			gridValue = barHeight * gridLineValue;
+			gridLine = [];
+			var values:Array;
+			values = gridLineValue.split(",");
+			len = values.length;
+			for (i = 0; i < len; i++)
+			{
+				values[i] = ValueTools.mParseFloat(values[i]) * barHeight;
+			}
+			gridLine.push(0, dataList.length-1,values,color,gridLineValue.split(","));
+			resultData["gridLine"] = gridLine;
 		}
 		public function getMaxDatas(dataList:Array, dayCount:int, index:int):Number
 		{
@@ -66,9 +81,9 @@ package laya.stock.analysers.lines
 		{
 			var rst:Array;
 			rst = [];
-			debugger;
-			rst.push(["drawLinesEx",[resultData["expList"],color]]);
 			
+			rst.push(["drawLinesEx",[resultData["expList"],color]]);
+			rst.push(["drawGridLineEx",resultData["gridLine"]]);
 			return rst;
 		}
 	}

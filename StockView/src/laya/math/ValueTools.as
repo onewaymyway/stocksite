@@ -18,6 +18,16 @@ package laya.math
 			if (tV.toString() == "NaN") return 0;
 			return tV;
 		}
+		public static function makeNumArr(arr:Array):Array
+		{
+			var i:int, len:int;
+			len = arr.length;
+			for (i = 0; i < len; i++)
+			{
+				arr[i] = mParseFloat(arr[i]);
+			}
+			return arr;
+		}
 	}
 
 }

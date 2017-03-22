@@ -1,5 +1,6 @@
 package stock.views 
 {
+	import laya.display.Graphics;
 	import laya.display.Sprite;
 	import laya.math.DataUtils;
 	import laya.math.GraphicUtils;
@@ -358,6 +359,58 @@ package stock.views
 		public function drawLineEx(startI:int, startY:Number, endI:int, endY:Number, color:String = "#ff0000"):void
 		{
 			this.graphics.drawLine(getAdptXV(startI * gridWidth), -startY, getAdptXV(endI * gridWidth), -endY, color);
+		}
+		public function drawGridLine(startI:int, endI:int, values:Array,color:String="#ff0000",texts:Array=null):void
+		{
+			var i:int, len:int;
+			len = values.length;
+			var tValue:Number;
+			for (i = 0; i < len; i++)
+			{
+				tValue = values;
+				drawLine(startI, tValue, endI, tValue, color);
+				
+			}
+			if (texts)
+			{
+				len = texts.length;
+				for (i = 0; i < len; i++)
+				{
+					tTxt = texts[i];
+					tValue = values[i];
+					this.graphics.fillText(tTxt, getAdptXV(startI* gridWidth), getAdptYV(tValue), null, color, "left");
+					this.graphics.fillText(tTxt, getAdptXV(endI* gridWidth), getAdptYV(tValue), null, color, "right");
+				}
+			}
+		}
+		public function drawGridLineEx(startI:int, endI:int, values:Array,color:String="#ff0000",texts:Array=null):void
+		{
+			
+			var i:int, len:int;
+			len = values.length;
+			var tValue:Number;
+			var tTxt:String;
+			var g:Graphics;
+			g = this.graphics;
+			g.save();
+			g.alpha(0.5)
+			for (i = 0; i < len; i++)
+			{
+				tValue = values[i];
+				drawLineEx(startI, tValue, endI, tValue, color);
+			}
+			g.restore();
+			if (texts)
+			{
+				len = texts.length;
+				for (i = 0; i < len; i++)
+				{
+					tTxt = texts[i];
+					tValue = values[i];
+					this.graphics.fillText(tTxt, getAdptXV(startI* gridWidth), -tValue, null, color, "left");
+					this.graphics.fillText(tTxt, getAdptXV(endI* gridWidth), -tValue, null, color, "right");
+				}
+			}
 		}
 		public var yRate:Number;
 		public var xRate:Number;

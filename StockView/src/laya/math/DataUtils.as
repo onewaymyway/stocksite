@@ -267,6 +267,20 @@ package laya.math
 			return rst;
 		}
 		
+		public static function createGridLineData(start:int, end:int, values:Array):Array
+		{
+			var rst:Array;
+			rst = [];
+			var i:int, len:int;
+			len = values.length;
+			for (i = 0; i < len; i++)
+			{
+				rst.push([start, values[i]]);
+				rst.push([end, values[i]]);
+			}
+			return rst;
+		}
+		
 	}
 
 }
