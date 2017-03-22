@@ -305,10 +305,48 @@ package laya.math
 			var winRate:Number;
 			winRate = (max - tValue) / tValue;
 			var exp:Number;
-			exp = winRate-2 * loseRate;
+			exp = winRate+2 * loseRate;
 			return exp;
 		}
-		
+		public static function getMinMaxInfo(dataList:Array, dayCount:int, index:int,priceType:String="close"):Array
+		{
+			if (dataList.length <= index) return null;
+			var i:int, len:int;
+			var startI:int;
+			startI = index - dayCount;
+			if (startI < 0) startI = 0;
+			var max:Number;
+			var min:Number;
+			min = max = dataList[startI][priceType];
+			var tValue:Number;
+			len = index;
+			for (i = startI; i <= len; i++)
+			{
+				tValue = dataList[i][priceType];
+				if (min > tValue) min = tValue;
+				if (max < tValue) max = tValue;
+			}
+			tValue = dataList[index][priceType];
+			return [min,max,tValue]
+		}
+		public static function getWinLoseInfo(dataList:Array, dayCount:int, index:int,priceType:String="close"):Array
+		{
+			if (dataList.length <= index) return null;
+			var datas:Array;
+			datas = getMinMaxInfo(dataList, dayCount, index, priceType);
+			if (!datas || datas.length < 3) return null;
+			var min:Number, max:Number, tValue:Number;
+			min = datas[0];
+			max = datas[1];
+			tValue = datas[2];
+			var loseRate:Number;
+			loseRate = (min - tValue) / tValue;
+			var winRate:Number;
+			winRate = (max - tValue) / tValue;
+			var exp:Number;
+			exp = winRate+2 * loseRate;
+			return [loseRate,winRate,exp]
+		}
 	}
 
 }
