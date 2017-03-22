@@ -1004,7 +1004,7 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		WebTools.openStockDetail=function(stock){
-			WebTools.openUrl("http://stockhtm.finance.qq.com/sstock/ggcx/"+stock+".shtml");
+			WebTools.openUrl("http://q.stock.sohu.com/cn/"+stock+"/");
 		}
 
 		return WebTools;
@@ -35324,9 +35324,10 @@ var Laya=window.Laya=(function(window,document){
 			if (e.type=="mousedown"){
 				var tData;
 				tData=this.stockList.array[index];
-				if (!tData)return;
+				if (!tData)
+					return;
 				console.log(tData);
-				this.openUrl("http://stockhtm.finance.qq.com/sstock/ggcx/"+tData.code+".shtml");
+				WebTools.openStockDetail(tData.code);
 			}
 		}
 
