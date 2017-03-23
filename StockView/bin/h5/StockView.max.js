@@ -833,6 +833,7 @@ var Laya=window.Laya=(function(window,document){
 
 		__proto.getParam=function(){
 			var rst;
+			rst={};
 			if (this.paramkeys){
 				var i=0,len=0;
 				len=this.paramkeys.length;
@@ -843,6 +844,10 @@ var Laya=window.Laya=(function(window,document){
 				}
 			}
 			return rst;
+		}
+
+		__proto.getParamsArr=function(){
+			return [ClassTool.getClassName(this),this.getParam()];
 		}
 
 		__proto.setByParam=function(params){
@@ -1064,6 +1069,8 @@ var Laya=window.Laya=(function(window,document){
 		MsgConst.Show_Pre_Select="Show_Pre_Select";
 		MsgConst.AnalyserListChange="AnalyserListChange";
 		MsgConst.Show_Analyser_Prop="Show_Analyser_Prop";
+		MsgConst.Set_Analyser_Prop="Set_Analyser_Prop";
+		MsgConst.Fresh_Analyser_Prop="Fresh_Analyser_Prop";
 		return MsgConst;
 	})()
 
@@ -34920,11 +34927,19 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		__proto.initByData=function(propDes,propO){
-			if (this.tPropO==propO)return;
+			if (this.tPropO==propO){
+				return;
+			}
 			this.tPropO=propO;
 			this.tPropDes=propDes;
 			this.createBox(propDes);
 			this.initValue(propO);
+		}
+
+		__proto.refresh=function(){
+			if (this.tPropO){
+				this.initValue(this.tPropO);
+			}
 		}
 
 		__proto.initValue=function(propO){
@@ -34999,11 +35014,17 @@ var Laya=window.Laya=(function(window,document){
 			this.propPanel.visible=false;
 			Notice.listen("AnalyserListChange",this,this.analysersChanged);
 			Notice.listen("Show_Analyser_Prop",this,this.showAnalyserProp);
+			Notice.listen("Set_Analyser_Prop",this,this.onSetAnalyserProps);
 			this.propPanel.on("MakeChange",this,this.refreshKLine);
 		}
 
 		__class(KLineView,'view.KLineView',_super);
 		var __proto=KLineView.prototype;
+		__proto.onSetAnalyserProps=function(analyserName,paramsO){
+			this.analyserList.setAnalyserParams(analyserName,paramsO);
+			this.propPanel.refresh();
+		}
+
 		__proto.refreshKLine=function(){
 			this.showKline(this.kLine.tStock);
 		}
@@ -35163,6 +35184,36 @@ var Laya=window.Laya=(function(window,document){
 			this.list.array=this.dataList;
 		}
 
+		__proto.refreshList=function(){
+			if (this.list && this.list.array){
+				this.list.refresh();
+			}
+		}
+
+		__proto.getAnalyserByName=function(analyserName){
+			var i=0,len=0;
+			len=this.dataList.length;
+			var tData;
+			for (i=0;i < len;i++){
+				tData=this.dataList[i];
+				if (tData.name==analyserName){
+					return tData;
+				}
+			}
+			return null;
+		}
+
+		__proto.setAnalyserParams=function(analyserName,paramO){
+			var analyserO;
+			analyserO=this.getAnalyserByName(analyserName);
+			if (!analyserO)return;
+			var tAnalyser;
+			tAnalyser=analyserO["Analyser"];
+			if (!tAnalyser)return;
+			tAnalyser.setByParam(paramO);
+			this.refreshList();
+		}
+
 		__proto.mRender=function(cell,index){
 			var item=cell.dataSource;
 			var label;
@@ -35308,7 +35359,21 @@ var Laya=window.Laya=(function(window,document){
 				if (!tData)
 					return;
 				console.log(tData);
+				this.setUpAnalyserData();
 				Notice.notify("Show_Stock_KLine",tData.path);
+			}
+		}
+
+		__proto.setUpAnalyserData=function(){
+			if (this.typeDic[this.tType]){
+				var analyserInfos;
+				analyserInfos=this.typeDic[this.tType]["analyserInfo"];
+				if (!analyserInfos)return;
+				var i=0,len=0;
+				len=analyserInfos.length;
+				for (i=0;i < len;i++){
+					Notice.notify("Set_Analyser_Prop",analyserInfos[i]);
+				}
 			}
 		}
 
@@ -36035,7 +36100,7 @@ var Laya=window.Laya=(function(window,document){
 	})(ToolBarUI)
 
 
-	Laya.__init([EventDispatcher,LoaderManager,Browser,Render,View,LocalStorage,Timer]);
+	Laya.__init([LoaderManager,EventDispatcher,Browser,Render,View,LocalStorage,Timer]);
 	new StockMain();
 
 })(window,document,Laya);
