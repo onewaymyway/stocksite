@@ -1380,7 +1380,22 @@ var Laya=window.Laya=(function(window,document){
 				this.analyserAFile(fileList[i],this.dirInfos);
 			}
 			this.dirInfos.sort(MathUtil.sortByKey("lastDate",true,false));
-			FileManager.createJSONFile(RunConfig.outFile,this.dirInfos);
+			var moData;
+			moData={};
+			moData.stocks=this.dirInfos;
+			var types;
+			types=[];
+			var tData;
+			tData={};
+			tData.label="kline";
+			tData.sortParams=["lastDate",true,false];
+			types.push(tData);
+			tData={};
+			tData.label="exp";
+			tData.sortParams=["exp",true,true];
+			types.push(tData);
+			moData.types=types;
+			FileManager.createJSONFile(RunConfig.outFile,moData);
 		}
 
 		__proto.analyserAFile=function(path,rst){
@@ -15815,7 +15830,7 @@ var Laya=window.Laya=(function(window,document){
 					this._setUpNoticeType(0x1);
 				}
 			}
-			return _super.prototype.on.call(this,type,caller,listener,args);
+			return this._createListener(type,caller,listener,args,false);
 		}
 
 		/**
@@ -15833,7 +15848,7 @@ var Laya=window.Laya=(function(window,document){
 					this._setUpNoticeType(0x1);
 				}
 			}
-			return _super.prototype.once.call(this,type,caller,listener,args);
+			return this._createListener(type,caller,listener,args,true);
 		}
 
 		/**@private */
@@ -20322,9 +20337,10 @@ var Laya=window.Laya=(function(window,document){
 			if (this._mouseEnableState!==1 && this.isMouseEvent(type)){
 				this.mouseEnabled=true;
 				this._setBit(0x2,true);
-				if (this.parent){
+				if (this._parent){
 					this._$2__onDisplay();
 				}
+				return this._createListener(type,caller,listener,args,false);
 			}
 			return _super.prototype.on.call(this,type,caller,listener,args);
 		}
@@ -20342,9 +20358,10 @@ var Laya=window.Laya=(function(window,document){
 			if (this._mouseEnableState!==1 && this.isMouseEvent(type)){
 				this.mouseEnabled=true;
 				this._setBit(0x2,true);
-				if (this.parent){
+				if (this._parent){
 					this._$2__onDisplay();
 				}
+				return this._createListener(type,caller,listener,args,true);
 			}
 			return _super.prototype.once.call(this,type,caller,listener,args);
 		}
@@ -26397,11 +26414,15 @@ var Laya=window.Laya=(function(window,document){
 
 		/**@inheritDoc */
 		__proto.initialize=function(){
-			this.on("mouseover",this,this.onMouse);
-			this.on("mouseout",this,this.onMouse);
-			this.on("mousedown",this,this.onMouse);
-			this.on("mouseup",this,this.onMouse);
-			this.on("click",this,this.onMouse);
+			if (this._mouseEnableState!==1){
+				this.mouseEnabled=true;
+				this._setBit(0x2,true);
+			}
+			this._createListener("mouseover",this,this.onMouse,null,false,false);
+			this._createListener("mouseout",this,this.onMouse,null,false,false);
+			this._createListener("mousedown",this,this.onMouse,null,false,false);
+			this._createListener("mouseup",this,this.onMouse,null,false,false);
+			this._createListener("click",this,this.onMouse,null,false,false);
 		}
 
 		/**
@@ -26602,7 +26623,7 @@ var Laya=window.Laya=(function(window,document){
 			if (!this._text && !value)return;
 			this.createText();
 			if (this._text.text !=value){
-				value && !this._text.displayedInStage && this.addChild(this._text);
+				value && !this._text.parent && this.addChild(this._text);
 				this._text.text=(value+"").replace(/\\n/g,"\n");
 				this._setStateChanged();
 			}
@@ -26980,18 +27001,12 @@ var Laya=window.Laya=(function(window,document){
 			this.graphics=this._bitmap=new AutoBitmap();
 		}
 
-		/**@inheritDoc */
-		__proto.initialize=function(){
-			this.on("display",this,this._onDisplay);
-			this.on("undisplay",this,this._onDisplay);
-		}
-
 		/**@private */
 		__proto._onDisplay=function(e){
 			if (this._isPlaying){
 				if (this._displayedInStage)this.play();
 				else this.stop();
-				}else if (this._autoPlay && this._displayedInStage){
+				}else if (this._autoPlay){
 				this.play();
 			}
 		}
@@ -27047,6 +27062,8 @@ var Laya=window.Laya=(function(window,document){
 			this.index=0;
 			this._index++;
 			Laya.timer.loop(this.interval,this,this._loop);
+			this.on("display",this,this._onDisplay);
+			this.on("undisplay",this,this._onDisplay);
 		}
 
 		/**
@@ -31700,6 +31717,7 @@ var Laya=window.Laya=(function(window,document){
 			var arrow=e.currentTarget;
 			var index=arrow.tag;
 			this._list.array[index].isOpen=!this._list.array[index].isOpen;
+			this.event("open");
 			this._list.array=this.getArray();
 		}
 
@@ -37598,6 +37616,7 @@ var Laya=window.Laya=(function(window,document){
 		function SelectStockView(){
 			this.dataUrl="last.json";
 			this.tType=0;
+			this.configO=null;
 			this.tDatas=null;
 			this.tI=0;
 			SelectStockView.__super.call(this);
@@ -37625,7 +37644,8 @@ var Laya=window.Laya=(function(window,document){
 
 		__proto.dataLoaded=function(){
 			var data;
-			this.tDatas=Loader.getRes(this.dataUrl);;
+			this.configO=Loader.getRes(this.dataUrl);
+			this.tDatas=this.configO["stocks"];
 			this.refreshData();
 		}
 
