@@ -35215,8 +35215,10 @@ var Laya=window.Laya=(function(window,document){
 	var SelectStockView=(function(_super){
 		function SelectStockView(){
 			this.dataUrl="last.json";
-			this.tType=0;
+			this.tType="kline";
+			this.configO=null;
 			this.tDatas=null;
+			this.typeDic={};
 			this.tI=0;
 			SelectStockView.__super.call(this);
 			this.init();
@@ -35237,25 +35239,44 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		__proto.onTypeChange=function(){
-			this.tType=this.typeSelect.selectedIndex;
+			this.tType=this.typeSelect.selectedLabel;
 			this.refreshData();
 		}
 
 		__proto.dataLoaded=function(){
 			var data;
-			this.tDatas=Loader.getRes(this.dataUrl);;
+			this.configO=Loader.getRes(this.dataUrl);
+			this.tDatas=this.configO["stocks"];
+			this.initByConfigO();
 			this.refreshData();
+		}
+
+		__proto.initByConfigO=function(){
+			var types;
+			types=this.configO["types"];
+			if (!types)return;
+			this.typeDic={};
+			var typesStr;
+			typesStr=[];
+			var tTypeO;
+			var i=0,len=0;
+			len=types.length;
+			for (i=0;i < len;i++){
+				tTypeO=types[i];
+				typesStr.push(tTypeO.label);
+				this.typeDic[tTypeO.label]=tTypeO;
+			}
+			this.typeSelect.labels=typesStr.join(",");
+			this.typeSelect.selectedIndex=0;
 		}
 
 		__proto.refreshData=function(){
 			if (!this.tDatas)return;
-			switch(this.tType){
-				case 1:
-					this.tDatas.sort(MathUtil.sortByKey("exp",true,true));
-					break ;
-				default :
-					this.tDatas.sort(MathUtil.sortByKey("lastDate",true,false));
-				}
+			if (this.typeDic[this.tType]){
+				this.tDatas.sort(MathUtil.sortByKey.apply(null,this.typeDic[this.tType]["sortParams"]));
+				}else{
+				this.tDatas.sort(MathUtil.sortByKey("lastDate",true,false));
+			}
 			this.list.array=this.tDatas;
 		}
 
