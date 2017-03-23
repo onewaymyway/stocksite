@@ -77,7 +77,26 @@ package {
 			}
 			//trace("okFiles:", dirInfos);
 			dirInfos.sort(MathUtil.sortByKey("lastDate", true, false));
-			FileManager.createJSONFile(RunConfig.outFile, dirInfos);
+			var moData:Object;
+			moData = { };
+			moData.stocks = dirInfos;
+			
+			var types:Array;
+			types = [];
+			var tData:Object;
+			tData = { };
+			tData.label = "kline";
+			tData.sortParams = ["lastDate", true, false];
+			types.push(tData);
+			
+			tData = { };
+			tData.label = "exp";
+			tData.sortParams = ["exp", true, true];
+			types.push(tData);
+			
+			moData.types = types;
+			
+			FileManager.createJSONFile(RunConfig.outFile, moData);
 		}
 		public var analyser:KLineAnalyser;
 		
