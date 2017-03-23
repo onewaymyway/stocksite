@@ -19,7 +19,7 @@ package view {
 			init();
 		}
 		public var dataUrl:String = "last.json";
-		public var tType:int = 0;
+		public var tType:String = "kline";
 		public function init():void {
 			list.renderHandler = new Handler(this, stockRender);
 			list.array = [];
@@ -36,26 +36,57 @@ package view {
 		
 		private function onTypeChange():void
 		{
-			tType = typeSelect.selectedIndex;
+			tType = typeSelect.selectedLabel;
 			refreshData();
 		}
+		private var configO:Object;
 		private var tDatas:Array;
 		private function dataLoaded():void {
 			var data:Array;
-			tDatas = Loader.getRes(dataUrl);;
+			configO = Loader.getRes(dataUrl);
+			tDatas = configO["stocks"];
+			initByConfigO();
 			refreshData();
+		}
+		private var typeDic:Object={};
+		private function initByConfigO():void
+		{
+			var types:Array;
+			types = configO["types"];
+			if (!types) return;
+			typeDic = { };
+			var typesStr:Array;
+			typesStr = [];
+			var tTypeO:Object;
+			var i:int, len:int;
+			len = types.length;
+			for (i = 0; i < len; i++)
+			{
+				tTypeO = types[i];
+				typesStr.push(tTypeO.label);
+				typeDic[tTypeO.label] = tTypeO;
+			}
+			typeSelect.labels = typesStr.join(",");
+			typeSelect.selectedIndex = 0;
 		}
 		private function refreshData():void
 		{
 			if (!tDatas) return;
-			switch(tType)
+			if (typeDic[tType])
 			{
-				case 1:
-					tDatas.sort(MathUtil.sortByKey("exp", true, true));
-					break;
-				default:
-					tDatas.sort(MathUtil.sortByKey("lastDate", true, false));
+				tDatas.sort(MathUtil.sortByKey.apply(null,typeDic[tType]["sortParams"]));
+			}else
+			{
+				tDatas.sort(MathUtil.sortByKey("lastDate", true, false));
 			}
+			//switch(tType)
+			//{
+				//case 1:
+					//tDatas.sort(MathUtil.sortByKey("exp", true, true));
+					//break;
+				//default:
+					//tDatas.sort(MathUtil.sortByKey("lastDate", true, false));
+			//}
 			list.array = tDatas;
 		}
 		public static var signList:Array = ["high7","high15","high30","high45"];
