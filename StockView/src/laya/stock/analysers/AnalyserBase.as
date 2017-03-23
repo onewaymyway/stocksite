@@ -1,5 +1,6 @@
 package laya.stock.analysers 
 {
+	import laya.debug.tools.ClassTool;
 	import laya.math.DataUtils;
 	import laya.math.GraphicUtils;
 	import laya.stock.consts.ParamTypes;
@@ -52,6 +53,7 @@ package laya.stock.analysers
 		public function getParam():Object
 		{
 			var rst:Object;
+			rst = { };
 			if (paramkeys)
 			{
 				var i:int, len:int;
@@ -64,6 +66,10 @@ package laya.stock.analysers
 				}
 			}
 			return rst;
+		}
+		public function getParamsArr():Array
+		{
+			return [ClassTool.getClassName(this),getParam()];
 		}
 		public function setByParam(params:Object):void
 		{

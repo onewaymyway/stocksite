@@ -44,7 +44,39 @@ package view.plugins
 			}
 			list.array = dataList;
 		}
-		
+		public function refreshList():void
+		{
+			if (list && list.array)
+			{
+				list.refresh();
+			}
+		}
+		public function getAnalyserByName(analyserName:String):Object
+		{
+			var i:int, len:int;
+			len = dataList.length;
+			var tData:Object;
+			for (i = 0; i < len; i++)
+			{
+				tData = dataList[i];
+				if (tData.name == analyserName)
+				{
+					return tData;
+				}
+			}
+			return null;
+		}
+		public function setAnalyserParams(analyserName:String, paramO:Object):void
+		{
+			var analyserO:Object;
+			analyserO = getAnalyserByName(analyserName);
+			if (!analyserO) return;
+			var tAnalyser:AnalyserBase;
+			tAnalyser = analyserO["Analyser"];
+			if (!tAnalyser) return;
+			tAnalyser.setByParam(paramO);
+			refreshList();
+		}
 		private var checkHandler:Handler;
 		public function mRender(cell:Box, index:int):void {
 			var item:Object = cell.dataSource;

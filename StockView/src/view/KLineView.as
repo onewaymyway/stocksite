@@ -55,7 +55,13 @@ package view
 			propPanel.visible = false;
 			Notice.listen(MsgConst.AnalyserListChange, this, analysersChanged);
 			Notice.listen(MsgConst.Show_Analyser_Prop, this, showAnalyserProp);
+			Notice.listen(MsgConst.Set_Analyser_Prop, this, onSetAnalyserProps);
 			propPanel.on(PropPanel.MakeChange, this, refreshKLine);
+		}
+		public function onSetAnalyserProps(analyserName:String,paramsO:Object):void
+		{
+			analyserList.setAnalyserParams(analyserName, paramsO);
+			propPanel.refresh();
 		}
 		public function refreshKLine():void
 		{

@@ -121,10 +121,26 @@ package view {
 				if (!tData)
 					return;
 				trace(tData);
+				setUpAnalyserData();
 				Notice.notify(MsgConst.Show_Stock_KLine, tData.path);
 			}
 		}
-		
+		public function setUpAnalyserData():void
+		{
+			if (typeDic[tType])
+			{
+				var analyserInfos:Array;
+				analyserInfos = typeDic[tType]["analyserInfo"];
+				if (!analyserInfos) return;
+				var i:int, len:int;
+				len = analyserInfos.length;
+				for (i = 0; i < len; i++)
+				{
+					Notice.notify(MsgConst.Set_Analyser_Prop, analyserInfos[i]);
+				}
+					
+			}
+		}
 		public function next():void {
 			tI++;
 			showI(tI);

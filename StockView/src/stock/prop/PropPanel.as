@@ -41,11 +41,21 @@ package stock.prop
 		public var tPropO:Object;
 		public function initByData(propDes:Array, propO:Object):void
 		{
-			if (tPropO == propO) return;
+			if (tPropO == propO)
+			{
+				return;
+			} 
 			tPropO = propO;
 			tPropDes = propDes;
 			createBox(propDes);
 			initValue(propO);
+		}
+		public function refresh():void
+		{
+			if (tPropO)
+			{
+				initValue(tPropO);
+			}
 		}
 		public function initValue(propO:Object):void
 		{

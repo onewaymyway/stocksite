@@ -19,6 +19,9 @@ package msgs
 		public static const AnalyserListChange:String = "AnalyserListChange";
 		
 		public static const Show_Analyser_Prop:String = "Show_Analyser_Prop";
+		
+		public static const Set_Analyser_Prop:String = "Set_Analyser_Prop";
+		public static const Fresh_Analyser_Prop:String = "Fresh_Analyser_Prop";
 	}
 
 }
