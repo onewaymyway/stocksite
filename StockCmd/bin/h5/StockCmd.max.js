@@ -1329,7 +1329,9 @@ var Laya=window.Laya=(function(window,document){
 	var StockCmdTool=(function(){
 		function StockCmdTool(){
 			this.dirInfos=[];
+			this.moData=null;
 			this.analyser=null;
+			this.posAnalyser=null;
 			this.init();
 			this.parseCMD(NodeJSTools.getArgv());
 			DTrace.timeStart("StockCmdTool");
@@ -1370,9 +1372,36 @@ var Laya=window.Laya=(function(window,document){
 			this.workDir("D:/stockdata.git/trunk/trunk/stockdatas/");
 		}
 
+		__proto.initAnalysers=function(){
+			this.moData={};
+			var types;
+			types=[];
+			var tData;
+			var tAnalyserInfos;
+			this.analyser=new KLineAnalyser();
+			tData={};
+			tData.label="kline";
+			tData.sortParams=["lastDate",true,false];
+			tAnalyserInfos=[];
+			tAnalyserInfos.push(this.analyser.getParamsArr());
+			tData.analyserInfo=tAnalyserInfos;
+			types.push(tData);
+			this.posAnalyser=new PositionLine();
+			this.posAnalyser.dayCount=130;
+			tData={};
+			tData.label="exp";
+			tData.sortParams=["exp",true,true];
+			tAnalyserInfos=[];
+			tAnalyserInfos.push(this.posAnalyser.getParamsArr());
+			tData.analyserInfo=tAnalyserInfos;
+			types.push(tData);
+			this.moData.types=types;
+		}
+
 		__proto.workDir=function(path){
 			this.dirInfos=[];
 			var fileList;
+			this.initAnalysers();
 			fileList=FileTools.getFileList(path);
 			var i=0,len=0;
 			len=fileList.length;
@@ -1380,31 +1409,14 @@ var Laya=window.Laya=(function(window,document){
 				this.analyserAFile(fileList[i],this.dirInfos);
 			}
 			this.dirInfos.sort(MathUtil.sortByKey("lastDate",true,false));
-			var moData;
-			moData={};
-			moData.stocks=this.dirInfos;
-			var types;
-			types=[];
-			var tData;
-			tData={};
-			tData.label="kline";
-			tData.sortParams=["lastDate",true,false];
-			types.push(tData);
-			tData={};
-			tData.label="exp";
-			tData.sortParams=["exp",true,true];
-			types.push(tData);
-			moData.types=types;
-			FileManager.createJSONFile(RunConfig.outFile,moData);
+			this.moData.stocks=this.dirInfos;
+			FileManager.createJSONFile(RunConfig.outFile,this.moData);
 		}
 
 		__proto.analyserAFile=function(path,rst){
 			console.log("work:",path);
 			var data;
 			data=FileManager.readTxtFile(path);
-			if (!this.analyser){
-				this.analyser=new KLineAnalyser();
-			}
 			this.analyser.initByStrData(data);
 			var lastUnder;
 			lastUnder=this.analyser.getLastUnderLine(RunConfig.minUnderDay);
@@ -1420,7 +1432,7 @@ var Laya=window.Laya=(function(window,document){
 					tData.data=lastStock;
 					tData.lastDate=lastStock["date"];
 					StockTools.getBuyStaticInfos(lastUnder[2],this.analyser.disDataList,tData);
-					tData.exp=DataUtils.getExpDatas(this.analyser.disDataList,130,this.analyser.disDataList.length-1);
+					tData.exp=DataUtils.getExpDatas(this.analyser.disDataList,this.posAnalyser.dayCount,this.analyser.disDataList.length-1);
 					rst.push(tData);
 				}
 			}
@@ -15331,6 +15343,7 @@ var Laya=window.Laya=(function(window,document){
 
 		__proto.getParam=function(){
 			var rst;
+			rst={};
 			if (this.paramkeys){
 				var i=0,len=0;
 				len=this.paramkeys.length;
@@ -15341,6 +15354,10 @@ var Laya=window.Laya=(function(window,document){
 				}
 			}
 			return rst;
+		}
+
+		__proto.getParamsArr=function(){
+			return [ClassTool.getClassName(this),this.getParam()];
 		}
 
 		__proto.setByParam=function(params){
@@ -37563,6 +37580,35 @@ var Laya=window.Laya=(function(window,document){
 			this.list.array=this.dataList;
 		}
 
+		__proto.refreshList=function(){
+			if (this.list && this.list.array){
+				this.list.refresh();
+			}
+		}
+
+		__proto.getAnalyserByName=function(analyserName){
+			var i=0,len=0;
+			len=this.dataList.length;
+			var tData;
+			for (i=0;i < len;i++){
+				tData=this.dataList[i];
+				if (tData.name==analyserName){
+					return tData;
+				}
+			}
+			return null;
+		}
+
+		__proto.setAnalyserParams=function(analyserName,paramO){
+			var analyserO;
+			analyserO=this.getAnalyserByName(analyserName);
+			if (!analyserO)return;
+			var tAnalyser;
+			tAnalyser=analyserO["Analyser"];
+			if (!tAnalyser)return;
+			tAnalyser.setByParam(paramO);
+		}
+
 		__proto.mRender=function(cell,index){
 			var item=cell.dataSource;
 			var label;
@@ -37615,9 +37661,10 @@ var Laya=window.Laya=(function(window,document){
 	var SelectStockView=(function(_super){
 		function SelectStockView(){
 			this.dataUrl="last.json";
-			this.tType=0;
+			this.tType="kline";
 			this.configO=null;
 			this.tDatas=null;
+			this.typeDic={};
 			this.tI=0;
 			SelectStockView.__super.call(this);
 			this.init();
@@ -37638,7 +37685,7 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		__proto.onTypeChange=function(){
-			this.tType=this.typeSelect.selectedIndex;
+			this.tType=this.typeSelect.selectedLabel;
 			this.refreshData();
 		}
 
@@ -37646,18 +37693,36 @@ var Laya=window.Laya=(function(window,document){
 			var data;
 			this.configO=Loader.getRes(this.dataUrl);
 			this.tDatas=this.configO["stocks"];
+			this.initByConfigO();
 			this.refreshData();
+		}
+
+		__proto.initByConfigO=function(){
+			var types;
+			types=this.configO["types"];
+			if (!types)return;
+			this.typeDic={};
+			var typesStr;
+			typesStr=[];
+			var tTypeO;
+			var i=0,len=0;
+			len=types.length;
+			for (i=0;i < len;i++){
+				tTypeO=types[i];
+				typesStr.push(tTypeO.label);
+				this.typeDic[tTypeO.label]=tTypeO;
+			}
+			this.typeSelect.labels=typesStr.join(",");
+			this.typeSelect.selectedIndex=0;
 		}
 
 		__proto.refreshData=function(){
 			if (!this.tDatas)return;
-			switch(this.tType){
-				case 1:
-					this.tDatas.sort(MathUtil.sortByKey("exp",true,true));
-					break ;
-				default :
-					this.tDatas.sort(MathUtil.sortByKey("lastDate",true,false));
-				}
+			if (this.typeDic[this.tType]){
+				this.tDatas.sort(MathUtil.sortByKey.apply(null,this.typeDic[this.tType]["sortParams"]));
+				}else{
+				this.tDatas.sort(MathUtil.sortByKey("lastDate",true,false));
+			}
 			this.list.array=this.tDatas;
 		}
 
@@ -37781,7 +37846,7 @@ var Laya=window.Laya=(function(window,document){
 3 file:///D:/stocksite.git/trunk/StockCmd/src/nodetools/devices/FileTools.as (82):warning:Browser.window.location.href This variable is not defined.
 4 file:///D:/stocksite.git/trunk/StockCmd/src/nodetools/devices/FileTools.as (82):warning:Browser.window.location.href This variable is not defined.
 5 file:///D:/stocksite.git/trunk/StockCmd/src/nodetools/devices/FileTools.as (642):warning:Alert.show This variable is not defined.
-6 file:///D:/stocksite.git/trunk/StockCmd/src/StockCmdTool.as (36):warning:scriptPath This variable is not defined.
+6 file:///D:/stocksite.git/trunk/StockCmd/src/StockCmdTool.as (37):warning:scriptPath This variable is not defined.
 7 file:///D:/stocksite.git/trunk/StockView/src/stock/views/KLine.as (368):warning:tTxt This variable is not defined.
 8 file:///D:/stocksite.git/trunk/StockView/src/stock/views/KLine.as (370):warning:tTxt This variable is not defined.
 9 file:///D:/stocksite.git/trunk/StockView/src/stock/views/KLine.as (371):warning:tTxt This variable is not defined.
