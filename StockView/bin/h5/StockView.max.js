@@ -34995,6 +34995,7 @@ var Laya=window.Laya=(function(window,document){
 		function KLineView(){
 			this.kLine=null;
 			this.tAnalyser=null;
+			this.preMouseX=NaN;
 			KLineView.__super.call(this);
 			this.kLine=new KLine();
 			this.kLine.analysers=[];
@@ -35020,10 +35021,27 @@ var Laya=window.Laya=(function(window,document){
 			Notice.listen("Show_Analyser_Prop",this,this.showAnalyserProp);
 			Notice.listen("Set_Analyser_Prop",this,this.onSetAnalyserProps);
 			this.propPanel.on("MakeChange",this,this.refreshKLine);
+			this.on("mousedown",this,this.onMMouseDown);
+			this.on("mouseup",this,this.onMMouseUp);
+			this.enableAnimation.selected=false;
 		}
 
 		__class(KLineView,'view.KLineView',_super);
 		var __proto=KLineView.prototype;
+		__proto.onMMouseDown=function(){
+			this.preMouseX=Laya.stage.mouseX;
+		}
+
+		__proto.onMMouseUp=function(){
+			var dX=NaN;
+			dX=Laya.stage.mouseX-this.preMouseX;
+			if (dX > 100){
+				this.onNext();
+				}else if(dX<-100){
+				this.onPre();
+			}
+		}
+
 		__proto.onSetAnalyserProps=function(analyserName,paramsO){
 			this.analyserList.setAnalyserParams(analyserName,paramsO);
 			this.propPanel.refresh();
