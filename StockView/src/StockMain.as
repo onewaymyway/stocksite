@@ -1,6 +1,7 @@
 package  
 {
 	import laya.debug.DebugTool;
+	import laya.display.Stage;
 	import laya.maths.MathUtil;
 	import laya.net.Loader;
 	import laya.utils.Handler;
@@ -21,6 +22,7 @@ package
 		{
 			Laya.init(1000, 900);
 			Laya.stage.scaleMode = "full";
+			Laya.stage.screenMode = Stage.SCREEN_HORIZONTAL;
 			var loads:Array;
 			loads = [];
 			loads.push( { url:PathConfig.stockBasic, type:Loader.TEXT } );
