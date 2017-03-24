@@ -35272,6 +35272,7 @@ var Laya=window.Laya=(function(window,document){
 			this.tDatas=null;
 			this.typeDic={};
 			this.tI=0;
+			this.preTime=0;
 			SelectStockView.__super.call(this);
 			this.init();
 		}
@@ -35282,7 +35283,7 @@ var Laya=window.Laya=(function(window,document){
 			this.list.renderHandler=new Handler(this,this.stockRender);
 			this.list.array=[];
 			this.list.mouseHandler=new Handler(this,this.onMouseList);
-			this.list.scrollBar.touchScrollEnable=false;
+			this.list.scrollBar.touchScrollEnable=true;
 			Laya.loader.load(this.dataUrl,new Handler(this,this.dataLoaded),null,"json");
 			Notice.listen("Show_Next_Select",this,this.next);
 			Notice.listen("Show_Pre_Select",this,this.pre);
@@ -35306,7 +35307,8 @@ var Laya=window.Laya=(function(window,document){
 		__proto.initByConfigO=function(){
 			var types;
 			types=this.configO["types"];
-			if (!types)return;
+			if (!types)
+				return;
 			this.typeDic={};
 			var typesStr;
 			typesStr=[];
@@ -35323,10 +35325,12 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		__proto.refreshData=function(){
-			if (!this.tDatas)return;
+			if (!this.tDatas)
+				return;
 			if (this.typeDic[this.tType]){
 				this.tDatas.sort(MathUtil.sortByKey.apply(null,this.typeDic[this.tType]["sortParams"]));
-				}else{
+			}
+			else {
 				this.tDatas.sort(MathUtil.sortByKey("lastDate",true,false));
 			}
 			this.list.array=this.tDatas;
@@ -35340,7 +35344,7 @@ var Laya=window.Laya=(function(window,document){
 			var tSign;
 			for (i=0;i < len;i++){
 				tSign=SelectStockView.signList[i];
-				rst.push(Math.floor(stockO[tSign]*100)+"%")
+				rst.push(Math.floor(stockO[tSign] *100)+"%")
 			}
 			return rst;
 		}
@@ -35349,11 +35353,17 @@ var Laya=window.Laya=(function(window,document){
 			var item=cell.dataSource;
 			var label;
 			label=cell.getChildByName("label");
-			label.text=item.path+":"+Math.floor(item.changePercent*100)+"%"+":"+Math.floor(item.highPercent*100)+"%"+"\n"+this.getStockChanges(item).join(",")+"\n"+item.lastDate;
+			label.text=item.path+":"+Math.floor(item.changePercent *100)+"%"+":"+Math.floor(item.highPercent *100)+"%"+"\n"+this.getStockChanges(item).join(",")+"\n"+item.lastDate;
 		}
 
 		__proto.onMouseList=function(e,index){
 			if (e.type=="mousedown"){
+				var tTime=Browser.now();
+				if (tTime-this.preTime > 500){
+					this.preTime=tTime;
+					return;
+				}
+				this.preTime=tTime;
 				var tData;
 				tData=this.list.array[index];
 				this.tI=index;
@@ -35369,7 +35379,8 @@ var Laya=window.Laya=(function(window,document){
 			if (this.typeDic[this.tType]){
 				var analyserInfos;
 				analyserInfos=this.typeDic[this.tType]["analyserInfo"];
-				if (!analyserInfos)return;
+				if (!analyserInfos)
+					return;
 				var i=0,len=0;
 				len=analyserInfos.length;
 				for (i=0;i < len;i++){
@@ -35391,7 +35402,8 @@ var Laya=window.Laya=(function(window,document){
 		__proto.showI=function(i){
 			var index=0;
 			index=i;
-			if (index < 0)index=this.list.array.length-1;
+			if (index < 0)
+				index=this.list.array.length-1;
 			index=index % this.list.array.length;
 			var tData;
 			tData=this.list.array[index];
@@ -35416,6 +35428,7 @@ var Laya=window.Laya=(function(window,document){
 	//class view.StockView extends ui.StockViewUI
 	var StockView=(function(_super){
 		function StockView(){
+			this.preTime=0;
 			StockView.__super.call(this);
 		}
 
@@ -35425,7 +35438,7 @@ var Laya=window.Laya=(function(window,document){
 			this.stockList.renderHandler=new Handler(this,this.stockRender);
 			this.stockList.array=StockBasicInfo.I.stockList;
 			this.stockList.mouseHandler=new Handler(this,this.onMouseList);
-			this.stockList.scrollBar.touchScrollEnable=false;
+			this.stockList.scrollBar.touchScrollEnable=true;
 		}
 
 		__proto.stockRender=function(cell,index){
@@ -35440,7 +35453,13 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		__proto.onMouseList=function(e,index){
-			if (e.type=="mousedown"){
+			if (e.type=="mouseup"){
+				var tTime=Browser.now();
+				if (tTime-this.preTime > 500){
+					this.preTime=tTime;
+					return;
+				}
+				this.preTime=tTime;
 				var tData;
 				tData=this.stockList.array[index];
 				if (!tData)
