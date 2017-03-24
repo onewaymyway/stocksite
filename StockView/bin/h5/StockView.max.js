@@ -1452,7 +1452,6 @@ var Laya=window.Laya=(function(window,document){
 			Laya.init(1000,900);
 			Laya.stage.scaleMode="full";
 			Laya.stage.screenMode="horizontal";
-			Stat.show();
 			var loads;
 			loads=[];
 			loads.push({url:PathConfig.stockBasic,type:"text" });
