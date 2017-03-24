@@ -1452,6 +1452,7 @@ var Laya=window.Laya=(function(window,document){
 			Laya.init(1000,900);
 			Laya.stage.scaleMode="full";
 			Laya.stage.screenMode="horizontal";
+			Stat.show();
 			var loads;
 			loads=[];
 			loads.push({url:PathConfig.stockBasic,type:"text" });
@@ -20579,6 +20580,7 @@ var Laya=window.Laya=(function(window,document){
 		__proto.setStockData=function(stockData){
 			this.stockData=stockData;
 			this.dataList=stockData.dataList;
+			this.cacheAsBitmap=false;
 			this.drawdata();
 			this.tLen=10;
 			if (this.autoPlay){
@@ -20586,6 +20588,7 @@ var Laya=window.Laya=(function(window,document){
 				Laya.timer.loop(10,this,this.timeEffect);
 				}else{
 				this.showMsg("K-line Showed");
+				this.cacheAsBitmap=true;
 			}
 		}
 
@@ -20594,6 +20597,7 @@ var Laya=window.Laya=(function(window,document){
 			if (this.tLen >=this.dataList.length){
 				this.showMsg("Animation End");
 				Laya.timer.clear(this,this.timeEffect);
+				this.cacheAsBitmap=true;
 				return;
 			};
 			var start=0;
@@ -35357,7 +35361,7 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		__proto.onMouseList=function(e,index){
-			if (e.type=="mousedown"){
+			if (e.type=="mouseup"){
 				var tTime=Browser.now();
 				if (tTime-this.preTime > 500){
 					this.preTime=tTime;
@@ -36120,14 +36124,14 @@ var Laya=window.Laya=(function(window,document){
 	})(ToolBarUI)
 
 
-	Laya.__init([LoaderManager,EventDispatcher,Browser,Render,View,LocalStorage,Timer]);
+	Laya.__init([EventDispatcher,LoaderManager,Browser,Render,View,LocalStorage,Timer]);
 	new StockMain();
 
 })(window,document,Laya);
 
 
 /*
-1 file:///D:/stocksite.git/trunk/StockView/src/stock/views/KLine.as (368):warning:tTxt This variable is not defined.
-2 file:///D:/stocksite.git/trunk/StockView/src/stock/views/KLine.as (370):warning:tTxt This variable is not defined.
-3 file:///D:/stocksite.git/trunk/StockView/src/stock/views/KLine.as (371):warning:tTxt This variable is not defined.
+1 file:///D:/stocksite.git/trunk/StockView/src/stock/views/KLine.as (371):warning:tTxt This variable is not defined.
+2 file:///D:/stocksite.git/trunk/StockView/src/stock/views/KLine.as (373):warning:tTxt This variable is not defined.
+3 file:///D:/stocksite.git/trunk/StockView/src/stock/views/KLine.as (374):warning:tTxt This variable is not defined.
 */
