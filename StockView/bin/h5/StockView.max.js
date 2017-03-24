@@ -1451,6 +1451,7 @@ var Laya=window.Laya=(function(window,document){
 		function StockMain(){
 			Laya.init(1000,900);
 			Laya.stage.scaleMode="full";
+			Laya.stage.screenMode="horizontal";
 			var loads;
 			loads=[];
 			loads.push({url:PathConfig.stockBasic,type:"text" });
