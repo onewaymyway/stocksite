@@ -15075,14 +15075,14 @@ var Laya=window.Laya=(function(window,document){
 	//class laya.stock.analysers.lines.PositionLine extends laya.stock.analysers.AnalyserBase
 	var PositionLine=(function(_super){
 		function PositionLine(){
-			this.dayCount="130";
+			this.dayCount="90";
 			this.priceType="close";
 			this.color="#ffff00";
 			this.winColor="#ff0000";
 			this.loseColor="#00ff00";
 			this.expColor="#ffff00";
 			this.barHeight=50;
-			this.minBuyExp=0.4;
+			this.minBuyExp=0.3;
 			this.minBuyLose=-0.05;
 			this.maxBuyLose=-0.3;
 			this.gridLineValue="0,0.5,1,1.5,2,2.5";
