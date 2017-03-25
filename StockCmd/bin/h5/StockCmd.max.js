@@ -1363,7 +1363,8 @@ var Laya=window.Laya=(function(window,document){
 			}
 			if (FileTools.isDirectory(RunConfig.filePath)){
 				this.workDir(RunConfig.filePath);
-				}else{
+			}
+			else {
 				this.analyserAFile(RunConfig.filePath);
 			}
 		}
@@ -1381,19 +1382,35 @@ var Laya=window.Laya=(function(window,document){
 			this.analyser=new KLineAnalyser();
 			tData={};
 			tData.label="kline";
-			tData.sortParams=["lastDate",true,false];
+			tData.sortParams=["kLineO.lastDate",true,false];
+			tData.dataKey="kLineO";
 			tAnalyserInfos=[];
 			tAnalyserInfos.push(this.analyser.getParamsArr());
 			tData.analyserInfo=tAnalyserInfos;
+			tData.tip="股票:当前盈利:最高盈利\n7天最大盈利,15天最大盈利,30天最大盈利,45天最大盈利\n买入日期";
+			tData.tpl="{#code#}:{#changePercent#}%:{#highPercent#}%\n{#high7#}%,{#high15#}%,{#high30#}%,{#high45#}%\n{#lastDate#}";
 			types.push(tData);
 			this.posAnalyser=new PositionLine();
 			this.posAnalyser.dayCount=130;
 			tData={};
 			tData.label="exp";
-			tData.sortParams=["exp",true,true];
+			tData.sortParams=["expO.exp",true,true];
+			tData.dataKey="expO";
+			tData.tpl="{#code#}:exp:{#exp#}\nwin:{#win#}\nlose{#lose#}";
 			tAnalyserInfos=[];
 			tAnalyserInfos.push(this.posAnalyser.getParamsArr());
 			tData.analyserInfo=tAnalyserInfos;
+			tData.tip="n天期望模型";
+			types.push(tData);
+			tData={};
+			tData.label="win";
+			tData.sortParams=["expO.win",true,true];
+			tData.dataKey="expO";
+			tData.tpl="{#code#}:exp:{#exp#}\nwin:{#win#}\nlose{#lose#}";
+			tAnalyserInfos=[];
+			tAnalyserInfos.push(this.posAnalyser.getParamsArr());
+			tData.analyserInfo=tAnalyserInfos;
+			tData.tip="n天期望模型";
 			types.push(tData);
 			this.moData.types=types;
 		}
@@ -1408,7 +1425,6 @@ var Laya=window.Laya=(function(window,document){
 			for (i=0;i < len;i++){
 				this.analyserAFile(fileList[i],this.dirInfos);
 			}
-			this.dirInfos.sort(MathUtil.sortByKey("lastDate",true,false));
 			this.moData.stocks=this.dirInfos;
 			FileManager.createJSONFile(RunConfig.outFile,this.moData);
 		}
@@ -1418,6 +1434,24 @@ var Laya=window.Laya=(function(window,document){
 			var data;
 			data=FileManager.readTxtFile(path);
 			this.analyser.initByStrData(data);
+			var tData;
+			tData={};
+			tData.code=FileManager.getFileName(path);
+			tData.basic={code:tData.code};
+			var kLineO;
+			kLineO={};
+			tData.kLineO=kLineO;
+			kLineO.code=tData.code;
+			kLineO.lastDate="0";
+			var winLose;
+			winLose=DataUtils.getWinLoseInfo(this.analyser.disDataList,this.posAnalyser.dayCount,this.analyser.disDataList.length-1);
+			var expO={};
+			tData.expO=expO;
+			expO.code=tData.code;
+			expO.lose=StockTools.getGoodPercent(winLose[0]);
+			expO.win=StockTools.getGoodPercent(winLose[1]);
+			expO.exp=StockTools.getGoodPercent(winLose[2]);
+			rst.push(tData);
 			var lastUnder;
 			lastUnder=this.analyser.getLastUnderLine(RunConfig.minUnderDay);
 			if (!lastUnder)
@@ -1426,14 +1460,9 @@ var Laya=window.Laya=(function(window,document){
 			lastStock=this.analyser.getDataByI(lastUnder[2]);
 			if (rst){
 				if (lastStock){
-					var tData;
-					tData={};
-					tData.path=FileManager.getFileName(path);
-					tData.data=lastStock;
-					tData.lastDate=lastStock["date"];
-					StockTools.getBuyStaticInfos(lastUnder[2],this.analyser.disDataList,tData);
-					tData.exp=DataUtils.getExpDatas(this.analyser.disDataList,this.posAnalyser.dayCount,this.analyser.disDataList.length-1);
-					rst.push(tData);
+					kLineO.lastDate=lastStock["date"];
+					kLineO.data=lastStock;
+					StockTools.getBuyStaticInfos(lastUnder[2],this.analyser.disDataList,kLineO);
 				}
 			}
 		}
@@ -2568,7 +2597,7 @@ var Laya=window.Laya=(function(window,document){
 			(width===void 0)&& (width=0);
 			(height===void 0)&& (height=0);
 			(alpha===void 0)&& (alpha=1);
-			if (!tex)return;
+			if (!tex || alpha < 0.01)return;
 			if (!width)width=tex.sourceWidth;
 			if (!height)height=tex.sourceHeight;
 			width=width-tex.sourceWidth+tex.width;
@@ -5366,7 +5395,7 @@ var Laya=window.Laya=(function(window,document){
 				URL.formatRelativePath((base || URL.basePath)+url);
 				}else if (char1==="d"){
 				if (url.indexOf("data:image")===0)return url;
-				}else if (url.indexOf(":")> 0){
+				}else if (char1==="/" || url.indexOf(":")> 0){
 				return url;
 			}
 			return (base || URL.basePath)+url;
@@ -8702,12 +8731,12 @@ var Laya=window.Laya=(function(window,document){
 					this.method=null;
 					this.args=null;
 				}
-				__proto.run=function(widthClear){
+				__proto.run=function(withClear){
 					var caller=this.caller;
 					if (caller && caller.destroyed)return this.clear();
 					var method=this.method;
 					var args=this.args;
-					widthClear && this.clear();
+					withClear && this.clear();
 					if (method==null)return;
 					args ? method.apply(caller,args):method.call(caller);
 				}
@@ -15284,7 +15313,8 @@ var Laya=window.Laya=(function(window,document){
 		ValueTools.mParseFloat=function(v){
 			var tV=NaN;
 			tV=parseFloat(v);
-			if (tV.toString()=="NaN")return 0;
+			if (tV.toString()=="NaN")
+				return 0;
 			return tV;
 		}
 
@@ -15297,6 +15327,139 @@ var Laya=window.Laya=(function(window,document){
 			return arr;
 		}
 
+		ValueTools.splitStpl=function(tplStr){
+			if (ValueTools.tplArrDic[tplStr])return Utils.copyArray([],ValueTools.tplArrDic[tplStr]);
+			var i=0,len=0;
+			len=tplStr.length;
+			var preI=0;
+			var tStr;
+			var rst;
+			rst=[];
+			for (i=0;i < len;i++){
+				tStr=tplStr.charAt(i);
+				if (tStr=="#"){
+					if(i-1>=preI)
+						rst.push(tplStr.substring(preI,i));
+					preI=i+1;
+				}
+				if (tStr=="{" || tStr=="}"){
+					if(i-1>=preI)
+						rst.push(tplStr.substring(preI,i));
+					rst.push(tStr);
+					preI=i+1;
+				}
+			}
+			if (i-1 >=preI)rst.push(tplStr.substring(preI,i));
+			ValueTools.tplArrDic[tplStr]=rst;
+			return Utils.copyArray([],rst);
+		}
+
+		ValueTools.getTplStr=function(tplStr,data){
+			var i=0,len=0;
+			var tps;
+			tps=ValueTools.splitStpl(tplStr);
+			len=tps.length;
+			var tStr;
+			var tRst;
+			var preOpen=false;
+			var nextEnd=false;
+			var nextStr;
+			for (i=0;i < len;i++){
+				tStr=tps[i];
+				nextStr=tps[i+1];
+				if (nextStr=="}"){
+					nextEnd=true;
+				}
+				else {
+					nextEnd=false;
+				}
+				if (preOpen && nextEnd){
+					tps[i]=data[tStr];
+					tps[i-1]="";
+					tps[i+1]="";
+				}
+				if (tStr=="{"){
+					preOpen=true;
+				}
+				else {
+					preOpen=false;
+				}
+			}
+			return tps.join("");
+		}
+
+		ValueTools.getFlatKeyValue=function(obj,key){
+			if (!obj)
+				return null;
+			if (!key)
+				return obj;
+			var keys;
+			keys=key.split(".");
+			var i=0,len=0;
+			len=keys.length;
+			var tV;
+			tV=obj;
+			for (i=0;i < len;i++){
+				tV=tV[keys[i]];
+				if (!tV)
+					return tV;
+			}
+			return tV;
+		}
+
+		ValueTools.sortBigFirst=function(a,b){
+			if (a==b)
+				return 0;
+			return b > a ? 1 :-1;
+		}
+
+		ValueTools.sortSmallFirst=function(a,b){
+			if (a==b)
+				return 0;
+			return b > a ?-1 :1;
+		}
+
+		ValueTools.sortNumBigFirst=function(a,b){
+			return parseFloat(b)-parseFloat(a);
+		}
+
+		ValueTools.sortNumSmallFirst=function(a,b){
+			return parseFloat(a)-parseFloat(b);
+		}
+
+		ValueTools.sortByKey=function(key,bigFirst,forceNum){
+			(bigFirst===void 0)&& (bigFirst=false);
+			(forceNum===void 0)&& (forceNum=true);
+			var _sortFun;
+			if (bigFirst){
+				_sortFun=forceNum ? ValueTools.sortNumBigFirst :ValueTools.sortBigFirst;
+			}
+			else {
+				_sortFun=forceNum ? ValueTools.sortNumSmallFirst :ValueTools.sortSmallFirst;
+			}
+			return function (a,b){
+				return _sortFun(a[key],b[key]);
+			}
+		}
+
+		ValueTools.sortByKeyEX=function(key,bigFirst,forceNum){
+			(bigFirst===void 0)&& (bigFirst=false);
+			(forceNum===void 0)&& (forceNum=true);
+			if (key.indexOf(".")< 0)
+				return ValueTools.sortByKey(key,bigFirst,forceNum);
+			var _sortFun;
+			if (bigFirst){
+				_sortFun=forceNum ? ValueTools.sortNumBigFirst :ValueTools.sortBigFirst;
+			}
+			else {
+				_sortFun=forceNum ? ValueTools.sortNumSmallFirst :ValueTools.sortSmallFirst;
+			}
+			return function (a,b){
+				return _sortFun(ValueTools.getFlatKeyValue(a,key),ValueTools.getFlatKeyValue(b,key));
+			}
+		}
+
+		ValueTools.tplArrDic={};
 		return ValueTools;
 	})()
 
@@ -15554,6 +15717,10 @@ var Laya=window.Laya=(function(window,document){
 	var StockTools=(function(){
 		function StockTools(){}
 		__class(StockTools,'laya.stock.StockTools');
+		StockTools.getGoodPercent=function(v){
+			return Math.floor(v *1000)/ 10;
+		}
+
 		StockTools.getBuyStaticInfos=function(buyI,dataList,rst){
 			var priceLast=NaN;
 			var len=0;
@@ -15562,7 +15729,7 @@ var Laya=window.Laya=(function(window,document){
 			priceLast=dataList[len-1]["close"];
 			var priceBuy=NaN;
 			priceBuy=dataList[buyI]["high"];
-			rst.changePercent=(priceLast-priceBuy)/ priceBuy;
+			rst.changePercent=StockTools.getGoodPercent((priceLast-priceBuy)/ priceBuy);
 			var priceHigh=NaN;
 			priceHigh=-1;
 			for (i=buyI+1;i < len;i++){
@@ -15570,13 +15737,13 @@ var Laya=window.Laya=(function(window,document){
 					priceHigh=dataList[i]["high"];
 				}
 			}
-			rst.highPercent=(priceHigh-priceBuy)/ priceBuy;
+			rst.highPercent=StockTools.getGoodPercent((priceHigh-priceBuy)/ priceBuy);
 			len=StockTools.highDays.length;
 			var tDayCount=0;
 			for (i=0;i < len;i++){
 				tDayCount=StockTools.highDays[i];
 				priceHigh=StockTools.getHighInDays(buyI+1,tDayCount,dataList);
-				rst["high"+tDayCount]=(priceHigh-priceBuy)/ priceBuy;
+				rst["high"+tDayCount]=StockTools.getGoodPercent((priceHigh-priceBuy)/ priceBuy);
 			}
 		}
 
@@ -15634,6 +15801,8 @@ var Laya=window.Laya=(function(window,document){
 		MsgConst.Show_Pre_Select="Show_Pre_Select";
 		MsgConst.AnalyserListChange="AnalyserListChange";
 		MsgConst.Show_Analyser_Prop="Show_Analyser_Prop";
+		MsgConst.Set_Analyser_Prop="Set_Analyser_Prop";
+		MsgConst.Fresh_Analyser_Prop="Fresh_Analyser_Prop";
 		return MsgConst;
 	})()
 
@@ -15720,6 +15889,7 @@ var Laya=window.Laya=(function(window,document){
 		function StockMain(){
 			Laya.init(1000,900);
 			Laya.stage.scaleMode="full";
+			Laya.stage.screenMode="horizontal";
 			var loads;
 			loads=[];
 			loads.push({url:PathConfig.stockBasic,type:"text" });
@@ -19690,6 +19860,7 @@ var Laya=window.Laya=(function(window,document){
 		function StockBasicInfo(){
 			this.stockList=null;
 			this.stockCodeList=null;
+			this.stockDic={};
 			StockBasicInfo.__super.call(this);
 		}
 
@@ -19702,8 +19873,13 @@ var Laya=window.Laya=(function(window,document){
 			len=this.stockList.length;
 			this.stockCodeList=[];
 			for (i=0;i < len;i++){
+				this.stockDic[this.stockList[i]["code"]]=this.stockList[i];
 				this.stockCodeList.push(this.stockList[i]["code"]);
 			}
+		}
+
+		__proto.getStockData=function(code){
+			return this.stockDic[code];
 		}
 
 		__static(StockBasicInfo,
@@ -24689,6 +24865,7 @@ var Laya=window.Laya=(function(window,document){
 		__proto.setStockData=function(stockData){
 			this.stockData=stockData;
 			this.dataList=stockData.dataList;
+			this.cacheAsBitmap=false;
 			this.drawdata();
 			this.tLen=10;
 			if (this.autoPlay){
@@ -24696,6 +24873,7 @@ var Laya=window.Laya=(function(window,document){
 				Laya.timer.loop(10,this,this.timeEffect);
 				}else{
 				this.showMsg("K-line Showed");
+				this.cacheAsBitmap=true;
 			}
 		}
 
@@ -24704,6 +24882,7 @@ var Laya=window.Laya=(function(window,document){
 			if (this.tLen >=this.dataList.length){
 				this.showMsg("Animation End");
 				Laya.timer.clear(this,this.timeEffect);
+				this.cacheAsBitmap=true;
 				return;
 			};
 			var start=0;
@@ -37337,11 +37516,19 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		__proto.initByData=function(propDes,propO){
-			if (this.tPropO==propO)return;
+			if (this.tPropO==propO){
+				return;
+			}
 			this.tPropO=propO;
 			this.tPropDes=propDes;
 			this.createBox(propDes);
 			this.initValue(propO);
+		}
+
+		__proto.refresh=function(){
+			if (this.tPropO){
+				this.initValue(this.tPropO);
+			}
 		}
 
 		__proto.initValue=function(propO){
@@ -37393,6 +37580,7 @@ var Laya=window.Laya=(function(window,document){
 		function KLineView(){
 			this.kLine=null;
 			this.tAnalyser=null;
+			this.preMouseX=NaN;
 			KLineView.__super.call(this);
 			this.kLine=new KLine();
 			this.kLine.analysers=[];
@@ -37416,11 +37604,34 @@ var Laya=window.Laya=(function(window,document){
 			this.propPanel.visible=false;
 			Notice.listen("AnalyserListChange",this,this.analysersChanged);
 			Notice.listen("Show_Analyser_Prop",this,this.showAnalyserProp);
+			Notice.listen("Set_Analyser_Prop",this,this.onSetAnalyserProps);
 			this.propPanel.on("MakeChange",this,this.refreshKLine);
+			this.on("mousedown",this,this.onMMouseDown);
+			this.on("mouseup",this,this.onMMouseUp);
+			this.enableAnimation.selected=false;
 		}
 
 		__class(KLineView,'view.KLineView',_super);
 		var __proto=KLineView.prototype;
+		__proto.onMMouseDown=function(){
+			this.preMouseX=Laya.stage.mouseX;
+		}
+
+		__proto.onMMouseUp=function(){
+			var dX=NaN;
+			dX=Laya.stage.mouseX-this.preMouseX;
+			if (dX > 100){
+				this.onNext();
+				}else if(dX<-100){
+				this.onPre();
+			}
+		}
+
+		__proto.onSetAnalyserProps=function(analyserName,paramsO){
+			this.analyserList.setAnalyserParams(analyserName,paramsO);
+			this.propPanel.refresh();
+		}
+
 		__proto.refreshKLine=function(){
 			this.showKline(this.kLine.tStock);
 		}
@@ -37607,6 +37818,7 @@ var Laya=window.Laya=(function(window,document){
 			tAnalyser=analyserO["Analyser"];
 			if (!tAnalyser)return;
 			tAnalyser.setByParam(paramO);
+			this.refreshList();
 		}
 
 		__proto.mRender=function(cell,index){
@@ -37665,7 +37877,10 @@ var Laya=window.Laya=(function(window,document){
 			this.configO=null;
 			this.tDatas=null;
 			this.typeDic={};
+			this.tDataKey=null;
+			this.tTpl=null;
 			this.tI=0;
+			this.preTime=0;
 			SelectStockView.__super.call(this);
 			this.init();
 		}
@@ -37676,7 +37891,7 @@ var Laya=window.Laya=(function(window,document){
 			this.list.renderHandler=new Handler(this,this.stockRender);
 			this.list.array=[];
 			this.list.mouseHandler=new Handler(this,this.onMouseList);
-			this.list.scrollBar.touchScrollEnable=false;
+			this.list.scrollBar.touchScrollEnable=true;
 			Laya.loader.load(this.dataUrl,new Handler(this,this.dataLoaded),null,"json");
 			Notice.listen("Show_Next_Select",this,this.next);
 			Notice.listen("Show_Pre_Select",this,this.pre);
@@ -37700,7 +37915,8 @@ var Laya=window.Laya=(function(window,document){
 		__proto.initByConfigO=function(){
 			var types;
 			types=this.configO["types"];
-			if (!types)return;
+			if (!types)
+				return;
 			this.typeDic={};
 			var typesStr;
 			typesStr=[];
@@ -37714,14 +37930,22 @@ var Laya=window.Laya=(function(window,document){
 			}
 			this.typeSelect.labels=typesStr.join(",");
 			this.typeSelect.selectedIndex=0;
+			this.tType=this.typeSelect.selectedLabel;
 		}
 
 		__proto.refreshData=function(){
-			if (!this.tDatas)return;
+			if (!this.tDatas)
+				return;
 			if (this.typeDic[this.tType]){
-				this.tDatas.sort(MathUtil.sortByKey.apply(null,this.typeDic[this.tType]["sortParams"]));
-				}else{
-				this.tDatas.sort(MathUtil.sortByKey("lastDate",true,false));
+				this.tDataKey=this.typeDic[this.tType].dataKey;
+				this.tip.text=this.typeDic[this.tType].tip;
+				this.tTpl=this.typeDic[this.tType].tpl;
+				this.tDatas.sort(ValueTools.sortByKeyEX.apply(null,this.typeDic[this.tType]["sortParams"]));
+			}
+			else {
+				this.tDataKey=null;
+				this.tip.text="股票列表";
+				this.tDatas.sort(MathUtil.sortByKey("code",true,false));
 			}
 			this.list.array=this.tDatas;
 		}
@@ -37734,7 +37958,7 @@ var Laya=window.Laya=(function(window,document){
 			var tSign;
 			for (i=0;i < len;i++){
 				tSign=SelectStockView.signList[i];
-				rst.push(Math.floor(stockO[tSign]*100)+"%")
+				rst.push(Math.floor(stockO[tSign] *100)+"%")
 			}
 			return rst;
 		}
@@ -37743,18 +37967,42 @@ var Laya=window.Laya=(function(window,document){
 			var item=cell.dataSource;
 			var label;
 			label=cell.getChildByName("label");
-			label.text=item.path+":"+Math.floor(item.changePercent*100)+"%"+":"+Math.floor(item.highPercent*100)+"%"+"\n"+this.getStockChanges(item).join(",")+"\n"+item.lastDate;
+			var dataO;
+			dataO=ValueTools.getFlatKeyValue(item,this.tDataKey);
+			if (!this.tTpl)this.tTpl=SelectStockView.DefalutTpl;
+			label.text=ValueTools.getTplStr(this.tTpl,dataO);
 		}
 
 		__proto.onMouseList=function(e,index){
-			if (e.type=="mousedown"){
+			if (e.type=="mouseup"){
+				var tTime=Browser.now();
+				if (tTime-this.preTime > 500){
+					this.preTime=tTime;
+					return;
+				}
+				this.preTime=tTime;
 				var tData;
 				tData=this.list.array[index];
 				this.tI=index;
 				if (!tData)
 					return;
 				console.log(tData);
-				Notice.notify("Show_Stock_KLine",tData.path);
+				this.setUpAnalyserData();
+				Notice.notify("Show_Stock_KLine",tData.code);
+			}
+		}
+
+		__proto.setUpAnalyserData=function(){
+			if (this.typeDic[this.tType]){
+				var analyserInfos;
+				analyserInfos=this.typeDic[this.tType]["analyserInfo"];
+				if (!analyserInfos)
+					return;
+				var i=0,len=0;
+				len=analyserInfos.length;
+				for (i=0;i < len;i++){
+					Notice.notify("Set_Analyser_Prop",analyserInfos[i]);
+				}
 			}
 		}
 
@@ -37771,7 +38019,8 @@ var Laya=window.Laya=(function(window,document){
 		__proto.showI=function(i){
 			var index=0;
 			index=i;
-			if (index < 0)index=this.list.array.length-1;
+			if (index < 0)
+				index=this.list.array.length-1;
 			index=index % this.list.array.length;
 			var tData;
 			tData=this.list.array[index];
@@ -37779,9 +38028,10 @@ var Laya=window.Laya=(function(window,document){
 			if (!tData)
 				return;
 			console.log(tData);
-			Notice.notify("Show_Stock_KLine",tData.path);
+			Notice.notify("Show_Stock_KLine",tData.code);
 		}
 
+		SelectStockView.DefalutTpl="{#code#}";
 		__static(SelectStockView,
 		['signList',function(){return this.signList=["high7","high15","high30","high45"];}
 		]);
@@ -37796,6 +38046,7 @@ var Laya=window.Laya=(function(window,document){
 	//class view.StockView extends ui.StockViewUI
 	var StockView=(function(_super){
 		function StockView(){
+			this.preTime=0;
 			StockView.__super.call(this);
 		}
 
@@ -37805,7 +38056,7 @@ var Laya=window.Laya=(function(window,document){
 			this.stockList.renderHandler=new Handler(this,this.stockRender);
 			this.stockList.array=StockBasicInfo.I.stockList;
 			this.stockList.mouseHandler=new Handler(this,this.onMouseList);
-			this.stockList.scrollBar.touchScrollEnable=false;
+			this.stockList.scrollBar.touchScrollEnable=true;
 		}
 
 		__proto.stockRender=function(cell,index){
@@ -37820,7 +38071,13 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		__proto.onMouseList=function(e,index){
-			if (e.type=="mousedown"){
+			if (e.type=="mouseup"){
+				var tTime=Browser.now();
+				if (tTime-this.preTime > 500){
+					this.preTime=tTime;
+					return;
+				}
+				this.preTime=tTime;
 				var tData;
 				tData=this.stockList.array[index];
 				if (!tData)
@@ -37846,8 +38103,8 @@ var Laya=window.Laya=(function(window,document){
 3 file:///D:/stocksite.git/trunk/StockCmd/src/nodetools/devices/FileTools.as (82):warning:Browser.window.location.href This variable is not defined.
 4 file:///D:/stocksite.git/trunk/StockCmd/src/nodetools/devices/FileTools.as (82):warning:Browser.window.location.href This variable is not defined.
 5 file:///D:/stocksite.git/trunk/StockCmd/src/nodetools/devices/FileTools.as (642):warning:Alert.show This variable is not defined.
-6 file:///D:/stocksite.git/trunk/StockCmd/src/StockCmdTool.as (37):warning:scriptPath This variable is not defined.
-7 file:///D:/stocksite.git/trunk/StockView/src/stock/views/KLine.as (368):warning:tTxt This variable is not defined.
-8 file:///D:/stocksite.git/trunk/StockView/src/stock/views/KLine.as (370):warning:tTxt This variable is not defined.
-9 file:///D:/stocksite.git/trunk/StockView/src/stock/views/KLine.as (371):warning:tTxt This variable is not defined.
+6 file:///D:/stocksite.git/trunk/StockCmd/src/StockCmdTool.as (38):warning:scriptPath This variable is not defined.
+7 file:///D:/stocksite.git/trunk/StockView/src/stock/views/KLine.as (371):warning:tTxt This variable is not defined.
+8 file:///D:/stocksite.git/trunk/StockView/src/stock/views/KLine.as (373):warning:tTxt This variable is not defined.
+9 file:///D:/stocksite.git/trunk/StockView/src/stock/views/KLine.as (374):warning:tTxt This variable is not defined.
 */
