@@ -774,7 +774,8 @@ var Laya=window.Laya=(function(window,document){
 		ValueTools.mParseFloat=function(v){
 			var tV=NaN;
 			tV=parseFloat(v);
-			if (tV.toString()=="NaN")return 0;
+			if (tV.toString()=="NaN")
+				return 0;
 			return tV;
 		}
 
@@ -787,6 +788,139 @@ var Laya=window.Laya=(function(window,document){
 			return arr;
 		}
 
+		ValueTools.splitStpl=function(tplStr){
+			if (ValueTools.tplArrDic[tplStr])return Utils.copyArray([],ValueTools.tplArrDic[tplStr]);
+			var i=0,len=0;
+			len=tplStr.length;
+			var preI=0;
+			var tStr;
+			var rst;
+			rst=[];
+			for (i=0;i < len;i++){
+				tStr=tplStr.charAt(i);
+				if (tStr=="#"){
+					if(i-1>=preI)
+						rst.push(tplStr.substring(preI,i));
+					preI=i+1;
+				}
+				if (tStr=="{" || tStr=="}"){
+					if(i-1>=preI)
+						rst.push(tplStr.substring(preI,i));
+					rst.push(tStr);
+					preI=i+1;
+				}
+			}
+			if (i-1 >=preI)rst.push(tplStr.substring(preI,i));
+			ValueTools.tplArrDic[tplStr]=rst;
+			return Utils.copyArray([],rst);
+		}
+
+		ValueTools.getTplStr=function(tplStr,data){
+			var i=0,len=0;
+			var tps;
+			tps=ValueTools.splitStpl(tplStr);
+			len=tps.length;
+			var tStr;
+			var tRst;
+			var preOpen=false;
+			var nextEnd=false;
+			var nextStr;
+			for (i=0;i < len;i++){
+				tStr=tps[i];
+				nextStr=tps[i+1];
+				if (nextStr=="}"){
+					nextEnd=true;
+				}
+				else {
+					nextEnd=false;
+				}
+				if (preOpen && nextEnd){
+					tps[i]=data[tStr];
+					tps[i-1]="";
+					tps[i+1]="";
+				}
+				if (tStr=="{"){
+					preOpen=true;
+				}
+				else {
+					preOpen=false;
+				}
+			}
+			return tps.join("");
+		}
+
+		ValueTools.getFlatKeyValue=function(obj,key){
+			if (!obj)
+				return null;
+			if (!key)
+				return obj;
+			var keys;
+			keys=key.split(".");
+			var i=0,len=0;
+			len=keys.length;
+			var tV;
+			tV=obj;
+			for (i=0;i < len;i++){
+				tV=tV[keys[i]];
+				if (!tV)
+					return tV;
+			}
+			return tV;
+		}
+
+		ValueTools.sortBigFirst=function(a,b){
+			if (a==b)
+				return 0;
+			return b > a ? 1 :-1;
+		}
+
+		ValueTools.sortSmallFirst=function(a,b){
+			if (a==b)
+				return 0;
+			return b > a ?-1 :1;
+		}
+
+		ValueTools.sortNumBigFirst=function(a,b){
+			return parseFloat(b)-parseFloat(a);
+		}
+
+		ValueTools.sortNumSmallFirst=function(a,b){
+			return parseFloat(a)-parseFloat(b);
+		}
+
+		ValueTools.sortByKey=function(key,bigFirst,forceNum){
+			(bigFirst===void 0)&& (bigFirst=false);
+			(forceNum===void 0)&& (forceNum=true);
+			var _sortFun;
+			if (bigFirst){
+				_sortFun=forceNum ? ValueTools.sortNumBigFirst :ValueTools.sortBigFirst;
+			}
+			else {
+				_sortFun=forceNum ? ValueTools.sortNumSmallFirst :ValueTools.sortSmallFirst;
+			}
+			return function (a,b){
+				return _sortFun(a[key],b[key]);
+			}
+		}
+
+		ValueTools.sortByKeyEX=function(key,bigFirst,forceNum){
+			(bigFirst===void 0)&& (bigFirst=false);
+			(forceNum===void 0)&& (forceNum=true);
+			if (key.indexOf(".")< 0)
+				return ValueTools.sortByKey(key,bigFirst,forceNum);
+			var _sortFun;
+			if (bigFirst){
+				_sortFun=forceNum ? ValueTools.sortNumBigFirst :ValueTools.sortBigFirst;
+			}
+			else {
+				_sortFun=forceNum ? ValueTools.sortNumSmallFirst :ValueTools.sortSmallFirst;
+			}
+			return function (a,b){
+				return _sortFun(ValueTools.getFlatKeyValue(a,key),ValueTools.getFlatKeyValue(b,key));
+			}
+		}
+
+		ValueTools.tplArrDic={};
 		return ValueTools;
 	})()
 
@@ -15474,6 +15608,7 @@ var Laya=window.Laya=(function(window,document){
 		function StockBasicInfo(){
 			this.stockList=null;
 			this.stockCodeList=null;
+			this.stockDic={};
 			StockBasicInfo.__super.call(this);
 		}
 
@@ -15486,8 +15621,13 @@ var Laya=window.Laya=(function(window,document){
 			len=this.stockList.length;
 			this.stockCodeList=[];
 			for (i=0;i < len;i++){
+				this.stockDic[this.stockList[i]["code"]]=this.stockList[i];
 				this.stockCodeList.push(this.stockList[i]["code"]);
 			}
+		}
+
+		__proto.getStockData=function(code){
+			return this.stockDic[code];
 		}
 
 		__static(StockBasicInfo,
@@ -35292,6 +35432,8 @@ var Laya=window.Laya=(function(window,document){
 			this.configO=null;
 			this.tDatas=null;
 			this.typeDic={};
+			this.tDataKey=null;
+			this.tTpl=null;
 			this.tI=0;
 			this.preTime=0;
 			SelectStockView.__super.call(this);
@@ -35343,16 +35485,22 @@ var Laya=window.Laya=(function(window,document){
 			}
 			this.typeSelect.labels=typesStr.join(",");
 			this.typeSelect.selectedIndex=0;
+			this.tType=this.typeSelect.selectedLabel;
 		}
 
 		__proto.refreshData=function(){
 			if (!this.tDatas)
 				return;
 			if (this.typeDic[this.tType]){
-				this.tDatas.sort(MathUtil.sortByKey.apply(null,this.typeDic[this.tType]["sortParams"]));
+				this.tDataKey=this.typeDic[this.tType].dataKey;
+				this.tip.text=this.typeDic[this.tType].tip;
+				this.tTpl=this.typeDic[this.tType].tpl;
+				this.tDatas.sort(ValueTools.sortByKeyEX.apply(null,this.typeDic[this.tType]["sortParams"]));
 			}
 			else {
-				this.tDatas.sort(MathUtil.sortByKey("lastDate",true,false));
+				this.tDataKey=null;
+				this.tip.text="股票列表";
+				this.tDatas.sort(MathUtil.sortByKey("code",true,false));
 			}
 			this.list.array=this.tDatas;
 		}
@@ -35374,7 +35522,10 @@ var Laya=window.Laya=(function(window,document){
 			var item=cell.dataSource;
 			var label;
 			label=cell.getChildByName("label");
-			label.text=item.path+":"+Math.floor(item.changePercent *100)+"%"+":"+Math.floor(item.highPercent *100)+"%"+"\n"+this.getStockChanges(item).join(",")+"\n"+item.lastDate;
+			var dataO;
+			dataO=ValueTools.getFlatKeyValue(item,this.tDataKey);
+			if (!this.tTpl)this.tTpl=SelectStockView.DefalutTpl;
+			label.text=ValueTools.getTplStr(this.tTpl,dataO);
 		}
 
 		__proto.onMouseList=function(e,index){
@@ -35392,7 +35543,7 @@ var Laya=window.Laya=(function(window,document){
 					return;
 				console.log(tData);
 				this.setUpAnalyserData();
-				Notice.notify("Show_Stock_KLine",tData.path);
+				Notice.notify("Show_Stock_KLine",tData.code);
 			}
 		}
 
@@ -35432,9 +35583,10 @@ var Laya=window.Laya=(function(window,document){
 			if (!tData)
 				return;
 			console.log(tData);
-			Notice.notify("Show_Stock_KLine",tData.path);
+			Notice.notify("Show_Stock_KLine",tData.code);
 		}
 
+		SelectStockView.DefalutTpl="{#code#}";
 		__static(SelectStockView,
 		['signList',function(){return this.signList=["high7","high15","high30","high45"];}
 		]);
@@ -36141,7 +36293,7 @@ var Laya=window.Laya=(function(window,document){
 	})(ToolBarUI)
 
 
-	Laya.__init([EventDispatcher,LoaderManager,Browser,Render,View,LocalStorage,Timer]);
+	Laya.__init([LoaderManager,EventDispatcher,Browser,Render,View,LocalStorage,Timer]);
 	new StockMain();
 
 })(window,document,Laya);
