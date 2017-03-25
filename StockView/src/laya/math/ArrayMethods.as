@@ -40,7 +40,24 @@ package laya.math
 			if (!key) return obj;
 			return obj[key];
 		}
-		
+		public static function isHighThenBefore(dataList:Array, index:int, count:int):Boolean
+		{
+			if (index <= 0) return false;
+			var tV:Number;
+			tV = dataList[index];
+			var tI:int;
+			var i:int, len:int;
+			len = count;
+			var tIndex:int;
+			for (i = 1; i <= len; i++)
+			{
+				tIndex = index - i;
+				if (tIndex <= 0) return false;
+				if (dataList[tIndex] > tv) return false;
+				
+			}
+			return true;
+		}
 	}
 
 }
