@@ -20,6 +20,11 @@ package stock.prop
 			//propBox = new Box();
 			//addChild(propBox);
 			okBtn.on(Event.MOUSE_DOWN, this, onOk);
+			this.on(Event.DOUBLE_CLICK, this, onDoubleClick);
+		}
+		private function onDoubleClick():void
+		{
+			this.visible = false;
 		}
 		private function onOk():void
 		{
