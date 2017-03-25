@@ -35125,10 +35125,15 @@ var Laya=window.Laya=(function(window,document){
 			this.tPropItems=[];
 			PropPanel.__super.call(this);
 			this.okBtn.on("mousedown",this,this.onOk);
+			this.on("doubleclick",this,this.onDoubleClick);
 		}
 
 		__class(PropPanel,'stock.prop.PropPanel',_super);
 		var __proto=PropPanel.prototype;
+		__proto.onDoubleClick=function(){
+			this.visible=false;
+		}
+
 		__proto.onOk=function(){
 			if (!this.tPropO || !this.tPropItems)return;
 			var i=0,len=0;
