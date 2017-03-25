@@ -12,7 +12,11 @@ package laya.stock
 			
 		}
 		
-		public static var highDays:Array = [7,15,30,45,60];
+		public static var highDays:Array = [7, 15, 30, 45, 60];
+		public static function getGoodPercent(v:Number):Number
+		{
+			return Math.floor(v * 1000) / 10;
+		}
 		public static function getBuyStaticInfos(buyI:int, dataList:Array, rst:Object):void
 		{
 			var priceLast:Number;
@@ -22,7 +26,7 @@ package laya.stock
 			priceLast = dataList[len - 1]["close"];
 			var priceBuy:Number;
 			priceBuy = dataList[buyI]["high"];
-			rst.changePercent = (priceLast - priceBuy) / priceBuy;
+			rst.changePercent = getGoodPercent((priceLast - priceBuy) / priceBuy);
 			var priceHigh:Number;
 			priceHigh = -1;
 			for (i = buyI + 1; i < len; i++)
@@ -32,7 +36,7 @@ package laya.stock
 					priceHigh = dataList[i]["high"];
 				}
 			}
-			rst.highPercent = (priceHigh - priceBuy) / priceBuy;
+			rst.highPercent = getGoodPercent((priceHigh - priceBuy) / priceBuy);
 			
 			len = highDays.length;
 			var tDayCount:int;
@@ -40,7 +44,7 @@ package laya.stock
 			{
 				tDayCount = highDays[i];
 				priceHigh = getHighInDays(buyI + 1, tDayCount, dataList);
-				rst["high"+tDayCount]=(priceHigh - priceBuy) / priceBuy;
+				rst["high"+tDayCount]=getGoodPercent((priceHigh - priceBuy) / priceBuy);
 			}
 			
 		}

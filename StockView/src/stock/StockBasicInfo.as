@@ -14,6 +14,7 @@ package stock
 		public static var I:StockBasicInfo = new StockBasicInfo();
 		public var stockList:Array;
 		public var stockCodeList:Array;
+		public var stockDic:Object={};
 		public override function init(csvStr:String):void
 		{
 			
@@ -24,8 +25,13 @@ package stock
 			stockCodeList = [];
 			for (i = 0; i < len; i++)
 			{
+				stockDic[stockList[i]["code"]] = stockList[i];
 				stockCodeList.push(stockList[i]["code"]);
 			}
+		}
+		public function getStockData(code:String):Object
+		{
+			return stockDic[code];
 		}
 	}
 

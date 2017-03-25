@@ -76,17 +76,19 @@ package stock.views
 			this.stockData = stockData;
 			dataList = stockData.dataList;
 			//drawdata();
-			
+			this.cacheAsBitmap = false;
 			drawdata();
 			tLen = 10;
 			
 			if (autoPlay)
 			{
+				
 				showMsg("playing K-line Animation");
 				Laya.timer.loop(10, this, timeEffect);
 			}else
 			{
 				showMsg("K-line Showed");
+				this.cacheAsBitmap = true;
 			}
 			
 			
@@ -100,6 +102,7 @@ package stock.views
 			{
 				showMsg("Animation End");
 				Laya.timer.clear(this, timeEffect);
+				this.cacheAsBitmap = true;
 				return;
 			}
 			var start:int = 0;

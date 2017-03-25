@@ -22,7 +22,7 @@ package view {
 			stockList.renderHandler = new Handler(this, stockRender);
 			stockList.array = StockBasicInfo.I.stockList;
 			stockList.mouseHandler = new Handler(this, onMouseList);
-			stockList.scrollBar.touchScrollEnable = false;
+			stockList.scrollBar.touchScrollEnable = true;
 		}
 		
 		public function stockRender(cell:Box, index:int):void {
@@ -36,9 +36,17 @@ package view {
 		public function openUrl(path:String):void {
 			Browser.window.open(path, "_blank");
 		}
-		
+		private var preTime:Number = 0;
 		public function onMouseList(e:Event, index:int):void {
-			if (e.type == Event.MOUSE_DOWN) {
+			if (e.type == Event.MOUSE_UP) {
+				var tTime:Number = Browser.now();
+				if (tTime - preTime > 500)
+				{
+					preTime = tTime;
+					return;
+				}
+					
+				preTime = tTime;
 				var tData:Object;
 				tData = stockList.array[index];
 				if (!tData)

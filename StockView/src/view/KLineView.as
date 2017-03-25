@@ -57,6 +57,27 @@ package view
 			Notice.listen(MsgConst.Show_Analyser_Prop, this, showAnalyserProp);
 			Notice.listen(MsgConst.Set_Analyser_Prop, this, onSetAnalyserProps);
 			propPanel.on(PropPanel.MakeChange, this, refreshKLine);
+			this.on(Event.MOUSE_DOWN, this, onMMouseDown);
+			this.on(Event.MOUSE_UP, this, onMMouseUp);
+			enableAnimation.selected = false;
+		 
+		}
+		private var preMouseX:Number;
+		private function onMMouseDown():void
+		{
+			preMouseX = Laya.stage.mouseX;
+		}
+		private function onMMouseUp():void
+		{
+			var dX:Number;
+			dX = Laya.stage.mouseX - preMouseX;
+			if (dX > 100)
+			{
+				onNext();
+			}else if(dX<-100)
+			{
+				onPre();
+			}
 		}
 		public function onSetAnalyserProps(analyserName:String,paramsO:Object):void
 		{
