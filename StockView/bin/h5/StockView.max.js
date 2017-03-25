@@ -421,6 +421,22 @@ var Laya=window.Laya=(function(window,document){
 			return obj[key];
 		}
 
+		ArrayMethods.isHighThenBefore=function(dataList,index,count){
+			if (index <=0)return false;
+			var tV=NaN;
+			tV=dataList[index];
+			var tI=0;
+			var i=0,len=0;
+			len=count;
+			var tIndex=0;
+			for (i=1;i <=len;i++){
+				tIndex=index-i;
+				if (tIndex <=0)return false;
+				if (dataList[tIndex] > /*no*/this.tv)return false;
+			}
+			return true;
+		}
+
 		return ArrayMethods;
 	})()
 
@@ -15059,13 +15075,16 @@ var Laya=window.Laya=(function(window,document){
 	//class laya.stock.analysers.lines.PositionLine extends laya.stock.analysers.AnalyserBase
 	var PositionLine=(function(_super){
 		function PositionLine(){
-			this.dayCount=130;
+			this.dayCount="130";
 			this.priceType="close";
 			this.color="#ffff00";
 			this.winColor="#ff0000";
 			this.loseColor="#00ff00";
 			this.expColor="#ffff00";
 			this.barHeight=50;
+			this.minBuyExp=0.4;
+			this.minBuyLose=-0.05;
+			this.maxBuyLose=-0.3;
 			this.gridLineValue="0,0.5,1,1.5,2,2.5";
 			PositionLine.__super.call(this);
 		}
@@ -15073,7 +15092,7 @@ var Laya=window.Laya=(function(window,document){
 		__class(PositionLine,'laya.stock.analysers.lines.PositionLine',_super);
 		var __proto=PositionLine.prototype;
 		__proto.initParamKeys=function(){
-			this.paramkeys=["barHeight","priceType","color","dayCount","gridLineValue"];
+			this.paramkeys=["barHeight","priceType","color","dayCount","minBuyExp","minBuyLose","maxBuyLose"];
 		}
 
 		__proto.analyseWork=function(){
@@ -15084,25 +15103,14 @@ var Laya=window.Laya=(function(window,document){
 			var dataList;
 			dataList=this.disDataList;
 			var i=0,len=0;
-			var expList;
-			expList=[];
-			var winList;
-			winList=[];
-			var loseList;
-			loseList=[];
-			var tDatas;
-			len=dataList.length;
+			var days=(this.dayCount+"").split(",");
+			len=days.length;
+			var positionList;
+			positionList=[];
+			this.resultData["positionList"]=positionList;
 			for (i=0;i < len;i++){
-				tDatas=DataUtils.getWinLoseInfo(dataList,this.dayCount,i);
-				if (tDatas){
-					loseList.push([i,tDatas[0] *this.barHeight]);
-					winList.push([i,tDatas[1] *this.barHeight]);
-					expList.push([i,tDatas[2] *this.barHeight]);
-				}
-			}
-			this.resultData["expList"]=expList;
-			this.resultData["winList"]=winList;
-			this.resultData["loseList"]=loseList;
+				positionList.push(this.getWinLoseData(ValueTools.mParseFloat(days[i]),dataList));
+			};
 			var gridLine;
 			var gridValue=NaN;
 			gridValue=this.barHeight *this.gridLineValue;
@@ -15117,12 +15125,78 @@ var Laya=window.Laya=(function(window,document){
 			this.resultData["gridLine"]=gridLine;
 		}
 
+		__proto.getBuyList=function(positionData){
+			var expList;
+			expList=positionData["expList"];
+			var loseList;
+			loseList=positionData["loseList"];
+			var i=0,len=0;
+			var rst;
+			rst=[];
+			var tExp=NaN;
+			var tLimit=NaN;
+			tLimit=this.minBuyExp *this.barHeight;
+			var tLimitLose=NaN;
+			tLimitLose=this.minBuyLose *this.barHeight;
+			var tLimitLoseMax=NaN;
+			tLimitLoseMax=this.maxBuyLose *this.barHeight;
+			len=expList.length;
+			var tLose=NaN;
+			for (i=1;i < len;i++){
+				tExp=expList[i][1];
+				if (tExp < tLimit)continue ;
+				tLose=loseList[i][1];
+				if (tLose > tLimitLose)continue ;
+				if (tLose < tLimitLoseMax)continue ;
+				if (tExp > expList[i-1][1]&&ArrayMethods.isHighThenBefore(expList,i-1,5)){
+					rst.push(["buy:",expList[i][0]])
+				}
+			}
+			return rst;
+		}
+
+		__proto.getWinLoseData=function(dayCount,dataList){
+			var resultData;
+			resultData={};
+			var i=0,len=0;
+			var expList;
+			expList=[];
+			var winList;
+			winList=[];
+			var loseList;
+			loseList=[];
+			var tDatas;
+			len=dataList.length;
+			for (i=0;i < len;i++){
+				tDatas=DataUtils.getWinLoseInfo(dataList,dayCount,i);
+				if (tDatas){
+					loseList.push([i,tDatas[0] *this.barHeight]);
+					winList.push([i,tDatas[1] *this.barHeight]);
+					expList.push([i,tDatas[2] *this.barHeight]);
+				}
+			}
+			resultData["expList"]=expList;
+			resultData["winList"]=winList;
+			resultData["loseList"]=loseList;
+			resultData["buyList"]=this.getBuyList(resultData);
+			return resultData;
+		}
+
 		__proto.getDrawCmds=function(){
 			var rst;
 			rst=[];
-			rst.push(["drawLinesEx",[this.resultData["expList"],this.expColor]]);
-			rst.push(["drawLinesEx",[this.resultData["winList"],this.winColor]]);
-			rst.push(["drawLinesEx",[this.resultData["loseList"],this.loseColor]]);
+			var positions;
+			positions=this.resultData["positionList"];
+			var i=0,len=0;
+			len=positions.length;
+			var tPositionO;
+			for (i=0;i < len;i++){
+				tPositionO=positions[i];
+				rst.push(["drawLinesEx",[tPositionO["expList"],this.expColor]]);
+				rst.push(["drawLinesEx",[tPositionO["winList"],this.winColor]]);
+				rst.push(["drawLinesEx",[tPositionO["loseList"],this.loseColor]]);
+				rst.push(["drawTexts",[tPositionO["buyList"],"low",30,"#00ff00",true,"#00ff00"]]);
+			}
 			rst.push(["drawGridLineEx",this.resultData["gridLine"]]);
 			return rst;
 		}
@@ -36300,7 +36374,8 @@ var Laya=window.Laya=(function(window,document){
 
 
 /*
-1 file:///D:/stocksite.git/trunk/StockView/src/stock/views/KLine.as (371):warning:tTxt This variable is not defined.
-2 file:///D:/stocksite.git/trunk/StockView/src/stock/views/KLine.as (373):warning:tTxt This variable is not defined.
-3 file:///D:/stocksite.git/trunk/StockView/src/stock/views/KLine.as (374):warning:tTxt This variable is not defined.
+1 file:///D:/stocksite.git/trunk/StockView/src/laya/math/ArrayMethods.as (55):warning:tv This variable is not defined.
+2 file:///D:/stocksite.git/trunk/StockView/src/stock/views/KLine.as (371):warning:tTxt This variable is not defined.
+3 file:///D:/stocksite.git/trunk/StockView/src/stock/views/KLine.as (373):warning:tTxt This variable is not defined.
+4 file:///D:/stocksite.git/trunk/StockView/src/stock/views/KLine.as (374):warning:tTxt This variable is not defined.
 */
