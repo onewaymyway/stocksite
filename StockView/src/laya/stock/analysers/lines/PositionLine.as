@@ -13,7 +13,7 @@ package laya.stock.analysers.lines {
 		public function PositionLine() {
 			super();
 		}
-		public var dayCount:int = "90";
+		public var dayCount:String = "90";
 		public var priceType:String = "close";
 		public var color:String = "#ffff00";
 		public var winColor:String = "#ff0000";
@@ -93,7 +93,7 @@ package laya.stock.analysers.lines {
 			}
 			return rst;
 		}
-		private function getWinLoseData(dayCount:int, dataList:Array):Object {
+		public function getWinLoseData(dayCount:int, dataList:Array):Object {
 			var resultData:Object;
 			resultData = {};
 			var i:int, len:int;
