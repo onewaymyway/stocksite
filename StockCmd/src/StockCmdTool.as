@@ -115,6 +115,17 @@ package {
 			tData.tip = "n天期望模型";
 			types.push(tData);
 			
+			tData = {};
+			tData.label = "expBuy";
+			tData.sortParams = ["lastExpBuy", true, true];
+			tData.dataKey = "expO";
+			tData.tpl = "{#code#}:exp:{#exp#}\nwin:{#win#}\nlose{#lose#}\nbuy:{#lastExpBuy#}";
+			tAnalyserInfos = [];
+			tAnalyserInfos.push(posAnalyser.getParamsArr());
+			tData.analyserInfo = tAnalyserInfos;
+			tData.tip = "n天期望模型";
+			types.push(tData);
+			
 			moData.types = types;
 		}
 		public var moData:Object;
@@ -159,13 +170,21 @@ package {
 			
 			var winLose:Array;
 			winLose = DataUtils.getWinLoseInfo(analyser.disDataList, posAnalyser.dayCount, analyser.disDataList.length - 1);
-			
+			var posBuy:Object;
+			posBuy = posAnalyser.getWinLoseData(posAnalyser.dayCount, analyser.disDataList);
 			var expO:Object = {};
 			tData.expO = expO;
 			expO.code = tData.code;
 			expO.lose = StockTools.getGoodPercent(winLose[0]);
 			expO.win = StockTools.getGoodPercent(winLose[1]);
 			expO.exp = StockTools.getGoodPercent(winLose[2]);
+			if (posBuy && posBuy["buyList"]&&posBuy["buyList"][0])
+			{
+				var lastBuyI:int;
+				lastBuyI = posBuy["buyList"].pop()[1];
+				//trace(posBuy["buyList"]);
+				expO.lastExpBuy = analyser.disDataList[lastBuyI]["date"];
+			}
 			rst.push(tData);
 			
 			var lastUnder:Object;
