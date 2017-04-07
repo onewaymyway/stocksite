@@ -1417,7 +1417,7 @@ var Laya=window.Laya=(function(window,document){
 			types.push(tData);
 			tData={};
 			tData.label="expBuy";
-			tData.sortParams=["lastExpBuy",true,true];
+			tData.sortParams=["expO.lastExpBuy",true,true];
 			tData.dataKey="expO";
 			tData.tpl="{#code#}:exp:{#exp#}\nwin:{#win#}\nlose{#lose#}\nbuy:{#lastExpBuy#}";
 			tAnalyserInfos=[];
