@@ -17,6 +17,16 @@ package laya.stock
 		{
 			return Math.floor(v * 1000) / 10;
 		}
+		public static function getGoodPercentList(arr:Array):Array
+		{
+			var i:int, len:int;
+			len = arr.length;
+			for (i = 0; i < len; i++)
+			{
+				arr[i] = getGoodPercent(arr[i]);
+			}
+			return arr;
+		}
 		public static function getBuyStaticInfos(buyI:int, dataList:Array, rst:Object):void
 		{
 			var priceLast:Number;
