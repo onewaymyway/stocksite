@@ -1,7 +1,7 @@
 var window = window || global;
 var document = document || (window.document = {});
 /***********************************/
-/*http://www.layabox.com 2017/01/16*/
+/*http://www.layabox.com  2017/3/23*/
 /***********************************/
 var Laya=window.Laya=(function(window,document){
 	var Laya={
@@ -187,7 +187,7 @@ var Laya=window.Laya=(function(window,document){
 	window.console=window.console || ({log:function(){}});
 	window.trace=window.console.log;
 	Error.prototype.throwError=function(){throw arguments;};
-	String.prototype.substr=Laya.__substr;
+	//String.prototype.substr=Laya.__substr;
 	Object.defineProperty(Array.prototype,'fixed',{enumerable: false});
 
 	return Laya;
@@ -740,6 +740,7 @@ var Laya=window.Laya=(function(window,document){
 
 		DataUtils.getWinLoseInfo=function(dataList,dayCount,index,priceType){
 			(priceType===void 0)&& (priceType="close");
+			dayCount=ValueTools.mParseFloat(dayCount);
 			if (dataList.length <=index)return null;
 			var datas;
 			datas=DataUtils.getMinMaxInfo(dataList,dayCount,index,priceType);
@@ -1183,6 +1184,74 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		return Trend;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class laya.stock.StockTools
+	var StockTools=(function(){
+		function StockTools(){}
+		__class(StockTools,'laya.stock.StockTools');
+		StockTools.getGoodPercent=function(v){
+			return Math.floor(v *1000)/ 10;
+		}
+
+		StockTools.getGoodPercentList=function(arr){
+			var i=0,len=0;
+			len=arr.length;
+			for (i=0;i < len;i++){
+				arr[i]=StockTools.getGoodPercent(arr[i]);
+			}
+			return arr;
+		}
+
+		StockTools.getBuyStaticInfos=function(buyI,dataList,rst){
+			var priceLast=NaN;
+			var len=0;
+			var i=0;
+			len=dataList.length;
+			priceLast=dataList[len-1]["close"];
+			var priceBuy=NaN;
+			priceBuy=dataList[buyI]["high"];
+			rst.changePercent=StockTools.getGoodPercent((priceLast-priceBuy)/ priceBuy);
+			var priceHigh=NaN;
+			priceHigh=-1;
+			for (i=buyI+1;i < len;i++){
+				if (dataList[i]["high"] > priceHigh){
+					priceHigh=dataList[i]["high"];
+				}
+			}
+			rst.highPercent=StockTools.getGoodPercent((priceHigh-priceBuy)/ priceBuy);
+			len=StockTools.highDays.length;
+			var tDayCount=0;
+			for (i=0;i < len;i++){
+				tDayCount=StockTools.highDays[i];
+				priceHigh=StockTools.getHighInDays(buyI+1,tDayCount,dataList);
+				rst["high"+tDayCount]=StockTools.getGoodPercent((priceHigh-priceBuy)/ priceBuy);
+			}
+		}
+
+		StockTools.getHighInDays=function(start,days,dataList){
+			var i=0,len=0;
+			var priceHigh=NaN;
+			priceHigh=-1;
+			len=days+start;
+			if (len > dataList.length)len=dataList.length;
+			for (i=start;i < len;i++){
+				if (dataList[i]["high"] > priceHigh){
+					priceHigh=dataList[i]["high"];
+				}
+			}
+			return priceHigh;
+		}
+
+		__static(StockTools,
+		['highDays',function(){return this.highDays=[7,15,30,45,60];}
+		]);
+		return StockTools;
 	})()
 
 
@@ -15149,7 +15218,7 @@ var Laya=window.Laya=(function(window,document){
 				if (tLose > tLimitLose)continue ;
 				if (tLose < tLimitLoseMax)continue ;
 				if (tExp > expList[i-1][1]&&ArrayMethods.isHighThenBefore(expList,i-1,5)){
-					rst.push(["buy:",expList[i][0]])
+					rst.push(["buy:"+StockTools.getGoodPercent(tExp/this.barHeight)+"\n"+this.disDataList[expList[i][0]]["date"],expList[i][0]])
 				}
 			}
 			return rst;
@@ -35814,25 +35883,6 @@ var Laya=window.Laya=(function(window,document){
 	*...
 	*@author ww
 	*/
-	//class laya.debug.view.nodeInfo.nodetree.FindNodeSmall extends laya.debug.ui.debugui.FindNodeSmallUI
-	var FindNodeSmall=(function(_super){
-		function FindNodeSmall(){
-			FindNodeSmall.__super.call(this);
-			Base64AtlasManager.replaceRes(FindNodeSmallUI.uiView);
-			this.createView(FindNodeSmallUI.uiView);
-		}
-
-		__class(FindNodeSmall,'laya.debug.view.nodeInfo.nodetree.FindNodeSmall',_super);
-		var __proto=FindNodeSmall.prototype;
-		__proto.createChildren=function(){}
-		return FindNodeSmall;
-	})(FindNodeSmallUI)
-
-
-	/**
-	*...
-	*@author ww
-	*/
 	//class laya.debug.view.nodeInfo.nodetree.FindNode extends laya.debug.ui.debugui.FindNodeUI
 	var FindNode=(function(_super){
 		function FindNode(){
@@ -35849,6 +35899,25 @@ var Laya=window.Laya=(function(window,document){
 
 		return FindNode;
 	})(FindNodeUI)
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class laya.debug.view.nodeInfo.nodetree.FindNodeSmall extends laya.debug.ui.debugui.FindNodeSmallUI
+	var FindNodeSmall=(function(_super){
+		function FindNodeSmall(){
+			FindNodeSmall.__super.call(this);
+			Base64AtlasManager.replaceRes(FindNodeSmallUI.uiView);
+			this.createView(FindNodeSmallUI.uiView);
+		}
+
+		__class(FindNodeSmall,'laya.debug.view.nodeInfo.nodetree.FindNodeSmall',_super);
+		var __proto=FindNodeSmall.prototype;
+		__proto.createChildren=function(){}
+		return FindNodeSmall;
+	})(FindNodeSmallUI)
 
 
 	/**
