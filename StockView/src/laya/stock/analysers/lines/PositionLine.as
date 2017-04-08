@@ -36,6 +36,7 @@ package laya.stock.analysers.lines {
 		}
 		
 		public function doAWork():void {
+			if (forSelect) return;
 			var dataList:Array;
 			dataList = disDataList;
 			var i:int, len:int;
@@ -204,6 +205,9 @@ package laya.stock.analysers.lines {
 				lastBuyI = posBuy["buyList"].pop()[1];
 				//trace(posBuy["buyList"]);
 				expO.lastExpBuy = disDataList[lastBuyI]["date"];
+			}else
+			{
+				expO.lastExpBuy = "0";
 			}
 		}
 	}

@@ -27,7 +27,8 @@ package laya.stock.analysers
 		public var disDataList:Array;
 		public var resultData:Object;
 		public var paramkeys:Array;
-		public var paramDes:Array=[];
+		public var paramDes:Array = [];
+		public var forSelect:Boolean = false;
 		private function initParamDes():void
 		{
 			paramDes.length = 0;
@@ -88,8 +89,9 @@ package laya.stock.analysers
 				}
 			}
 		}
-		public function analyser(stockData:StockData,start:int = 0, end:int = -1):void
+		public function analyser(stockData:StockData,start:int = 0, end:int = -1,forSelect:Boolean=false):void
 		{
+			this.forSelect = forSelect;
 			this.stockData = stockData;
 			dataList = stockData.dataList;
 			analyserData(start,end);
