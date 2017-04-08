@@ -28593,6 +28593,7 @@ var Laya=window.Laya=(function(window,document){
 			this.tInput.skin="comp/textinput.png";
 			this.tInput.pos(70,0);
 			this.tInput.width=100;
+			this.tInput.color="#ffffff";
 			this.addChild(this.label);
 			this.addChild(this.tInput);
 		}
@@ -33979,7 +33980,7 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		__static(PropPanelUI,
-		['uiView',function(){return this.uiView={"type":"View","props":{"width":230,"height":400},"child":[{"type":"Label","props":{"y":18,"x":18,"width":80,"var":"title","text":"属性设置","height":20,"color":"#e72b28"}},{"type":"Button","props":{"y":13,"x":100,"var":"okBtn","skin":"comp/button.png","label":"应用设置"}},{"type":"Box","props":{"y":45,"x":13,"width":190,"var":"propBox","height":237}}]};}
+		['uiView',function(){return this.uiView={"type":"View","props":{"width":230,"height":400},"child":[{"type":"Label","props":{"y":18,"x":18,"width":80,"var":"title","text":"属性设置","height":20,"color":"#e72b28"}},{"type":"Button","props":{"y":13,"x":100,"var":"okBtn","skin":"comp/button.png","label":"应用设置","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Box","props":{"y":45,"x":13,"width":190,"var":"propBox","height":237}}]};}
 		]);
 		return PropPanelUI;
 	})(View)
@@ -34012,7 +34013,7 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		__static(KLineViewUI,
-		['uiView',function(){return this.uiView={"type":"View","props":{"width":600,"height":400},"child":[{"type":"ComboBox","props":{"y":9,"x":8,"var":"stockSelect","skin":"comp/combobox.png","scrollBarSkin":"comp/vscroll.png","labels":"000233,600322"}},{"type":"Button","props":{"y":9,"x":114,"var":"playBtn","skin":"comp/button.png","label":"play"}},{"type":"Label","props":{"y":13,"x":225,"width":147,"var":"infoTxt","text":"label","height":20,"color":"#5be330"}},{"type":"TextInput","props":{"y":43,"x":8,"width":90,"var":"stockInput","text":"002234","skin":"comp/textinput.png","height":22}},{"type":"Button","props":{"y":42,"x":114,"var":"playInputBtn","skin":"comp/button.png","label":"play"}},{"type":"CheckBox","props":{"y":45,"x":226,"var":"enableAnimation","skin":"comp/checkbox.png","selected":true,"label":"开启动画"}},{"type":"Button","props":{"y":39,"x":301,"var":"detailBtn","skin":"comp/button.png","label":"详情"}},{"type":"Button","props":{"y":80,"x":11,"var":"preBtn","skin":"comp/button.png","label":"pre"}},{"type":"Button","props":{"y":80,"x":100,"var":"nextBtn","skin":"comp/button.png","label":"next"}},{"type":"AnalyserList","props":{"var":"analyserList","top":10,"runtime":"view.plugins.AnalyserList","right":10}},{"type":"PropPanel","props":{"y":0,"var":"propPanel","runtime":"stock.prop.PropPanel","right":180}}]};}
+		['uiView',function(){return this.uiView={"type":"View","props":{"width":600,"height":400},"child":[{"type":"ComboBox","props":{"y":9,"x":8,"var":"stockSelect","skin":"comp/combobox.png","scrollBarSkin":"comp/vscroll.png","labels":"000233,600322","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":9,"x":114,"var":"playBtn","skin":"comp/button.png","label":"play","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Label","props":{"y":13,"x":225,"width":147,"var":"infoTxt","text":"label","height":20,"color":"#5be330"}},{"type":"TextInput","props":{"y":43,"x":8,"width":90,"var":"stockInput","text":"002234","skin":"comp/textinput.png","height":22,"color":"#f1dede"}},{"type":"Button","props":{"y":42,"x":114,"var":"playInputBtn","skin":"comp/button.png","label":"play","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"CheckBox","props":{"y":45,"x":226,"var":"enableAnimation","skin":"comp/checkbox.png","selected":true,"label":"开启动画","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":39,"x":301,"var":"detailBtn","skin":"comp/button.png","label":"详情","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":80,"x":11,"var":"preBtn","skin":"comp/button.png","label":"pre","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":80,"x":100,"var":"nextBtn","skin":"comp/button.png","label":"next","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"AnalyserList","props":{"var":"analyserList","top":10,"runtime":"view.plugins.AnalyserList","right":10}},{"type":"PropPanel","props":{"y":0,"var":"propPanel","runtime":"stock.prop.PropPanel","right":180}}]};}
 		]);
 		return KLineViewUI;
 	})(View)
@@ -34039,7 +34040,7 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		__static(MainViewUI,
-		['uiView',function(){return this.uiView={"type":"View","props":{"width":445,"height":400},"child":[{"type":"Tab","props":{"y":4,"x":4,"var":"typeSelect","skin":"comp/tab.png","selectedIndex":0,"labels":"股票列表,K线动画,选股"}},{"type":"StockView","props":{"var":"stockListView","top":40,"runtime":"view.StockView","right":10,"left":10,"bottom":10}},{"type":"KLineView","props":{"var":"kLineView","top":40,"runtime":"view.KLineView","right":10,"left":10,"bottom":10}},{"type":"SelectStockView","props":{"var":"selectView","top":40,"runtime":"view.SelectStockView","right":10,"left":10,"bottom":10}}]};}
+		['uiView',function(){return this.uiView={"type":"View","props":{"width":445,"height":400},"child":[{"type":"Tab","props":{"y":4,"x":4,"var":"typeSelect","skin":"comp/tab.png","selectedIndex":0,"labels":"股票列表,K线动画,选股","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"StockView","props":{"var":"stockListView","top":40,"runtime":"view.StockView","right":10,"left":10,"bottom":10}},{"type":"KLineView","props":{"var":"kLineView","top":40,"runtime":"view.KLineView","right":10,"left":10,"bottom":10}},{"type":"SelectStockView","props":{"var":"selectView","top":40,"runtime":"view.SelectStockView","right":10,"left":10,"bottom":10}}]};}
 		]);
 		return MainViewUI;
 	})(View)
@@ -34060,7 +34061,7 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		__static(AnalyserListUI,
-		['uiView',function(){return this.uiView={"type":"View","props":{},"child":[{"type":"List","props":{"y":0,"x":2,"width":160,"var":"list","vScrollBarSkin":"comp/vscroll.png","height":193},"child":[{"type":"Box","props":{"y":0,"x":0,"width":148,"renderType":"render","height":17},"child":[{"type":"Label","props":{"width":80,"text":"limittxt","name":"nameTxt","height":17,"color":"#e0211d"}},{"type":"CheckBox","props":{"x":92,"skin":"comp/checkbox.png","name":"ifShow","label":"启用"}}]}]}]};}
+		['uiView',function(){return this.uiView={"type":"View","props":{},"child":[{"type":"List","props":{"y":0,"x":2,"width":160,"var":"list","vScrollBarSkin":"comp/vscroll.png","height":193},"child":[{"type":"Box","props":{"y":0,"x":0,"width":148,"renderType":"render","height":17},"child":[{"type":"Label","props":{"width":80,"text":"limittxt","name":"nameTxt","height":17,"color":"#e0211d"}},{"type":"CheckBox","props":{"x":92,"skin":"comp/checkbox.png","name":"ifShow","label":"启用","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}}]}]}]};}
 		]);
 		return AnalyserListUI;
 	})(View)
@@ -34083,7 +34084,7 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		__static(SelectStockViewUI,
-		['uiView',function(){return this.uiView={"type":"View","props":{"width":445,"height":400},"child":[{"type":"List","props":{"var":"list","vScrollBarSkin":"comp/vscroll.png","top":30,"right":10,"left":10,"bottom":10},"child":[{"type":"Box","props":{"y":0,"x":0,"width":168,"name":"render","height":61},"child":[{"type":"Label","props":{"wordWrap":true,"top":0,"text":"this is a list","skin":"comp/label.png","right":0,"name":"label","left":0,"fontSize":14,"color":"#83e726","bottom":0}}]}]},{"type":"Label","props":{"y":-41,"width":271,"var":"tip","text":"股票代码:当前盈利:最高盈利","right":40,"height":42,"color":"#f33713"}},{"type":"ComboBox","props":{"y":3,"var":"typeSelect","skin":"comp/combobox.png","selectedIndex":0,"right":20,"labels":"KLine,Position"}}]};}
+		['uiView',function(){return this.uiView={"type":"View","props":{"width":445,"height":400},"child":[{"type":"List","props":{"var":"list","vScrollBarSkin":"comp/vscroll.png","top":30,"right":10,"left":10,"bottom":10},"child":[{"type":"Box","props":{"y":0,"x":0,"width":168,"name":"render","height":61},"child":[{"type":"Label","props":{"wordWrap":true,"top":0,"text":"this is a list","skin":"comp/label.png","right":0,"name":"label","left":0,"fontSize":14,"color":"#efe82f","bottom":0}}]}]},{"type":"Label","props":{"y":-41,"width":271,"var":"tip","text":"股票代码:当前盈利:最高盈利","right":40,"height":42,"color":"#f33713"}},{"type":"ComboBox","props":{"y":3,"var":"typeSelect","skin":"comp/combobox.png","selectedIndex":0,"right":20,"labels":"KLine,Position","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}}]};}
 		]);
 		return SelectStockViewUI;
 	})(View)
