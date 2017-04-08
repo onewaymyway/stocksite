@@ -2,9 +2,11 @@ package {
 	import laya.debug.tools.DTrace;
 	import laya.math.DataUtils;
 	import laya.maths.MathUtil;
+	import laya.stock.analysers.AnalyserBase;
 	import laya.stock.analysers.KLineAnalyser;
 	import laya.stock.analysers.lines.PositionLine;
 	import laya.stock.StockTools;
+	import laya.structs.RankInfo;
 	import laya.utils.Browser;
 	import nodetools.devices.Device;
 	import nodetools.devices.FileManager;
@@ -12,6 +14,7 @@ package {
 	import nodetools.devices.NodeJSTools;
 	import nodetools.devices.OSInfo;
 	import nodetools.devices.SystemSetting;
+	import stock.StockData;
 	import stockcmd.RunConfig;
 	
 	/**
@@ -69,62 +72,47 @@ package {
 		
 		private function initAnalysers():void {
 			moData = {};
+			var analyser:KLineAnalyser;
+			var posAnalyser:PositionLine;
+			var posAnalyser300:PositionLine;
 			
 			var types:Array;
 			types = [];
+			analysers = [];
 			
-			var tData:Object;
+			var tData:RankInfo;
 			var tAnalyserInfos:Array;
 			
 			analyser = new KLineAnalyser();
-			
-			tData = {};
-			tData.label = "kline";
-			tData.sortParams = ["kLineO.lastDate", true, false];
-			tData.dataKey = "kLineO";
-			tAnalyserInfos = [];
-			tAnalyserInfos.push(analyser.getParamsArr());
-			tData.analyserInfo = tAnalyserInfos;
-			
-			tData.tip = "股票:当前盈利:最高盈利\n7天最大盈利,15天最大盈利,30天最大盈利,45天最大盈利\n买入日期";
-			tData.tpl = "{#code#}:{#changePercent#}%:{#highPercent#}%\n{#high7#}%,{#high15#}%,{#high30#}%,{#high45#}%\n{#lastDate#}";
-			types.push(tData);
+			analyser.buyMinUnder = RunConfig.minUnderDay;
+			analysers.push(analyser);
 			
 			posAnalyser = new PositionLine();
-			posAnalyser.dayCount = 130;
+			posAnalyser.dayCount = "130";
+			analysers.push(posAnalyser);
 			
-			tData = {};
-			tData.label = "exp";
-			tData.sortParams = ["expO.exp", true, true];
-			tData.dataKey = "expO";
-			tData.tpl = "{#code#}:exp:{#exp#}\nwin:{#win#}\nlose{#lose#}";
-			tAnalyserInfos = [];
-			tAnalyserInfos.push(posAnalyser.getParamsArr());
-			tData.analyserInfo = tAnalyserInfos;
-			tData.tip = "n天期望模型";
-			types.push(tData);
+			posAnalyser300 = new PositionLine();
+			posAnalyser300.dayCount = "300";
+			analysers.push(posAnalyser300);
 			
-			tData = {};
-			tData.label = "win";
-			tData.sortParams = ["expO.win", true, true];
-			tData.dataKey = "expO";
-			tData.tpl = "{#code#}:exp:{#exp#}\nwin:{#win#}\nlose{#lose#}";
-			tAnalyserInfos = [];
-			tAnalyserInfos.push(posAnalyser.getParamsArr());
-			tData.analyserInfo = tAnalyserInfos;
-			tData.tip = "n天期望模型";
-			types.push(tData);
+			var posAnalyser60:PositionLine = new PositionLine();
+			posAnalyser60.dayCount = "60";
+			analysers.push(posAnalyser60);
 			
-			tData = {};
-			tData.label = "expBuy";
-			tData.sortParams = ["lastExpBuy", true, true];
-			tData.dataKey = "expO";
-			tData.tpl = "{#code#}:exp:{#exp#}\nwin:{#win#}\nlose{#lose#}\nbuy:{#lastExpBuy#}";
-			tAnalyserInfos = [];
-			tAnalyserInfos.push(posAnalyser.getParamsArr());
-			tData.analyserInfo = tAnalyserInfos;
-			tData.tip = "n天期望模型";
-			types.push(tData);
+			var posAnalyser30:PositionLine = new PositionLine();
+			posAnalyser30.dayCount = "30";
+			posAnalyser30.minBuyExp = 0.15;
+			posAnalyser30.minBuyLose = -0.02;
+			posAnalyser30.maxBuyLose = 0.1;
+			analysers.push(posAnalyser30);
+			
+			var i:int, len:int;
+			len = analysers.length;
+			var tAnalyser:AnalyserBase;
+			for (i = 0; i < len; i++) {
+				tAnalyser = analysers[i];
+				tAnalyser.addToConfigTypes(types);
+			}
 			
 			moData.types = types;
 		}
@@ -148,60 +136,35 @@ package {
 			
 			FileManager.createJSONFile(RunConfig.outFile, moData);
 		}
-		public var analyser:KLineAnalyser;
-		public var posAnalyser:PositionLine;
+		
+		public var analysers:Array;
 		
 		public function analyserAFile(path:String, rst:Array = null):void {
 			trace("work:", path);
 			var data:String;
 			data = FileManager.readTxtFile(path);
 			
-			analyser.initByStrData(data);
-			//trace("analyser:", analyser);
+			var stockData:StockData;
+			stockData = new StockData();
+			stockData.init(data);
+			
 			var tData:Object;
 			tData = {};
 			tData.code = FileManager.getFileName(path);
 			tData.basic = {code: tData.code};
-			var kLineO:Object;
-			kLineO = {};
-			tData.kLineO = kLineO;
-			kLineO.code = tData.code;
-			kLineO.lastDate = "0";
 			
-			var winLose:Array;
-			winLose = DataUtils.getWinLoseInfo(analyser.disDataList, posAnalyser.dayCount, analyser.disDataList.length - 1);
-			var posBuy:Object;
-			posBuy = posAnalyser.getWinLoseData(posAnalyser.dayCount, analyser.disDataList);
-			var expO:Object = {};
-			tData.expO = expO;
-			expO.code = tData.code;
-			expO.lose = StockTools.getGoodPercent(winLose[0]);
-			expO.win = StockTools.getGoodPercent(winLose[1]);
-			expO.exp = StockTools.getGoodPercent(winLose[2]);
-			if (posBuy && posBuy["buyList"]&&posBuy["buyList"][0])
-			{
-				var lastBuyI:int;
-				lastBuyI = posBuy["buyList"].pop()[1];
-				//trace(posBuy["buyList"]);
-				expO.lastExpBuy = analyser.disDataList[lastBuyI]["date"];
+			var i:int, len:int;
+			len = analysers.length;
+			var tAnalyser:AnalyserBase;
+			for (i = 0; i < len; i++) {
+				tAnalyser = analysers[i];
+				//tAnalyser.initByStrData(data);
+				tAnalyser.analyser(stockData);
+				tAnalyser.addToShowData(tData);
 			}
+			
 			rst.push(tData);
-			
-			var lastUnder:Object;
-			lastUnder = analyser.getLastUnderLine(RunConfig.minUnderDay);
-			//trace("lastUnder", lastUnder);
-			if (!lastUnder)
-				return;
-			var lastStock:Object;
-			lastStock = analyser.getDataByI(lastUnder[2]);
-			//trace("lastStock:", lastStock);
-			if (rst) {
-				if (lastStock) {
-					kLineO.lastDate = lastStock["date"];
-					kLineO.data = lastStock;
-					StockTools.getBuyStaticInfos(lastUnder[2], analyser.disDataList, kLineO);
-				}
-			}
+		
 		}
 	}
 
