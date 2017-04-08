@@ -1048,6 +1048,8 @@ var Laya=window.Laya=(function(window,document){
 			return null;
 		}
 
+		__proto.addToConfigTypes=function(types){}
+		__proto.addToShowData=function(showData){}
 		return AnalyserBase;
 	})()
 
@@ -1252,6 +1254,26 @@ var Laya=window.Laya=(function(window,document){
 		['highDays',function(){return this.highDays=[7,15,30,45,60];}
 		]);
 		return StockTools;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class laya.structs.RankInfo
+	var RankInfo=(function(){
+		function RankInfo(){
+			this.label=null;
+			this.dataKey=null;
+			this.tpl=null;
+			this.tip=null;
+			this.sortParams=null;
+			this.analyserInfo=null;
+		}
+
+		__class(RankInfo,'laya.structs.RankInfo');
+		return RankInfo;
 	})()
 
 
@@ -14959,10 +14981,10 @@ var Laya=window.Laya=(function(window,document){
 			maxs=[];
 			for (i=0;i < len;i++){
 				tData=maxList[i];
-				if ((tData["highR"] > this.rightLimit)&&tData["highL"] > this.leftLimit){
+				if ((tData["highR"] > this.rightLimit)&& tData["highL"] > this.leftLimit){
 					maxs.push(i);
 				}
-				if ((tData["lowR"] > this.rightLimit)&&tData["lowL"] > this.leftLimit){
+				if ((tData["lowR"] > this.rightLimit)&& tData["lowL"] > this.leftLimit){
 					mins.push(i);
 				}
 			}
@@ -15004,8 +15026,8 @@ var Laya=window.Laya=(function(window,document){
 		__proto.getDrawCmds=function(){
 			var rst;
 			rst=[];
-			rst.push(["drawPointsLine",[ this.resultData["maxs"],"high",-20]]);
-			rst.push(["drawPointsLine",[ this.resultData["mins"],"low",20]]);
+			rst.push(["drawPointsLine",[this.resultData["maxs"],"high",-20]]);
+			rst.push(["drawPointsLine",[this.resultData["mins"],"low",20]]);
 			rst.push(["drawPoints",[this.resultData["underPoints"],"low",3,"#ffff00"]]);
 			rst.push(["drawTexts",[this.resultData["buys"],"low",30,"#00ff00",true,"#00ff00"]]);
 			return rst;
@@ -15013,7 +15035,8 @@ var Laya=window.Laya=(function(window,document){
 
 		__proto.getLastUnderLine=function(minCount){
 			(minCount===void 0)&& (minCount=3);
-			if (!this.resultData)return null;
+			if (!this.resultData)
+				return null;
 			var minUnders;
 			minUnders=this.resultData["minUnders"];
 			var i=0,len=0;
@@ -15046,6 +15069,41 @@ var Laya=window.Laya=(function(window,document){
 				}
 			}
 			return resultArr;
+		}
+
+		__proto.addToConfigTypes=function(types){
+			var tData;
+			var tAnalyserInfos;
+			tData={};
+			tData.label="kline";
+			tData.sortParams=["kLineO.lastDate",true,false];
+			tData.dataKey="kLineO";
+			tAnalyserInfos=[];
+			tAnalyserInfos.push(this.getParamsArr());
+			tData.analyserInfo=tAnalyserInfos;
+			tData.tip="股票:当前盈利:最高盈利\n7天最大盈利,15天最大盈利,30天最大盈利,45天最大盈利\n买入日期";
+			tData.tpl="{#code#}:{#changePercent#}%:{#highPercent#}%\n{#high7#}%,{#high15#}%,{#high30#}%,{#high45#}%\n{#lastDate#}";
+			types.push(tData);
+		}
+
+		__proto.addToShowData=function(showData){
+			var kLineO;
+			kLineO={};
+			showData.kLineO=kLineO;
+			kLineO.code=showData.code;
+			kLineO.lastDate="0";
+			var lastUnder;
+			lastUnder=this.getLastUnderLine(this.buyMinUnder);
+			debugger;
+			if (!lastUnder)
+				return;
+			var lastStock;
+			lastStock=this.getDataByI(lastUnder[2]);
+			if (lastStock){
+				kLineO.lastDate=lastStock["date"];
+				kLineO.data=lastStock;
+				StockTools.getBuyStaticInfos(lastUnder[2],this.disDataList,kLineO);
+			}
 		}
 
 		return KLineAnalyser;
@@ -15268,6 +15326,63 @@ var Laya=window.Laya=(function(window,document){
 			}
 			rst.push(["drawGridLineEx",this.resultData["gridLine"]]);
 			return rst;
+		}
+
+		__proto.addToConfigTypes=function(types){
+			var tData;
+			var tAnalyserInfos;
+			var sign;
+			sign="exp"+this.dayCount;
+			tData={};
+			tData.label="exp"+this.dayCount;
+			tData.sortParams=[sign+".exp",true,true];
+			tData.dataKey=sign;
+			tData.tpl="{#code#}:exp:{#exp#}\nwin:{#win#}\nlose{#lose#}";
+			tAnalyserInfos=[];
+			tAnalyserInfos.push(this.getParamsArr());
+			tData.analyserInfo=tAnalyserInfos;
+			tData.tip="n天期望模型";
+			types.push(tData);
+			tData={};
+			tData.label="win"+this.dayCount;
+			tData.sortParams=[sign+".win",true,true];
+			tData.dataKey=sign;
+			tData.tpl="{#code#}:exp:{#exp#}\nwin:{#win#}\nlose{#lose#}";
+			tAnalyserInfos=[];
+			tAnalyserInfos.push(this.getParamsArr());
+			tData.analyserInfo=tAnalyserInfos;
+			tData.tip="n天期望模型";
+			types.push(tData);
+			tData={};
+			tData.label="expBuy"+this.dayCount;
+			tData.sortParams=[sign+".lastExpBuy",true,false];
+			tData.dataKey=sign;
+			tData.tpl="{#code#}:exp:{#exp#}\nwin:{#win#}\nlose{#lose#}\nbuy:{#lastExpBuy#}";
+			tAnalyserInfos=[];
+			tAnalyserInfos.push(this.getParamsArr());
+			tData.analyserInfo=tAnalyserInfos;
+			tData.tip="n天期望模型";
+			types.push(tData);
+		}
+
+		__proto.addToShowData=function(showData){
+			var sign;
+			sign="exp"+this.dayCount;
+			var winLose;
+			winLose=DataUtils.getWinLoseInfo(this.disDataList,this.dayCount,this.disDataList.length-1);
+			var posBuy;
+			posBuy=this.getWinLoseData(this.dayCount,this.disDataList);
+			var expO={};
+			showData[sign]=expO;
+			expO.code=showData.code;
+			expO.lose=StockTools.getGoodPercent(winLose[0]);
+			expO.win=StockTools.getGoodPercent(winLose[1]);
+			expO.exp=StockTools.getGoodPercent(winLose[2]);
+			if (posBuy && posBuy["buyList"]&&posBuy["buyList"][0]){
+				var lastBuyI=0;
+				lastBuyI=posBuy["buyList"].pop()[1];
+				expO.lastExpBuy=this.disDataList[lastBuyI]["date"];
+			}
 		}
 
 		return PositionLine;
@@ -34084,7 +34199,7 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		__static(SelectStockViewUI,
-		['uiView',function(){return this.uiView={"type":"View","props":{"width":445,"height":400},"child":[{"type":"List","props":{"var":"list","vScrollBarSkin":"comp/vscroll.png","top":30,"right":10,"left":10,"bottom":10},"child":[{"type":"Box","props":{"y":0,"x":0,"width":168,"name":"render","height":61},"child":[{"type":"Label","props":{"wordWrap":true,"top":0,"text":"this is a list","skin":"comp/label.png","right":0,"name":"label","left":0,"fontSize":14,"color":"#efe82f","bottom":0,"borderColor":"#fb125d"}}]}]},{"type":"Label","props":{"y":-41,"width":271,"var":"tip","text":"股票代码:当前盈利:最高盈利","right":40,"height":42,"color":"#f33713"}},{"type":"ComboBox","props":{"y":3,"var":"typeSelect","skin":"comp/combobox.png","selectedIndex":0,"right":20,"labels":"KLine,Position","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}}]};}
+		['uiView',function(){return this.uiView={"type":"View","props":{"width":445,"height":400},"child":[{"type":"List","props":{"var":"list","vScrollBarSkin":"comp/vscroll.png","top":30,"right":10,"left":10,"bottom":10},"child":[{"type":"Box","props":{"y":0,"x":0,"width":168,"name":"render","height":61},"child":[{"type":"Label","props":{"wordWrap":true,"top":0,"text":"this is a list","skin":"comp/label.png","right":0,"name":"label","left":0,"fontSize":14,"color":"#efe82f","bottom":0,"borderColor":"#fb125d"}}]}]},{"type":"Label","props":{"y":-41,"width":271,"var":"tip","text":"股票代码:当前盈利:最高盈利","right":40,"height":42,"color":"#f33713"}},{"type":"ComboBox","props":{"y":3,"visibleNum":15,"var":"typeSelect","skin":"comp/combobox.png","selectedIndex":0,"scrollBarSkin":"comp/vscroll.png","right":20,"labels":"KLine,Position","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}}]};}
 		]);
 		return SelectStockViewUI;
 	})(View)
