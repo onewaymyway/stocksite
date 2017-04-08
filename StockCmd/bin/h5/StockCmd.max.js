@@ -19887,6 +19887,8 @@ var Laya=window.Laya=(function(window,document){
 				var lastBuyI=0;
 				lastBuyI=posBuy["buyList"].pop()[1];
 				expO.lastExpBuy=this.disDataList[lastBuyI]["date"];
+				}else{
+				expO.lastExpBuy="0";
 			}
 		}
 
