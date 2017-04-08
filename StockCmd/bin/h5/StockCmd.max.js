@@ -1396,6 +1396,9 @@ var Laya=window.Laya=(function(window,document){
 			this.analysers.push(posAnalyser300);
 			var posAnalyser60=new PositionLine();
 			posAnalyser60.dayCount="60";
+			posAnalyser60.minBuyExp=0.2;
+			posAnalyser60.minBuyLose=-0.02;
+			posAnalyser60.maxBuyLose=-0.1;
 			this.analysers.push(posAnalyser60);
 			var posAnalyser30=new PositionLine();
 			posAnalyser30.dayCount="30";
