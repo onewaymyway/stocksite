@@ -1,8 +1,8 @@
 {
     "x":0,
     "type":"View",
-    "selectedBox":1,
-    "selecteID":6,
+    "selectedBox":3,
+    "selecteID":4,
     "props":{"width":445,"sceneColor":"#f1dcdc","height":400},
     "nodeParent":-1,
     "label":"View",
@@ -39,7 +39,7 @@
                         {
                             "x":45,
                             "type":"Label",
-                            "props":{"wordWrap":true,"top":0,"text":"this is a list","skin":"comp/label.png","right":0,"name":"label","left":0,"fontSize":14,"color":"#83e726","bottom":0},
+                            "props":{"wordWrap":true,"top":0,"text":"this is a list","skin":"comp/label.png","right":0,"name":"label","left":0,"fontSize":14,"color":"#efe82f","bottom":0},
                             "nodeParent":3,
                             "label":"Label(label)",
                             "isDirectory":false,

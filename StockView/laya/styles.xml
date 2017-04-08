@@ -1,0 +1,6 @@
+<res>
+   <item name="comp/button.png" type="Button" compress="0" pack="0" quality="80" props="labelColors=#efefef,#ffffff,#c5c5c5,#c5c5c5" picType="0"/>
+   <item name="comp/tab.png" type="Tab" compress="0" pack="0" quality="80" props="labelColors=#efefef,#ffffff,#c5c5c5,#c5c5c5" picType="0"/>
+   <item name="comp/combobox.png" type="ComboBox" compress="0" pack="0" quality="80" props="labelColors=#efefef,#ffffff,#c5c5c5,#c5c5c5" picType="0"/>
+   <item name="comp/checkbox.png" type="CheckBox" compress="0" pack="0" quality="80" props="labelColors=#efefef,#ffffff,#c5c5c5,#c5c5c5" picType="0"/>
+</res>
