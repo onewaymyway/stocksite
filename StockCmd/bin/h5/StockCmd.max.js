@@ -1443,7 +1443,7 @@ var Laya=window.Laya=(function(window,document){
 			var tAnalyser;
 			for (i=0;i < len;i++){
 				tAnalyser=this.analysers[i];
-				tAnalyser.analyser(stockData);
+				tAnalyser.analyser(stockData,0,-1,true);
 				tAnalyser.addToShowData(tData);
 			}
 			rst.push(tData);
@@ -15370,6 +15370,7 @@ var Laya=window.Laya=(function(window,document){
 			this.resultData=null;
 			this.paramkeys=null;
 			this.paramDes=[];
+			this.forSelect=false;
 			this.initParamKeys();
 			this.initParamDes();
 		}
@@ -15430,9 +15431,11 @@ var Laya=window.Laya=(function(window,document){
 			}
 		}
 
-		__proto.analyser=function(stockData,start,end){
+		__proto.analyser=function(stockData,start,end,forSelect){
 			(start===void 0)&& (start=0);
 			(end===void 0)&& (end=-1);
+			(forSelect===void 0)&& (forSelect=false);
+			this.forSelect=forSelect;
 			this.stockData=stockData;
 			this.dataList=stockData.dataList;
 			this.analyserData(start,end);
@@ -19728,6 +19731,7 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		__proto.doAWork=function(){
+			if (this.forSelect)return;
 			var dataList;
 			dataList=this.disDataList;
 			var i=0,len=0;
