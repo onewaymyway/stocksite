@@ -103,7 +103,7 @@ package {
 			posAnalyser30.dayCount = "30";
 			posAnalyser30.minBuyExp = 0.15;
 			posAnalyser30.minBuyLose = -0.02;
-			posAnalyser30.maxBuyLose = 0.1;
+			posAnalyser30.maxBuyLose = -0.1;
 			analysers.push(posAnalyser30);
 			
 			var i:int, len:int;
@@ -159,7 +159,7 @@ package {
 			for (i = 0; i < len; i++) {
 				tAnalyser = analysers[i];
 				//tAnalyser.initByStrData(data);
-				tAnalyser.analyser(stockData);
+				tAnalyser.analyser(stockData,0,-1,true);
 				tAnalyser.addToShowData(tData);
 			}
 			
