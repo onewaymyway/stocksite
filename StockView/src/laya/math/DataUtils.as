@@ -331,6 +331,7 @@ package laya.math
 		}
 		public static function getWinLoseInfo(dataList:Array, dayCount:int, index:int,priceType:String="close"):Array
 		{
+			dayCount = ValueTools.mParseFloat(dayCount);
 			if (dataList.length <= index) return null;
 			var datas:Array;
 			datas = getMinMaxInfo(dataList, dayCount, index, priceType);

@@ -1,39 +1,34 @@
-package laya.stock.analysers 
-{
+package laya.stock.analysers {
 	import laya.math.DataUtils;
 	import laya.math.GraphicUtils;
+	import laya.stock.StockTools;
+	import laya.structs.RankInfo;
 	import laya.utils.Utils;
 	import stock.StockData;
+	
 	/**
 	 * ...
 	 * @author ww
 	 */
-	public class KLineAnalyser extends AnalyserBase
-	{
-		public var leftLimit:int=25;
+	public class KLineAnalyser extends AnalyserBase {
+		public var leftLimit:int = 25;
 		public var rightLimit:int = 10;
 		public var buyMinUnder:int = 3;
 		
-		public function KLineAnalyser() 
-		{
-			
+		public function KLineAnalyser() {
+		
 		}
 		
-		
-		override public function initParamKeys():void 
-		{
-			paramkeys = ["leftLimit","rightLimit","buyMinUnder"];
+		override public function initParamKeys():void {
+			paramkeys = ["leftLimit", "rightLimit", "buyMinUnder"];
 		}
 		
-		
-	
-		override public function analyseWork():void
-		{
+		override public function analyseWork():void {
 			workMaxValues();
 			drawMaxs();
 		}
-		public function workMaxValues():void
-		{
+		
+		public function workMaxValues():void {
 			var dataList:Array;
 			dataList = disDataList;
 			var maxI:int;
@@ -44,11 +39,11 @@ package laya.stock.analysers
 			resultData["high"] = maxI;
 			resultData["low"] = minI;
 		}
-		public function drawMaxs():void
-		{
+		
+		public function drawMaxs():void {
 			var dataList:Array;
 			dataList = disDataList;
-		    var maxList:Array;
+			var maxList:Array;
 			maxList = DataUtils.getMaxInfo(dataList);
 			var i:int, len:int;
 			len = maxList.length;
@@ -57,15 +52,12 @@ package laya.stock.analysers
 			var maxs:Array;
 			mins = [];
 			maxs = [];
-			for (i = 0; i < len; i++)
-			{
+			for (i = 0; i < len; i++) {
 				tData = maxList[i];
-				if ((tData["highR"] > rightLimit)&&tData["highL"] > leftLimit)
-				{
+				if ((tData["highR"] > rightLimit) && tData["highL"] > leftLimit) {
 					maxs.push(i);
 				}
-				if ((tData["lowR"] > rightLimit)&&tData["lowL"] > leftLimit)
-				{
+				if ((tData["lowR"] > rightLimit) && tData["lowL"] > leftLimit) {
 					mins.push(i);
 				}
 			}
@@ -79,26 +71,22 @@ package laya.stock.analysers
 			var tUnders:Array;
 			var buys:Array;
 			buys = [];
-			for (i = 1; i < len; i++)
-			{
+			for (i = 1; i < len; i++) {
 				preData = dataList[mins[i - 1]];
 				tData = dataList[mins[i]];
-				tUnders=hasUnders(mins[i - 1], preData["low"], mins[i], tData["low"], mins[i - 1], mins[i], dataList);
+				tUnders = hasUnders(mins[i - 1], preData["low"], mins[i], tData["low"], mins[i - 1], mins[i], dataList);
 				tUnderCount = tUnders.length;
-				if (tUnderCount > 0)
-				{
+				if (tUnderCount > 0) {
 					minUnders.push([tUnderCount, mins[i - 1], mins[i]]);
 					underIs = Utils.concatArray(underIs, tUnders);
 				}
-				if (tUnderCount > buyMinUnder)
-				{
-					buys.push([tData["date"] + ":Buy",mins[i]]);
+				if (tUnderCount > buyMinUnder) {
+					buys.push([tData["date"] + ":Buy", mins[i]]);
 				}
 			}
 			
 			len = maxs.length;
-			for (i = 1; i < len; i++)
-			{
+			for (i = 1; i < len; i++) {
 				preData = dataList[maxs[i - 1]];
 				tData = dataList[maxs[i]];
 			}
@@ -108,37 +96,35 @@ package laya.stock.analysers
 			resultData["underPoints"] = underIs;
 			resultData["buys"] = buys;
 		}
-		override public function getDrawCmds():Array
-		{
+		
+		override public function getDrawCmds():Array {
 			var rst:Array;
 			rst = [];
-			rst.push(["drawPointsLine",[ resultData["maxs"], "high", -20]]);
-			rst.push(["drawPointsLine",[ resultData["mins"], "low", 20]]);
+			rst.push(["drawPointsLine", [resultData["maxs"], "high", -20]]);
+			rst.push(["drawPointsLine", [resultData["mins"], "low", 20]]);
 			rst.push(["drawPoints", [resultData["underPoints"], "low", 3, "#ffff00"]]);
-			rst.push(["drawTexts", [resultData["buys"], "low", 30, "#00ff00",true,"#00ff00"]]);
+			rst.push(["drawTexts", [resultData["buys"], "low", 30, "#00ff00", true, "#00ff00"]]);
 			return rst;
 		}
-		public function getLastUnderLine(minCount:int = 3):Object
-		{
-			if (!resultData) return null;
+		
+		public function getLastUnderLine(minCount:int = 3):Object {
+			if (!resultData)
+				return null;
 			var minUnders:Array;
 			minUnders = resultData["minUnders"];
 			var i:int, len:int;
 			len = minUnders.length;
 			var tData:Array;
-			for (i = len-1; i >=0; i--)
-			{
+			for (i = len - 1; i >= 0; i--) {
 				tData = minUnders[i];
-				if (tData[0] >= minCount)
-				{
+				if (tData[0] >= minCount) {
 					return tData;
 				}
 			}
 			return null;
 		}
-
-		public function hasUnders(x0:Number, y0:Number, x1:Number, y1:Number,startI:int,endI:int,datas:Array):Array
-		{
+		
+		public function hasUnders(x0:Number, y0:Number, x1:Number, y1:Number, startI:int, endI:int, datas:Array):Array {
 			var resultArr:Array = [];
 			var i:int, len:int;
 			var tData:Object;
@@ -146,19 +132,56 @@ package laya.stock.analysers
 			var tY:Number;
 			var rst:int;
 			rst = 0;
-			for (i = startI + 1; i < endI; i++)
-			{
+			for (i = startI + 1; i < endI; i++) {
 				tData = datas[i];
 				tX = i;
 				tY = tData["low"];
-				if (GraphicUtils.pointOfLine(tX, tY, x0, y0, x1, y1) > 0)
-				{
-
+				if (GraphicUtils.pointOfLine(tX, tY, x0, y0, x1, y1) > 0) {
+					
 					resultArr.push(i);
 					rst++;
 				}
 			}
 			return resultArr;
+		}
+		
+		override public function addToConfigTypes(types:Array):void {
+			var tData:RankInfo;
+			var tAnalyserInfos:Array;
+			tData = {};
+			tData.label = "kline";
+			tData.sortParams = ["kLineO.lastDate", true, false];
+			tData.dataKey = "kLineO";
+			tAnalyserInfos = [];
+			tAnalyserInfos.push(this.getParamsArr());
+			tData.analyserInfo = tAnalyserInfos;
+			
+			tData.tip = "股票:当前盈利:最高盈利\n7天最大盈利,15天最大盈利,30天最大盈利,45天最大盈利\n买入日期";
+			tData.tpl = "{#code#}:{#changePercent#}%:{#highPercent#}%\n{#high7#}%,{#high15#}%,{#high30#}%,{#high45#}%\n{#lastDate#}";
+			types.push(tData);
+		}
+		
+		override public function addToShowData(showData:Object):void {
+			var kLineO:Object;
+			kLineO = {};
+			showData.kLineO = kLineO;
+			kLineO.code = showData.code;
+			kLineO.lastDate = "0";
+			
+			var lastUnder:Object;
+			lastUnder = this.getLastUnderLine(buyMinUnder);
+			
+			if (!lastUnder)
+				return;
+			var lastStock:Object;
+			lastStock = this.getDataByI(lastUnder[2]);
+			
+			if (lastStock) {
+				kLineO.lastDate = lastStock["date"];
+				kLineO.data = lastStock;
+				StockTools.getBuyStaticInfos(lastUnder[2], disDataList, kLineO);
+			}
+		
 		}
 	}
 

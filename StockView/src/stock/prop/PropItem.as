@@ -40,6 +40,7 @@ package stock.prop
 			tInput.skin = "comp/textinput.png";		
 			tInput.pos(70, 0);
 			tInput.width = 100;
+			tInput.color = "#ffffff";
 			
 			this.addChild(label);
 			this.addChild(tInput);

@@ -3,6 +3,8 @@ package laya.stock.analysers.lines {
 	import laya.math.DataUtils;
 	import laya.math.ValueTools;
 	import laya.stock.analysers.AnalyserBase;
+	import laya.stock.StockTools;
+	import laya.structs.RankInfo;
 	
 	/**
 	 * ...
@@ -88,7 +90,7 @@ package laya.stock.analysers.lines {
 				if (tLose < tLimitLoseMax) continue;
 				if (tExp > expList[i - 1][1]&&ArrayMethods.isHighThenBefore(expList,i-1,5))
 				{
-					rst.push(["buy:",expList[i][0]])
+					rst.push(["buy:"+StockTools.getGoodPercent(tExp/barHeight)+"\n"+disDataList[expList[i][0]]["date"],expList[i][0]])
 				}
 			}
 			return rst;
@@ -140,6 +142,69 @@ package laya.stock.analysers.lines {
 			
 			rst.push(["drawGridLineEx", resultData["gridLine"]]);
 			return rst;
+		}
+		
+		override public function addToConfigTypes(types:Array):void 
+		{
+			var tData:RankInfo;
+			var tAnalyserInfos:Array;
+			var sign:String;
+			sign = "exp" + dayCount;
+			tData = {};
+			tData.label = "exp"+dayCount;
+			tData.sortParams = [sign+".exp", true, true];
+			tData.dataKey = sign;
+			tData.tpl = "{#code#}:exp:{#exp#}\nwin:{#win#}\nlose{#lose#}";
+			tAnalyserInfos = [];
+			tAnalyserInfos.push(this.getParamsArr());
+			tData.analyserInfo = tAnalyserInfos;
+			tData.tip = "n天期望模型";
+			types.push(tData);
+			
+			tData = {};
+			tData.label = "win"+dayCount;
+			tData.sortParams = [sign+".win", true, true];
+			tData.dataKey = sign;
+			tData.tpl = "{#code#}:exp:{#exp#}\nwin:{#win#}\nlose{#lose#}";
+			tAnalyserInfos = [];
+			tAnalyserInfos.push(this.getParamsArr());
+			tData.analyserInfo = tAnalyserInfos;
+			tData.tip = "n天期望模型";
+			types.push(tData);
+			
+			tData = {};
+			tData.label = "expBuy"+dayCount;
+			tData.sortParams = [sign+".lastExpBuy", true, false];
+			tData.dataKey = sign;
+			tData.tpl = "{#code#}:exp:{#exp#}\nwin:{#win#}\nlose{#lose#}\nbuy:{#lastExpBuy#}";
+			tAnalyserInfos = [];
+			tAnalyserInfos.push(this.getParamsArr());
+			tData.analyserInfo = tAnalyserInfos;
+			tData.tip = "n天期望模型";
+			types.push(tData);
+		}
+		override public function addToShowData(showData:Object):void 
+		{
+			var sign:String;
+			sign = "exp" + dayCount;
+			
+			var winLose:Array;
+			winLose = DataUtils.getWinLoseInfo(this.disDataList, this.dayCount, this.disDataList.length - 1);
+			var posBuy:Object;
+			posBuy = this.getWinLoseData(this.dayCount, this.disDataList);
+			var expO:Object = {};
+			showData[sign] = expO;
+			expO.code = showData.code;
+			expO.lose = StockTools.getGoodPercent(winLose[0]);
+			expO.win = StockTools.getGoodPercent(winLose[1]);
+			expO.exp = StockTools.getGoodPercent(winLose[2]);
+			if (posBuy && posBuy["buyList"]&&posBuy["buyList"][0])
+			{
+				var lastBuyI:int;
+				lastBuyI = posBuy["buyList"].pop()[1];
+				//trace(posBuy["buyList"]);
+				expO.lastExpBuy = disDataList[lastBuyI]["date"];
+			}
 		}
 	}
 

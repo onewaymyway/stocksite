@@ -120,6 +120,16 @@ package laya.stock.analysers
 		{
 			return null;
 		}
+		
+		public function addToConfigTypes(types:Array):void
+		{
+			
+		}
+		
+		public function addToShowData(showData:Object):void
+		{
+			
+		}
 	}
 
 }
