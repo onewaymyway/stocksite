@@ -1333,9 +1333,7 @@ var Laya=window.Laya=(function(window,document){
 		function StockCmdTool(){
 			this.dirInfos=[];
 			this.moData=null;
-			this.analyser=null;
-			this.posAnalyser=null;
-			this.posAnalyser300=null;
+			this.analysers=null;
 			this.init();
 			this.parseCMD(NodeJSTools.getArgv());
 			DTrace.timeStart("StockCmdTool");
@@ -1379,65 +1377,33 @@ var Laya=window.Laya=(function(window,document){
 
 		__proto.initAnalysers=function(){
 			this.moData={};
+			var analyser;
+			var posAnalyser;
+			var posAnalyser300;
 			var types;
 			types=[];
+			this.analysers=[];
 			var tData;
 			var tAnalyserInfos;
-			this.analyser=new KLineAnalyser();
-			tData={};
-			tData.label="kline";
-			tData.sortParams=["kLineO.lastDate",true,false];
-			tData.dataKey="kLineO";
-			tAnalyserInfos=[];
-			tAnalyserInfos.push(this.analyser.getParamsArr());
-			tData.analyserInfo=tAnalyserInfos;
-			tData.tip="股票:当前盈利:最高盈利\n7天最大盈利,15天最大盈利,30天最大盈利,45天最大盈利\n买入日期";
-			tData.tpl="{#code#}:{#changePercent#}%:{#highPercent#}%\n{#high7#}%,{#high15#}%,{#high30#}%,{#high45#}%\n{#lastDate#}";
-			types.push(tData);
-			this.posAnalyser=new PositionLine();
-			this.posAnalyser.dayCount="130";
-			tData={};
-			tData.label="exp130";
-			tData.sortParams=["expO.exp",true,true];
-			tData.dataKey="expO";
-			tData.tpl="{#code#}:exp:{#exp#}\nwin:{#win#}\nlose{#lose#}";
-			tAnalyserInfos=[];
-			tAnalyserInfos.push(this.posAnalyser.getParamsArr());
-			tData.analyserInfo=tAnalyserInfos;
-			tData.tip="n天期望模型";
-			types.push(tData);
-			tData={};
-			tData.label="win130";
-			tData.sortParams=["expO.win",true,true];
-			tData.dataKey="expO";
-			tData.tpl="{#code#}:exp:{#exp#}\nwin:{#win#}\nlose{#lose#}";
-			tAnalyserInfos=[];
-			tAnalyserInfos.push(this.posAnalyser.getParamsArr());
-			tData.analyserInfo=tAnalyserInfos;
-			tData.tip="n天期望模型";
-			types.push(tData);
-			tData={};
-			tData.label="expBuy130";
-			tData.sortParams=["expO.lastExpBuy",true,false];
-			tData.dataKey="expO";
-			tData.tpl="{#code#}:exp:{#exp#}\nwin:{#win#}\nlose{#lose#}\nbuy:{#lastExpBuy#}";
-			tAnalyserInfos=[];
-			tAnalyserInfos.push(this.posAnalyser.getParamsArr());
-			tData.analyserInfo=tAnalyserInfos;
-			tData.tip="n天期望模型";
-			types.push(tData);
-			this.posAnalyser300=new PositionLine();
-			this.posAnalyser300.dayCount="300";
-			tData={};
-			tData.label="exp300";
-			tData.sortParams=["exp300.exp",true,true];
-			tData.dataKey="exp300";
-			tData.tpl="{#code#}:exp:{#exp#}\nwin:{#win#}\nlose{#lose#}";
-			tAnalyserInfos=[];
-			tAnalyserInfos.push(this.posAnalyser300.getParamsArr());
-			tData.analyserInfo=tAnalyserInfos;
-			tData.tip="n天期望模型";
-			types.push(tData);
+			analyser=new KLineAnalyser();
+			analyser.buyMinUnder=RunConfig.minUnderDay;
+			this.analysers.push(analyser);
+			posAnalyser=new PositionLine();
+			posAnalyser.dayCount="130";
+			this.analysers.push(posAnalyser);
+			posAnalyser300=new PositionLine();
+			posAnalyser300.dayCount="300";
+			this.analysers.push(posAnalyser300);
+			var posAnalyser60=new PositionLine();
+			posAnalyser60.dayCount="60";
+			this.analysers.push(posAnalyser60);
+			var i=0,len=0;
+			len=this.analysers.length;
+			var tAnalyser;
+			for (i=0;i < len;i++){
+				tAnalyser=this.analysers[i];
+				tAnalyser.addToConfigTypes(types);
+			}
 			this.moData.types=types;
 		}
 
@@ -1459,52 +1425,22 @@ var Laya=window.Laya=(function(window,document){
 			console.log("work:",path);
 			var data;
 			data=FileManager.readTxtFile(path);
-			this.analyser.initByStrData(data);
+			var stockData;
+			stockData=new StockData();
+			stockData.init(data);
 			var tData;
 			tData={};
 			tData.code=FileManager.getFileName(path);
 			tData.basic={code:tData.code};
-			var kLineO;
-			kLineO={};
-			tData.kLineO=kLineO;
-			kLineO.code=tData.code;
-			kLineO.lastDate="0";
-			var winLose;
-			winLose=DataUtils.getWinLoseInfo(this.analyser.disDataList,this.posAnalyser.dayCount,this.analyser.disDataList.length-1);
-			var posBuy;
-			posBuy=this.posAnalyser.getWinLoseData(this.posAnalyser.dayCount,this.analyser.disDataList);
-			var expO={};
-			tData.expO=expO;
-			expO.code=tData.code;
-			expO.lose=StockTools.getGoodPercent(winLose[0]);
-			expO.win=StockTools.getGoodPercent(winLose[1]);
-			expO.exp=StockTools.getGoodPercent(winLose[2]);
-			if (posBuy && posBuy["buyList"]&&posBuy["buyList"][0]){
-				var lastBuyI=0;
-				lastBuyI=posBuy["buyList"].pop()[1];
-				expO.lastExpBuy=this.analyser.disDataList[lastBuyI]["date"];
-			};
-			var exp300={};
-			tData.exp300=exp300;
-			exp300.code=tData.code;
-			winLose=DataUtils.getWinLoseInfo(this.analyser.disDataList,this.posAnalyser300.dayCount,this.analyser.disDataList.length-1);
-			exp300.lose=StockTools.getGoodPercent(winLose[0]);
-			exp300.win=StockTools.getGoodPercent(winLose[1]);
-			exp300.exp=StockTools.getGoodPercent(winLose[2]);
-			rst.push(tData);
-			var lastUnder;
-			lastUnder=this.analyser.getLastUnderLine(RunConfig.minUnderDay);
-			if (!lastUnder)
-				return;
-			var lastStock;
-			lastStock=this.analyser.getDataByI(lastUnder[2]);
-			if (rst){
-				if (lastStock){
-					kLineO.lastDate=lastStock["date"];
-					kLineO.data=lastStock;
-					StockTools.getBuyStaticInfos(lastUnder[2],this.analyser.disDataList,kLineO);
-				}
+			var i=0,len=0;
+			len=this.analysers.length;
+			var tAnalyser;
+			for (i=0;i < len;i++){
+				tAnalyser=this.analysers[i];
+				tAnalyser.analyser(stockData);
+				tAnalyser.addToShowData(tData);
 			}
+			rst.push(tData);
 		}
 
 		return StockCmdTool;
@@ -15521,6 +15457,8 @@ var Laya=window.Laya=(function(window,document){
 			return null;
 		}
 
+		__proto.addToConfigTypes=function(types){}
+		__proto.addToShowData=function(showData){}
 		return AnalyserBase;
 	})()
 
@@ -19539,10 +19477,10 @@ var Laya=window.Laya=(function(window,document){
 			maxs=[];
 			for (i=0;i < len;i++){
 				tData=maxList[i];
-				if ((tData["highR"] > this.rightLimit)&&tData["highL"] > this.leftLimit){
+				if ((tData["highR"] > this.rightLimit)&& tData["highL"] > this.leftLimit){
 					maxs.push(i);
 				}
-				if ((tData["lowR"] > this.rightLimit)&&tData["lowL"] > this.leftLimit){
+				if ((tData["lowR"] > this.rightLimit)&& tData["lowL"] > this.leftLimit){
 					mins.push(i);
 				}
 			}
@@ -19584,8 +19522,8 @@ var Laya=window.Laya=(function(window,document){
 		__proto.getDrawCmds=function(){
 			var rst;
 			rst=[];
-			rst.push(["drawPointsLine",[ this.resultData["maxs"],"high",-20]]);
-			rst.push(["drawPointsLine",[ this.resultData["mins"],"low",20]]);
+			rst.push(["drawPointsLine",[this.resultData["maxs"],"high",-20]]);
+			rst.push(["drawPointsLine",[this.resultData["mins"],"low",20]]);
 			rst.push(["drawPoints",[this.resultData["underPoints"],"low",3,"#ffff00"]]);
 			rst.push(["drawTexts",[this.resultData["buys"],"low",30,"#00ff00",true,"#00ff00"]]);
 			return rst;
@@ -19593,7 +19531,8 @@ var Laya=window.Laya=(function(window,document){
 
 		__proto.getLastUnderLine=function(minCount){
 			(minCount===void 0)&& (minCount=3);
-			if (!this.resultData)return null;
+			if (!this.resultData)
+				return null;
 			var minUnders;
 			minUnders=this.resultData["minUnders"];
 			var i=0,len=0;
@@ -19626,6 +19565,40 @@ var Laya=window.Laya=(function(window,document){
 				}
 			}
 			return resultArr;
+		}
+
+		__proto.addToConfigTypes=function(types){
+			var tData;
+			var tAnalyserInfos;
+			tData={};
+			tData.label="kline";
+			tData.sortParams=["kLineO.lastDate",true,false];
+			tData.dataKey="kLineO";
+			tAnalyserInfos=[];
+			tAnalyserInfos.push(this.getParamsArr());
+			tData.analyserInfo=tAnalyserInfos;
+			tData.tip="股票:当前盈利:最高盈利\n7天最大盈利,15天最大盈利,30天最大盈利,45天最大盈利\n买入日期";
+			tData.tpl="{#code#}:{#changePercent#}%:{#highPercent#}%\n{#high7#}%,{#high15#}%,{#high30#}%,{#high45#}%\n{#lastDate#}";
+			types.push(tData);
+		}
+
+		__proto.addToShowData=function(showData){
+			var kLineO;
+			kLineO={};
+			showData.kLineO=kLineO;
+			kLineO.code=showData.code;
+			kLineO.lastDate="0";
+			var lastUnder;
+			lastUnder=this.getLastUnderLine(this.buyMinUnder);
+			if (!lastUnder)
+				return;
+			var lastStock;
+			lastStock=this.getDataByI(lastUnder[2]);
+			if (lastStock){
+				kLineO.lastDate=lastStock["date"];
+				kLineO.data=lastStock;
+				StockTools.getBuyStaticInfos(lastUnder[2],this.disDataList,kLineO);
+			}
 		}
 
 		return KLineAnalyser;
@@ -19798,7 +19771,7 @@ var Laya=window.Laya=(function(window,document){
 				if (tLose > tLimitLose)continue ;
 				if (tLose < tLimitLoseMax)continue ;
 				if (tExp > expList[i-1][1]&&ArrayMethods.isHighThenBefore(expList,i-1,5)){
-					rst.push(["buy:",expList[i][0]])
+					rst.push(["buy:"+StockTools.getGoodPercent(tExp/this.barHeight)+"\n"+this.disDataList[expList[i][0]]["date"],expList[i][0]])
 				}
 			}
 			return rst;
@@ -19848,6 +19821,63 @@ var Laya=window.Laya=(function(window,document){
 			}
 			rst.push(["drawGridLineEx",this.resultData["gridLine"]]);
 			return rst;
+		}
+
+		__proto.addToConfigTypes=function(types){
+			var tData;
+			var tAnalyserInfos;
+			var sign;
+			sign="exp"+this.dayCount;
+			tData={};
+			tData.label="exp"+this.dayCount;
+			tData.sortParams=[sign+".exp",true,true];
+			tData.dataKey=sign;
+			tData.tpl="{#code#}:exp:{#exp#}\nwin:{#win#}\nlose{#lose#}";
+			tAnalyserInfos=[];
+			tAnalyserInfos.push(this.getParamsArr());
+			tData.analyserInfo=tAnalyserInfos;
+			tData.tip="n天期望模型";
+			types.push(tData);
+			tData={};
+			tData.label="win"+this.dayCount;
+			tData.sortParams=[sign+".win",true,true];
+			tData.dataKey=sign;
+			tData.tpl="{#code#}:exp:{#exp#}\nwin:{#win#}\nlose{#lose#}";
+			tAnalyserInfos=[];
+			tAnalyserInfos.push(this.getParamsArr());
+			tData.analyserInfo=tAnalyserInfos;
+			tData.tip="n天期望模型";
+			types.push(tData);
+			tData={};
+			tData.label="expBuy"+this.dayCount;
+			tData.sortParams=[sign+".lastExpBuy",true,false];
+			tData.dataKey=sign;
+			tData.tpl="{#code#}:exp:{#exp#}\nwin:{#win#}\nlose{#lose#}\nbuy:{#lastExpBuy#}";
+			tAnalyserInfos=[];
+			tAnalyserInfos.push(this.getParamsArr());
+			tData.analyserInfo=tAnalyserInfos;
+			tData.tip="n天期望模型";
+			types.push(tData);
+		}
+
+		__proto.addToShowData=function(showData){
+			var sign;
+			sign="exp"+this.dayCount;
+			var winLose;
+			winLose=DataUtils.getWinLoseInfo(this.disDataList,this.dayCount,this.disDataList.length-1);
+			var posBuy;
+			posBuy=this.getWinLoseData(this.dayCount,this.disDataList);
+			var expO={};
+			showData[sign]=expO;
+			expO.code=showData.code;
+			expO.lose=StockTools.getGoodPercent(winLose[0]);
+			expO.win=StockTools.getGoodPercent(winLose[1]);
+			expO.exp=StockTools.getGoodPercent(winLose[2]);
+			if (posBuy && posBuy["buyList"]&&posBuy["buyList"][0]){
+				var lastBuyI=0;
+				lastBuyI=posBuy["buyList"].pop()[1];
+				expO.lastExpBuy=this.disDataList[lastBuyI]["date"];
+			}
 		}
 
 		return PositionLine;
@@ -35030,6 +35060,7 @@ var Laya=window.Laya=(function(window,document){
 			this.tInput.skin="comp/textinput.png";
 			this.tInput.pos(70,0);
 			this.tInput.width=100;
+			this.tInput.color="#ffffff";
 			this.addChild(this.label);
 			this.addChild(this.tInput);
 		}
@@ -36341,7 +36372,7 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		__static(PropPanelUI,
-		['uiView',function(){return this.uiView={"type":"View","props":{"width":230,"height":400},"child":[{"type":"Label","props":{"y":18,"x":18,"width":80,"var":"title","text":"属性设置","height":20,"color":"#e72b28"}},{"type":"Button","props":{"y":13,"x":100,"var":"okBtn","skin":"comp/button.png","label":"应用设置"}},{"type":"Box","props":{"y":45,"x":13,"width":190,"var":"propBox","height":237}}]};}
+		['uiView',function(){return this.uiView={"type":"View","props":{"width":230,"height":400},"child":[{"type":"Label","props":{"y":18,"x":18,"width":80,"var":"title","text":"属性设置","height":20,"color":"#e72b28"}},{"type":"Button","props":{"y":13,"x":100,"var":"okBtn","skin":"comp/button.png","label":"应用设置","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Box","props":{"y":45,"x":13,"width":190,"var":"propBox","height":237}}]};}
 		]);
 		return PropPanelUI;
 	})(View)
@@ -36374,7 +36405,7 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		__static(KLineViewUI,
-		['uiView',function(){return this.uiView={"type":"View","props":{"width":600,"height":400},"child":[{"type":"ComboBox","props":{"y":9,"x":8,"var":"stockSelect","skin":"comp/combobox.png","scrollBarSkin":"comp/vscroll.png","labels":"000233,600322"}},{"type":"Button","props":{"y":9,"x":114,"var":"playBtn","skin":"comp/button.png","label":"play"}},{"type":"Label","props":{"y":13,"x":225,"width":147,"var":"infoTxt","text":"label","height":20,"color":"#5be330"}},{"type":"TextInput","props":{"y":43,"x":8,"width":90,"var":"stockInput","text":"002234","skin":"comp/textinput.png","height":22}},{"type":"Button","props":{"y":42,"x":114,"var":"playInputBtn","skin":"comp/button.png","label":"play"}},{"type":"CheckBox","props":{"y":45,"x":226,"var":"enableAnimation","skin":"comp/checkbox.png","selected":true,"label":"开启动画"}},{"type":"Button","props":{"y":39,"x":301,"var":"detailBtn","skin":"comp/button.png","label":"详情"}},{"type":"Button","props":{"y":80,"x":11,"var":"preBtn","skin":"comp/button.png","label":"pre"}},{"type":"Button","props":{"y":80,"x":100,"var":"nextBtn","skin":"comp/button.png","label":"next"}},{"type":"AnalyserList","props":{"var":"analyserList","top":10,"runtime":"view.plugins.AnalyserList","right":10}},{"type":"PropPanel","props":{"y":0,"var":"propPanel","runtime":"stock.prop.PropPanel","right":180}}]};}
+		['uiView',function(){return this.uiView={"type":"View","props":{"width":600,"height":400},"child":[{"type":"ComboBox","props":{"y":9,"x":8,"var":"stockSelect","skin":"comp/combobox.png","scrollBarSkin":"comp/vscroll.png","labels":"000233,600322","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":9,"x":114,"var":"playBtn","skin":"comp/button.png","label":"play","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Label","props":{"y":13,"x":225,"width":147,"var":"infoTxt","text":"label","height":20,"color":"#ffffff"}},{"type":"TextInput","props":{"y":43,"x":8,"width":90,"var":"stockInput","text":"002234","skin":"comp/textinput.png","height":22,"color":"#f1dede"}},{"type":"Button","props":{"y":42,"x":114,"var":"playInputBtn","skin":"comp/button.png","label":"play","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"CheckBox","props":{"y":45,"x":226,"var":"enableAnimation","skin":"comp/checkbox.png","selected":true,"label":"开启动画","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":39,"x":301,"var":"detailBtn","skin":"comp/button.png","label":"详情","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":80,"x":11,"var":"preBtn","skin":"comp/button.png","label":"pre","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":80,"x":100,"var":"nextBtn","skin":"comp/button.png","label":"next","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"AnalyserList","props":{"var":"analyserList","top":10,"runtime":"view.plugins.AnalyserList","right":10}},{"type":"PropPanel","props":{"y":0,"var":"propPanel","runtime":"stock.prop.PropPanel","right":180}}]};}
 		]);
 		return KLineViewUI;
 	})(View)
@@ -36401,7 +36432,7 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		__static(MainViewUI,
-		['uiView',function(){return this.uiView={"type":"View","props":{"width":445,"height":400},"child":[{"type":"Tab","props":{"y":4,"x":4,"var":"typeSelect","skin":"comp/tab.png","selectedIndex":0,"labels":"股票列表,K线动画,选股"}},{"type":"StockView","props":{"var":"stockListView","top":40,"runtime":"view.StockView","right":10,"left":10,"bottom":10}},{"type":"KLineView","props":{"var":"kLineView","top":40,"runtime":"view.KLineView","right":10,"left":10,"bottom":10}},{"type":"SelectStockView","props":{"var":"selectView","top":40,"runtime":"view.SelectStockView","right":10,"left":10,"bottom":10}}]};}
+		['uiView',function(){return this.uiView={"type":"View","props":{"width":445,"height":400},"child":[{"type":"Tab","props":{"y":4,"x":4,"var":"typeSelect","skin":"comp/tab.png","selectedIndex":0,"labels":"股票列表,K线动画,选股","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"StockView","props":{"var":"stockListView","top":40,"runtime":"view.StockView","right":10,"left":10,"bottom":10}},{"type":"KLineView","props":{"var":"kLineView","top":40,"runtime":"view.KLineView","right":10,"left":10,"bottom":10}},{"type":"SelectStockView","props":{"var":"selectView","top":40,"runtime":"view.SelectStockView","right":10,"left":10,"bottom":10}}]};}
 		]);
 		return MainViewUI;
 	})(View)
@@ -36422,7 +36453,7 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		__static(AnalyserListUI,
-		['uiView',function(){return this.uiView={"type":"View","props":{},"child":[{"type":"List","props":{"y":0,"x":2,"width":160,"var":"list","vScrollBarSkin":"comp/vscroll.png","height":193},"child":[{"type":"Box","props":{"y":0,"x":0,"width":148,"renderType":"render","height":17},"child":[{"type":"Label","props":{"width":80,"text":"limittxt","name":"nameTxt","height":17,"color":"#e0211d"}},{"type":"CheckBox","props":{"x":92,"skin":"comp/checkbox.png","name":"ifShow","label":"启用"}}]}]}]};}
+		['uiView',function(){return this.uiView={"type":"View","props":{},"child":[{"type":"List","props":{"y":0,"x":2,"width":160,"var":"list","vScrollBarSkin":"comp/vscroll.png","height":193},"child":[{"type":"Box","props":{"y":0,"x":0,"width":148,"renderType":"render","height":17},"child":[{"type":"Label","props":{"width":80,"text":"limittxt","name":"nameTxt","height":17,"color":"#e0211d"}},{"type":"CheckBox","props":{"x":92,"skin":"comp/checkbox.png","name":"ifShow","label":"启用","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}}]}]}]};}
 		]);
 		return AnalyserListUI;
 	})(View)
@@ -36445,7 +36476,7 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		__static(SelectStockViewUI,
-		['uiView',function(){return this.uiView={"type":"View","props":{"width":445,"height":400},"child":[{"type":"List","props":{"var":"list","vScrollBarSkin":"comp/vscroll.png","top":30,"right":10,"left":10,"bottom":10},"child":[{"type":"Box","props":{"y":0,"x":0,"width":168,"name":"render","height":61},"child":[{"type":"Label","props":{"wordWrap":true,"top":0,"text":"this is a list","skin":"comp/label.png","right":0,"name":"label","left":0,"fontSize":14,"color":"#83e726","bottom":0}}]}]},{"type":"Label","props":{"y":-41,"width":271,"var":"tip","text":"股票代码:当前盈利:最高盈利","right":40,"height":42,"color":"#f33713"}},{"type":"ComboBox","props":{"y":3,"var":"typeSelect","skin":"comp/combobox.png","selectedIndex":0,"right":20,"labels":"KLine,Position"}}]};}
+		['uiView',function(){return this.uiView={"type":"View","props":{"width":445,"height":400},"child":[{"type":"List","props":{"var":"list","vScrollBarSkin":"comp/vscroll.png","top":30,"right":10,"left":10,"bottom":10},"child":[{"type":"Box","props":{"y":0,"x":0,"width":168,"name":"render","height":61},"child":[{"type":"Label","props":{"wordWrap":true,"top":0,"text":"this is a list","skin":"comp/label.png","right":0,"name":"label","left":0,"fontSize":14,"color":"#efe82f","bottom":0,"borderColor":"#fb125d"}}]}]},{"type":"Label","props":{"y":-41,"width":271,"var":"tip","text":"股票代码:当前盈利:最高盈利","right":40,"height":42,"color":"#f33713"}},{"type":"ComboBox","props":{"y":3,"visibleNum":15,"var":"typeSelect","skin":"comp/combobox.png","selectedIndex":0,"scrollBarSkin":"comp/vscroll.png","right":20,"labels":"KLine,Position","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}}]};}
 		]);
 		return SelectStockViewUI;
 	})(View)
@@ -38258,7 +38289,7 @@ var Laya=window.Laya=(function(window,document){
 3 file:///D:/stocksite.git/trunk/StockCmd/src/nodetools/devices/FileTools.as (82):warning:Browser.window.location.href This variable is not defined.
 4 file:///D:/stocksite.git/trunk/StockCmd/src/nodetools/devices/FileTools.as (82):warning:Browser.window.location.href This variable is not defined.
 5 file:///D:/stocksite.git/trunk/StockCmd/src/nodetools/devices/FileTools.as (642):warning:Alert.show This variable is not defined.
-6 file:///D:/stocksite.git/trunk/StockCmd/src/StockCmdTool.as (39):warning:scriptPath This variable is not defined.
+6 file:///D:/stocksite.git/trunk/StockCmd/src/StockCmdTool.as (41):warning:scriptPath This variable is not defined.
 7 file:///D:/stocksite.git/trunk/StockView/src/laya/math/ArrayMethods.as (55):warning:tv This variable is not defined.
 8 file:///E:/wangwei/codes/laya/libs/LayaAir/core/src/laya/display/Stage.as (240):warning:_adjustTransform This variable is not defined.
 9 file:///D:/stocksite.git/trunk/StockView/src/stock/views/KLine.as (371):warning:tTxt This variable is not defined.
