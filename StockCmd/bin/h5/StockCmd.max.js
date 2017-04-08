@@ -1335,6 +1335,7 @@ var Laya=window.Laya=(function(window,document){
 			this.moData=null;
 			this.analyser=null;
 			this.posAnalyser=null;
+			this.posAnalyser300=null;
 			this.init();
 			this.parseCMD(NodeJSTools.getArgv());
 			DTrace.timeStart("StockCmdTool");
@@ -1394,9 +1395,9 @@ var Laya=window.Laya=(function(window,document){
 			tData.tpl="{#code#}:{#changePercent#}%:{#highPercent#}%\n{#high7#}%,{#high15#}%,{#high30#}%,{#high45#}%\n{#lastDate#}";
 			types.push(tData);
 			this.posAnalyser=new PositionLine();
-			this.posAnalyser.dayCount=130;
+			this.posAnalyser.dayCount="130";
 			tData={};
-			tData.label="exp";
+			tData.label="exp130";
 			tData.sortParams=["expO.exp",true,true];
 			tData.dataKey="expO";
 			tData.tpl="{#code#}:exp:{#exp#}\nwin:{#win#}\nlose{#lose#}";
@@ -1406,7 +1407,7 @@ var Laya=window.Laya=(function(window,document){
 			tData.tip="n天期望模型";
 			types.push(tData);
 			tData={};
-			tData.label="win";
+			tData.label="win130";
 			tData.sortParams=["expO.win",true,true];
 			tData.dataKey="expO";
 			tData.tpl="{#code#}:exp:{#exp#}\nwin:{#win#}\nlose{#lose#}";
@@ -1416,12 +1417,24 @@ var Laya=window.Laya=(function(window,document){
 			tData.tip="n天期望模型";
 			types.push(tData);
 			tData={};
-			tData.label="expBuy";
+			tData.label="expBuy130";
 			tData.sortParams=["expO.lastExpBuy",true,false];
 			tData.dataKey="expO";
 			tData.tpl="{#code#}:exp:{#exp#}\nwin:{#win#}\nlose{#lose#}\nbuy:{#lastExpBuy#}";
 			tAnalyserInfos=[];
 			tAnalyserInfos.push(this.posAnalyser.getParamsArr());
+			tData.analyserInfo=tAnalyserInfos;
+			tData.tip="n天期望模型";
+			types.push(tData);
+			this.posAnalyser300=new PositionLine();
+			this.posAnalyser300.dayCount="300";
+			tData={};
+			tData.label="exp300";
+			tData.sortParams=["exp300.exp",true,true];
+			tData.dataKey="exp300";
+			tData.tpl="{#code#}:exp:{#exp#}\nwin:{#win#}\nlose{#lose#}";
+			tAnalyserInfos=[];
+			tAnalyserInfos.push(this.posAnalyser300.getParamsArr());
 			tData.analyserInfo=tAnalyserInfos;
 			tData.tip="n天期望模型";
 			types.push(tData);
@@ -1470,7 +1483,14 @@ var Laya=window.Laya=(function(window,document){
 				var lastBuyI=0;
 				lastBuyI=posBuy["buyList"].pop()[1];
 				expO.lastExpBuy=this.analyser.disDataList[lastBuyI]["date"];
-			}
+			};
+			var exp300={};
+			tData.exp300=exp300;
+			exp300.code=tData.code;
+			winLose=DataUtils.getWinLoseInfo(this.analyser.disDataList,this.posAnalyser300.dayCount,this.analyser.disDataList.length-1);
+			exp300.lose=StockTools.getGoodPercent(winLose[0]);
+			exp300.win=StockTools.getGoodPercent(winLose[1]);
+			exp300.exp=StockTools.getGoodPercent(winLose[2]);
 			rst.push(tData);
 			var lastUnder;
 			lastUnder=this.analyser.getLastUnderLine(RunConfig.minUnderDay);
@@ -15193,6 +15213,7 @@ var Laya=window.Laya=(function(window,document){
 
 		DataUtils.getWinLoseInfo=function(dataList,dayCount,index,priceType){
 			(priceType===void 0)&& (priceType="close");
+			dayCount=ValueTools.mParseFloat(dayCount);
 			if (dataList.length <=index)return null;
 			var datas;
 			datas=DataUtils.getMinMaxInfo(dataList,dayCount,index,priceType);
