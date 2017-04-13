@@ -97,6 +97,9 @@ package {
 			
 			var posAnalyser60:PositionLine = new PositionLine();
 			posAnalyser60.dayCount = "60";
+			posAnalyser60.minBuyExp = 0.2;
+			posAnalyser60.minBuyLose = -0.02;
+			posAnalyser60.maxBuyLose = -0.1;
 			analysers.push(posAnalyser60);
 			
 			var posAnalyser30:PositionLine = new PositionLine();
@@ -147,6 +150,7 @@ package {
 			var stockData:StockData;
 			stockData = new StockData();
 			stockData.init(data);
+			if (stockData.dataList.length < 2) return;
 			
 			var tData:Object;
 			tData = {};
