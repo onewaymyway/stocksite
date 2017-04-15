@@ -35792,6 +35792,8 @@ var Laya=window.Laya=(function(window,document){
 			this.kLine=null;
 			this.tAnalyser=null;
 			this.preMouseX=NaN;
+			this.isLongPress=false;
+			this.tDayD=0;
 			this.isFirstStockComing=true;
 			this._preStock=null;
 			KLineView.__super.call(this);
@@ -35832,9 +35834,33 @@ var Laya=window.Laya=(function(window,document){
 		var __proto=KLineView.prototype;
 		__proto.onMMouseDown=function(){
 			this.preMouseX=Laya.stage.mouseX;
+			this.isLongPress=false;
+			Laya.timer.once(800,this,this.longDown);
+		}
+
+		__proto.longDown=function(){
+			if (!this.maxDayEnable.selected)return;
+			this.isLongPress=true;
+			var dX=NaN;
+			dX=Laya.stage.mouseX-this.preMouseX;
+			var tD=0;
+			if (dX > 80){
+				this.tDayD=1;
+			}
+			else if (dX <-80){
+				this.tDayD=-1;
+			}
+			Laya.timer.frameLoop(2,this,this.loopChangeDay);
+		}
+
+		__proto.loopChangeDay=function(){
+			this.dayScroll.value=this.dayScroll.value+this.tDayD;
 		}
 
 		__proto.onMMouseUp=function(){
+			Laya.timer.clear(this,this.longDown);
+			Laya.timer.clear(this,this.loopChangeDay);
+			if (this.isLongPress)return;
 			var dX=NaN;
 			dX=Laya.stage.mouseX-this.preMouseX;
 			if (dX > 100){
