@@ -9,6 +9,7 @@ package stock.views
 	import laya.stock.analysers.KLineAnalyser;
 	import laya.stock.StockTools;
 	import laya.utils.Handler;
+	import msgs.MsgConst;
 	import stock.StockData;
 	/**
 	 * ...
@@ -31,6 +32,7 @@ package stock.views
 		public var tStock:String;
 		public var stockUrl:String;
 		public var gridWidth:int = 3;
+		public var start:int = 0;
 		public function setStock(stock:String):void
 		{
 			Laya.timer.clear(this, timeEffect);
@@ -79,7 +81,8 @@ package stock.views
 			dataList = stockData.dataList;
 			//drawdata();
 			this.cacheAsBitmap = false;
-			drawdata();
+			event(MsgConst.Stock_Data_Inited);
+			drawdata(this.start);
 			tLen = 10;
 			
 			if (autoPlay)
@@ -106,9 +109,7 @@ package stock.views
 				Laya.timer.clear(this, timeEffect);
 				this.cacheAsBitmap = true;
 				return;
-			}
-			var start:int = 0;
-			
+			}		
 			drawdata(start, tLen);
 		}
 		public var lineHeight:Number = 400;
@@ -130,13 +131,8 @@ package stock.views
 			//debugger;
 			if (maxShowCount > 0)
 			{
-				if (end < start) end = dataList.length - 1;
-				var tLen:int;
-				tLen = end;
-				if (tLen > maxShowCount)
-				{
-					start = tLen - maxShowCount;
-				}
+				end = start + maxShowCount;
+				if (end > dataList.length - 1) end = dataList.length - 1;
 			}
 			analysersDoAnalyse(start,end);
 			//trace(analyser);

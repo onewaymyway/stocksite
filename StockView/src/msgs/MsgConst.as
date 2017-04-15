@@ -22,6 +22,8 @@ package msgs
 		
 		public static const Set_Analyser_Prop:String = "Set_Analyser_Prop";
 		public static const Fresh_Analyser_Prop:String = "Fresh_Analyser_Prop";
+		
+		public static const Stock_Data_Inited:String = "DataInited";
 	}
 
 }

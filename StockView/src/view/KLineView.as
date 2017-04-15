@@ -3,6 +3,7 @@ package view
 	import laya.debug.tools.Notice;
 	import laya.events.Event;
 	import laya.math.DataUtils;
+	import laya.math.ValueTools;
 	import laya.stock.analysers.AnalyserBase;
 	import laya.stock.analysers.bars.VolumeBar;
 	import laya.stock.analysers.BottomAnalyser;
@@ -30,6 +31,9 @@ package view
 		public function KLineView() 
 		{
 			kLine = new KLine();
+			kLine.on(MsgConst.Stock_Data_Inited, this, onStockInited);
+			dayScroll.on(Event.CHANGE, this, onDayScrollChange);
+			maxDayEnable.on(Event.CHANGE, this, onPlayInput);
 			kLine.analysers = [];
 			var analyserClassList:Array;
 			analyserClassList = [];
@@ -100,10 +104,34 @@ package view
 			kLine.analysers = analysers;
 			refreshKLine();
 		}
+		private var isFirstStockComing:Boolean = true;
+		private var _preStock:String;
 		public function showStockKline(stock:String):void
 		{
+			isFirstStockComing = true;
 			stockInput.text = stock;
 			onPlayInput();
+		}
+		
+		public function getDayCount():int
+		{
+			return ValueTools.mParseFloat(dayCountInput.text);
+		}
+		private function onStockInited():void
+		{
+			if (kLine.tStock == _preStock) return;
+			_preStock = kLine.tStock;
+			var max:Number;
+			var dayCount:int;
+			dayCount = getDayCount();
+			max = kLine.dataList.length - dayCount;
+			if (max < 0) max = 0;
+		
+			dayScroll.setScroll(0, max, max);
+			if (maxDayEnable)
+			{
+				kLine.start = Math.floor(dayScroll.value);
+			}
 		}
 		private function onKlineMsg(msg:String):void
 		{
@@ -128,6 +156,13 @@ package view
 			detailBtn.on(Event.MOUSE_DOWN, this, onDetail);
 			preBtn.on(Event.MOUSE_DOWN, this, onPre);
 			nextBtn.on(Event.MOUSE_DOWN, this, onNext);
+		}
+		private function onDayScrollChange():void
+		{
+			if (maxDayEnable)
+			{
+				onPlayInput();
+			}
 		}
 		override protected function changeSize():void 
 		{
@@ -158,6 +193,14 @@ package view
 		public function showKline(stock:String):void
 		{
 			kLine.autoPlay = enableAnimation.selected;
+			if (maxDayEnable.selected)
+			{
+				kLine.maxShowCount = ValueTools.mParseFloat(dayCountInput.text);
+				kLine.start = Math.floor(dayScroll.value);
+			}else
+			{
+				kLine.maxShowCount = -1;
+			}
 			kLine.setStock(stock);
 		}
 		private function onPre():void
