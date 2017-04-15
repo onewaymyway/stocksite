@@ -35885,8 +35885,10 @@ var Laya=window.Laya=(function(window,document){
 			max=this.kLine.dataList.length-dayCount;
 			if (max < 0)max=0;
 			this.dayScroll.setScroll(0,max,max);
-			if (this.maxDayEnable){
+			if (this.maxDayEnable.selected){
 				this.kLine.start=Math.floor(this.dayScroll.value);
+				}else{
+				this.kLine.start=0;
 			}
 		}
 
@@ -35947,6 +35949,7 @@ var Laya=window.Laya=(function(window,document){
 				this.kLine.start=Math.floor(this.dayScroll.value);
 				}else{
 				this.kLine.maxShowCount=-1;
+				this.kLine.start=0;
 			}
 			this.kLine.setStock(stock);
 		}
