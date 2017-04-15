@@ -13,7 +13,7 @@ package laya.stock.analysers {
 			
 		
 		}
-		public var rightMin:int = 5;
+		public var rightMin:int = 15;
 		public var leftMin:int = 15;
 		override public function initParamKeys():void 
 		{

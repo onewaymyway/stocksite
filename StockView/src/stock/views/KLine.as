@@ -7,6 +7,7 @@ package stock.views
 	import laya.net.Loader;
 	import laya.stock.analysers.AnalyserBase;
 	import laya.stock.analysers.KLineAnalyser;
+	import laya.stock.StockTools;
 	import laya.utils.Handler;
 	import stock.StockData;
 	/**
@@ -38,6 +39,7 @@ package stock.views
 			tStock = stock;
 			stockUrl = "https://onewaymyway.github.io/stockdata/stockdatas/" + stock + ".csv";
 			//stockUrl = "res/stockdata/" + stock + ".csv";
+			stockUrl = StockTools.getStockCsvPath(stock);
 			Laya.loader.load(stockUrl, Handler.create(this, dataLoaded), null, Loader.TEXT);
 		}
 		private function dataErr():void
@@ -106,13 +108,7 @@ package stock.views
 				return;
 			}
 			var start:int = 0;
-			if (maxShowCount > 0)
-			{
-				if (tLen > maxShowCount)
-				{
-					start = tLen - maxShowCount;
-				}
-			}
+			
 			drawdata(start, tLen);
 		}
 		public var lineHeight:Number = 400;
@@ -131,7 +127,17 @@ package stock.views
 		}
 		public function drawdata(start:int=0, end:int=-1 ):void
 		{
-			
+			//debugger;
+			if (maxShowCount > 0)
+			{
+				if (end < start) end = dataList.length - 1;
+				var tLen:int;
+				tLen = end;
+				if (tLen > maxShowCount)
+				{
+					start = tLen - maxShowCount;
+				}
+			}
 			analysersDoAnalyse(start,end);
 			//trace(analyser);
 			this.graphics.clear();
@@ -254,11 +260,11 @@ package stock.views
 
 			//var tData:Object;
 			//tData=dataList[i];
-			this.graphics.fillText(text, getAdptXV(i * gridWidth), getAdptYV(dataList[i][sign]) + dY, null, color, "center");
+			this.graphics.fillText(text, getAdptXV(i * gridWidth), getAdptYV(disDataList[i][sign]) + dY, null, color, "center");
 			if (withLine)
 			{
 				if (!lineColor) lineColor = color;
-				this.graphics.drawLine(getAdptXV(i * gridWidth), getAdptYV(dataList[i][sign]) + dY, getAdptXV(i * gridWidth), getAdptYV(dataList[i][sign]) , lineColor);
+				this.graphics.drawLine(getAdptXV(i * gridWidth), getAdptYV(disDataList[i][sign]) + dY, getAdptXV(i * gridWidth), getAdptYV(disDataList[i][sign]) , lineColor);
 			}
 		}
 		public function drawPointsLine(iList:Array, sign:String="high",dY:Number=-20):void
@@ -284,6 +290,47 @@ package stock.views
 				drawLine(iList[i - 1], preData[sign], iList[i], tData[sign], "#ff0000");
 			}
 		}
+		
+		public static var SignDrawDes:Object = 
+		{
+			"high":
+				{
+					color:"#ffff00",
+					dy:-30
+				},
+			"low":
+				{
+					color:"#00ff00",
+					dy:30
+				}	
+		};
+		public function drawPointsLineEx(iList:Array, lineWidth:Number=2):void
+		{
+			var dataList:Array;
+			dataList = disDataList;
+			var tI:int;
+			var i:int, len:int;
+			var preData:Object;
+			var tData:Object;
+			len = iList.length;
+			var tArr:Array;
+			var tSign:String;
+			for (i = 0; i < len; i++)
+			{
+				tArr=iList[i];
+				tI = tArr[0];
+				tData = dataList[tI];
+				tSign = tArr[1];
+				drawPoint(tI, tData[tSign], tData[tSign], SignDrawDes[tSign]["dy"],SignDrawDes[tSign]["color"],3);
+			}
+			for (i = 1; i < len; i++)
+			{
+				preData = dataList[iList[i - 1][0]];
+				tData = dataList[iList[i][0]];
+				drawLine(iList[i - 1][0], preData[iList[i - 1][1]], iList[i][0], tData[iList[i][1]], "#ff00ff",2);
+			}
+		}
+		
 		public function drawBars(barList:Array, yZero:Number = 0 , color:String = "#ffff00"):void
 		{
 			var i:int, len:int;
@@ -343,11 +390,11 @@ package stock.views
 			this.graphics.drawCircle(getAdptXV(i * gridWidth), getAdptYV(y), r, color) ;
 		}
 		
-		public function drawPoint(i:int, y:Number,text:String,dy:Number=10,color:String="#ffff00"):void
+		public function drawPoint(i:int, y:Number,text:String,dy:Number=10,color:String="#ffff00",radio:Number=2):void
 		{
 			var xPos:Number;
 			xPos = getAdptXV(i * gridWidth);
-			this.graphics.drawCircle(xPos, getAdptYV(y), 2, color);
+			this.graphics.drawCircle(xPos, getAdptYV(y), radio, color);
 			if (text)
 			{
 				this.graphics.fillText(text, xPos, getAdptYV(y) + dy, null, color, "center");
@@ -355,9 +402,9 @@ package stock.views
 			
 		}
 		
-		public function drawLine(startI:int, startY:Number, endI:int, endY:Number, color:String = "#ff0000"):void
+		public function drawLine(startI:int, startY:Number, endI:int, endY:Number, color:String = "#ff0000",lineWidth:Number=1):void
 		{
-			this.graphics.drawLine(getAdptXV(startI * gridWidth), getAdptYV(startY), getAdptXV(endI * gridWidth), getAdptYV(endY), color);
+			this.graphics.drawLine(getAdptXV(startI * gridWidth), getAdptYV(startY), getAdptXV(endI * gridWidth), getAdptYV(endY), color,lineWidth);
 		}
 		public function drawLineEx(startI:int, startY:Number, endI:int, endY:Number, color:String = "#ff0000"):void
 		{

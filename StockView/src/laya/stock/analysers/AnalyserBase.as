@@ -89,6 +89,20 @@ package laya.stock.analysers
 				}
 			}
 		}
+		
+		public function showIndexs():void
+		{
+			var i:int, len:int;
+			len = disDataList.length;
+			var indexs:Array;
+			indexs = [];
+			for (i = 0; i < len; i++)
+			{
+				indexs.push([i + "",i]);
+			}
+			resultData["indexs"] = indexs;
+		}
+		
 		public function analyser(stockData:StockData,start:int = 0, end:int = -1,forSelect:Boolean=false):void
 		{
 			this.forSelect = forSelect;

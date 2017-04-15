@@ -11,6 +11,13 @@ package laya.stock
 		{
 			
 		}
+		public static function getStockCsvPath(stock:String):String
+		{
+			var stockUrl:String;
+			stockUrl = "https://onewaymyway.github.io/stockdata/stockdatas/" + stock + ".csv";
+			//stockUrl = "res/stockdata/" + "002694" + ".csv";
+			return stockUrl;
+		}
 		
 		public static var highDays:Array = [7, 15, 30, 45, 60];
 		public static function getGoodPercent(v:Number):Number

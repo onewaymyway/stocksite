@@ -348,6 +348,36 @@ package laya.math
 			exp = winRate+2 * loseRate;
 			return [loseRate,winRate,exp]
 		}
+		
+		
+		public static const K_Top:String = "top";
+		public static const K_Bottom:String = "bottom";
+		public static const K_Unknow:String = "unknow";
+		public static function getKLineType(dataList:Array, i:int,highSign:String="high",lowSign:String="low"):String
+		{
+			var preData:Object;
+			preData = dataList[i - 1];
+			var tData:Object;
+			tData = dataList[i];
+			var nextData:Object;
+			nextData = dataList[i + 1];
+			if (!preData || !tData || !nextData) return K_Unknow;
+			
+			trace("getKlineType:");
+			trace(preData[lowSign], preData[highSign]);
+			trace(tData[lowSign], tData[highSign]);
+			trace(nextData[lowSign], nextData[highSign]);
+			
+			if (preData[highSign] < tData[highSign] && preData[lowSign] < tData[lowSign]&&nextData[highSign] < tData[highSign] && nextData[lowSign] < tData[lowSign])
+			{
+				return K_Top;
+			}
+			if (preData[highSign] > tData[highSign] && preData[lowSign] > tData[lowSign]&&nextData[highSign] > tData[highSign] && nextData[lowSign] > tData[lowSign])
+			{
+				return K_Bottom;
+			}
+			return K_Unknow;
+		}
 	}
 
 }

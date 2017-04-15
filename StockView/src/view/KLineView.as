@@ -7,6 +7,7 @@ package view
 	import laya.stock.analysers.bars.VolumeBar;
 	import laya.stock.analysers.BottomAnalyser;
 	import laya.stock.analysers.BreakAnalyser;
+	import laya.stock.analysers.ChanAnalyser;
 	import laya.stock.analysers.KLineAnalyser;
 	import laya.stock.analysers.lines.AverageLine;
 	import laya.stock.analysers.lines.PositionLine;
@@ -39,6 +40,7 @@ package view
 			analyserClassList.push(VolumeBar);
 			analyserClassList.push(WinRateLine);
 			analyserClassList.push(PositionLine);
+			analyserClassList.push(ChanAnalyser);
 			
 			analyserList.initAnalysers(analyserClassList);
 			addChild(kLine);
@@ -48,7 +50,7 @@ package view
 			//stock = "000725";
 			stock = "002064";
 			//stock = "600139";
-			
+			//kLine.maxShowCount = 180;
 			kLine.pos(0, kLine.lineHeight + 90);
 			kLine.on("msg", this, onKlineMsg);
 			init();
