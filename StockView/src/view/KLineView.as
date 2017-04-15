@@ -68,12 +68,36 @@ package view {
 		
 		}
 		private var preMouseX:Number;
-		
+		private var isLongPress:Boolean = false;
 		private function onMMouseDown():void {
 			preMouseX = Laya.stage.mouseX;
+			isLongPress = false;
+			Laya.timer.once(800, this, longDown);
 		}
-		
+		private function longDown():void
+		{
+			if (!maxDayEnable.selected) return;
+			isLongPress = true;
+			var dX:Number;
+			dX = Laya.stage.mouseX - preMouseX;
+			var tD:int;
+			if (dX > 80) {
+				tDayD = 1;
+			}
+			else if (dX < -80) {
+				tDayD = -1;
+			}
+			Laya.timer.frameLoop(2, this, loopChangeDay);
+		}
+		private var tDayD:int = 0;
+		private function loopChangeDay():void
+		{
+			dayScroll.value = dayScroll.value + tDayD;
+		}
 		private function onMMouseUp():void {
+			Laya.timer.clear(this, longDown);
+			Laya.timer.clear(this, loopChangeDay);
+			if (isLongPress) return;
 			var dX:Number;
 			dX = Laya.stage.mouseX - preMouseX;
 			if (dX > 100) {
