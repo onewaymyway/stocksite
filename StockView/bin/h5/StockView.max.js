@@ -768,10 +768,6 @@ var Laya=window.Laya=(function(window,document){
 			var nextData;
 			nextData=dataList[i+1];
 			if (!preData || !tData || !nextData)return "unknow";
-			console.log("getKlineType:");
-			console.log(preData[lowSign],preData[highSign]);
-			console.log(tData[lowSign],tData[highSign]);
-			console.log(nextData[lowSign],nextData[highSign]);
 			if (preData[highSign] < tData[highSign] && preData[lowSign] < tData[lowSign]&&nextData[highSign] < tData[highSign] && nextData[lowSign] < tData[lowSign]){
 				return "top";
 			}
