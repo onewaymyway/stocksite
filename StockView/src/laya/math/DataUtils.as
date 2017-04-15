@@ -363,10 +363,10 @@ package laya.math
 			nextData = dataList[i + 1];
 			if (!preData || !tData || !nextData) return K_Unknow;
 			
-			trace("getKlineType:");
-			trace(preData[lowSign], preData[highSign]);
-			trace(tData[lowSign], tData[highSign]);
-			trace(nextData[lowSign], nextData[highSign]);
+			//trace("getKlineType:");
+			//trace(preData[lowSign], preData[highSign]);
+			//trace(tData[lowSign], tData[highSign]);
+			//trace(nextData[lowSign], nextData[highSign]);
 			
 			if (preData[highSign] < tData[highSign] && preData[lowSign] < tData[lowSign]&&nextData[highSign] < tData[highSign] && nextData[lowSign] < tData[lowSign])
 			{
