@@ -758,6 +758,32 @@ var Laya=window.Laya=(function(window,document){
 			return [loseRate,winRate,exp]
 		}
 
+		DataUtils.getKLineType=function(dataList,i,highSign,lowSign){
+			(highSign===void 0)&& (highSign="high");
+			(lowSign===void 0)&& (lowSign="low");
+			var preData;
+			preData=dataList[i-1];
+			var tData;
+			tData=dataList[i];
+			var nextData;
+			nextData=dataList[i+1];
+			if (!preData || !tData || !nextData)return "unknow";
+			console.log("getKlineType:");
+			console.log(preData[lowSign],preData[highSign]);
+			console.log(tData[lowSign],tData[highSign]);
+			console.log(nextData[lowSign],nextData[highSign]);
+			if (preData[highSign] < tData[highSign] && preData[lowSign] < tData[lowSign]&&nextData[highSign] < tData[highSign] && nextData[lowSign] < tData[lowSign]){
+				return "top";
+			}
+			if (preData[highSign] > tData[highSign] && preData[lowSign] > tData[lowSign]&&nextData[highSign] > tData[highSign] && nextData[lowSign] > tData[lowSign]){
+				return "bottom";
+			}
+			return "unknow";
+		}
+
+		DataUtils.K_Top="top";
+		DataUtils.K_Bottom="bottom";
+		DataUtils.K_Unknow="unknow";
 		return DataUtils;
 	})()
 
@@ -955,6 +981,7 @@ var Laya=window.Laya=(function(window,document){
 			this.resultData=null;
 			this.paramkeys=null;
 			this.paramDes=[];
+			this.forSelect=false;
 			this.initParamKeys();
 			this.initParamDes();
 		}
@@ -1015,9 +1042,22 @@ var Laya=window.Laya=(function(window,document){
 			}
 		}
 
-		__proto.analyser=function(stockData,start,end){
+		__proto.showIndexs=function(){
+			var i=0,len=0;
+			len=this.disDataList.length;
+			var indexs;
+			indexs=[];
+			for (i=0;i < len;i++){
+				indexs.push([i+"",i]);
+			}
+			this.resultData["indexs"]=indexs;
+		}
+
+		__proto.analyser=function(stockData,start,end,forSelect){
 			(start===void 0)&& (start=0);
 			(end===void 0)&& (end=-1);
+			(forSelect===void 0)&& (forSelect=false);
+			this.forSelect=forSelect;
 			this.stockData=stockData;
 			this.dataList=stockData.dataList;
 			this.analyserData(start,end);
@@ -1051,6 +1091,209 @@ var Laya=window.Laya=(function(window,document){
 		__proto.addToConfigTypes=function(types){}
 		__proto.addToShowData=function(showData){}
 		return AnalyserBase;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class laya.stock.analysers.chan.ChanKBar
+	var ChanKBar=(function(){
+		function ChanKBar(){
+			this.topO=null;
+			this.bottomO=null;
+			this.state=null;
+		}
+
+		__class(ChanKBar,'laya.stock.analysers.chan.ChanKBar');
+		var __proto=ChanKBar.prototype;
+		__proto.init=function(kO){
+			this.topO=kO;
+			this.bottomO=kO;
+		}
+
+		__proto.merge=function(kO,type){
+			if (ChanKList.getIndex(kO.bottomO)==79){
+				debugger;
+			}
+			switch(type){
+				case "down":
+					ChanKBar.mergeK(this,this,kO,false,true);
+					break ;
+				case "up":
+					ChanKBar.mergeK(this,this,kO,true,false);
+					break ;
+				case "none":
+					ChanKBar.mergeK(this,this,kO,true,true);
+					break ;
+				}
+		}
+
+		__getset(0,__proto,'top',function(){
+			return this.topO["high"];
+		});
+
+		__getset(0,__proto,'bottom',function(){
+			return this.bottomO["low"];
+		});
+
+		ChanKBar.mergeK=function(result,kA,kB,maxTop,minBottom){
+			(maxTop===void 0)&& (maxTop=true);
+			(minBottom===void 0)&& (minBottom=true);
+			if (kA.top > kB.top && maxTop){
+				result.topO=kA.topO;
+				}else{
+				result.topO=kB.topO;
+			}
+			if (kA.bottom < kB.bottom && minBottom){
+				result.bottomO=kA.bottomO;
+				}else{
+				result.bottomO=kB.bottomO;
+			}
+		}
+
+		ChanKBar.createByKO=function(kO){
+			var rst;
+			rst=new ChanKBar();
+			rst.init(kO);
+			return rst;
+		}
+
+		ChanKBar.getRelativeType=function(chankBarA,chankBarB){
+			if (chankBarA.top > chankBarB.top){
+				if (chankBarA.bottom > chankBarB.bottom){
+					return "down";
+					}else{
+					return "cover";
+				}
+			}else
+			if (chankBarA.top==chankBarB.top){
+				if (chankBarA.bottom > chankBarB.bottom){
+					return "in";
+					}else{
+					return "cover";
+				}
+				}else{
+				if (chankBarA.bottom >=chankBarB.bottom){
+					return "in";
+					}else{
+					return "up";
+				}
+			}
+		}
+
+		ChanKBar.GoUp="up";
+		ChanKBar.GoDown="down";
+		ChanKBar.In="in";
+		ChanKBar.Cover="cover";
+		return ChanKBar;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class laya.stock.analysers.chan.ChanKList
+	var ChanKList=(function(){
+		function ChanKList(){
+			this.dataList=null;
+			this.kList=[];
+			this.tState="none";
+		}
+
+		__class(ChanKList,'laya.stock.analysers.chan.ChanKList');
+		var __proto=ChanKList.prototype;
+		__proto.setDataList=function(dataList){
+			this.dataList=dataList;
+			var i=0,len=0;
+			len=dataList.length;
+			var tData;
+			for (i=0;i < len;i++){
+				tData=dataList[i];
+				tData.cIndex=i;
+				this.addData(dataList[i]);
+			}
+		}
+
+		__proto.findTopBottoms=function(){
+			var i=0,len=0;
+			len=this.kList.length-1;
+			var changePoints;
+			changePoints=[];
+			var tType;
+			for (i=1;i < len;i++){
+				var tI=0;
+				tI=ChanKList.getIndex(this.kList[i].topO);
+				if (tI > 49 && tI < 52){
+					debugger;
+				}
+				tType=DataUtils.getKLineType(this.kList,i,"top","bottom");
+				if (tType !="unknow"){
+					changePoints.push([tType,this.kList[i]]);
+				}
+			}
+			return changePoints;
+		}
+
+		__proto.addData=function(dataO){
+			var tK;
+			tK=ChanKBar.createByKO(dataO);
+			this.tryAddK(tK);
+		}
+
+		__proto.tryAddK=function(tK){
+			if (this.kList.length < 1){
+				tK.state="none";
+				this.kList.push(tK);
+				}else{
+				this.addK(tK);
+			}
+		}
+
+		__proto.addK=function(newK){
+			var lastK;
+			lastK=this.kList[this.kList.length-1];
+			var tRelation;
+			tRelation=ChanKBar.getRelativeType(lastK,newK);
+			switch(tRelation){
+				case "down":
+					this.kList.push(newK);
+					this.tState="down";
+					newK.state=this.tState;
+					break ;
+				case "up":
+					this.kList.push(newK);
+					this.tState="up";
+					newK.state=this.tState;
+					break ;
+				case "in":
+					this.tryMerge(newK);
+					break ;
+				case "cover":
+					this.tryMerge(newK);
+					break ;
+				}
+		}
+
+		__proto.tryMerge=function(newK){
+			var lastK;
+			lastK=this.kList.pop();
+			lastK.merge(newK,this.tState);
+			this.tryAddK(lastK);
+		}
+
+		ChanKList.getIndex=function(dataO){
+			return dataO.cIndex;
+		}
+
+		ChanKList.GoUp="up";
+		ChanKList.GoDown="down";
+		ChanKList.None="none";
+		ChanKList.Top="top";
+		ChanKList.Bottom="bottom";
+		return ChanKList;
 	})()
 
 
@@ -1197,6 +1440,12 @@ var Laya=window.Laya=(function(window,document){
 	var StockTools=(function(){
 		function StockTools(){}
 		__class(StockTools,'laya.stock.StockTools');
+		StockTools.getStockCsvPath=function(stock){
+			var stockUrl;
+			stockUrl="https://onewaymyway.github.io/stockdata/stockdatas/"+stock+".csv";
+			return stockUrl;
+		}
+
 		StockTools.getGoodPercent=function(v){
 			return Math.floor(v *1000)/ 10;
 		}
@@ -14755,7 +15004,7 @@ var Laya=window.Laya=(function(window,document){
 	//class laya.stock.analysers.BottomAnalyser extends laya.stock.analysers.AnalyserBase
 	var BottomAnalyser=(function(_super){
 		function BottomAnalyser(){
-			this.rightMin=5;
+			this.rightMin=15;
 			this.leftMin=15;
 			BottomAnalyser.__super.call(this);
 		}
@@ -14935,6 +15184,105 @@ var Laya=window.Laya=(function(window,document){
 	*...
 	*@author ww
 	*/
+	//class laya.stock.analysers.ChanAnalyser extends laya.stock.analysers.AnalyserBase
+	var ChanAnalyser=(function(_super){
+		function ChanAnalyser(){
+			this.ifShowIndex=0;
+			this.showRaw=0;
+			ChanAnalyser.__super.call(this);
+		}
+
+		__class(ChanAnalyser,'laya.stock.analysers.ChanAnalyser',_super);
+		var __proto=ChanAnalyser.prototype;
+		__proto.initParamKeys=function(){
+			this.paramkeys=["ifShowIndex","showRaw"];
+		}
+
+		__proto.analyseWork=function(){
+			this.myCalculate();
+		}
+
+		__proto.getMegerLines=function(chanList){
+			var cPointList;
+			cPointList=chanList.kList;
+			var i=0,len=0;
+			len=cPointList.length;
+			var tops;
+			var bottoms;
+			tops=[];
+			bottoms=[];
+			var tDataO;
+			for (i=0;i < len;i++){
+				tDataO=cPointList[i];
+				tops.push(ChanKList.getIndex(tDataO.topO));
+				bottoms.push(ChanKList.getIndex(tDataO.bottomO));
+			}
+			this.resultData["tops"]=tops;
+			this.resultData["bottoms"]=bottoms;
+		}
+
+		__proto.myCalculate=function(){
+			if (this.ifShowIndex)
+				this.showIndexs();
+			var cPointList;
+			cPointList=[];
+			var chanList;
+			chanList=new ChanKList();
+			chanList.setDataList(this.disDataList);
+			if (this.showRaw){
+				this.getMegerLines(chanList);
+				return;
+			}
+			else {}
+			cPointList=chanList.findTopBottoms();
+			var i=0,len=0;
+			len=cPointList.length;
+			var tops;
+			var bottoms;
+			tops=[];
+			bottoms=[];
+			var tType;
+			var tArr;
+			var tDataO;
+			var points;
+			points=[];
+			for (i=0;i < len;i++){
+				tArr=cPointList[i];
+				tType=tArr[0];
+				tDataO=tArr[1];
+				if (tType !="unknow"){
+					if (tType=="top"){
+						tops.push(ChanKList.getIndex(tDataO.topO));
+						points.push([ChanKList.getIndex(tDataO.topO),"high"]);
+					}
+					if (tType=="bottom"){
+						bottoms.push(ChanKList.getIndex(tDataO.bottomO));
+						points.push([ChanKList.getIndex(tDataO.bottomO),"low"]);
+					}
+				}
+			}
+			this.resultData["tops"]=tops;
+			this.resultData["bottoms"]=bottoms;
+			this.resultData["points"]=points;
+		}
+
+		__proto.getDrawCmds=function(){
+			var rst;
+			rst=[];
+			rst.push(["drawPointsLineEx",[this.resultData["points"]]]);
+			if (this.ifShowIndex)
+				rst.push(["drawTexts",[this.resultData["indexs"],"low",30,"#00ff00",true,"#00ff00"]]);
+			return rst;
+		}
+
+		return ChanAnalyser;
+	})(AnalyserBase)
+
+
+	/**
+	*...
+	*@author ww
+	*/
 	//class laya.stock.analysers.KLineAnalyser extends laya.stock.analysers.AnalyserBase
 	var KLineAnalyser=(function(_super){
 		function KLineAnalyser(){
@@ -15094,7 +15442,6 @@ var Laya=window.Laya=(function(window,document){
 			kLineO.lastDate="0";
 			var lastUnder;
 			lastUnder=this.getLastUnderLine(this.buyMinUnder);
-			debugger;
 			if (!lastUnder)
 				return;
 			var lastStock;
@@ -15227,6 +15574,7 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		__proto.doAWork=function(){
+			if (this.forSelect)return;
 			var dataList;
 			dataList=this.disDataList;
 			var i=0,len=0;
@@ -15382,6 +15730,8 @@ var Laya=window.Laya=(function(window,document){
 				var lastBuyI=0;
 				lastBuyI=posBuy["buyList"].pop()[1];
 				expO.lastExpBuy=this.disDataList[lastBuyI]["date"];
+				}else{
+				expO.lastExpBuy="0";
 			}
 		}
 
@@ -15427,6 +15777,44 @@ var Laya=window.Laya=(function(window,document){
 
 		return UpList;
 	})(OrdedList)
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class stock.StockBasicInfo extends stock.CSVParser
+	var StockBasicInfo=(function(_super){
+		function StockBasicInfo(){
+			this.stockList=null;
+			this.stockCodeList=null;
+			this.stockDic={};
+			StockBasicInfo.__super.call(this);
+		}
+
+		__class(StockBasicInfo,'stock.StockBasicInfo',_super);
+		var __proto=StockBasicInfo.prototype;
+		__proto.init=function(csvStr){
+			_super.prototype.init.call(this,csvStr);
+			this.stockList=this.dataList;
+			var i=0,len=0;
+			len=this.stockList.length;
+			this.stockCodeList=[];
+			for (i=0;i < len;i++){
+				this.stockDic[this.stockList[i]["code"]]=this.stockList[i];
+				this.stockCodeList.push(this.stockList[i]["code"]);
+			}
+		}
+
+		__proto.getStockData=function(code){
+			return this.stockDic[code];
+		}
+
+		__static(StockBasicInfo,
+		['I',function(){return this.I=new StockBasicInfo();}
+		]);
+		return StockBasicInfo;
+	})(CSVParser)
 
 
 	/**
@@ -15855,44 +16243,6 @@ var Laya=window.Laya=(function(window,document){
 		Node.PROP_EMPTY={};
 		return Node;
 	})(EventDispatcher)
-
-
-	/**
-	*...
-	*@author ww
-	*/
-	//class stock.StockBasicInfo extends stock.CSVParser
-	var StockBasicInfo=(function(_super){
-		function StockBasicInfo(){
-			this.stockList=null;
-			this.stockCodeList=null;
-			this.stockDic={};
-			StockBasicInfo.__super.call(this);
-		}
-
-		__class(StockBasicInfo,'stock.StockBasicInfo',_super);
-		var __proto=StockBasicInfo.prototype;
-		__proto.init=function(csvStr){
-			_super.prototype.init.call(this,csvStr);
-			this.stockList=this.dataList;
-			var i=0,len=0;
-			len=this.stockList.length;
-			this.stockCodeList=[];
-			for (i=0;i < len;i++){
-				this.stockDic[this.stockList[i]["code"]]=this.stockList[i];
-				this.stockCodeList.push(this.stockList[i]["code"]);
-			}
-		}
-
-		__proto.getStockData=function(code){
-			return this.stockDic[code];
-		}
-
-		__static(StockBasicInfo,
-		['I',function(){return this.I=new StockBasicInfo();}
-		]);
-		return StockBasicInfo;
-	})(CSVParser)
 
 
 	/**
@@ -20945,6 +21295,7 @@ var Laya=window.Laya=(function(window,document){
 			this.showMsg("loadingData:"+stock);
 			this.tStock=stock;
 			this.stockUrl="https://onewaymyway.github.io/stockdata/stockdatas/"+stock+".csv";
+			this.stockUrl=StockTools.getStockCsvPath(stock);
 			Laya.loader.load(this.stockUrl,Handler.create(this,this.dataLoaded),null,"text");
 		}
 
@@ -20998,11 +21349,6 @@ var Laya=window.Laya=(function(window,document){
 				return;
 			};
 			var start=0;
-			if (this.maxShowCount > 0){
-				if (this.tLen > this.maxShowCount){
-					start=this.tLen-this.maxShowCount;
-				}
-			}
 			this.drawdata(start,this.tLen);
 		}
 
@@ -21021,6 +21367,14 @@ var Laya=window.Laya=(function(window,document){
 		__proto.drawdata=function(start,end){
 			(start===void 0)&& (start=0);
 			(end===void 0)&& (end=-1);
+			if (this.maxShowCount > 0){
+				if (end < start)end=this.dataList.length-1;
+				var tLen=0;
+				tLen=end;
+				if (tLen > this.maxShowCount){
+					start=tLen-this.maxShowCount;
+				}
+			}
 			this.analysersDoAnalyse(start,end);
 			this.graphics.clear();
 			if (end < start)end=this.dataList.length-1;
@@ -21133,10 +21487,10 @@ var Laya=window.Laya=(function(window,document){
 			(dY===void 0)&& (dY=0);
 			(color===void 0)&& (color="#ff0000");
 			(withLine===void 0)&& (withLine=false);
-			this.graphics.fillText(text,this.getAdptXV(i *this.gridWidth),this.getAdptYV(this.dataList[i][sign])+dY,null,color,"center");
+			this.graphics.fillText(text,this.getAdptXV(i *this.gridWidth),this.getAdptYV(this.disDataList[i][sign])+dY,null,color,"center");
 			if (withLine){
 				if (!lineColor)lineColor=color;
-				this.graphics.drawLine(this.getAdptXV(i *this.gridWidth),this.getAdptYV(this.dataList[i][sign])+dY,this.getAdptXV(i *this.gridWidth),this.getAdptYV(this.dataList[i][sign]),lineColor);
+				this.graphics.drawLine(this.getAdptXV(i *this.gridWidth),this.getAdptYV(this.disDataList[i][sign])+dY,this.getAdptXV(i *this.gridWidth),this.getAdptYV(this.disDataList[i][sign]),lineColor);
 			}
 		}
 
@@ -21159,6 +21513,31 @@ var Laya=window.Laya=(function(window,document){
 				preData=dataList[iList[i-1]];
 				tData=dataList[iList[i]];
 				this.drawLine(iList[i-1],preData[sign],iList[i],tData[sign],"#ff0000");
+			}
+		}
+
+		__proto.drawPointsLineEx=function(iList,lineWidth){
+			(lineWidth===void 0)&& (lineWidth=2);
+			var dataList;
+			dataList=this.disDataList;
+			var tI=0;
+			var i=0,len=0;
+			var preData;
+			var tData;
+			len=iList.length;
+			var tArr;
+			var tSign;
+			for (i=0;i < len;i++){
+				tArr=iList[i];
+				tI=tArr[0];
+				tData=dataList[tI];
+				tSign=tArr[1];
+				this.drawPoint(tI,tData[tSign],tData[tSign],KLine.SignDrawDes[tSign]["dy"],KLine.SignDrawDes[tSign]["color"],3);
+			}
+			for (i=1;i < len;i++){
+				preData=dataList[iList[i-1][0]];
+				tData=dataList[iList[i][0]];
+				this.drawLine(iList[i-1][0],preData[iList[i-1][1]],iList[i][0],tData[iList[i][1]],"#ff00ff",2);
 			}
 		}
 
@@ -21221,20 +21600,22 @@ var Laya=window.Laya=(function(window,document){
 			this.graphics.drawCircle(this.getAdptXV(i *this.gridWidth),this.getAdptYV(y),r,color);
 		}
 
-		__proto.drawPoint=function(i,y,text,dy,color){
+		__proto.drawPoint=function(i,y,text,dy,color,radio){
 			(dy===void 0)&& (dy=10);
 			(color===void 0)&& (color="#ffff00");
+			(radio===void 0)&& (radio=2);
 			var xPos=NaN;
 			xPos=this.getAdptXV(i *this.gridWidth);
-			this.graphics.drawCircle(xPos,this.getAdptYV(y),2,color);
+			this.graphics.drawCircle(xPos,this.getAdptYV(y),radio,color);
 			if (text){
 				this.graphics.fillText(text,xPos,this.getAdptYV(y)+dy,null,color,"center");
 			}
 		}
 
-		__proto.drawLine=function(startI,startY,endI,endY,color){
+		__proto.drawLine=function(startI,startY,endI,endY,color,lineWidth){
 			(color===void 0)&& (color="#ff0000");
-			this.graphics.drawLine(this.getAdptXV(startI *this.gridWidth),this.getAdptYV(startY),this.getAdptXV(endI *this.gridWidth),this.getAdptYV(endY),color);
+			(lineWidth===void 0)&& (lineWidth=1);
+			this.graphics.drawLine(this.getAdptXV(startI *this.gridWidth),this.getAdptYV(startY),this.getAdptXV(endI *this.gridWidth),this.getAdptYV(endY),color,lineWidth);
 		}
 
 		__proto.drawLineEx=function(startI,startY,endI,endY,color){
@@ -21296,6 +21677,19 @@ var Laya=window.Laya=(function(window,document){
 			return DataUtils.mParseFloat(v)*this.xRate;
 		}
 
+		__static(KLine,
+		['SignDrawDes',function(){return this.SignDrawDes={
+				"high":{
+					color:"#ffff00",
+					dy:-30
+				},
+				"low":{
+					color:"#00ff00",
+					dy:30
+				}
+		};}
+
+		]);
 		return KLine;
 	})(Sprite)
 
@@ -35412,6 +35806,7 @@ var Laya=window.Laya=(function(window,document){
 			analyserClassList.push(VolumeBar);
 			analyserClassList.push(WinRateLine);
 			analyserClassList.push(PositionLine);
+			analyserClassList.push(ChanAnalyser);
 			this.analyserList.initAnalysers(analyserClassList);
 			this.addChild(this.kLine);
 			var stock;
@@ -36144,26 +36539,6 @@ var Laya=window.Laya=(function(window,document){
 	*...
 	*@author ww
 	*/
-	//class laya.debug.view.nodeInfo.nodetree.NodeTreeSetting extends laya.debug.ui.debugui.NodeTreeSettingUI
-	var NodeTreeSetting=(function(_super){
-		function NodeTreeSetting(){
-			NodeTreeSetting.__super.call(this);
-			Base64AtlasManager.replaceRes(NodeTreeSettingUI.uiView);
-			this.createView(NodeTreeSettingUI.uiView);
-		}
-
-		__class(NodeTreeSetting,'laya.debug.view.nodeInfo.nodetree.NodeTreeSetting',_super);
-		var __proto=NodeTreeSetting.prototype;
-		//inits();
-		__proto.createChildren=function(){}
-		return NodeTreeSetting;
-	})(NodeTreeSettingUI)
-
-
-	/**
-	*...
-	*@author ww
-	*/
 	//class laya.debug.view.nodeInfo.nodetree.NodeTree extends laya.debug.ui.debugui.NodeTreeUI
 	var NodeTree=(function(_super){
 		function NodeTree(){
@@ -36407,6 +36782,26 @@ var Laya=window.Laya=(function(window,document){
 	*...
 	*@author ww
 	*/
+	//class laya.debug.view.nodeInfo.nodetree.NodeTreeSetting extends laya.debug.ui.debugui.NodeTreeSettingUI
+	var NodeTreeSetting=(function(_super){
+		function NodeTreeSetting(){
+			NodeTreeSetting.__super.call(this);
+			Base64AtlasManager.replaceRes(NodeTreeSettingUI.uiView);
+			this.createView(NodeTreeSettingUI.uiView);
+		}
+
+		__class(NodeTreeSetting,'laya.debug.view.nodeInfo.nodetree.NodeTreeSetting',_super);
+		var __proto=NodeTreeSetting.prototype;
+		//inits();
+		__proto.createChildren=function(){}
+		return NodeTreeSetting;
+	})(NodeTreeSettingUI)
+
+
+	/**
+	*...
+	*@author ww
+	*/
 	//class laya.debug.view.nodeInfo.nodetree.ObjectCreate extends laya.debug.ui.debugui.ObjectCreateUI
 	var ObjectCreate=(function(_super){
 		function ObjectCreate(){
@@ -36557,7 +36952,7 @@ var Laya=window.Laya=(function(window,document){
 	})(ToolBarUI)
 
 
-	Laya.__init([LoaderManager,EventDispatcher,Browser,Render,View,LocalStorage,Timer]);
+	Laya.__init([EventDispatcher,LoaderManager,Browser,Render,View,LocalStorage,Timer]);
 	new StockMain();
 
 })(window,document,Laya);
@@ -36565,7 +36960,7 @@ var Laya=window.Laya=(function(window,document){
 
 /*
 1 file:///D:/stocksite.git/trunk/StockView/src/laya/math/ArrayMethods.as (55):warning:tv This variable is not defined.
-2 file:///D:/stocksite.git/trunk/StockView/src/stock/views/KLine.as (371):warning:tTxt This variable is not defined.
-3 file:///D:/stocksite.git/trunk/StockView/src/stock/views/KLine.as (373):warning:tTxt This variable is not defined.
-4 file:///D:/stocksite.git/trunk/StockView/src/stock/views/KLine.as (374):warning:tTxt This variable is not defined.
+2 file:///D:/stocksite.git/trunk/StockView/src/stock/views/KLine.as (417):warning:tTxt This variable is not defined.
+3 file:///D:/stocksite.git/trunk/StockView/src/stock/views/KLine.as (419):warning:tTxt This variable is not defined.
+4 file:///D:/stocksite.git/trunk/StockView/src/stock/views/KLine.as (420):warning:tTxt This variable is not defined.
 */
