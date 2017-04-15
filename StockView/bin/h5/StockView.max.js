@@ -35877,12 +35877,17 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		__proto.onStockInited=function(){
+			if (this.kLine.tStock==this._preStock)return;
+			this._preStock=this.kLine.tStock;
 			var max=NaN;
 			var dayCount=0;
 			dayCount=this.getDayCount();
 			max=this.kLine.dataList.length-dayCount;
 			if (max < 0)max=0;
-			this.dayScroll.setScroll(0,max,this.dayScroll.value);
+			this.dayScroll.setScroll(0,max,max);
+			if (this.maxDayEnable){
+				this.kLine.start=Math.floor(this.dayScroll.value);
+			}
 		}
 
 		__proto.onKlineMsg=function(msg){
