@@ -128,9 +128,12 @@ package view
 			if (max < 0) max = 0;
 		
 			dayScroll.setScroll(0, max, max);
-			if (maxDayEnable)
+			if (maxDayEnable.selected)
 			{
 				kLine.start = Math.floor(dayScroll.value);
+			}else
+			{
+				kLine.start = 0;
 			}
 		}
 		private function onKlineMsg(msg:String):void
@@ -200,6 +203,7 @@ package view
 			}else
 			{
 				kLine.maxShowCount = -1;
+				kLine.start = 0;
 			}
 			kLine.setStock(stock);
 		}
