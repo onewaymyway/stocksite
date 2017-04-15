@@ -2,8 +2,8 @@
     "x":0,
     "type":"View",
     "selectedBox":1,
-    "selecteID":4,
-    "props":{"width":600,"sceneColor":"#000000","height":400},
+    "selecteID":17,
+    "props":{"width":800,"sceneColor":"#000000","height":400},
     "nodeParent":-1,
     "label":"View",
     "isOpen":true,
@@ -157,6 +157,45 @@
             "child":[
                 ],
             "$HIDDEN":false
+        },
+        {
+            "x":15,
+            "type":"HScrollBar",
+            "props":{"y":101,"x":225,"width":166,"var":"dayScroll","skin":"comp/hscroll.png","height":13},
+            "nodeParent":1,
+            "label":"HScrollBar(dayScroll)",
+            "isDirectory":false,
+            "isAniNode":true,
+            "hasChild":false,
+            "compId":17,
+            "child":[
+                ]
+        },
+        {
+            "x":15,
+            "type":"CheckBox",
+            "props":{"y":76,"x":226,"var":"maxDayEnable","skin":"comp/checkbox.png","selected":false,"label":"天数限制"},
+            "nodeParent":1,
+            "label":"CheckBox(maxDayEnable)",
+            "isDirectory":false,
+            "isAniNode":true,
+            "hasChild":false,
+            "compId":18,
+            "child":[
+                ]
+        },
+        {
+            "x":15,
+            "type":"TextInput",
+            "props":{"y":73,"x":300,"width":90,"var":"dayCountInput","text":"180","skin":"comp/textinput.png","height":22,"color":"#f1dede"},
+            "nodeParent":1,
+            "label":"TextInput(dayCountInput)",
+            "isDirectory":false,
+            "isAniNode":true,
+            "hasChild":false,
+            "compId":19,
+            "child":[
+                ]
         }],
     "animations":[
         {
