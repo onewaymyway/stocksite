@@ -1,5 +1,4 @@
-package view 
-{
+package view {
 	import laya.debug.tools.Notice;
 	import laya.events.Event;
 	import laya.math.DataUtils;
@@ -20,16 +19,16 @@ package view
 	import stock.StockBasicInfo;
 	import stock.views.KLine;
 	import ui.KLineViewUI;
+	
 	/**
 	 * ...
 	 * @author ww
 	 */
-	public class KLineView extends KLineViewUI
-	{
+	public class KLineView extends KLineViewUI {
 		public var kLine:KLine;
 		public var tAnalyser:AnalyserBase;
-		public function KLineView() 
-		{
+		
+		public function KLineView() {
 			kLine = new KLine();
 			kLine.on(MsgConst.Stock_Data_Inited, this, onStockInited);
 			dayScroll.on(Event.CHANGE, this, onDayScrollChange);
@@ -66,86 +65,96 @@ package view
 			this.on(Event.MOUSE_DOWN, this, onMMouseDown);
 			this.on(Event.MOUSE_UP, this, onMMouseUp);
 			enableAnimation.selected = false;
-		 
+		
 		}
 		private var preMouseX:Number;
-		private function onMMouseDown():void
-		{
+		
+		private function onMMouseDown():void {
 			preMouseX = Laya.stage.mouseX;
 		}
-		private function onMMouseUp():void
-		{
+		
+		private function onMMouseUp():void {
 			var dX:Number;
 			dX = Laya.stage.mouseX - preMouseX;
-			if (dX > 100)
-			{
+			if (dX > 100) {
 				onNext();
-			}else if(dX<-100)
-			{
+			}
+			else if (dX < -100) {
 				onPre();
 			}
+			else {
+				if (clickControlEnable) {
+					if (Laya.stage.mouseX > Laya.stage.width * 0.5) {
+						dayScroll.value = dayScroll.value + 1;
+					}else
+					{
+						dayScroll.value = dayScroll.value - 1;
+					}
+				}
+				
+			}
 		}
-		public function onSetAnalyserProps(analyserName:String,paramsO:Object):void
-		{
+		
+		public function onSetAnalyserProps(analyserName:String, paramsO:Object):void {
 			analyserList.setAnalyserParams(analyserName, paramsO);
 			propPanel.refresh();
 		}
-		public function refreshKLine():void
-		{
+		
+		public function refreshKLine():void {
 			showKline(kLine.tStock);
 		}
-		private function showAnalyserProp(desArr:Array, dataO:Object):void
-		{
+		
+		private function showAnalyserProp(desArr:Array, dataO:Object):void {
 			propPanel.visible = true;
 			propPanel.initByData(desArr, dataO);
 		}
-		private function analysersChanged(analysers:Array):void
-		{
+		
+		private function analysersChanged(analysers:Array):void {
 			kLine.analysers = analysers;
 			refreshKLine();
 		}
 		private var isFirstStockComing:Boolean = true;
 		private var _preStock:String;
-		public function showStockKline(stock:String):void
-		{
+		
+		public function showStockKline(stock:String):void {
 			isFirstStockComing = true;
 			stockInput.text = stock;
 			onPlayInput();
 		}
 		
-		public function getDayCount():int
-		{
+		public function getDayCount():int {
 			return ValueTools.mParseFloat(dayCountInput.text);
 		}
-		private function onStockInited():void
-		{
-			if (kLine.tStock == _preStock) return;
+		
+		private function onStockInited():void {
+			if (kLine.tStock == _preStock)
+				return;
 			_preStock = kLine.tStock;
 			var max:Number;
 			var dayCount:int;
 			dayCount = getDayCount();
 			max = kLine.dataList.length - dayCount;
-			if (max < 0) max = 0;
-		
+			if (max < 0)
+				max = 0;
+			
 			dayScroll.setScroll(0, max, max);
-			if (maxDayEnable.selected)
-			{
+			if (maxDayEnable.selected) {
 				kLine.start = Math.floor(dayScroll.value);
-			}else
-			{
+			}
+			else {
 				kLine.start = 0;
 			}
 		}
-		private function onKlineMsg(msg:String):void
-		{
+		
+		private function onKlineMsg(msg:String):void {
 			infoTxt.text = msg;
 		}
-		public function init():void
-		{
+		
+		public function init():void {
 			//stockSelect.labels = "300383,000546,000725,002064,600139";
 			var tLabel:String;
 			tLabel = StockBasicInfo.I.stockCodeList.join(",");
-			trace("tLabel",tLabel);
+			trace("tLabel", tLabel);
 			stockSelect.labels = tLabel;
 			stockSelect.selectedIndex = 0;
 			stockSelect.selectHandler = new Handler(this, onSelect);
@@ -160,59 +169,57 @@ package view
 			preBtn.on(Event.MOUSE_DOWN, this, onPre);
 			nextBtn.on(Event.MOUSE_DOWN, this, onNext);
 		}
-		private function onDayScrollChange():void
-		{
-			if (maxDayEnable)
-			{
+		
+		private function onDayScrollChange():void {
+			if (maxDayEnable) {
 				onPlayInput();
 			}
 		}
-		override protected function changeSize():void 
-		{
+		
+		override protected function changeSize():void {
 			super.changeSize();
 			kLine.lineHeight = this.height - 100;
 			kLine.lineWidth = this.width - 20;
 			kLine.pos(0, kLine.lineHeight + 90);
 		}
-		private function onDetail():void
-		{
+		
+		private function onDetail():void {
 			WebTools.openStockDetail(kLine.tStock);
 		}
-		private function onSelect():void
-		{
+		
+		private function onSelect():void {
 			//kLine.autoPlay = enableAnimation.selected;
 			showKline(stockSelect.selectedLabel);
 		}
-		private function onPlayBtn():void
-		{
+		
+		private function onPlayBtn():void {
 			//kLine.autoPlay = enableAnimation.selected;
 			showKline(stockSelect.selectedLabel);
 		}
-		private function onPlayInput():void
-		{
+		
+		private function onPlayInput():void {
 			//kLine.autoPlay = enableAnimation.selected;
 			showKline(stockInput.text);
 		}
-		public function showKline(stock:String):void
-		{
+		
+		public function showKline(stock:String):void {
 			kLine.autoPlay = enableAnimation.selected;
-			if (maxDayEnable.selected)
-			{
+			if (maxDayEnable.selected) {
 				kLine.maxShowCount = ValueTools.mParseFloat(dayCountInput.text);
 				kLine.start = Math.floor(dayScroll.value);
-			}else
-			{
+			}
+			else {
 				kLine.maxShowCount = -1;
 				kLine.start = 0;
 			}
 			kLine.setStock(stock);
 		}
-		private function onPre():void
-		{
+		
+		private function onPre():void {
 			Notice.notify(MsgConst.Show_Pre_Select);
 		}
-		private function onNext():void
-		{
+		
+		private function onNext():void {
 			Notice.notify(MsgConst.Show_Next_Select);
 		}
 	}
