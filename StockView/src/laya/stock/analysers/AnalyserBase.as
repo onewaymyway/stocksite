@@ -119,7 +119,7 @@ package laya.stock.analysers
 		}
 		public function analyserData(start:int = 0, end:int = -1):void
 		{
-			if (end < start) end = dataList.length - 1;
+			if (end < start) end = dataList.length;
 			disDataList = dataList.slice(start, end);
 			resultData = { };
 			analyseWork();
