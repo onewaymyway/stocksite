@@ -21367,11 +21367,11 @@ var Laya=window.Laya=(function(window,document){
 			(end===void 0)&& (end=-1);
 			if (this.maxShowCount > 0){
 				end=start+this.maxShowCount;
-				if (end > this.dataList.length-1)end=this.dataList.length-1;
+				if (end > this.dataList.length)end=this.dataList.length;
 			}
 			this.analysersDoAnalyse(start,end);
 			this.graphics.clear();
-			if (end < start)end=this.dataList.length-1;
+			if (end < start)end=this.dataList.length;
 			this.disDataList=this.dataList.slice(start,end);
 			this.drawStockKLine();
 			this.drawGrid();
