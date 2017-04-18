@@ -1069,7 +1069,7 @@ var Laya=window.Laya=(function(window,document){
 		__proto.analyserData=function(start,end){
 			(start===void 0)&& (start=0);
 			(end===void 0)&& (end=-1);
-			if (end < start)end=this.dataList.length-1;
+			if (end < start)end=this.dataList.length;
 			this.disDataList=this.dataList.slice(start,end);
 			this.resultData={};
 			this.analyseWork();
