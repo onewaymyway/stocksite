@@ -15177,6 +15177,28 @@ var Laya=window.Laya=(function(window,document){
 			return [loseRate,winRate,exp]
 		}
 
+		DataUtils.getKLineType=function(dataList,i,highSign,lowSign){
+			(highSign===void 0)&& (highSign="high");
+			(lowSign===void 0)&& (lowSign="low");
+			var preData;
+			preData=dataList[i-1];
+			var tData;
+			tData=dataList[i];
+			var nextData;
+			nextData=dataList[i+1];
+			if (!preData || !tData || !nextData)return "unknow";
+			if (preData[highSign] < tData[highSign] && preData[lowSign] < tData[lowSign]&&nextData[highSign] < tData[highSign] && nextData[lowSign] < tData[lowSign]){
+				return "top";
+			}
+			if (preData[highSign] > tData[highSign] && preData[lowSign] > tData[lowSign]&&nextData[highSign] > tData[highSign] && nextData[lowSign] > tData[lowSign]){
+				return "bottom";
+			}
+			return "unknow";
+		}
+
+		DataUtils.K_Top="top";
+		DataUtils.K_Bottom="bottom";
+		DataUtils.K_Unknow="unknow";
 		return DataUtils;
 	})()
 
@@ -15435,6 +15457,17 @@ var Laya=window.Laya=(function(window,document){
 			}
 		}
 
+		__proto.showIndexs=function(){
+			var i=0,len=0;
+			len=this.disDataList.length;
+			var indexs;
+			indexs=[];
+			for (i=0;i < len;i++){
+				indexs.push([i+"",i]);
+			}
+			this.resultData["indexs"]=indexs;
+		}
+
 		__proto.analyser=function(stockData,start,end,forSelect){
 			(start===void 0)&& (start=0);
 			(end===void 0)&& (end=-1);
@@ -15455,7 +15488,7 @@ var Laya=window.Laya=(function(window,document){
 		__proto.analyserData=function(start,end){
 			(start===void 0)&& (start=0);
 			(end===void 0)&& (end=-1);
-			if (end < start)end=this.dataList.length-1;
+			if (end < start)end=this.dataList.length;
 			this.disDataList=this.dataList.slice(start,end);
 			this.resultData={};
 			this.analyseWork();
@@ -15473,6 +15506,209 @@ var Laya=window.Laya=(function(window,document){
 		__proto.addToConfigTypes=function(types){}
 		__proto.addToShowData=function(showData){}
 		return AnalyserBase;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class laya.stock.analysers.chan.ChanKBar
+	var ChanKBar=(function(){
+		function ChanKBar(){
+			this.topO=null;
+			this.bottomO=null;
+			this.state=null;
+		}
+
+		__class(ChanKBar,'laya.stock.analysers.chan.ChanKBar');
+		var __proto=ChanKBar.prototype;
+		__proto.init=function(kO){
+			this.topO=kO;
+			this.bottomO=kO;
+		}
+
+		__proto.merge=function(kO,type){
+			if (ChanKList.getIndex(kO.bottomO)==79){
+				debugger;
+			}
+			switch(type){
+				case "down":
+					ChanKBar.mergeK(this,this,kO,false,true);
+					break ;
+				case "up":
+					ChanKBar.mergeK(this,this,kO,true,false);
+					break ;
+				case "none":
+					ChanKBar.mergeK(this,this,kO,true,true);
+					break ;
+				}
+		}
+
+		__getset(0,__proto,'top',function(){
+			return this.topO["high"];
+		});
+
+		__getset(0,__proto,'bottom',function(){
+			return this.bottomO["low"];
+		});
+
+		ChanKBar.mergeK=function(result,kA,kB,maxTop,minBottom){
+			(maxTop===void 0)&& (maxTop=true);
+			(minBottom===void 0)&& (minBottom=true);
+			if (kA.top > kB.top && maxTop){
+				result.topO=kA.topO;
+				}else{
+				result.topO=kB.topO;
+			}
+			if (kA.bottom < kB.bottom && minBottom){
+				result.bottomO=kA.bottomO;
+				}else{
+				result.bottomO=kB.bottomO;
+			}
+		}
+
+		ChanKBar.createByKO=function(kO){
+			var rst;
+			rst=new ChanKBar();
+			rst.init(kO);
+			return rst;
+		}
+
+		ChanKBar.getRelativeType=function(chankBarA,chankBarB){
+			if (chankBarA.top > chankBarB.top){
+				if (chankBarA.bottom > chankBarB.bottom){
+					return "down";
+					}else{
+					return "cover";
+				}
+			}else
+			if (chankBarA.top==chankBarB.top){
+				if (chankBarA.bottom > chankBarB.bottom){
+					return "in";
+					}else{
+					return "cover";
+				}
+				}else{
+				if (chankBarA.bottom >=chankBarB.bottom){
+					return "in";
+					}else{
+					return "up";
+				}
+			}
+		}
+
+		ChanKBar.GoUp="up";
+		ChanKBar.GoDown="down";
+		ChanKBar.In="in";
+		ChanKBar.Cover="cover";
+		return ChanKBar;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class laya.stock.analysers.chan.ChanKList
+	var ChanKList=(function(){
+		function ChanKList(){
+			this.dataList=null;
+			this.kList=[];
+			this.tState="none";
+		}
+
+		__class(ChanKList,'laya.stock.analysers.chan.ChanKList');
+		var __proto=ChanKList.prototype;
+		__proto.setDataList=function(dataList){
+			this.dataList=dataList;
+			var i=0,len=0;
+			len=dataList.length;
+			var tData;
+			for (i=0;i < len;i++){
+				tData=dataList[i];
+				tData.cIndex=i;
+				this.addData(dataList[i]);
+			}
+		}
+
+		__proto.findTopBottoms=function(){
+			var i=0,len=0;
+			len=this.kList.length-1;
+			var changePoints;
+			changePoints=[];
+			var tType;
+			for (i=1;i < len;i++){
+				var tI=0;
+				tI=ChanKList.getIndex(this.kList[i].topO);
+				if (tI > 49 && tI < 52){
+					debugger;
+				}
+				tType=DataUtils.getKLineType(this.kList,i,"top","bottom");
+				if (tType !="unknow"){
+					changePoints.push([tType,this.kList[i]]);
+				}
+			}
+			return changePoints;
+		}
+
+		__proto.addData=function(dataO){
+			var tK;
+			tK=ChanKBar.createByKO(dataO);
+			this.tryAddK(tK);
+		}
+
+		__proto.tryAddK=function(tK){
+			if (this.kList.length < 1){
+				tK.state="none";
+				this.kList.push(tK);
+				}else{
+				this.addK(tK);
+			}
+		}
+
+		__proto.addK=function(newK){
+			var lastK;
+			lastK=this.kList[this.kList.length-1];
+			var tRelation;
+			tRelation=ChanKBar.getRelativeType(lastK,newK);
+			switch(tRelation){
+				case "down":
+					this.kList.push(newK);
+					this.tState="down";
+					newK.state=this.tState;
+					break ;
+				case "up":
+					this.kList.push(newK);
+					this.tState="up";
+					newK.state=this.tState;
+					break ;
+				case "in":
+					this.tryMerge(newK);
+					break ;
+				case "cover":
+					this.tryMerge(newK);
+					break ;
+				}
+		}
+
+		__proto.tryMerge=function(newK){
+			var lastK;
+			lastK=this.kList.pop();
+			lastK.merge(newK,this.tState);
+			this.tryAddK(lastK);
+		}
+
+		ChanKList.getIndex=function(dataO){
+			return dataO.cIndex;
+		}
+
+		ChanKList.GoUp="up";
+		ChanKList.GoDown="down";
+		ChanKList.None="none";
+		ChanKList.Top="top";
+		ChanKList.Bottom="bottom";
+		return ChanKList;
 	})()
 
 
@@ -15619,6 +15855,12 @@ var Laya=window.Laya=(function(window,document){
 	var StockTools=(function(){
 		function StockTools(){}
 		__class(StockTools,'laya.stock.StockTools');
+		StockTools.getStockCsvPath=function(stock){
+			var stockUrl;
+			stockUrl="https://onewaymyway.github.io/stockdata/stockdatas/"+stock+".csv";
+			return stockUrl;
+		}
+
 		StockTools.getGoodPercent=function(v){
 			return Math.floor(v *1000)/ 10;
 		}
@@ -15734,6 +15976,7 @@ var Laya=window.Laya=(function(window,document){
 		MsgConst.Show_Analyser_Prop="Show_Analyser_Prop";
 		MsgConst.Set_Analyser_Prop="Set_Analyser_Prop";
 		MsgConst.Fresh_Analyser_Prop="Fresh_Analyser_Prop";
+		MsgConst.Stock_Data_Inited="DataInited";
 		return MsgConst;
 	})()
 
@@ -17662,74 +17905,6 @@ var Laya=window.Laya=(function(window,document){
 
 
 	/**
-	*<p><code>ColorFilter</code> 是颜色滤镜。</p>
-	*/
-	//class laya.filters.ColorFilter extends laya.filters.Filter
-	var ColorFilter=(function(_super){
-		function ColorFilter(mat){
-			//this._mat=null;
-			//this._alpha=null;
-			ColorFilter.__super.call(this);
-			if (!mat){
-				mat=[0.3,0.59,0.11,0,0,0.3,0.59,0.11,0,0,0.3,0.59,0.11,0,0,0,0,0,1,0];
-			}
-			this._mat=new Float32Array(16);
-			this._alpha=new Float32Array(4);
-			var j=0;
-			var z=0;
-			for (var i=0;i < 20;i++){
-				if (i % 5 !=4){
-					this._mat[j++]=mat[i];
-					}else {
-					this._alpha[z++]=mat[i];
-				}
-			}
-			this._action=RunDriver.createFilterAction(0x20);
-			this._action.data=this;
-		}
-
-		__class(ColorFilter,'laya.filters.ColorFilter',_super);
-		var __proto=ColorFilter.prototype;
-		Laya.imps(__proto,{"laya.filters.IFilter":true})
-		/**
-		*@private 通知微端
-		*/
-		__proto.callNative=function(sp){
-			var t=sp._$P.cf=this;
-			sp.conchModel && sp.conchModel.setFilterMatrix&&sp.conchModel.setFilterMatrix(this._mat,this._alpha);
-		}
-
-		/**@private */
-		__getset(0,__proto,'type',function(){
-			return 0x20;
-		});
-
-		/**@private */
-		__getset(0,__proto,'action',function(){
-			return this._action;
-		});
-
-		__getset(1,ColorFilter,'DEFAULT',function(){
-			if (!ColorFilter._DEFAULT){
-				ColorFilter._DEFAULT=new ColorFilter([1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0]);
-			}
-			return ColorFilter._DEFAULT;
-		},laya.filters.Filter._$SET_DEFAULT);
-
-		__getset(1,ColorFilter,'GRAY',function(){
-			if (!ColorFilter._GRAY){
-				ColorFilter._GRAY=new ColorFilter([0.3,0.59,0.11,0,0,0.3,0.59,0.11,0,0,0.3,0.59,0.11,0,0,0,0,0,1,0]);
-			}
-			return ColorFilter._GRAY;
-		},laya.filters.Filter._$SET_GRAY);
-
-		ColorFilter._DEFAULT=null
-		ColorFilter._GRAY=null
-		return ColorFilter;
-	})(Filter)
-
-
-	/**
 	*<code>Loader</code> 类可用来加载文本、JSON、XML、二进制、图像等资源。
 	*/
 	//class laya.net.Loader extends laya.events.EventDispatcher
@@ -18082,6 +18257,74 @@ var Laya=window.Laya=(function(window,document){
 		Loader._startIndex=0;
 		return Loader;
 	})(EventDispatcher)
+
+
+	/**
+	*<p><code>ColorFilter</code> 是颜色滤镜。</p>
+	*/
+	//class laya.filters.ColorFilter extends laya.filters.Filter
+	var ColorFilter=(function(_super){
+		function ColorFilter(mat){
+			//this._mat=null;
+			//this._alpha=null;
+			ColorFilter.__super.call(this);
+			if (!mat){
+				mat=[0.3,0.59,0.11,0,0,0.3,0.59,0.11,0,0,0.3,0.59,0.11,0,0,0,0,0,1,0];
+			}
+			this._mat=new Float32Array(16);
+			this._alpha=new Float32Array(4);
+			var j=0;
+			var z=0;
+			for (var i=0;i < 20;i++){
+				if (i % 5 !=4){
+					this._mat[j++]=mat[i];
+					}else {
+					this._alpha[z++]=mat[i];
+				}
+			}
+			this._action=RunDriver.createFilterAction(0x20);
+			this._action.data=this;
+		}
+
+		__class(ColorFilter,'laya.filters.ColorFilter',_super);
+		var __proto=ColorFilter.prototype;
+		Laya.imps(__proto,{"laya.filters.IFilter":true})
+		/**
+		*@private 通知微端
+		*/
+		__proto.callNative=function(sp){
+			var t=sp._$P.cf=this;
+			sp.conchModel && sp.conchModel.setFilterMatrix&&sp.conchModel.setFilterMatrix(this._mat,this._alpha);
+		}
+
+		/**@private */
+		__getset(0,__proto,'type',function(){
+			return 0x20;
+		});
+
+		/**@private */
+		__getset(0,__proto,'action',function(){
+			return this._action;
+		});
+
+		__getset(1,ColorFilter,'DEFAULT',function(){
+			if (!ColorFilter._DEFAULT){
+				ColorFilter._DEFAULT=new ColorFilter([1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0]);
+			}
+			return ColorFilter._DEFAULT;
+		},laya.filters.Filter._$SET_DEFAULT);
+
+		__getset(1,ColorFilter,'GRAY',function(){
+			if (!ColorFilter._GRAY){
+				ColorFilter._GRAY=new ColorFilter([0.3,0.59,0.11,0,0,0.3,0.59,0.11,0,0,0.3,0.59,0.11,0,0,0,0,0,1,0]);
+			}
+			return ColorFilter._GRAY;
+		},laya.filters.Filter._$SET_GRAY);
+
+		ColorFilter._DEFAULT=null
+		ColorFilter._GRAY=null
+		return ColorFilter;
+	})(Filter)
 
 
 	/**
@@ -19264,7 +19507,7 @@ var Laya=window.Laya=(function(window,document){
 	//class laya.stock.analysers.BottomAnalyser extends laya.stock.analysers.AnalyserBase
 	var BottomAnalyser=(function(_super){
 		function BottomAnalyser(){
-			this.rightMin=5;
+			this.rightMin=15;
 			this.leftMin=15;
 			BottomAnalyser.__super.call(this);
 		}
@@ -19437,6 +19680,105 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		return BreakAnalyser;
+	})(AnalyserBase)
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class laya.stock.analysers.ChanAnalyser extends laya.stock.analysers.AnalyserBase
+	var ChanAnalyser=(function(_super){
+		function ChanAnalyser(){
+			this.ifShowIndex=0;
+			this.showRaw=0;
+			ChanAnalyser.__super.call(this);
+		}
+
+		__class(ChanAnalyser,'laya.stock.analysers.ChanAnalyser',_super);
+		var __proto=ChanAnalyser.prototype;
+		__proto.initParamKeys=function(){
+			this.paramkeys=["ifShowIndex","showRaw"];
+		}
+
+		__proto.analyseWork=function(){
+			this.myCalculate();
+		}
+
+		__proto.getMegerLines=function(chanList){
+			var cPointList;
+			cPointList=chanList.kList;
+			var i=0,len=0;
+			len=cPointList.length;
+			var tops;
+			var bottoms;
+			tops=[];
+			bottoms=[];
+			var tDataO;
+			for (i=0;i < len;i++){
+				tDataO=cPointList[i];
+				tops.push(ChanKList.getIndex(tDataO.topO));
+				bottoms.push(ChanKList.getIndex(tDataO.bottomO));
+			}
+			this.resultData["tops"]=tops;
+			this.resultData["bottoms"]=bottoms;
+		}
+
+		__proto.myCalculate=function(){
+			if (this.ifShowIndex)
+				this.showIndexs();
+			var cPointList;
+			cPointList=[];
+			var chanList;
+			chanList=new ChanKList();
+			chanList.setDataList(this.disDataList);
+			if (this.showRaw){
+				this.getMegerLines(chanList);
+				return;
+			}
+			else {}
+			cPointList=chanList.findTopBottoms();
+			var i=0,len=0;
+			len=cPointList.length;
+			var tops;
+			var bottoms;
+			tops=[];
+			bottoms=[];
+			var tType;
+			var tArr;
+			var tDataO;
+			var points;
+			points=[];
+			for (i=0;i < len;i++){
+				tArr=cPointList[i];
+				tType=tArr[0];
+				tDataO=tArr[1];
+				if (tType !="unknow"){
+					if (tType=="top"){
+						tops.push(ChanKList.getIndex(tDataO.topO));
+						points.push([ChanKList.getIndex(tDataO.topO),"high"]);
+					}
+					if (tType=="bottom"){
+						bottoms.push(ChanKList.getIndex(tDataO.bottomO));
+						points.push([ChanKList.getIndex(tDataO.bottomO),"low"]);
+					}
+				}
+			}
+			this.resultData["tops"]=tops;
+			this.resultData["bottoms"]=bottoms;
+			this.resultData["points"]=points;
+		}
+
+		__proto.getDrawCmds=function(){
+			var rst;
+			rst=[];
+			rst.push(["drawPointsLineEx",[this.resultData["points"]]]);
+			if (this.ifShowIndex)
+				rst.push(["drawTexts",[this.resultData["indexs"],"low",30,"#00ff00",true,"#00ff00"]]);
+			return rst;
+		}
+
+		return ChanAnalyser;
 	})(AnalyserBase)
 
 
@@ -21612,6 +21954,10 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		__proto._tryClearBuffer=function(sourceNode){
+			if (!Browser.onIOS){
+				WebAudioSoundChannel._tryCleanFailed=true;
+				return;
+			}
 			try {sourceNode.buffer=WebAudioSound._miniBuffer;}catch (e){WebAudioSoundChannel._tryCleanFailed=true;}
 		}
 
@@ -24976,6 +25322,7 @@ var Laya=window.Laya=(function(window,document){
 			this.tStock=null;
 			this.stockUrl=null;
 			this.gridWidth=3;
+			this.start=0;
 			this.stockData=null;
 			this.dataList=null;
 			this.disDataList=null;
@@ -24998,6 +25345,7 @@ var Laya=window.Laya=(function(window,document){
 			this.showMsg("loadingData:"+stock);
 			this.tStock=stock;
 			this.stockUrl="https://onewaymyway.github.io/stockdata/stockdatas/"+stock+".csv";
+			this.stockUrl=StockTools.getStockCsvPath(stock);
 			Laya.loader.load(this.stockUrl,Handler.create(this,this.dataLoaded),null,"text");
 		}
 
@@ -25031,7 +25379,8 @@ var Laya=window.Laya=(function(window,document){
 			this.stockData=stockData;
 			this.dataList=stockData.dataList;
 			this.cacheAsBitmap=false;
-			this.drawdata();
+			this.event("DataInited");
+			this.drawdata(this.start);
 			this.tLen=10;
 			if (this.autoPlay){
 				this.showMsg("playing K-line Animation");
@@ -25049,14 +25398,8 @@ var Laya=window.Laya=(function(window,document){
 				Laya.timer.clear(this,this.timeEffect);
 				this.cacheAsBitmap=true;
 				return;
-			};
-			var start=0;
-			if (this.maxShowCount > 0){
-				if (this.tLen > this.maxShowCount){
-					start=this.tLen-this.maxShowCount;
-				}
 			}
-			this.drawdata(start,this.tLen);
+			this.drawdata(this.start,this.tLen);
 		}
 
 		__proto.analysersDoAnalyse=function(start,end){
@@ -25074,6 +25417,10 @@ var Laya=window.Laya=(function(window,document){
 		__proto.drawdata=function(start,end){
 			(start===void 0)&& (start=0);
 			(end===void 0)&& (end=-1);
+			if (this.maxShowCount > 0){
+				end=start+this.maxShowCount;
+				if (end > this.dataList.length-1)end=this.dataList.length-1;
+			}
 			this.analysersDoAnalyse(start,end);
 			this.graphics.clear();
 			if (end < start)end=this.dataList.length-1;
@@ -25186,10 +25533,10 @@ var Laya=window.Laya=(function(window,document){
 			(dY===void 0)&& (dY=0);
 			(color===void 0)&& (color="#ff0000");
 			(withLine===void 0)&& (withLine=false);
-			this.graphics.fillText(text,this.getAdptXV(i *this.gridWidth),this.getAdptYV(this.dataList[i][sign])+dY,null,color,"center");
+			this.graphics.fillText(text,this.getAdptXV(i *this.gridWidth),this.getAdptYV(this.disDataList[i][sign])+dY,null,color,"center");
 			if (withLine){
 				if (!lineColor)lineColor=color;
-				this.graphics.drawLine(this.getAdptXV(i *this.gridWidth),this.getAdptYV(this.dataList[i][sign])+dY,this.getAdptXV(i *this.gridWidth),this.getAdptYV(this.dataList[i][sign]),lineColor);
+				this.graphics.drawLine(this.getAdptXV(i *this.gridWidth),this.getAdptYV(this.disDataList[i][sign])+dY,this.getAdptXV(i *this.gridWidth),this.getAdptYV(this.disDataList[i][sign]),lineColor);
 			}
 		}
 
@@ -25212,6 +25559,31 @@ var Laya=window.Laya=(function(window,document){
 				preData=dataList[iList[i-1]];
 				tData=dataList[iList[i]];
 				this.drawLine(iList[i-1],preData[sign],iList[i],tData[sign],"#ff0000");
+			}
+		}
+
+		__proto.drawPointsLineEx=function(iList,lineWidth){
+			(lineWidth===void 0)&& (lineWidth=2);
+			var dataList;
+			dataList=this.disDataList;
+			var tI=0;
+			var i=0,len=0;
+			var preData;
+			var tData;
+			len=iList.length;
+			var tArr;
+			var tSign;
+			for (i=0;i < len;i++){
+				tArr=iList[i];
+				tI=tArr[0];
+				tData=dataList[tI];
+				tSign=tArr[1];
+				this.drawPoint(tI,tData[tSign],tData[tSign],KLine.SignDrawDes[tSign]["dy"],KLine.SignDrawDes[tSign]["color"],3);
+			}
+			for (i=1;i < len;i++){
+				preData=dataList[iList[i-1][0]];
+				tData=dataList[iList[i][0]];
+				this.drawLine(iList[i-1][0],preData[iList[i-1][1]],iList[i][0],tData[iList[i][1]],"#ff00ff",2);
 			}
 		}
 
@@ -25274,20 +25646,22 @@ var Laya=window.Laya=(function(window,document){
 			this.graphics.drawCircle(this.getAdptXV(i *this.gridWidth),this.getAdptYV(y),r,color);
 		}
 
-		__proto.drawPoint=function(i,y,text,dy,color){
+		__proto.drawPoint=function(i,y,text,dy,color,radio){
 			(dy===void 0)&& (dy=10);
 			(color===void 0)&& (color="#ffff00");
+			(radio===void 0)&& (radio=2);
 			var xPos=NaN;
 			xPos=this.getAdptXV(i *this.gridWidth);
-			this.graphics.drawCircle(xPos,this.getAdptYV(y),2,color);
+			this.graphics.drawCircle(xPos,this.getAdptYV(y),radio,color);
 			if (text){
 				this.graphics.fillText(text,xPos,this.getAdptYV(y)+dy,null,color,"center");
 			}
 		}
 
-		__proto.drawLine=function(startI,startY,endI,endY,color){
+		__proto.drawLine=function(startI,startY,endI,endY,color,lineWidth){
 			(color===void 0)&& (color="#ff0000");
-			this.graphics.drawLine(this.getAdptXV(startI *this.gridWidth),this.getAdptYV(startY),this.getAdptXV(endI *this.gridWidth),this.getAdptYV(endY),color);
+			(lineWidth===void 0)&& (lineWidth=1);
+			this.graphics.drawLine(this.getAdptXV(startI *this.gridWidth),this.getAdptYV(startY),this.getAdptXV(endI *this.gridWidth),this.getAdptYV(endY),color,lineWidth);
 		}
 
 		__proto.drawLineEx=function(startI,startY,endI,endY,color){
@@ -25349,6 +25723,19 @@ var Laya=window.Laya=(function(window,document){
 			return DataUtils.mParseFloat(v)*this.xRate;
 		}
 
+		__static(KLine,
+		['SignDrawDes',function(){return this.SignDrawDes={
+				"high":{
+					color:"#ffff00",
+					dy:-30
+				},
+				"low":{
+					color:"#00ff00",
+					dy:30
+				}
+		};}
+
+		]);
 		return KLine;
 	})(Sprite)
 
@@ -34740,6 +35127,66 @@ var Laya=window.Laya=(function(window,document){
 
 
 	/**
+	*<code>Radio</code> 控件使用户可在一组互相排斥的选择中做出一种选择。
+	*用户一次只能选择 <code>Radio</code> 组中的一个成员。选择未选中的组成员将取消选择该组中当前所选的 <code>Radio</code> 控件。
+	*@see laya.ui.RadioGroup
+	*/
+	//class laya.ui.Radio extends laya.ui.Button
+	var Radio=(function(_super){
+		function Radio(skin,label){
+			this._value=null;
+			(label===void 0)&& (label="");
+			Radio.__super.call(this,skin,label);
+		}
+
+		__class(Radio,'laya.ui.Radio',_super);
+		var __proto=Radio.prototype;
+		/**@inheritDoc */
+		__proto.destroy=function(destroyChild){
+			(destroyChild===void 0)&& (destroyChild=true);
+			_super.prototype.destroy.call(this,destroyChild);
+			this._value=null;
+		}
+
+		/**@inheritDoc */
+		__proto.preinitialize=function(){
+			laya.ui.Component.prototype.preinitialize.call(this);
+			this.toggle=false;
+			this._autoSize=false;
+		}
+
+		/**@inheritDoc */
+		__proto.initialize=function(){
+			_super.prototype.initialize.call(this);
+			this.createText();
+			this._text.align="left";
+			this._text.valign="top";
+			this._text.width=0;
+			this.on("click",this,this.onClick);
+		}
+
+		/**
+		*@private
+		*对象的<code>Event.CLICK</code>事件侦听处理函数。
+		*/
+		__proto.onClick=function(e){
+			this.selected=true;
+		}
+
+		/**
+		*获取或设置 <code>Radio</code> 关联的可选用户定义值。
+		*/
+		__getset(0,__proto,'value',function(){
+			return this._value !=null ? this._value :this.label;
+			},function(obj){
+			this._value=obj;
+		});
+
+		return Radio;
+	})(Button)
+
+
+	/**
 	*...
 	*@author ww
 	*/
@@ -34854,66 +35301,6 @@ var Laya=window.Laya=(function(window,document){
 		SelectInfosView._I=null
 		return SelectInfosView;
 	})(UIViewBase)
-
-
-	/**
-	*<code>Radio</code> 控件使用户可在一组互相排斥的选择中做出一种选择。
-	*用户一次只能选择 <code>Radio</code> 组中的一个成员。选择未选中的组成员将取消选择该组中当前所选的 <code>Radio</code> 控件。
-	*@see laya.ui.RadioGroup
-	*/
-	//class laya.ui.Radio extends laya.ui.Button
-	var Radio=(function(_super){
-		function Radio(skin,label){
-			this._value=null;
-			(label===void 0)&& (label="");
-			Radio.__super.call(this,skin,label);
-		}
-
-		__class(Radio,'laya.ui.Radio',_super);
-		var __proto=Radio.prototype;
-		/**@inheritDoc */
-		__proto.destroy=function(destroyChild){
-			(destroyChild===void 0)&& (destroyChild=true);
-			_super.prototype.destroy.call(this,destroyChild);
-			this._value=null;
-		}
-
-		/**@inheritDoc */
-		__proto.preinitialize=function(){
-			laya.ui.Component.prototype.preinitialize.call(this);
-			this.toggle=false;
-			this._autoSize=false;
-		}
-
-		/**@inheritDoc */
-		__proto.initialize=function(){
-			_super.prototype.initialize.call(this);
-			this.createText();
-			this._text.align="left";
-			this._text.valign="top";
-			this._text.width=0;
-			this.on("click",this,this.onClick);
-		}
-
-		/**
-		*@private
-		*对象的<code>Event.CLICK</code>事件侦听处理函数。
-		*/
-		__proto.onClick=function(e){
-			this.selected=true;
-		}
-
-		/**
-		*获取或设置 <code>Radio</code> 关联的可选用户定义值。
-		*/
-		__getset(0,__proto,'value',function(){
-			return this._value !=null ? this._value :this.label;
-			},function(obj){
-			this._value=obj;
-		});
-
-		return Radio;
-	})(Button)
 
 
 	/**
@@ -36554,6 +36941,10 @@ var Laya=window.Laya=(function(window,document){
 			this.nextBtn=null;
 			this.analyserList=null;
 			this.propPanel=null;
+			this.dayScroll=null;
+			this.maxDayEnable=null;
+			this.dayCountInput=null;
+			this.clickControlEnable=null;
 			KLineViewUI.__super.call(this);
 		}
 
@@ -36567,7 +36958,7 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		__static(KLineViewUI,
-		['uiView',function(){return this.uiView={"type":"View","props":{"width":600,"height":400},"child":[{"type":"ComboBox","props":{"y":9,"x":8,"var":"stockSelect","skin":"comp/combobox.png","scrollBarSkin":"comp/vscroll.png","labels":"000233,600322","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":9,"x":114,"var":"playBtn","skin":"comp/button.png","label":"play","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Label","props":{"y":13,"x":225,"width":147,"var":"infoTxt","text":"label","height":20,"color":"#ffffff"}},{"type":"TextInput","props":{"y":43,"x":8,"width":90,"var":"stockInput","text":"002234","skin":"comp/textinput.png","height":22,"color":"#f1dede"}},{"type":"Button","props":{"y":42,"x":114,"var":"playInputBtn","skin":"comp/button.png","label":"play","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"CheckBox","props":{"y":45,"x":226,"var":"enableAnimation","skin":"comp/checkbox.png","selected":true,"label":"开启动画","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":39,"x":301,"var":"detailBtn","skin":"comp/button.png","label":"详情","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":80,"x":11,"var":"preBtn","skin":"comp/button.png","label":"pre","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":80,"x":100,"var":"nextBtn","skin":"comp/button.png","label":"next","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"AnalyserList","props":{"var":"analyserList","top":10,"runtime":"view.plugins.AnalyserList","right":10}},{"type":"PropPanel","props":{"y":0,"var":"propPanel","runtime":"stock.prop.PropPanel","right":180}}]};}
+		['uiView',function(){return this.uiView={"type":"View","props":{"width":800,"height":400},"child":[{"type":"ComboBox","props":{"y":9,"x":8,"var":"stockSelect","skin":"comp/combobox.png","scrollBarSkin":"comp/vscroll.png","labels":"000233,600322","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":9,"x":114,"var":"playBtn","skin":"comp/button.png","label":"play","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Label","props":{"y":13,"x":225,"width":147,"var":"infoTxt","text":"label","height":20,"color":"#ffffff"}},{"type":"TextInput","props":{"y":43,"x":8,"width":90,"var":"stockInput","text":"002234","skin":"comp/textinput.png","height":22,"color":"#f1dede"}},{"type":"Button","props":{"y":42,"x":114,"var":"playInputBtn","skin":"comp/button.png","label":"play","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"CheckBox","props":{"y":45,"x":226,"var":"enableAnimation","skin":"comp/checkbox.png","selected":true,"label":"开启动画","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":39,"x":301,"var":"detailBtn","skin":"comp/button.png","label":"详情","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":80,"x":11,"var":"preBtn","skin":"comp/button.png","label":"pre","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":80,"x":100,"var":"nextBtn","skin":"comp/button.png","label":"next","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"AnalyserList","props":{"var":"analyserList","top":10,"runtime":"view.plugins.AnalyserList","right":10}},{"type":"PropPanel","props":{"y":0,"var":"propPanel","runtime":"stock.prop.PropPanel","right":180}},{"type":"HScrollBar","props":{"y":101,"x":225,"width":166,"var":"dayScroll","skin":"comp/hscroll.png","height":13}},{"type":"CheckBox","props":{"y":76,"x":226,"var":"maxDayEnable","skin":"comp/checkbox.png","selected":false,"label":"天数限制","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"TextInput","props":{"y":73,"x":300,"width":90,"var":"dayCountInput","text":"180","skin":"comp/textinput.png","height":22,"color":"#f1dede"}},{"type":"CheckBox","props":{"y":77,"x":403,"var":"clickControlEnable","skin":"comp/checkbox.png","selected":true,"label":"单击平移","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}}]};}
 		]);
 		return KLineViewUI;
 	})(View)
@@ -37268,6 +37659,25 @@ var Laya=window.Laya=(function(window,document){
 	*...
 	*@author ww
 	*/
+	//class laya.debug.view.nodeInfo.nodetree.FindNodeSmall extends laya.debug.ui.debugui.FindNodeSmallUI
+	var FindNodeSmall=(function(_super){
+		function FindNodeSmall(){
+			FindNodeSmall.__super.call(this);
+			Base64AtlasManager.replaceRes(FindNodeSmallUI.uiView);
+			this.createView(FindNodeSmallUI.uiView);
+		}
+
+		__class(FindNodeSmall,'laya.debug.view.nodeInfo.nodetree.FindNodeSmall',_super);
+		var __proto=FindNodeSmall.prototype;
+		__proto.createChildren=function(){}
+		return FindNodeSmall;
+	})(FindNodeSmallUI)
+
+
+	/**
+	*...
+	*@author ww
+	*/
 	//class laya.debug.view.nodeInfo.nodetree.FindNode extends laya.debug.ui.debugui.FindNodeUI
 	var FindNode=(function(_super){
 		function FindNode(){
@@ -37284,25 +37694,6 @@ var Laya=window.Laya=(function(window,document){
 
 		return FindNode;
 	})(FindNodeUI)
-
-
-	/**
-	*...
-	*@author ww
-	*/
-	//class laya.debug.view.nodeInfo.nodetree.FindNodeSmall extends laya.debug.ui.debugui.FindNodeSmallUI
-	var FindNodeSmall=(function(_super){
-		function FindNodeSmall(){
-			FindNodeSmall.__super.call(this);
-			Base64AtlasManager.replaceRes(FindNodeSmallUI.uiView);
-			this.createView(FindNodeSmallUI.uiView);
-		}
-
-		__class(FindNodeSmall,'laya.debug.view.nodeInfo.nodetree.FindNodeSmall',_super);
-		var __proto=FindNodeSmall.prototype;
-		__proto.createChildren=function(){}
-		return FindNodeSmall;
-	})(FindNodeSmallUI)
 
 
 	/**
@@ -37929,8 +38320,15 @@ var Laya=window.Laya=(function(window,document){
 			this.kLine=null;
 			this.tAnalyser=null;
 			this.preMouseX=NaN;
+			this.isLongPress=false;
+			this.tDayD=0;
+			this.isFirstStockComing=true;
+			this._preStock=null;
 			KLineView.__super.call(this);
 			this.kLine=new KLine();
+			this.kLine.on("DataInited",this,this.onStockInited);
+			this.dayScroll.on("change",this,this.onDayScrollChange);
+			this.maxDayEnable.on("change",this,this.onPlayInput);
 			this.kLine.analysers=[];
 			var analyserClassList;
 			analyserClassList=[];
@@ -37941,6 +38339,7 @@ var Laya=window.Laya=(function(window,document){
 			analyserClassList.push(VolumeBar);
 			analyserClassList.push(WinRateLine);
 			analyserClassList.push(PositionLine);
+			analyserClassList.push(ChanAnalyser);
 			this.analyserList.initAnalysers(analyserClassList);
 			this.addChild(this.kLine);
 			var stock;
@@ -37963,15 +38362,49 @@ var Laya=window.Laya=(function(window,document){
 		var __proto=KLineView.prototype;
 		__proto.onMMouseDown=function(){
 			this.preMouseX=Laya.stage.mouseX;
+			this.isLongPress=false;
+			Laya.timer.once(800,this,this.longDown);
+		}
+
+		__proto.longDown=function(){
+			if (!this.maxDayEnable.selected)return;
+			this.isLongPress=true;
+			var dX=NaN;
+			dX=Laya.stage.mouseX-this.preMouseX;
+			var tD=0;
+			if (dX > 80){
+				this.tDayD=1;
+			}
+			else if (dX <-80){
+				this.tDayD=-1;
+			}
+			Laya.timer.frameLoop(2,this,this.loopChangeDay);
+		}
+
+		__proto.loopChangeDay=function(){
+			this.dayScroll.value=this.dayScroll.value+this.tDayD;
 		}
 
 		__proto.onMMouseUp=function(){
+			Laya.timer.clear(this,this.longDown);
+			Laya.timer.clear(this,this.loopChangeDay);
+			if (this.isLongPress)return;
 			var dX=NaN;
 			dX=Laya.stage.mouseX-this.preMouseX;
 			if (dX > 100){
 				this.onNext();
-				}else if(dX<-100){
+			}
+			else if (dX <-100){
 				this.onPre();
+			}
+			else {
+				if (this.clickControlEnable){
+					if (Laya.stage.mouseX > Laya.stage.width *0.5){
+						this.dayScroll.value=this.dayScroll.value+1;
+						}else{
+						this.dayScroll.value=this.dayScroll.value-1;
+					}
+				}
 			}
 		}
 
@@ -37995,8 +38428,32 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		__proto.showStockKline=function(stock){
+			this.isFirstStockComing=true;
 			this.stockInput.text=stock;
 			this.onPlayInput();
+		}
+
+		__proto.getDayCount=function(){
+			return ValueTools.mParseFloat(this.dayCountInput.text);
+		}
+
+		__proto.onStockInited=function(){
+			if (this.kLine.tStock==this._preStock)
+				return;
+			this._preStock=this.kLine.tStock;
+			var max=NaN;
+			var dayCount=0;
+			dayCount=this.getDayCount();
+			max=this.kLine.dataList.length-dayCount;
+			if (max < 0)
+				max=0;
+			this.dayScroll.setScroll(0,max,max);
+			if (this.maxDayEnable.selected){
+				this.kLine.start=Math.floor(this.dayScroll.value);
+			}
+			else {
+				this.kLine.start=0;
+			}
 		}
 
 		__proto.onKlineMsg=function(msg){
@@ -38018,6 +38475,12 @@ var Laya=window.Laya=(function(window,document){
 			this.detailBtn.on("mousedown",this,this.onDetail);
 			this.preBtn.on("mousedown",this,this.onPre);
 			this.nextBtn.on("mousedown",this,this.onNext);
+		}
+
+		__proto.onDayScrollChange=function(){
+			if (this.maxDayEnable){
+				this.onPlayInput();
+			}
 		}
 
 		__proto.changeSize=function(){
@@ -38045,6 +38508,14 @@ var Laya=window.Laya=(function(window,document){
 
 		__proto.showKline=function(stock){
 			this.kLine.autoPlay=this.enableAnimation.selected;
+			if (this.maxDayEnable.selected){
+				this.kLine.maxShowCount=ValueTools.mParseFloat(this.dayCountInput.text);
+				this.kLine.start=Math.floor(this.dayScroll.value);
+			}
+			else {
+				this.kLine.maxShowCount=-1;
+				this.kLine.start=0;
+			}
 			this.kLine.setStock(stock);
 		}
 
@@ -38454,7 +38925,7 @@ var Laya=window.Laya=(function(window,document){
 6 file:///D:/stocksite.git/trunk/StockCmd/src/StockCmdTool.as (41):warning:scriptPath This variable is not defined.
 7 file:///D:/stocksite.git/trunk/StockView/src/laya/math/ArrayMethods.as (55):warning:tv This variable is not defined.
 8 file:///E:/wangwei/codes/laya/libs/LayaAir/core/src/laya/display/Stage.as (240):warning:_adjustTransform This variable is not defined.
-9 file:///D:/stocksite.git/trunk/StockView/src/stock/views/KLine.as (371):warning:tTxt This variable is not defined.
-10 file:///D:/stocksite.git/trunk/StockView/src/stock/views/KLine.as (373):warning:tTxt This variable is not defined.
-11 file:///D:/stocksite.git/trunk/StockView/src/stock/views/KLine.as (374):warning:tTxt This variable is not defined.
+9 file:///D:/stocksite.git/trunk/StockView/src/stock/views/KLine.as (413):warning:tTxt This variable is not defined.
+10 file:///D:/stocksite.git/trunk/StockView/src/stock/views/KLine.as (415):warning:tTxt This variable is not defined.
+11 file:///D:/stocksite.git/trunk/StockView/src/stock/views/KLine.as (416):warning:tTxt This variable is not defined.
 */
