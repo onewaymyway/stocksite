@@ -34,6 +34,10 @@ package nodetools.server
 		{
 			socketO.send(data);
 		}
+		public function sendJson(data:Object):void
+		{
+			send(JSON.stringify(data));
+		}
 		public function onMessage(message:*):void
 		{
 			trace("onMessage");

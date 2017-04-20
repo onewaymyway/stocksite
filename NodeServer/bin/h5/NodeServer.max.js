@@ -379,6 +379,10 @@ var Laya=window.Laya=(function(window,document){
 			this.socketO.send(data);
 		}
 
+		__proto.sendJson=function(data){
+			this.send(JSON.stringify(data));
+		}
+
 		__proto.onMessage=function(message){
 			console.log("onMessage");
 			console.log('received: %s',message);
@@ -1336,15 +1340,13 @@ var Laya=window.Laya=(function(window,document){
 
 		__proto.onMessage=function(message){
 			console.log("StockClient:onMessage",message);
-			var byte;
-			byte=new Byte(message);
 			var str;
-			str=byte.readUTFBytes();
+			str=message;
 			console.log(str);
 		}
 
 		__proto.onOpen=function(){
-			this.send("this is wsserver");
+			this.sendJson({"type":"welcome"});
 		}
 
 		return StockClient;

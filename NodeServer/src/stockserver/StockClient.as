@@ -23,16 +23,18 @@ package stockserver
 		override public function onMessage(message:*):void 
 		{
 			trace("StockClient:onMessage", message);
-			var byte:Byte;
-			byte = new Byte(message);
-			var str:String;
-			str = byte.readUTFBytes();
-			trace(str);
+			var data:Object;
+			data = JSON.parse(message);
+			trace(data);
+			switch(data.type)
+			{
+				
+			}
 		}
 		
 		override public function onOpen():void 
 		{
-			send("this is wsserver");
+			sendJson(MsgTool.createMsg(StockMsg.Welcome));
 		}
 	}
 
