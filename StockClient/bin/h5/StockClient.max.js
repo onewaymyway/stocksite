@@ -399,7 +399,7 @@ var Laya=window.Laya=(function(window,document){
 		__proto.connect=function(serverStr){
 			this.socket=new Socket("127.0.0.1",0,Byte);
 			this.socket.disableInput=true;
-			this.socket.connectByUrl("ws://127.0.0.1:9909");
+			this.socket.connectByUrl(serverStr);
 			this.socket.on("open",this,this.onConnect);
 			this.socket.on("message",this,this.onMessage);
 			this.socket.on("error",this,this.onErr);
@@ -461,7 +461,8 @@ var Laya=window.Laya=(function(window,document){
 		__proto.test=function(){
 			var sk;
 			sk=new StockSocket();
-			sk.connect("ws://127.0.0.1:9909");
+			debugger;
+			sk.connect("ws://orzooo.com:9909");
 		}
 
 		return StockClient;

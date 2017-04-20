@@ -18,7 +18,7 @@ package stock
 		{
 			socket = new Socket("127.0.0.1", 0, Byte);
 			socket.disableInput = true;
-			socket.connectByUrl("ws://127.0.0.1:9909");
+			socket.connectByUrl(serverStr);
 			socket.on(Event.OPEN, this, onConnect);
 			socket.on(Event.MESSAGE, this, onMessage);
 			socket.on(Event.ERROR, this, onErr);
