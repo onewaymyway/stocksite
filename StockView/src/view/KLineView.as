@@ -69,7 +69,11 @@ package view {
 		}
 		private var preMouseX:Number;
 		private var isLongPress:Boolean = false;
-		private function onMMouseDown():void {
+		private var isMyMouseDown:Boolean = false;
+		private function onMMouseDown(e:Event):void {
+			isMyMouseDown = false;
+			if (e.target != this) return;
+			isMyMouseDown = true;
 			preMouseX = Laya.stage.mouseX;
 			isLongPress = false;
 			Laya.timer.once(800, this, longDown);
@@ -95,6 +99,7 @@ package view {
 			dayScroll.value = dayScroll.value + tDayD;
 		}
 		private function onMMouseUp():void {
+			if (!isMyMouseDown) return;
 			Laya.timer.clear(this, longDown);
 			Laya.timer.clear(this, loopChangeDay);
 			if (isLongPress) return;
