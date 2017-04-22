@@ -132,12 +132,12 @@ package stock.views
 			if (maxShowCount > 0)
 			{
 				end = start + maxShowCount;
-				if (end > dataList.length - 1) end = dataList.length - 1;
+				if (end > dataList.length) end = dataList.length;
 			}
 			analysersDoAnalyse(start,end);
 			//trace(analyser);
 			this.graphics.clear();
-			if (end < start) end = dataList.length - 1;
+			if (end < start) end = dataList.length;
 			disDataList = dataList.slice(start, end);
 			
 			drawStockKLine();
@@ -292,12 +292,12 @@ package stock.views
 			"high":
 				{
 					color:"#ffff00",
-					dy:-30
+					dy:-20
 				},
 			"low":
 				{
 					color:"#00ff00",
-					dy:30
+					dy:20
 				}	
 		};
 		public function drawPointsLineEx(iList:Array, lineWidth:Number=2):void
@@ -311,13 +311,22 @@ package stock.views
 			len = iList.length;
 			var tArr:Array;
 			var tSign:String;
+			var exTxt:String;
 			for (i = 0; i < len; i++)
 			{
 				tArr=iList[i];
 				tI = tArr[0];
 				tData = dataList[tI];
 				tSign = tArr[1];
-				drawPoint(tI, tData[tSign], tData[tSign], SignDrawDes[tSign]["dy"],SignDrawDes[tSign]["color"],3);
+				exTxt = tArr[2];
+				if (exTxt)
+				{
+					drawPoint(tI, tData[tSign], exTxt, SignDrawDes[tSign]["dy"],SignDrawDes[tSign]["color"],3);
+				}else
+				{
+					drawPoint(tI, tData[tSign], tData[tSign], SignDrawDes[tSign]["dy"],SignDrawDes[tSign]["color"],3);
+				}
+				
 			}
 			for (i = 1; i < len; i++)
 			{

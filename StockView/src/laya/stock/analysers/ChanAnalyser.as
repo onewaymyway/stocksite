@@ -2,6 +2,7 @@ package laya.stock.analysers {
 	import laya.math.DataUtils;
 	import laya.stock.analysers.chan.ChanKBar;
 	import laya.stock.analysers.chan.ChanKList;
+	import laya.stock.StockTools;
 	
 	/**
 	 * ...
@@ -76,6 +77,7 @@ package laya.stock.analysers {
 			
 			var points:Array;
 			points = [];
+			var preData:ChanKBar;
 			for (i = 0; i < len; i++) {
 				tArr = cPointList[i];
 				tType = tArr[0];
@@ -83,12 +85,27 @@ package laya.stock.analysers {
 				if (tType != DataUtils.K_Unknow) {
 					if (tType == DataUtils.K_Top) {
 						tops.push(ChanKList.getIndex(tDataO.topO));
-						points.push([ChanKList.getIndex(tDataO.topO),"high"]);
+						if (preData)
+						{
+							points.push([ChanKList.getIndex(tDataO.topO),"high"," "+StockTools.getGoodPercent((tDataO.top-preData.bottom)/preData.bottom)+"%"]);
+						}else
+						{
+							points.push([ChanKList.getIndex(tDataO.topO),"high"]);
+						}
+						
 					}
 					if (tType == DataUtils.K_Bottom) {
 						bottoms.push(ChanKList.getIndex(tDataO.bottomO));
-						points.push([ChanKList.getIndex(tDataO.bottomO),"low"]);
+						if (preData)
+						{
+							points.push([ChanKList.getIndex(tDataO.bottomO),"low"," "+StockTools.getGoodPercent((tDataO.bottom-preData.top)/preData.top)+"%"]);
+						}else
+						{
+							points.push([ChanKList.getIndex(tDataO.bottomO),"low"]);
+						}
+						
 					}
+					preData = tDataO;
 				}
 			}
 			resultData["tops"] = tops;
