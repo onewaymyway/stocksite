@@ -308,10 +308,10 @@ package laya.renders {
 				//				}
 				tRec.x -= sprite.pivotX;
 				tRec.y -= sprite.pivotY;
-				tRec.x -= 16;
-				tRec.y -= 16;
-				tRec.width += 32;
-				tRec.height += 32;
+				tRec.x -= 40;
+				tRec.y -= 40;
+				tRec.width += 80;
+				tRec.height += 80;
 				tRec.x = Math.floor(tRec.x + x) - x;
 				tRec.y = Math.floor(tRec.y + y) - y;
 				tRec.width = Math.floor(tRec.width);
