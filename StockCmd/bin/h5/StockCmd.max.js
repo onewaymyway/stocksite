@@ -377,7 +377,7 @@ var Laya=window.Laya=(function(window,document){
 		Laya.stage=null;
 		Laya.timer=null;
 		Laya.loader=null;
-		Laya.version="1.7.2beta";
+		Laya.version="1.7.3beta";
 		Laya.render=null
 		Laya._currentStage=null
 		Laya._isinit=false;
@@ -1391,6 +1391,9 @@ var Laya=window.Laya=(function(window,document){
 			posAnalyser=new PositionLine();
 			posAnalyser.dayCount="130";
 			this.analysers.push(posAnalyser);
+			posAnalyser=new PositionLine();
+			posAnalyser.dayCount="90";
+			this.analysers.push(posAnalyser);
 			posAnalyser300=new PositionLine();
 			posAnalyser300.dayCount="300";
 			this.analysers.push(posAnalyser300);
@@ -1470,7 +1473,7 @@ var Laya=window.Laya=(function(window,document){
 		Config.animationInterval=50;
 		Config.isAntialias=false;
 		Config.isAlpha=false;
-		Config.premultipliedAlpha=false;
+		Config.premultipliedAlpha=true;
 		Config.isStencil=true;
 		Config.preserveDrawingBuffer=false;
 		return Config;
@@ -2324,6 +2327,7 @@ var Laya=window.Laya=(function(window,document){
 			//this._bounds=null;
 			//this._rstBoundPoints=null;
 			//this._vectorgraphArray=null;
+			this._cacheBoundsType=false;
 			this._render=this._renderEmpty;
 			if (Render.isConchNode){
 				this._nativeObj=new _conchGraphics();;
@@ -2381,22 +2385,28 @@ var Laya=window.Laya=(function(window,document){
 
 		/**
 		*获取位置及宽高信息矩阵(比较耗，尽量少用)。
+		*@param realSize 使用图片的真实大小，默认为false
 		*@return 位置与宽高组成的 一个 Rectangle 对象。
 		*/
-		__proto.getBounds=function(){
-			if (!this._bounds || !this._temp || this._temp.length < 1){
-				this._bounds=Rectangle._getWrapRec(this.getBoundPoints(),this._bounds)
+		__proto.getBounds=function(realSize){
+			(realSize===void 0)&& (realSize=false);
+			if (!this._bounds || !this._temp || this._temp.length < 1||realSize!=this._cacheBoundsType){
+				this._bounds=Rectangle._getWrapRec(this.getBoundPoints(realSize),this._bounds)
 			}
+			this._cacheBoundsType=realSize;
 			return this._bounds;
 		}
 
 		/**
 		*@private
+		*@param realSize 使用图片的真实大小，默认为false
 		*获取端点列表。
 		*/
-		__proto.getBoundPoints=function(){
-			if (!this._temp || this._temp.length < 1)
-				this._temp=this._getCmdPoints();
+		__proto.getBoundPoints=function(realSize){
+			(realSize===void 0)&& (realSize=false);
+			if (!this._temp || this._temp.length < 1||realSize!=this._cacheBoundsType)
+				this._temp=this._getCmdPoints(realSize);
+			this._cacheBoundsType=realSize;
 			return this._rstBoundPoints=Utils.copyArray(this._rstBoundPoints,this._temp);
 		}
 
@@ -2406,7 +2416,8 @@ var Laya=window.Laya=(function(window,document){
 			this._cmds.push(a);
 		}
 
-		__proto._getCmdPoints=function(){
+		__proto._getCmdPoints=function(realSize){
+			(realSize===void 0)&& (realSize=false);
 			var context=Render._context;
 			var cmds=this._cmds;
 			var rst;
@@ -2480,12 +2491,21 @@ var Laya=window.Laya=(function(window,document){
 						break ;
 					case context._drawTexture:
 						tex=cmd[0];
-						var offX=tex.offsetX>0?tex.offsetX:0;
-						var offY=tex.offsetY>0?tex.offsetY:0;
-						if (cmd[3] && cmd[4]){
-							Graphics._addPointArrToRst(rst,Rectangle._getBoundPointS(cmd[1]-offX,cmd[2]-offY,cmd[3]+tex.sourceWidth-tex.width,cmd[4]+tex.sourceHeight-tex.height),tMatrix);
-							}else {
-							Graphics._addPointArrToRst(rst,Rectangle._getBoundPointS(cmd[1]-offX,cmd[2]-offY,tex.width+tex.sourceWidth-tex.width,tex.height+tex.sourceHeight-tex.height),tMatrix);
+						if (realSize){
+							if (cmd[3] && cmd[4]){
+								Graphics._addPointArrToRst(rst,Rectangle._getBoundPointS(cmd[1],cmd[2],cmd[3],cmd[4]),tMatrix);
+								}else {
+								var tex=cmd[0];
+								Graphics._addPointArrToRst(rst,Rectangle._getBoundPointS(cmd[1],cmd[2],tex.width,tex.height),tMatrix);
+							}
+							}else{
+							var offX=tex.offsetX>0?tex.offsetX:0;
+							var offY=tex.offsetY>0?tex.offsetY:0;
+							if (cmd[3] && cmd[4]){
+								Graphics._addPointArrToRst(rst,Rectangle._getBoundPointS(cmd[1]-offX,cmd[2]-offY,cmd[3]+tex.sourceWidth-tex.width,cmd[4]+tex.sourceHeight-tex.height),tMatrix);
+								}else {
+								Graphics._addPointArrToRst(rst,Rectangle._getBoundPointS(cmd[1]-offX,cmd[2]-offY,tex.width+tex.sourceWidth-tex.width,tex.height+tex.sourceHeight-tex.height),tMatrix);
+							}
 						}
 						break ;
 					case context._fillTexture:
@@ -2505,13 +2525,22 @@ var Laya=window.Laya=(function(window,document){
 							}else {
 							drawMatrix=tMatrix;
 						}
-						tex=cmd[0];
-						offX=tex.offsetX>0?tex.offsetX:0;
-						offY=tex.offsetY>0?tex.offsetY:0;
-						if (cmd[3] && cmd[4]){
-							Graphics._addPointArrToRst(rst,Rectangle._getBoundPointS(cmd[1]-offX,cmd[2]-offY,cmd[3]+tex.sourceWidth-tex.width,cmd[4]+tex.sourceHeight-tex.height),tMatrix);
-							}else {
-							Graphics._addPointArrToRst(rst,Rectangle._getBoundPointS(cmd[1]-offX,cmd[2]-offY,tex.width+tex.sourceWidth-tex.width,tex.height+tex.sourceHeight-tex.height),tMatrix);
+						if (realSize){
+							if (cmd[3] && cmd[4]){
+								Graphics._addPointArrToRst(rst,Rectangle._getBoundPointS(cmd[1],cmd[2],cmd[3],cmd[4]),drawMatrix);
+								}else {
+								tex=cmd[0];
+								Graphics._addPointArrToRst(rst,Rectangle._getBoundPointS(cmd[1],cmd[2],tex.width,tex.height),drawMatrix);
+							}
+							}else{
+							tex=cmd[0];
+							offX=tex.offsetX>0?tex.offsetX:0;
+							offY=tex.offsetY>0?tex.offsetY:0;
+							if (cmd[3] && cmd[4]){
+								Graphics._addPointArrToRst(rst,Rectangle._getBoundPointS(cmd[1]-offX,cmd[2]-offY,cmd[3]+tex.sourceWidth-tex.width,cmd[4]+tex.sourceHeight-tex.height),tMatrix);
+								}else {
+								Graphics._addPointArrToRst(rst,Rectangle._getBoundPointS(cmd[1]-offX,cmd[2]-offY,tex.width+tex.sourceWidth-tex.width,tex.height+tex.sourceHeight-tex.height),tMatrix);
+							}
 						}
 						break ;
 					case context._drawRect:
@@ -3780,7 +3809,7 @@ var Laya=window.Laya=(function(window,document){
 						}
 						break ;
 					case "touchmove":;
-						var touchemoves=evt.changedTouches;
+						var touchemoves=evt.targetTouches;
 						for (j=0,n=touchemoves.length;j < n;j++){
 							_this.initEvent(touchemoves[j],evt);
 							_this.check(_this._stage,_this.mouseX,_this.mouseY,_this.onMouseMove);
@@ -5448,7 +5477,7 @@ var Laya=window.Laya=(function(window,document){
 		var __proto=Render.prototype;
 		/**@private */
 		__proto._onVisibilitychange=function(){
-			if (Laya.stage.isVisibility){
+			if (!Laya.stage.isVisibility){
 				this._timeId=Browser.window.setInterval(this._enterFrame,1000);
 				}else if (this._timeId !=0){
 				Browser.window.clearInterval(this._timeId);
@@ -8248,8 +8277,10 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		Stat.hide=function(){
-			Browser.removeElement(Stat._canvas.source);
-			Laya.timer.clear(Stat,Stat.loop);
+			if (Stat._canvas){
+				Browser.removeElement(Stat._canvas.source);
+				Laya.timer.clear(Stat,Stat.loop);
+			}
 		}
 
 		Stat.clear=function(){
@@ -16219,6 +16250,7 @@ var Laya=window.Laya=(function(window,document){
 
 		/**
 		*<p>销毁此对象。destroy对象默认会把自己从父节点移除，并且清理自身引用关系，等待js自动垃圾回收机制回收。destroy后不能再使用。</p>
+		*destroy时会移除自身的事情监听，自身的timer监听，移除子对象及从父节点移除自己。
 		*@param destroyChild 是否同时销毁子节点，若值为true,则销毁子节点，否则不销毁子节点。
 		*/
 		__proto.destroy=function(destroyChild){
@@ -16232,6 +16264,7 @@ var Laya=window.Laya=(function(window,document){
 			this._childs=null;
 			this._$P=null;
 			this.offAll();
+			this.timer.clearAll(this);
 		}
 
 		/**
@@ -18329,9 +18362,13 @@ var Laya=window.Laya=(function(window,document){
 
 	/**
 	*<p> <code>LoaderManager</code> 类用于用于批量加载资源、数据。</p>
-	*<p>批量加载器，单例，可以通过Laya.loader访问。</p>
-	*多线程(默认5个线程)，5个优先级(0最快，4最慢,默认为1)
-	*某个资源加载失败后，会按照最低优先级重试加载(属性retryNum决定重试几次)，如果重试后失败，则调用complete函数，并返回null
+	*<p>批量加载器，单例，可以通过Laya.loader访问，注意大小写。</p>
+	*多线程：默认5个线程，可以通过maxLoader属性修改线程数量
+	*多优先级：默认5个优先级，0最快，4最慢，默认为1
+	*重复过滤：自动过滤重复加载以及已经加载过的地址，防止重复加载
+	*错误重试：资源加载失败后，会重试加载（按照最低优先级），retryNum设定加载失败后重试次数，retryDelay设定加载重试的时间间隔
+	*如果单个地址加载方式，加载重试后仍然失败，则调用complete回调，并返回null。如果多地址加载方式，重试后仍然失败，则调用complete回调，返回为success=false
+	*全部队列加载完成，会派发complete事件，如果队列中任意一个加载失败，会派发error事件
 	*/
 	//class laya.net.LoaderManager extends laya.events.EventDispatcher
 	var LoaderManager=(function(_super){
@@ -18357,8 +18394,8 @@ var Laya=window.Laya=(function(window,document){
 		*@param url 资源地址或者数组，比如[{url:xx,clas:xx,priority:xx,params:xx},{url:xx,clas:xx,priority:xx,params:xx}]
 		*@param progress 进度回调，回调参数为当前文件加载的进度信息(0-1)。
 		*@param clas 资源类名，比如Texture
-		*@param type 资源类型
-		*@param priority 优先级
+		*@param type 资源类型，比如：Loader.IMAGE
+		*@param priority 优先级，默认5个优先级，0最快，4最慢，默认为1
 		*@param cache 是否缓存
 		*@return 返回资源对象
 		*/
@@ -18421,7 +18458,7 @@ var Laya=window.Laya=(function(window,document){
 						if (complete)complete.run();
 					}
 					if (cache){
-						LoaderManager.cacheRes(url,item);
+						this.cacheRes(url,item);
 						item.url=url;
 					}
 				}
@@ -18434,13 +18471,13 @@ var Laya=window.Laya=(function(window,document){
 
 		/**
 		*加载资源。
-		*@param url 地址，或者资源对象数组(简单数组：["a.png","b.png"]，复杂数组[{url:"a.png",type:Loader.IMAGE,size:100,priority:1},{url:"b.json",type:Loader.JSON,size:50,priority:1}])。
+		*@param url 单个资源地址，或者资源地址数组(简单数组：["a.png","b.png"]，复杂数组[{url:"a.png",type:Loader.IMAGE,size:100,priority:1},{url:"b.json",type:Loader.JSON,size:50,priority:1}])。
 		*@param complete 结束回调，如果加载失败，则返回 null 。
 		*@param progress 进度回调，回调参数为当前文件加载的进度信息(0-1)。
-		*@param type 资源类型。
-		*@param priority 优先级，0-4，五个优先级，0优先级最高，默认为1。
+		*@param type 资源类型。比如：Loader.IMAGE
+		*@param priority 优先级，0-4，5个优先级，0优先级最高，默认为1。
 		*@param cache 是否缓存加载结果。
-		*@param group 分组。
+		*@param group 分组，方便对资源进行管理。
 		*@param ignoreCache 是否忽略缓存，强制重新加载
 		*@return 此 LoaderManager 对象。
 		*/
@@ -18554,6 +18591,32 @@ var Laya=window.Laya=(function(window,document){
 			return Loader.getRes(url);
 		}
 
+		/**
+		*缓存资源。
+		*@param url 资源地址。
+		*@param data 要缓存的内容。
+		*/
+		__proto.cacheRes=function(url,data){
+			Loader.cacheRes(url,data);
+		}
+
+		/**
+		*设置资源分组。
+		*@param url 资源地址。
+		*@param group 分组名
+		*/
+		__proto.setGroup=function(url,group){
+			Loader.setGroup(url,group);
+		}
+
+		/**
+		*根据分组清理资源
+		*@param group 分组名
+		*/
+		__proto.clearResByGroup=function(group){
+			Loader.clearResByGroup(group);
+		}
+
 		/**清理当前未完成的加载，所有未加载的内容全部停止加载。*/
 		__proto.clearUnLoaded=function(){
 			for (var i=0;i < this._maxPriority;i++){
@@ -18612,11 +18675,10 @@ var Laya=window.Laya=(function(window,document){
 			var loadedCount=0;
 			var totalSize=0;
 			var items=[];
-			var defaultType=type || "image";
 			var success=true;
 			for (var i=0;i < itemCount;i++){
 				var item=arr[i];
-				if ((typeof item=='string'))item={url:item,type:defaultType,size:1,priority:priority};
+				if ((typeof item=='string'))item={url:item,type:type,size:1,priority:priority};
 				if (!item.size)item.size=1;
 				item.progress=0;
 				totalSize+=item.size;
@@ -19297,8 +19359,15 @@ var Laya=window.Laya=(function(window,document){
 				var bottom=sizeGrid[2];
 				var left=sizeGrid[3];
 				var repeat=sizeGrid[4];
+				var needClip=false;
 				if (left+right > width){
-					right=0;
+					var clipWidth=width;
+					needClip=true;
+					width=left+right;
+				}
+				if (needClip){
+					this.save();
+					this.clipRect(0,0,clipWidth,height);
 				}
 				left && top && this.drawTexture(AutoBitmap.getTexture(source,0,0,left,top),0,0,left,top);
 				right && top && this.drawTexture(AutoBitmap.getTexture(source,sw-right,0,right,top),width-right,0,right,top);
@@ -19309,6 +19378,7 @@ var Laya=window.Laya=(function(window,document){
 				left && this.drawBitmap(repeat,AutoBitmap.getTexture(source,0,top,left,sh-top-bottom),0,top,left,height-top-bottom);
 				right && this.drawBitmap(repeat,AutoBitmap.getTexture(source,sw-right,top,right,sh-top-bottom),width-right,top,right,height-top-bottom);
 				this.drawBitmap(repeat,AutoBitmap.getTexture(source,left,top,sw-left-right,sh-top-bottom),left,top,width-left-right,height-top-bottom);
+				if (needClip)this.restore();
 				if (this.autoCacheCmd && !Render.isConchApp)AutoBitmap.cmdCaches[key]=this.cmds;
 			}
 			this._repaint();
@@ -20605,11 +20675,13 @@ var Laya=window.Laya=(function(window,document){
 
 		/**
 		*返回此实例中的绘图对象（ <code>Graphics</code> ）的显示区域，不包括子对象。
+		*@param realSize 使用图片的真实大小，默认为false
 		*@return 一个 Rectangle 对象，表示获取到的显示区域。
 		*/
-		__proto.getGraphicBounds=function(){
+		__proto.getGraphicBounds=function(realSize){
+			(realSize===void 0)&& (realSize=false);
 			if (!this._graphics)return Rectangle.TEMP.setTo(0,0,0,0);
-			return this._graphics.getBounds();
+			return this._graphics.getBounds(realSize);
 		}
 
 		/**
@@ -20808,7 +20880,20 @@ var Laya=window.Laya=(function(window,document){
 
 		/**
 		*绘制 当前<code>Sprite</code> 到 <code>Canvas</code> 上，并返回一个HtmlCanvas
-		*注意：HtmlCanvas不是浏览器原生的canvas对象，可以通过canvas.source来获取原生的canvas对象。
+		*绘制的结果可以当作图片源，再次绘制到其他Sprite里面，示例：
+		*
+		*var htmlCanvas:HTMLCanvas=sprite.drawToCanvas(100,100,0,0);//把精灵绘制到canvas上面
+		*var texture:Texture=new Texture(htmlCanvas);//使用htmlCanvas创建Texture
+		*var sp:Sprite=new Sprite().pos(0,200);//创建精灵并把它放倒200位置
+		*sp.graphics.drawTexture(texture);//把截图绘制到精灵上
+		*Laya.stage.addChild(sp);//把精灵显示到舞台
+		*
+		*也可以获取原始图片数据，分享到网上，从而实现截图效果，示例：
+		*
+		*var htmlCanvas:HTMLCanvas=sprite.drawToCanvas(100,100,0,0);//把精灵绘制到canvas上面
+		*var canvas:*=htmlCanvas.getCanvas();//获取原生的canvas对象
+		*trace(canvas.toDataURL("image/png"));//打印图片base64信息，可以发给服务器或者保存为图片
+		*
 		*@param canvasWidth 画布宽度。
 		*@param canvasHeight 画布高度。
 		*@param x 绘制的 X 轴偏移量。
@@ -23287,6 +23372,7 @@ var Laya=window.Laya=(function(window,document){
 			this.canvasRotation=false;
 			this.canvasDegree=0;
 			this.renderingEnabled=true;
+			this.screenAdaptationEnabled=true;
 			this._screenMode="none";
 			this._scaleMode="noscale";
 			this._alignV="top";
@@ -23386,12 +23472,12 @@ var Laya=window.Laya=(function(window,document){
 
 		/**@private */
 		__proto._resetCanvas=function(){
+			if (!this.screenAdaptationEnabled)return;
 			var canvas=Render._mainCanvas;
 			var canvasStyle=canvas.source.style;
 			canvas.size(1,1);
 			canvasStyle.transform=canvasStyle.webkitTransform=canvasStyle.msTransform=canvasStyle.mozTransform=canvasStyle.oTransform="";
-			this.visible=false;
-			Laya.timer.once(100,this,this._changeCanvasSize);
+			this._changeCanvasSize();
 		}
 
 		/**
@@ -23447,13 +23533,11 @@ var Laya=window.Laya=(function(window,document){
 					break ;
 				case "fixedwidth":
 					scaleY=scaleX;
-					this._height=screenHeight / scaleX;
-					canvasHeight=Math.round(screenHeight / scaleX);
+					this._height=canvasHeight=Math.round(screenHeight / scaleX);
 					break ;
 				case "fixedheight":
 					scaleX=scaleY;
-					this._width=screenWidth / scaleY;
-					canvasWidth=Math.round(screenWidth / scaleY);
+					this._width=canvasWidth=Math.round(screenWidth / scaleY);
 					break ;
 				}
 			scaleX *=this.scaleX;
@@ -23548,7 +23632,7 @@ var Laya=window.Laya=(function(window,document){
 			}
 			this._renderCount++;
 			Render.isFlash && this.repaint();
-			if (!this.visible){
+			if (!this._style.visible){
 				if (this._renderCount % 5===0){
 					Stat.loopCount++;
 					MouseManager.instance.runEvent();
@@ -23678,7 +23762,7 @@ var Laya=window.Laya=(function(window,document){
 		});
 
 		__getset(0,__proto,'transform',function(){
-			if (this._tfChanged)/*no*/this._adjustTransform();
+			if (this._tfChanged)this._adjustTransform();
 			return this._transform=this._transform|| Matrix.create();
 		},_super.prototype._$set_transform);
 
@@ -24375,7 +24459,7 @@ var Laya=window.Laya=(function(window,document){
 			},function(value){
 			this._dataSource=value;
 			for (var prop in this._dataSource){
-				if (this.hasOwnProperty(prop)){
+				if (this.hasOwnProperty(prop)&& !((typeof (this[prop])=='function'))){
 					this[prop]=this._dataSource[prop];
 				}
 			}
@@ -24712,6 +24796,10 @@ var Laya=window.Laya=(function(window,document){
 				this._ctx && this._ctx.size(w,h);
 				this._source && (this._source.height=h,this._source.width=w);
 			}
+		}
+
+		__proto.getCanvas=function(){
+			return this._source;
 		}
 
 		/**
@@ -25419,11 +25507,11 @@ var Laya=window.Laya=(function(window,document){
 			(end===void 0)&& (end=-1);
 			if (this.maxShowCount > 0){
 				end=start+this.maxShowCount;
-				if (end > this.dataList.length-1)end=this.dataList.length-1;
+				if (end > this.dataList.length)end=this.dataList.length;
 			}
 			this.analysersDoAnalyse(start,end);
 			this.graphics.clear();
-			if (end < start)end=this.dataList.length-1;
+			if (end < start)end=this.dataList.length;
 			this.disDataList=this.dataList.slice(start,end);
 			this.drawStockKLine();
 			this.drawGrid();
@@ -27054,7 +27142,7 @@ var Laya=window.Laya=(function(window,document){
 			for (var name in value){
 				var comp=this.getChildByName(name);
 				if (comp)comp.dataSource=value[name];
-				else if (this.hasOwnProperty(name))this[name]=value[name];
+				else if (this.hasOwnProperty(name)&& !((typeof (this[name])=='function')))this[name]=value[name];
 			}
 		});
 
@@ -27188,6 +27276,8 @@ var Laya=window.Laya=(function(window,document){
 				this._text.overflow=Text.HIDDEN;
 				this._text.align="center";
 				this._text.valign="middle";
+				this._text.width=this._width;
+				this._text.height=this._height;
 			}
 		}
 
@@ -35127,66 +35217,6 @@ var Laya=window.Laya=(function(window,document){
 
 
 	/**
-	*<code>Radio</code> 控件使用户可在一组互相排斥的选择中做出一种选择。
-	*用户一次只能选择 <code>Radio</code> 组中的一个成员。选择未选中的组成员将取消选择该组中当前所选的 <code>Radio</code> 控件。
-	*@see laya.ui.RadioGroup
-	*/
-	//class laya.ui.Radio extends laya.ui.Button
-	var Radio=(function(_super){
-		function Radio(skin,label){
-			this._value=null;
-			(label===void 0)&& (label="");
-			Radio.__super.call(this,skin,label);
-		}
-
-		__class(Radio,'laya.ui.Radio',_super);
-		var __proto=Radio.prototype;
-		/**@inheritDoc */
-		__proto.destroy=function(destroyChild){
-			(destroyChild===void 0)&& (destroyChild=true);
-			_super.prototype.destroy.call(this,destroyChild);
-			this._value=null;
-		}
-
-		/**@inheritDoc */
-		__proto.preinitialize=function(){
-			laya.ui.Component.prototype.preinitialize.call(this);
-			this.toggle=false;
-			this._autoSize=false;
-		}
-
-		/**@inheritDoc */
-		__proto.initialize=function(){
-			_super.prototype.initialize.call(this);
-			this.createText();
-			this._text.align="left";
-			this._text.valign="top";
-			this._text.width=0;
-			this.on("click",this,this.onClick);
-		}
-
-		/**
-		*@private
-		*对象的<code>Event.CLICK</code>事件侦听处理函数。
-		*/
-		__proto.onClick=function(e){
-			this.selected=true;
-		}
-
-		/**
-		*获取或设置 <code>Radio</code> 关联的可选用户定义值。
-		*/
-		__getset(0,__proto,'value',function(){
-			return this._value !=null ? this._value :this.label;
-			},function(obj){
-			this._value=obj;
-		});
-
-		return Radio;
-	})(Button)
-
-
-	/**
 	*...
 	*@author ww
 	*/
@@ -35301,6 +35331,66 @@ var Laya=window.Laya=(function(window,document){
 		SelectInfosView._I=null
 		return SelectInfosView;
 	})(UIViewBase)
+
+
+	/**
+	*<code>Radio</code> 控件使用户可在一组互相排斥的选择中做出一种选择。
+	*用户一次只能选择 <code>Radio</code> 组中的一个成员。选择未选中的组成员将取消选择该组中当前所选的 <code>Radio</code> 控件。
+	*@see laya.ui.RadioGroup
+	*/
+	//class laya.ui.Radio extends laya.ui.Button
+	var Radio=(function(_super){
+		function Radio(skin,label){
+			this._value=null;
+			(label===void 0)&& (label="");
+			Radio.__super.call(this,skin,label);
+		}
+
+		__class(Radio,'laya.ui.Radio',_super);
+		var __proto=Radio.prototype;
+		/**@inheritDoc */
+		__proto.destroy=function(destroyChild){
+			(destroyChild===void 0)&& (destroyChild=true);
+			_super.prototype.destroy.call(this,destroyChild);
+			this._value=null;
+		}
+
+		/**@inheritDoc */
+		__proto.preinitialize=function(){
+			laya.ui.Component.prototype.preinitialize.call(this);
+			this.toggle=false;
+			this._autoSize=false;
+		}
+
+		/**@inheritDoc */
+		__proto.initialize=function(){
+			_super.prototype.initialize.call(this);
+			this.createText();
+			this._text.align="left";
+			this._text.valign="top";
+			this._text.width=0;
+			this.on("click",this,this.onClick);
+		}
+
+		/**
+		*@private
+		*对象的<code>Event.CLICK</code>事件侦听处理函数。
+		*/
+		__proto.onClick=function(e){
+			this.selected=true;
+		}
+
+		/**
+		*获取或设置 <code>Radio</code> 关联的可选用户定义值。
+		*/
+		__getset(0,__proto,'value',function(){
+			return this._value !=null ? this._value :this.label;
+			},function(obj){
+			this._value=obj;
+		});
+
+		return Radio;
+	})(Button)
 
 
 	/**
@@ -35933,107 +36023,6 @@ var Laya=window.Laya=(function(window,document){
 
 
 	/**
-	*使用 <code>VSlider</code> 控件，用户可以通过在滑块轨道的终点之间移动滑块来选择值。
-	*<p> <code>VSlider</code> 控件采用垂直方向。滑块轨道从下往上扩展，而标签位于轨道的左右两侧。</p>
-	*
-	*@example 以下示例代码，创建了一个 <code>VSlider</code> 实例。
-	*<listing version="3.0">
-	*package
-	*{
-		*import laya.ui.HSlider;
-		*import laya.ui.VSlider;
-		*import laya.utils.Handler;
-		*public class VSlider_Example
-		*{
-			*private var vSlider:VSlider;
-			*public function VSlider_Example()
-			*{
-				*Laya.init(640,800);//设置游戏画布宽高。
-				*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
-				*Laya.loader.load(["resource/ui/vslider.png","resource/ui/vslider$bar.png"],Handler.create(this,onLoadComplete));//加载资源。
-				*}
-			*private function onLoadComplete():void
-			*{
-				*vSlider=new VSlider();//创建一个 VSlider 类的实例对象 vSlider 。
-				*vSlider.skin="resource/ui/vslider.png";//设置 vSlider 的皮肤。
-				*vSlider.min=0;//设置 vSlider 最低位置值。
-				*vSlider.max=10;//设置 vSlider 最高位置值。
-				*vSlider.value=2;//设置 vSlider 当前位置值。
-				*vSlider.tick=1;//设置 vSlider 刻度值。
-				*vSlider.x=100;//设置 vSlider 对象的属性 x 的值，用于控制 vSlider 对象的显示位置。
-				*vSlider.y=100;//设置 vSlider 对象的属性 y 的值，用于控制 vSlider 对象的显示位置。
-				*vSlider.changeHandler=new Handler(this,onChange);//设置 vSlider 位置变化处理器。
-				*Laya.stage.addChild(vSlider);//把 vSlider 添加到显示列表。
-				*}
-			*private function onChange(value:Number):void
-			*{
-				*trace("滑块的位置： value="+value);
-				*}
-			*}
-		*}
-	*</listing>
-	*<listing version="3.0">
-	*Laya.init(640,800);//设置游戏画布宽高
-	*Laya.stage.bgColor="#efefef";//设置画布的背景颜色
-	*var vSlider;
-	*Laya.loader.load(["resource/ui/vslider.png","resource/ui/vslider$bar.png"],laya.utils.Handler.create(this,onLoadComplete));//加载资源。
-	*function onLoadComplete(){
-		*vSlider=new laya.ui.VSlider();//创建一个 VSlider 类的实例对象 vSlider 。
-		*vSlider.skin="resource/ui/vslider.png";//设置 vSlider 的皮肤。
-		*vSlider.min=0;//设置 vSlider 最低位置值。
-		*vSlider.max=10;//设置 vSlider 最高位置值。
-		*vSlider.value=2;//设置 vSlider 当前位置值。
-		*vSlider.tick=1;//设置 vSlider 刻度值。
-		*vSlider.x=100;//设置 vSlider 对象的属性 x 的值，用于控制 vSlider 对象的显示位置。
-		*vSlider.y=100;//设置 vSlider 对象的属性 y 的值，用于控制 vSlider 对象的显示位置。
-		*vSlider.changeHandler=new laya.utils.Handler(this,onChange);//设置 vSlider 位置变化处理器。
-		*Laya.stage.addChild(vSlider);//把 vSlider 添加到显示列表。
-		*}
-	*function onChange(value){
-		*console.log("滑块的位置： value="+value);
-		*}
-	*</listing>
-	*<listing version="3.0">
-	*import HSlider=laya.ui.HSlider;
-	*import VSlider=laya.ui.VSlider;
-	*import Handler=laya.utils.Handler;
-	*class VSlider_Example {
-		*private vSlider:VSlider;
-		*constructor(){
-			*Laya.init(640,800);//设置游戏画布宽高。
-			*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
-			*Laya.loader.load(["resource/ui/vslider.png","resource/ui/vslider$bar.png"],Handler.create(this,this.onLoadComplete));//加载资源。
-			*}
-		*private onLoadComplete():void {
-			*this.vSlider=new VSlider();//创建一个 VSlider 类的实例对象 vSlider 。
-			*this.vSlider.skin="resource/ui/vslider.png";//设置 vSlider 的皮肤。
-			*this.vSlider.min=0;//设置 vSlider 最低位置值。
-			*this.vSlider.max=10;//设置 vSlider 最高位置值。
-			*this.vSlider.value=2;//设置 vSlider 当前位置值。
-			*this.vSlider.tick=1;//设置 vSlider 刻度值。
-			*this.vSlider.x=100;//设置 vSlider 对象的属性 x 的值，用于控制 vSlider 对象的显示位置。
-			*this.vSlider.y=100;//设置 vSlider 对象的属性 y 的值，用于控制 vSlider 对象的显示位置。
-			*this.vSlider.changeHandler=new Handler(this,this.onChange);//设置 vSlider 位置变化处理器。
-			*Laya.stage.addChild(this.vSlider);//把 vSlider 添加到显示列表。
-			*}
-		*private onChange(value:number):void {
-			*console.log("滑块的位置： value="+value);
-			*}
-		*}
-	*</listing>
-	*@see laya.ui.Slider
-	*/
-	//class laya.ui.VSlider extends laya.ui.Slider
-	var VSlider=(function(_super){
-		function VSlider(){VSlider.__super.call(this);;
-		};
-
-		__class(VSlider,'laya.ui.VSlider',_super);
-		return VSlider;
-	})(Slider)
-
-
-	/**
 	*<code>TextInput</code> 类用于创建显示对象以显示和输入文本。
 	*
 	*@example 以下示例代码，创建了一个 <code>TextInput</code> 实例。
@@ -36346,6 +36335,107 @@ var Laya=window.Laya=(function(window,document){
 
 		return TextInput;
 	})(Label)
+
+
+	/**
+	*使用 <code>VSlider</code> 控件，用户可以通过在滑块轨道的终点之间移动滑块来选择值。
+	*<p> <code>VSlider</code> 控件采用垂直方向。滑块轨道从下往上扩展，而标签位于轨道的左右两侧。</p>
+	*
+	*@example 以下示例代码，创建了一个 <code>VSlider</code> 实例。
+	*<listing version="3.0">
+	*package
+	*{
+		*import laya.ui.HSlider;
+		*import laya.ui.VSlider;
+		*import laya.utils.Handler;
+		*public class VSlider_Example
+		*{
+			*private var vSlider:VSlider;
+			*public function VSlider_Example()
+			*{
+				*Laya.init(640,800);//设置游戏画布宽高。
+				*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
+				*Laya.loader.load(["resource/ui/vslider.png","resource/ui/vslider$bar.png"],Handler.create(this,onLoadComplete));//加载资源。
+				*}
+			*private function onLoadComplete():void
+			*{
+				*vSlider=new VSlider();//创建一个 VSlider 类的实例对象 vSlider 。
+				*vSlider.skin="resource/ui/vslider.png";//设置 vSlider 的皮肤。
+				*vSlider.min=0;//设置 vSlider 最低位置值。
+				*vSlider.max=10;//设置 vSlider 最高位置值。
+				*vSlider.value=2;//设置 vSlider 当前位置值。
+				*vSlider.tick=1;//设置 vSlider 刻度值。
+				*vSlider.x=100;//设置 vSlider 对象的属性 x 的值，用于控制 vSlider 对象的显示位置。
+				*vSlider.y=100;//设置 vSlider 对象的属性 y 的值，用于控制 vSlider 对象的显示位置。
+				*vSlider.changeHandler=new Handler(this,onChange);//设置 vSlider 位置变化处理器。
+				*Laya.stage.addChild(vSlider);//把 vSlider 添加到显示列表。
+				*}
+			*private function onChange(value:Number):void
+			*{
+				*trace("滑块的位置： value="+value);
+				*}
+			*}
+		*}
+	*</listing>
+	*<listing version="3.0">
+	*Laya.init(640,800);//设置游戏画布宽高
+	*Laya.stage.bgColor="#efefef";//设置画布的背景颜色
+	*var vSlider;
+	*Laya.loader.load(["resource/ui/vslider.png","resource/ui/vslider$bar.png"],laya.utils.Handler.create(this,onLoadComplete));//加载资源。
+	*function onLoadComplete(){
+		*vSlider=new laya.ui.VSlider();//创建一个 VSlider 类的实例对象 vSlider 。
+		*vSlider.skin="resource/ui/vslider.png";//设置 vSlider 的皮肤。
+		*vSlider.min=0;//设置 vSlider 最低位置值。
+		*vSlider.max=10;//设置 vSlider 最高位置值。
+		*vSlider.value=2;//设置 vSlider 当前位置值。
+		*vSlider.tick=1;//设置 vSlider 刻度值。
+		*vSlider.x=100;//设置 vSlider 对象的属性 x 的值，用于控制 vSlider 对象的显示位置。
+		*vSlider.y=100;//设置 vSlider 对象的属性 y 的值，用于控制 vSlider 对象的显示位置。
+		*vSlider.changeHandler=new laya.utils.Handler(this,onChange);//设置 vSlider 位置变化处理器。
+		*Laya.stage.addChild(vSlider);//把 vSlider 添加到显示列表。
+		*}
+	*function onChange(value){
+		*console.log("滑块的位置： value="+value);
+		*}
+	*</listing>
+	*<listing version="3.0">
+	*import HSlider=laya.ui.HSlider;
+	*import VSlider=laya.ui.VSlider;
+	*import Handler=laya.utils.Handler;
+	*class VSlider_Example {
+		*private vSlider:VSlider;
+		*constructor(){
+			*Laya.init(640,800);//设置游戏画布宽高。
+			*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
+			*Laya.loader.load(["resource/ui/vslider.png","resource/ui/vslider$bar.png"],Handler.create(this,this.onLoadComplete));//加载资源。
+			*}
+		*private onLoadComplete():void {
+			*this.vSlider=new VSlider();//创建一个 VSlider 类的实例对象 vSlider 。
+			*this.vSlider.skin="resource/ui/vslider.png";//设置 vSlider 的皮肤。
+			*this.vSlider.min=0;//设置 vSlider 最低位置值。
+			*this.vSlider.max=10;//设置 vSlider 最高位置值。
+			*this.vSlider.value=2;//设置 vSlider 当前位置值。
+			*this.vSlider.tick=1;//设置 vSlider 刻度值。
+			*this.vSlider.x=100;//设置 vSlider 对象的属性 x 的值，用于控制 vSlider 对象的显示位置。
+			*this.vSlider.y=100;//设置 vSlider 对象的属性 y 的值，用于控制 vSlider 对象的显示位置。
+			*this.vSlider.changeHandler=new Handler(this,this.onChange);//设置 vSlider 位置变化处理器。
+			*Laya.stage.addChild(this.vSlider);//把 vSlider 添加到显示列表。
+			*}
+		*private onChange(value:number):void {
+			*console.log("滑块的位置： value="+value);
+			*}
+		*}
+	*</listing>
+	*@see laya.ui.Slider
+	*/
+	//class laya.ui.VSlider extends laya.ui.Slider
+	var VSlider=(function(_super){
+		function VSlider(){VSlider.__super.call(this);;
+		};
+
+		__class(VSlider,'laya.ui.VSlider',_super);
+		return VSlider;
+	})(Slider)
 
 
 	//class laya.debug.ui.debugui.comps.ListItemUI extends laya.ui.View
@@ -37659,25 +37749,6 @@ var Laya=window.Laya=(function(window,document){
 	*...
 	*@author ww
 	*/
-	//class laya.debug.view.nodeInfo.nodetree.FindNodeSmall extends laya.debug.ui.debugui.FindNodeSmallUI
-	var FindNodeSmall=(function(_super){
-		function FindNodeSmall(){
-			FindNodeSmall.__super.call(this);
-			Base64AtlasManager.replaceRes(FindNodeSmallUI.uiView);
-			this.createView(FindNodeSmallUI.uiView);
-		}
-
-		__class(FindNodeSmall,'laya.debug.view.nodeInfo.nodetree.FindNodeSmall',_super);
-		var __proto=FindNodeSmall.prototype;
-		__proto.createChildren=function(){}
-		return FindNodeSmall;
-	})(FindNodeSmallUI)
-
-
-	/**
-	*...
-	*@author ww
-	*/
 	//class laya.debug.view.nodeInfo.nodetree.FindNode extends laya.debug.ui.debugui.FindNodeUI
 	var FindNode=(function(_super){
 		function FindNode(){
@@ -37694,6 +37765,25 @@ var Laya=window.Laya=(function(window,document){
 
 		return FindNode;
 	})(FindNodeUI)
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class laya.debug.view.nodeInfo.nodetree.FindNodeSmall extends laya.debug.ui.debugui.FindNodeSmallUI
+	var FindNodeSmall=(function(_super){
+		function FindNodeSmall(){
+			FindNodeSmall.__super.call(this);
+			Base64AtlasManager.replaceRes(FindNodeSmallUI.uiView);
+			this.createView(FindNodeSmallUI.uiView);
+		}
+
+		__class(FindNodeSmall,'laya.debug.view.nodeInfo.nodetree.FindNodeSmall',_super);
+		var __proto=FindNodeSmall.prototype;
+		__proto.createChildren=function(){}
+		return FindNodeSmall;
+	})(FindNodeSmallUI)
 
 
 	/**
@@ -38924,8 +39014,7 @@ var Laya=window.Laya=(function(window,document){
 5 file:///D:/stocksite.git/trunk/StockCmd/src/nodetools/devices/FileTools.as (642):warning:Alert.show This variable is not defined.
 6 file:///D:/stocksite.git/trunk/StockCmd/src/StockCmdTool.as (41):warning:scriptPath This variable is not defined.
 7 file:///D:/stocksite.git/trunk/StockView/src/laya/math/ArrayMethods.as (55):warning:tv This variable is not defined.
-8 file:///E:/wangwei/codes/laya/libs/LayaAir/core/src/laya/display/Stage.as (240):warning:_adjustTransform This variable is not defined.
-9 file:///D:/stocksite.git/trunk/StockView/src/stock/views/KLine.as (413):warning:tTxt This variable is not defined.
-10 file:///D:/stocksite.git/trunk/StockView/src/stock/views/KLine.as (415):warning:tTxt This variable is not defined.
-11 file:///D:/stocksite.git/trunk/StockView/src/stock/views/KLine.as (416):warning:tTxt This variable is not defined.
+8 file:///D:/stocksite.git/trunk/StockView/src/stock/views/KLine.as (413):warning:tTxt This variable is not defined.
+9 file:///D:/stocksite.git/trunk/StockView/src/stock/views/KLine.as (415):warning:tTxt This variable is not defined.
+10 file:///D:/stocksite.git/trunk/StockView/src/stock/views/KLine.as (416):warning:tTxt This variable is not defined.
 */
