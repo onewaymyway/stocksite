@@ -11698,10 +11698,10 @@ var Laya=window.Laya=(function(window,document){
 				tRec=sprite.getSelfBounds();
 				tRec.x-=sprite.pivotX;
 				tRec.y-=sprite.pivotY;
-				tRec.x-=16;
-				tRec.y-=16;
-				tRec.width+=32;
-				tRec.height+=32;
+				tRec.x-=40;
+				tRec.y-=40;
+				tRec.width+=80;
+				tRec.height+=80;
 				tRec.x=Math.floor(tRec.x+x)-x;
 				tRec.y=Math.floor(tRec.y+y)-y;
 				tRec.width=Math.floor(tRec.width);
@@ -15243,6 +15243,7 @@ var Laya=window.Laya=(function(window,document){
 			var tDataO;
 			var points;
 			points=[];
+			var preData;
 			for (i=0;i < len;i++){
 				tArr=cPointList[i];
 				tType=tArr[0];
@@ -15250,12 +15251,21 @@ var Laya=window.Laya=(function(window,document){
 				if (tType !="unknow"){
 					if (tType=="top"){
 						tops.push(ChanKList.getIndex(tDataO.topO));
-						points.push([ChanKList.getIndex(tDataO.topO),"high"]);
+						if (preData){
+							points.push([ChanKList.getIndex(tDataO.topO),"high"," "+StockTools.getGoodPercent((tDataO.top-preData.bottom)/preData.bottom)+"%"]);
+							}else{
+							points.push([ChanKList.getIndex(tDataO.topO),"high"]);
+						}
 					}
 					if (tType=="bottom"){
 						bottoms.push(ChanKList.getIndex(tDataO.bottomO));
-						points.push([ChanKList.getIndex(tDataO.bottomO),"low"]);
+						if (preData){
+							points.push([ChanKList.getIndex(tDataO.bottomO),"low"," "+StockTools.getGoodPercent((tDataO.bottom-preData.top)/preData.top)+"%"]);
+							}else{
+							points.push([ChanKList.getIndex(tDataO.bottomO),"low"]);
+						}
 					}
+					preData=tDataO;
 				}
 			}
 			this.resultData["tops"]=tops;
@@ -21521,12 +21531,18 @@ var Laya=window.Laya=(function(window,document){
 			len=iList.length;
 			var tArr;
 			var tSign;
+			var exTxt;
 			for (i=0;i < len;i++){
 				tArr=iList[i];
 				tI=tArr[0];
 				tData=dataList[tI];
 				tSign=tArr[1];
-				this.drawPoint(tI,tData[tSign],tData[tSign],KLine.SignDrawDes[tSign]["dy"],KLine.SignDrawDes[tSign]["color"],3);
+				exTxt=tArr[2];
+				if (exTxt){
+					this.drawPoint(tI,tData[tSign],exTxt,KLine.SignDrawDes[tSign]["dy"],KLine.SignDrawDes[tSign]["color"],3);
+					}else{
+					this.drawPoint(tI,tData[tSign],tData[tSign],KLine.SignDrawDes[tSign]["dy"],KLine.SignDrawDes[tSign]["color"],3);
+				}
 			}
 			for (i=1;i < len;i++){
 				preData=dataList[iList[i-1][0]];
@@ -21675,11 +21691,11 @@ var Laya=window.Laya=(function(window,document){
 		['SignDrawDes',function(){return this.SignDrawDes={
 				"high":{
 					color:"#ffff00",
-					dy:-30
+					dy:-20
 				},
 				"low":{
 					color:"#00ff00",
-					dy:30
+					dy:20
 				}
 		};}
 
@@ -37037,7 +37053,7 @@ var Laya=window.Laya=(function(window,document){
 
 /*
 1 file:///D:/stocksite.git/trunk/StockView/src/laya/math/ArrayMethods.as (55):warning:tv This variable is not defined.
-2 file:///D:/stocksite.git/trunk/StockView/src/stock/views/KLine.as (413):warning:tTxt This variable is not defined.
-3 file:///D:/stocksite.git/trunk/StockView/src/stock/views/KLine.as (415):warning:tTxt This variable is not defined.
-4 file:///D:/stocksite.git/trunk/StockView/src/stock/views/KLine.as (416):warning:tTxt This variable is not defined.
+2 file:///D:/stocksite.git/trunk/StockView/src/stock/views/KLine.as (422):warning:tTxt This variable is not defined.
+3 file:///D:/stocksite.git/trunk/StockView/src/stock/views/KLine.as (424):warning:tTxt This variable is not defined.
+4 file:///D:/stocksite.git/trunk/StockView/src/stock/views/KLine.as (425):warning:tTxt This variable is not defined.
 */
