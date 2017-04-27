@@ -70,6 +70,7 @@ package {
 		}
 		public var dirInfos:Array = [];
 		
+		
 		private function initAnalysers():void {
 			moData = {};
 			var analyser:KLineAnalyser;
@@ -87,8 +88,14 @@ package {
 			analyser.buyMinUnder = RunConfig.minUnderDay;
 			analysers.push(analyser);
 			
+			
+			
 			posAnalyser = new PositionLine();
 			posAnalyser.dayCount = "130";
+			analysers.push(posAnalyser);
+			
+			posAnalyser = new PositionLine();
+			posAnalyser.dayCount = "90";
 			analysers.push(posAnalyser);
 			
 			posAnalyser300 = new PositionLine();
