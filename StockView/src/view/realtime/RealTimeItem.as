@@ -34,7 +34,7 @@ package view.realtime
 			dataO = StockJsonP.I.getStockData(stock);
 			if (dataO)
 			{
-				txt.text = dataO.name+","+dataO.price+","+StockTools.getGoodPercent((dataO.price-dataO.close)/dataO.close)+"%";
+				txt.text = dataO.code+","+dataO.name+","+dataO.price+","+StockTools.getGoodPercent((dataO.price-dataO.close)/dataO.close)+"%";
 			}
 		}
 		private function onDoubleClick():void
