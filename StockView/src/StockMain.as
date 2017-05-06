@@ -4,6 +4,7 @@ package
 	import laya.display.Stage;
 	import laya.maths.MathUtil;
 	import laya.net.Loader;
+	import laya.tools.StockJsonP;
 	import laya.utils.Handler;
 	import laya.utils.Stat;
 	import stock.PathConfig;
@@ -41,6 +42,7 @@ package
 			trace(StockBasicInfo.I.stockList);
 			//StockBasicInfo.I.stockList.sort(MathUtil.sortByKey("totals", false, true));
 			testMainView();
+			//testStockInfo();
 		}
 		private function begin():void
 		{
@@ -80,6 +82,11 @@ package
 			mainView = new MainView();
 			mainView.left = mainView.right = mainView.top = mainView.bottom = 10;
 			Laya.stage.addChild(mainView);
+		}
+		private function testStockInfo():void
+		{
+			StockJsonP.I.addStock("sh601003");
+			StockJsonP.I.freshData();
 		}
 	}
 

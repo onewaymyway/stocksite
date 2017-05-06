@@ -20,7 +20,7 @@ package view
 		public var views:Array;
 		public function init():void
 		{
-			views = [stockListView,kLineView,selectView];
+			views = [stockListView,kLineView,selectView,realTimeView];
 			typeSelect.selectHandler = new Handler(this,updateSelect);
 			updateSelect();
 			stockListView.init();
@@ -43,9 +43,11 @@ package view
 				if (i != typeSelect.selectedIndex)
 				{
 					tV.visible = false;
+					tV.removeSelf();
 				}else
 				{
 					tV.visible = true;
+					addChild(tV);
 				}
 			}
 		}

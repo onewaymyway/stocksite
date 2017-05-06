@@ -24,6 +24,9 @@ package msgs
 		public static const Fresh_Analyser_Prop:String = "Fresh_Analyser_Prop";
 		
 		public static const Stock_Data_Inited:String = "DataInited";
+		
+		public static const Add_MyStock:String = "AddMyStock";
+		public static const Remove_MyStock:String = "Remove_MyStock";
 	}
 
 }

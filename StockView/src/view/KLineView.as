@@ -65,7 +65,14 @@ package view {
 			this.on(Event.MOUSE_DOWN, this, onMMouseDown);
 			this.on(Event.MOUSE_UP, this, onMMouseUp);
 			enableAnimation.selected = false;
+			
+			addToStockBtn.on(Event.MOUSE_DOWN, this, onAddToStock);
 		
+		}
+		
+		private function onAddToStock():void
+		{
+			Notice.notify(MsgConst.Add_MyStock,kLine.tStock );
 		}
 		private var preMouseX:Number;
 		private var isLongPress:Boolean = false;
