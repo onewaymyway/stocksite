@@ -1614,7 +1614,7 @@ var Laya=window.Laya=(function(window,document){
 			var scp=Browser.createElement("script");
 			Browser.document.body.appendChild(scp);
 			scp.type="text/javascript";
-			scp.src="http://hq.sinajs.cn/list="+stock;
+			scp.src="https://hq.sinajs.cn/list="+stock;
 			scp.onload=function (){
 				scp.src="";
 				Browser.removeElement(scp);
@@ -1623,7 +1623,7 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		StockJsonP.getStockUrl=function(stocks){
-			return "http://hq.sinajs.cn/list="+stocks.join(",");
+			return "https://hq.sinajs.cn/list="+stocks.join(",");
 		}
 
 		StockJsonP.getAdptStockStr=function(stock){
