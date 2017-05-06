@@ -20,7 +20,7 @@ package laya.tools
 			var scp:*= Browser.createElement("script");
 			Browser.document.body.appendChild(scp);
 			scp.type = "text/javascript";
-			scp.src = "http://hq.sinajs.cn/list="+stock;
+			scp.src = "https://hq.sinajs.cn/list="+stock;
 			scp.onload = function()
 			{
 				scp.src = "";
@@ -30,7 +30,7 @@ package laya.tools
 		}
 		public static function getStockUrl(stocks:Array):String
 		{
-			return "http://hq.sinajs.cn/list=" + stocks.join(",");
+			return "https://hq.sinajs.cn/list=" + stocks.join(",");
 		}
 		public static function getAdptStockStr(stock:String):String
 		{
