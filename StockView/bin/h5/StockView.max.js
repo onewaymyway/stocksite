@@ -1526,6 +1526,183 @@ var Laya=window.Laya=(function(window,document){
 	*...
 	*@author ww
 	*/
+	//class laya.tools.JsonP
+	var JsonP=(function(){
+		function JsonP(){}
+		__class(JsonP,'laya.tools.JsonP');
+		JsonP.getData=function(url,complete){
+			var scp=Browser.createElement("script");
+			Browser.document.body.appendChild(scp);
+			scp.type="text/javascript";
+			scp.src=url;
+			scp.onload=function (){
+				scp.src="";
+				Browser.removeElement(scp);
+				complete.run();
+			}
+		}
+
+		return JsonP;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class laya.tools.StockJsonP
+	var StockJsonP=(function(){
+		function StockJsonP(){
+			this.listenStocks=[];
+			this.tUrl=null;
+		}
+
+		__class(StockJsonP,'laya.tools.StockJsonP');
+		var __proto=StockJsonP.prototype;
+		__proto.updateStockUrl=function(){
+			if (this.listenStocks.length > 0){
+				this.tUrl=StockJsonP.getStockUrl(this.listenStocks);
+				}else{
+				this.tUrl=null;
+			}
+		}
+
+		__proto.addStock=function(stock){
+			if (this.listenStocks.indexOf(stock)< 0){
+				this.listenStocks.push(stock);
+				this.updateStockUrl();
+			}
+		}
+
+		__proto.freshData=function(){
+			if (this.tUrl){
+				JsonP.getData(this.tUrl,Handler.create(this,this.dataComplete));
+			}
+		}
+
+		__proto.getStockData=function(stock){
+			return StockJsonP.stockDataO[stock];
+		}
+
+		__proto.startFresh=function(interval){
+			(interval===void 0)&& (interval=5000);
+			Laya.timer.loop(interval,this,this.freshData);
+		}
+
+		__proto.stopFresh=function(){
+			Laya.timer.clear(this,this.freshData);
+		}
+
+		__proto.dataComplete=function(){
+			var i=0,len=0;
+			len=this.listenStocks.length;
+			for (i=0;i < len;i++){
+				this.parserStockData(this.listenStocks[i]);
+			}
+			Notice.notify("StockFresh");
+		}
+
+		__proto.parserStockData=function(stock){
+			var tStr;
+			tStr="hq_str_"+stock;
+			if (Browser.window[tStr]){
+				StockJsonP.parseStockStrToData(stock,Browser.window[tStr]);
+			}
+		}
+
+		StockJsonP.getStockData=function(stock,complete){
+			var scp=Browser.createElement("script");
+			Browser.document.body.appendChild(scp);
+			scp.type="text/javascript";
+			scp.src="http://hq.sinajs.cn/list="+stock;
+			scp.onload=function (){
+				scp.src="";
+				Browser.removeElement(scp);
+				complete.run();
+			}
+		}
+
+		StockJsonP.getStockUrl=function(stocks){
+			return "http://hq.sinajs.cn/list="+stocks.join(",");
+		}
+
+		StockJsonP.getAdptStockStr=function(stock){
+			var tChar;
+			tChar=stock.charAt(0);
+			if (tChar=="s")return stock;
+			if (stock.charAt(0)=="6"){
+				return "sh"+stock;
+			}
+			return "sz"+stock;
+		}
+
+		StockJsonP.getPureStock=function(stock){
+			if (stock.length > 6){
+				stock=stock.substr(2,6);
+			}
+			return stock;
+		}
+
+		StockJsonP.parseStockStrToData=function(stock,stockStr){
+			var arrs;
+			arrs=stockStr.split(",");
+			var data;
+			data=StockJsonP.stockDataO[stock]|| {};
+			var i=0,len=0;
+			len=StockJsonP.keys.length;
+			for (i=0;i < len;i++){
+				data[StockJsonP.keys[i]]=arrs[i];
+			}
+			data.code=stock;
+			StockJsonP.stockDataO[stock]=data;
+			Notice.notify(stock,data);
+		}
+
+		StockJsonP.StockFresh="StockFresh";
+		StockJsonP.stockDataO={};
+		__static(StockJsonP,
+		['I',function(){return this.I=new StockJsonP();},'keys',function(){return this.keys=[
+			"name",
+			"open",
+			"close",
+			"price",
+			"high",
+			"low",
+			"tbuy",
+			"tsell",
+			"amount",
+			"money",
+			"buy1count",
+			"buy1price",
+			"buy2count",
+			"buy2price",
+			"buy3count",
+			"buy3price",
+			"buy4count",
+			"buy4price",
+			"buy5count",
+			"buy5price",
+			"sell1count",
+			"sell1price",
+			"sell2count",
+			"sell2price",
+			"sell3count",
+			"sell3price",
+			"sell4count",
+			"sell4price",
+			"sell5count",
+			"sell5price",
+			"date",
+			"time"];}
+		]);
+		return StockJsonP;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
 	//class laya.tools.WebTools
 	var WebTools=(function(){
 		function WebTools(){}
@@ -1558,6 +1735,8 @@ var Laya=window.Laya=(function(window,document){
 		MsgConst.Set_Analyser_Prop="Set_Analyser_Prop";
 		MsgConst.Fresh_Analyser_Prop="Fresh_Analyser_Prop";
 		MsgConst.Stock_Data_Inited="DataInited";
+		MsgConst.Add_MyStock="AddMyStock";
+		MsgConst.Remove_MyStock="Remove_MyStock";
 		return MsgConst;
 	})()
 
@@ -1955,6 +2134,7 @@ var Laya=window.Laya=(function(window,document){
 			this.testMainView();
 		}
 
+		//testStockInfo();
 		__proto.begin=function(){
 			var view;
 			view=new StockView();
@@ -1985,6 +2165,11 @@ var Laya=window.Laya=(function(window,document){
 			mainView=new MainView();
 			mainView.left=mainView.right=mainView.top=mainView.bottom=10;
 			Laya.stage.addChild(mainView);
+		}
+
+		__proto.testStockInfo=function(){
+			StockJsonP.I.addStock("sh601003");
+			StockJsonP.I.freshData();
 		}
 
 		return StockMain;
@@ -15787,44 +15972,6 @@ var Laya=window.Laya=(function(window,document){
 
 
 	/**
-	*...
-	*@author ww
-	*/
-	//class stock.StockBasicInfo extends stock.CSVParser
-	var StockBasicInfo=(function(_super){
-		function StockBasicInfo(){
-			this.stockList=null;
-			this.stockCodeList=null;
-			this.stockDic={};
-			StockBasicInfo.__super.call(this);
-		}
-
-		__class(StockBasicInfo,'stock.StockBasicInfo',_super);
-		var __proto=StockBasicInfo.prototype;
-		__proto.init=function(csvStr){
-			_super.prototype.init.call(this,csvStr);
-			this.stockList=this.dataList;
-			var i=0,len=0;
-			len=this.stockList.length;
-			this.stockCodeList=[];
-			for (i=0;i < len;i++){
-				this.stockDic[this.stockList[i]["code"]]=this.stockList[i];
-				this.stockCodeList.push(this.stockList[i]["code"]);
-			}
-		}
-
-		__proto.getStockData=function(code){
-			return this.stockDic[code];
-		}
-
-		__static(StockBasicInfo,
-		['I',function(){return this.I=new StockBasicInfo();}
-		]);
-		return StockBasicInfo;
-	})(CSVParser)
-
-
-	/**
 	*<code>Node</code> 类用于创建节点对象，节点是最基本的元素。
 	*/
 	//class laya.display.Node extends laya.events.EventDispatcher
@@ -16250,6 +16397,44 @@ var Laya=window.Laya=(function(window,document){
 		Node.PROP_EMPTY={};
 		return Node;
 	})(EventDispatcher)
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class stock.StockBasicInfo extends stock.CSVParser
+	var StockBasicInfo=(function(_super){
+		function StockBasicInfo(){
+			this.stockList=null;
+			this.stockCodeList=null;
+			this.stockDic={};
+			StockBasicInfo.__super.call(this);
+		}
+
+		__class(StockBasicInfo,'stock.StockBasicInfo',_super);
+		var __proto=StockBasicInfo.prototype;
+		__proto.init=function(csvStr){
+			_super.prototype.init.call(this,csvStr);
+			this.stockList=this.dataList;
+			var i=0,len=0;
+			len=this.stockList.length;
+			this.stockCodeList=[];
+			for (i=0;i < len;i++){
+				this.stockDic[this.stockList[i]["code"]]=this.stockList[i];
+				this.stockCodeList.push(this.stockList[i]["code"]);
+			}
+		}
+
+		__proto.getStockData=function(code){
+			return this.stockDic[code];
+		}
+
+		__static(StockBasicInfo,
+		['I',function(){return this.I=new StockBasicInfo();}
+		]);
+		return StockBasicInfo;
+	})(CSVParser)
 
 
 	/**
@@ -25034,496 +25219,6 @@ var Laya=window.Laya=(function(window,document){
 
 
 	/**
-	*<p><code>Input</code> 类用于创建显示对象以显示和输入文本。</p>
-	*/
-	//class laya.display.Input extends laya.display.Text
-	var Input=(function(_super){
-		function Input(){
-			this._focus=false;
-			this._multiline=false;
-			this._editable=true;
-			this._restrictPattern=null;
-			this._type="text";
-			this._prompt='';
-			this._promptColor="#A9A9A9";
-			this._originColor="#000000";
-			this._content='';
-			Input.__super.call(this);
-			this._maxChars=1E5;
-			this._width=100;
-			this._height=20;
-			this.multiline=false;
-			this.overflow=Text.SCROLL;
-			this.on("mousedown",this,this._onMouseDown);
-			this.on("undisplay",this,this._onUnDisplay);
-		}
-
-		__class(Input,'laya.display.Input',_super);
-		var __proto=Input.prototype;
-		/**
-		*设置光标位置和选取字符。
-		*@param startIndex 光标起始位置。
-		*@param endIndex 光标结束位置。
-		*/
-		__proto.setSelection=function(startIndex,endIndex){
-			laya.display.Input.inputElement.selectionStart=startIndex;
-			laya.display.Input.inputElement.selectionEnd=endIndex;
-		}
-
-		/**@private */
-		__proto._onUnDisplay=function(e){
-			this.focus=false;
-		}
-
-		/**@private */
-		__proto._onMouseDown=function(e){
-			this.focus=true;
-			Laya.stage.on("mousedown",this,this._checkBlur);
-		}
-
-		/**@private */
-		__proto._checkBlur=function(e){
-			if (e.nativeEvent.target !=laya.display.Input.input && e.nativeEvent.target !=laya.display.Input.area && e.target !=this)
-				this.focus=false;
-		}
-
-		/**@inheritDoc*/
-		__proto.render=function(context,x,y){
-			laya.display.Sprite.prototype.render.call(this,context,x,y);
-		}
-
-		/**
-		*在输入期间，如果 Input 实例的位置改变，调用该方法同步输入框的位置。
-		*/
-		__proto._syncInputTransform=function(){
-			var style=this.nativeInput.style;
-			var stage=Laya.stage;
-			var rec;
-			rec=Utils.getGlobalPosAndScale(this);
-			var m=stage._canvasTransform.clone();
-			var tm=m.clone();
-			tm.rotate(-Math.PI / 180 *Laya.stage.canvasDegree);
-			tm.scale(Laya.stage.clientScaleX,Laya.stage.clientScaleY);
-			var perpendicular=(Laya.stage.canvasDegree % 180 !=0);
-			var sx=perpendicular ? tm.d :tm.a;
-			var sy=perpendicular ? tm.a :tm.d;
-			tm.destroy();
-			var tx=this.padding[3];
-			var ty=this.padding[0];
-			if (Laya.stage.canvasDegree==0){
-				tx+=rec.x;
-				ty+=rec.y;
-				tx *=sx;
-				ty *=sy;
-				tx+=m.tx;
-				ty+=m.ty;
-				}else if (Laya.stage.canvasDegree==90){
-				tx+=rec.y;
-				ty+=rec.x;
-				tx *=sx;
-				ty *=sy;
-				tx=m.tx-tx;
-				ty+=m.ty;
-				}else{
-				tx+=rec.y;
-				ty+=rec.x;
-				tx *=sx;
-				ty *=sy;
-				tx+=m.tx;
-				ty=m.ty-ty;
-			};
-			var quarter=0.785;
-			var r=Math.atan2(rec.height,rec.width)-quarter;
-			var sin=Math.sin(r),cos=Math.cos(r);
-			var tsx=cos *rec.width+sin *rec.height;
-			var tsy=cos *rec.height-sin *rec.width;
-			sx *=(perpendicular ? tsy :tsx);
-			sy *=(perpendicular ? tsx :tsy);
-			m.tx=0;
-			m.ty=0;
-			r *=180 / 3.1415;
-			Input.inputContainer.style.transform="scale("+sx+","+sy+") rotate("+(Laya.stage.canvasDegree+r)+"deg)";
-			Input.inputContainer.style.webkitTransform="scale("+sx+","+sy+") rotate("+(Laya.stage.canvasDegree+r)+"deg)";
-			Input.inputContainer.setPos(tx,ty);
-			m.destroy();
-			var inputWid=this._width-this.padding[1]-this.padding[3];
-			var inputHei=this._height-this.padding[0]-this.padding[2];
-			this.nativeInput.setSize(inputWid,inputHei);
-			if (Render.isConchApp){
-				this.nativeInput.setPos(tx,ty);
-				this.nativeInput.setScale(sx,sy);
-			}
-		}
-
-		/**选中所有文本。*/
-		__proto.select=function(){
-			this.nativeInput.select();
-		}
-
-		/**@private 设置输入法（textarea或input）*/
-		__proto._setInputMethod=function(){
-			Input.input.parentElement && (Input.inputContainer.removeChild(Input.input));
-			Input.area.parentElement && (Input.inputContainer.removeChild(Input.area));
-			Input.inputElement=(this._multiline ? Input.area :Input.input);
-			Input.inputContainer.appendChild(Input.inputElement);
-		}
-
-		/**@private */
-		__proto._focusIn=function(){
-			laya.display.Input.isInputting=true;
-			var input=this.nativeInput;
-			this._focus=true;
-			var cssStyle=input.style;
-			cssStyle.whiteSpace=(this.wordWrap ? "pre-wrap" :"nowrap");
-			this._setPromptColor();
-			input.readOnly=!this._editable;
-			input.maxLength=this._maxChars;
-			var padding=this.padding;
-			input.type=this._type;
-			input.value=this._content;
-			input.placeholder=this._prompt;
-			Laya.stage.off("keydown",this,this._onKeyDown);
-			Laya.stage.on("keydown",this,this._onKeyDown);
-			Laya.stage.focus=this;
-			this.event("focus");
-			if (Browser.onPC)input.focus();
-			var temp=this._text;
-			this._text=null;
-			this.typeset();
-			input.setColor(this._originColor);
-			input.setFontSize(this.fontSize);
-			input.setFontFace(this.font);
-			if (Render.isConchApp){
-				input.setMultiAble && input.setMultiAble(this._multiline);
-			}
-			cssStyle.lineHeight=(this.leading+this.fontSize)+"px";
-			cssStyle.fontStyle=(this.italic ? "italic" :"normal");
-			cssStyle.fontWeight=(this.bold ? "bold" :"normal");
-			cssStyle.textAlign=this.align;
-			cssStyle.padding="0 0";
-			this._syncInputTransform();
-			if (!Render.isConchApp && Browser.onPC)
-				Laya.timer.frameLoop(1,this,this._syncInputTransform);
-		}
-
-		// 设置DOM输入框提示符颜色。
-		__proto._setPromptColor=function(){
-			Input.promptStyleDOM=Browser.getElementById("promptStyle");
-			if (!Input.promptStyleDOM){
-				Input.promptStyleDOM=Browser.createElement("style");
-				Browser.document.head.appendChild(Input.promptStyleDOM);
-			}
-			Input.promptStyleDOM.innerText="input::-webkit-input-placeholder, textarea::-webkit-input-placeholder {"+"color:"+this._promptColor+"}"+"input:-moz-placeholder, textarea:-moz-placeholder {"+"color:"+this._promptColor+"}"+"input::-moz-placeholder, textarea::-moz-placeholder {"+"color:"+this._promptColor+"}"+"input:-ms-input-placeholder, textarea:-ms-input-placeholder {"+"color:"+this._promptColor+"}";
-		}
-
-		/**@private */
-		__proto._focusOut=function(){
-			laya.display.Input.isInputting=false;
-			this._focus=false;
-			this._text=null;
-			this._content=this.nativeInput.value;
-			if (!this._content){
-				_super.prototype._$set_text.call(this,this._prompt);
-				_super.prototype._$set_color.call(this,this._promptColor);
-				}else {
-				_super.prototype._$set_text.call(this,this._content);
-				_super.prototype._$set_color.call(this,this._originColor);
-			}
-			Laya.stage.off("keydown",this,this._onKeyDown);
-			Laya.stage.focus=null;
-			this.event("blur");
-			if (Render.isConchApp)this.nativeInput.blur();
-			Browser.onPC && Laya.timer.clear(this,this._syncInputTransform);
-			Laya.stage.off("mousedown",this,this._checkBlur);
-		}
-
-		/**@private */
-		__proto._onKeyDown=function(e){
-			if (e.keyCode===13){
-				if (Browser.onMobile && !this._multiline)
-					this.focus=false;
-				this.event("enter");
-			}
-		}
-
-		__proto.changeText=function(text){
-			this._content=text;
-			if (this._focus){
-				this.nativeInput.value=text || '';
-				this.event("change");
-			}else
-			_super.prototype.changeText.call(this,text);
-		}
-
-		/**@inheritDoc */
-		__getset(0,__proto,'color',_super.prototype._$get_color,function(value){
-			if (this._focus)
-				this.nativeInput.setColor(value);
-			_super.prototype._$set_color.call(this,this._content?value:this._promptColor);
-			this._originColor=value;
-		});
-
-		//[Deprecated]
-		__getset(0,__proto,'inputElementYAdjuster',function(){
-			console.warn("deprecated: 由于即使设置了该值，在各平台和浏览器之间也不一定一致，inputElementYAdjuster已弃用。");
-			return 0;
-			},function(value){
-			console.warn("deprecated: 由于即使设置了该值，在各平台和浏览器之间也不一定一致，inputElementYAdjuster已弃用。");
-		});
-
-		/**表示是否是多行输入框。*/
-		__getset(0,__proto,'multiline',function(){
-			return this._multiline;
-			},function(value){
-			this._multiline=value;
-			this.valign=value ? "top" :"middle";
-		});
-
-		/**
-		*字符数量限制，默认为10000。
-		*设置字符数量限制时，小于等于0的值将会限制字符数量为10000。
-		*/
-		__getset(0,__proto,'maxChars',function(){
-			return this._maxChars;
-			},function(value){
-			if (value <=0)
-				value=1E5;
-			this._maxChars=value;
-		});
-
-		/**@inheritDoc */
-		__getset(0,__proto,'text',function(){
-			if (this._focus)
-				return this.nativeInput.value;
-			else
-			return this._content || "";
-			},function(value){
-			_super.prototype._$set_color.call(this,this._originColor);
-			value+='';
-			if (this._focus){
-				this.nativeInput.value=value || '';
-				this.event("change");
-				}else {
-				if (!this._multiline)
-					value=value.replace(/\r?\n/g,'');
-				this._content=value;
-				if (value)
-					_super.prototype._$set_text.call(this,value);
-				else {
-					_super.prototype._$set_text.call(this,this._prompt);
-					_super.prototype._$set_color.call(this,this.promptColor);
-				}
-			}
-		});
-
-		/**
-		*获取对输入框的引用实例。
-		*/
-		__getset(0,__proto,'nativeInput',function(){
-			return this._multiline ? Input.area :Input.input;
-		});
-
-		/**
-		*设置输入提示符。
-		*/
-		__getset(0,__proto,'prompt',function(){
-			return this._prompt;
-			},function(value){
-			if (!this._text && value)
-				_super.prototype._$set_color.call(this,this._promptColor);
-			this.promptColor=this._promptColor;
-			if (this._text)
-				_super.prototype._$set_text.call(this,(this._text==this._prompt)?value:this._text);
-			else
-			_super.prototype._$set_text.call(this,value);
-			this._prompt=value;
-		});
-
-		// 因此 调用focus接口是无法都在移动平台立刻弹出键盘的
-		/**
-		*表示焦点是否在显示对象上。
-		*/
-		__getset(0,__proto,'focus',function(){
-			return this._focus;
-			},function(value){
-			var input=this.nativeInput;
-			if (this._focus!==value){
-				if (value){
-					input.target && (input.target.focus=false);
-					input.target=this;
-					this._setInputMethod();
-					this._focusIn();
-					}else {
-					input.target=null;
-					this._focusOut();
-					input.blur();
-					if (Render.isConchApp){
-						input.setPos(-10000,-10000);
-					}else if (Input.inputContainer.contains(input))
-					Input.inputContainer.removeChild(input);
-				}
-			}
-		});
-
-		/**限制输入的字符。*/
-		__getset(0,__proto,'restrict',function(){
-			if (this._restrictPattern){
-				return this._restrictPattern.source;
-			}
-			return "";
-			},function(pattern){
-			if (pattern){
-				pattern="[^"+pattern+"]";
-				if (pattern.indexOf("^^")>-1)
-					pattern=pattern.replace("^^","");
-				this._restrictPattern=new RegExp(pattern,"g");
-			}else
-			this._restrictPattern=null;
-		});
-
-		/**
-		*是否可编辑。
-		*/
-		__getset(0,__proto,'editable',function(){
-			return this._editable;
-			},function(value){
-			this._editable=value;
-		});
-
-		/**
-		*设置输入提示符颜色。
-		*/
-		__getset(0,__proto,'promptColor',function(){
-			return this._promptColor;
-			},function(value){
-			this._promptColor=value;
-			if (!this._content)_super.prototype._$set_color.call(this,value);
-		});
-
-		/**
-		*输入框类型为Input静态常量之一。
-		*平台兼容性参见http://www.w3school.com.cn/html5/html_5_form_input_types.asp。
-		*/
-		__getset(0,__proto,'type',function(){
-			return this._type;
-			},function(value){
-			if (value=="password")
-				this._getCSSStyle().password=true;
-			else
-			this._getCSSStyle().password=false;
-			this._type=value;
-		});
-
-		//[Deprecated]
-		__getset(0,__proto,'inputElementXAdjuster',function(){
-			console.warn("deprecated: 由于即使设置了该值，在各平台和浏览器之间也不一定一致，inputElementXAdjuster已弃用。");
-			return 0;
-			},function(value){
-			console.warn("deprecated: 由于即使设置了该值，在各平台和浏览器之间也不一定一致，inputElementXAdjuster已弃用。");
-		});
-
-		//[Deprecated(replacement="Input.type")]
-		__getset(0,__proto,'asPassword',function(){
-			return this._getCSSStyle().password;
-			},function(value){
-			this._getCSSStyle().password=value;
-			this._type="password";
-			console.warn("deprecated: 使用type=\"password\"替代设置asPassword, asPassword将在下次重大更新时删去");
-			this.isChanged=true;
-		});
-
-		Input.__init__=function(){
-			Input._createInputElement();
-			if (Browser.onMobile)
-				Render.canvas.addEventListener(Input.IOS_IFRAME ? "click" :"touchend",Input._popupInputMethod);
-		}
-
-		Input._popupInputMethod=function(e){
-			if (!laya.display.Input.isInputting)return;
-			var input=laya.display.Input.inputElement;
-			input.focus();
-		}
-
-		Input._createInputElement=function(){
-			Input._initInput(Input.area=Browser.createElement("textarea"));
-			Input._initInput(Input.input=Browser.createElement("input"));
-			Input.inputContainer=Browser.createElement("div");
-			Input.inputContainer.style.position="absolute";
-			Input.inputContainer.style.zIndex=1E5;
-			Browser.container.appendChild(Input.inputContainer);
-			Input.inputContainer.setPos=function (x,y){Input.inputContainer.style.left=x+'px';Input.inputContainer.style.top=y+'px';};
-		}
-
-		Input._initInput=function(input){
-			var style=input.style;
-			style.cssText="position:absolute;overflow:hidden;resize:none;transform-origin:0 0;-webkit-transform-origin:0 0;-moz-transform-origin:0 0;-o-transform-origin:0 0;";
-			style.resize='none';
-			style.backgroundColor='transparent';
-			style.border='none';
-			style.outline='none';
-			style.zIndex=1;
-			input.addEventListener('input',Input._processInputting);
-			input.addEventListener('mousemove',Input._stopEvent);
-			input.addEventListener('mousedown',Input._stopEvent);
-			input.addEventListener('touchmove',Input._stopEvent);
-			if(!Render.isConchApp){
-				input.setColor=function (color){input.style.color=color;};
-				input.setFontSize=function (fontSize){input.style.fontSize=fontSize+'px';};
-				input.setSize=function (w,h){input.style.width=w+'px';input.style.height=h+'px';};
-			}
-			input.setFontFace=function (fontFace){input.style.fontFamily=fontFace;};
-		}
-
-		Input._processInputting=function(e){
-			var input=laya.display.Input.inputElement.target;
-			if (!input)return;
-			var value=laya.display.Input.inputElement.value;
-			if (input._restrictPattern){
-				value=value.replace(/\u2006|\x27/g,"");
-				if (input._restrictPattern.test(value)){
-					value=value.replace(input._restrictPattern,"");
-					laya.display.Input.inputElement.value=value;
-				}
-			}
-			input._text=value;
-			input.event("input");
-		}
-
-		Input._stopEvent=function(e){
-			if (e.type=='touchmove')
-				e.preventDefault();
-			e.stopPropagation && e.stopPropagation();
-		}
-
-		Input.TYPE_TEXT="text";
-		Input.TYPE_PASSWORD="password";
-		Input.TYPE_EMAIL="email";
-		Input.TYPE_URL="url";
-		Input.TYPE_NUMBER="number";
-		Input.TYPE_RANGE="range";
-		Input.TYPE_DATE="date";
-		Input.TYPE_MONTH="month";
-		Input.TYPE_WEEK="week";
-		Input.TYPE_TIME="time";
-		Input.TYPE_DATE_TIME="datetime";
-		Input.TYPE_DATE_TIME_LOCAL="datetime-local";
-		Input.TYPE_SEARCH="search";
-		Input.input=null
-		Input.area=null
-		Input.inputElement=null
-		Input.inputContainer=null
-		Input.confirmButton=null
-		Input.promptStyleDOM=null
-		Input.inputHeight=45;
-		Input.isInputting=false;
-		__static(Input,
-		['IOS_IFRAME',function(){return this.IOS_IFRAME=(Browser.onIOS && Browser.window.top !=Browser.window.self);}
-		]);
-		return Input;
-	})(Text)
-
-
-	/**
 	*<p> <code>Clip</code> 类是位图切片动画。</p>
 	*<p> <code>Clip</code> 可将一张图片，按横向分割数量 <code>clipX</code> 、竖向分割数量 <code>clipY</code> ，
 	*或横向分割每个切片的宽度 <code>clipWidth</code> 、竖向分割每个切片的高度 <code>clipHeight</code> ，
@@ -26305,6 +26000,496 @@ var Laya=window.Laya=(function(window,document){
 
 		return ColorPicker;
 	})(Component)
+
+
+	/**
+	*<p><code>Input</code> 类用于创建显示对象以显示和输入文本。</p>
+	*/
+	//class laya.display.Input extends laya.display.Text
+	var Input=(function(_super){
+		function Input(){
+			this._focus=false;
+			this._multiline=false;
+			this._editable=true;
+			this._restrictPattern=null;
+			this._type="text";
+			this._prompt='';
+			this._promptColor="#A9A9A9";
+			this._originColor="#000000";
+			this._content='';
+			Input.__super.call(this);
+			this._maxChars=1E5;
+			this._width=100;
+			this._height=20;
+			this.multiline=false;
+			this.overflow=Text.SCROLL;
+			this.on("mousedown",this,this._onMouseDown);
+			this.on("undisplay",this,this._onUnDisplay);
+		}
+
+		__class(Input,'laya.display.Input',_super);
+		var __proto=Input.prototype;
+		/**
+		*设置光标位置和选取字符。
+		*@param startIndex 光标起始位置。
+		*@param endIndex 光标结束位置。
+		*/
+		__proto.setSelection=function(startIndex,endIndex){
+			laya.display.Input.inputElement.selectionStart=startIndex;
+			laya.display.Input.inputElement.selectionEnd=endIndex;
+		}
+
+		/**@private */
+		__proto._onUnDisplay=function(e){
+			this.focus=false;
+		}
+
+		/**@private */
+		__proto._onMouseDown=function(e){
+			this.focus=true;
+			Laya.stage.on("mousedown",this,this._checkBlur);
+		}
+
+		/**@private */
+		__proto._checkBlur=function(e){
+			if (e.nativeEvent.target !=laya.display.Input.input && e.nativeEvent.target !=laya.display.Input.area && e.target !=this)
+				this.focus=false;
+		}
+
+		/**@inheritDoc*/
+		__proto.render=function(context,x,y){
+			laya.display.Sprite.prototype.render.call(this,context,x,y);
+		}
+
+		/**
+		*在输入期间，如果 Input 实例的位置改变，调用该方法同步输入框的位置。
+		*/
+		__proto._syncInputTransform=function(){
+			var style=this.nativeInput.style;
+			var stage=Laya.stage;
+			var rec;
+			rec=Utils.getGlobalPosAndScale(this);
+			var m=stage._canvasTransform.clone();
+			var tm=m.clone();
+			tm.rotate(-Math.PI / 180 *Laya.stage.canvasDegree);
+			tm.scale(Laya.stage.clientScaleX,Laya.stage.clientScaleY);
+			var perpendicular=(Laya.stage.canvasDegree % 180 !=0);
+			var sx=perpendicular ? tm.d :tm.a;
+			var sy=perpendicular ? tm.a :tm.d;
+			tm.destroy();
+			var tx=this.padding[3];
+			var ty=this.padding[0];
+			if (Laya.stage.canvasDegree==0){
+				tx+=rec.x;
+				ty+=rec.y;
+				tx *=sx;
+				ty *=sy;
+				tx+=m.tx;
+				ty+=m.ty;
+				}else if (Laya.stage.canvasDegree==90){
+				tx+=rec.y;
+				ty+=rec.x;
+				tx *=sx;
+				ty *=sy;
+				tx=m.tx-tx;
+				ty+=m.ty;
+				}else{
+				tx+=rec.y;
+				ty+=rec.x;
+				tx *=sx;
+				ty *=sy;
+				tx+=m.tx;
+				ty=m.ty-ty;
+			};
+			var quarter=0.785;
+			var r=Math.atan2(rec.height,rec.width)-quarter;
+			var sin=Math.sin(r),cos=Math.cos(r);
+			var tsx=cos *rec.width+sin *rec.height;
+			var tsy=cos *rec.height-sin *rec.width;
+			sx *=(perpendicular ? tsy :tsx);
+			sy *=(perpendicular ? tsx :tsy);
+			m.tx=0;
+			m.ty=0;
+			r *=180 / 3.1415;
+			Input.inputContainer.style.transform="scale("+sx+","+sy+") rotate("+(Laya.stage.canvasDegree+r)+"deg)";
+			Input.inputContainer.style.webkitTransform="scale("+sx+","+sy+") rotate("+(Laya.stage.canvasDegree+r)+"deg)";
+			Input.inputContainer.setPos(tx,ty);
+			m.destroy();
+			var inputWid=this._width-this.padding[1]-this.padding[3];
+			var inputHei=this._height-this.padding[0]-this.padding[2];
+			this.nativeInput.setSize(inputWid,inputHei);
+			if (Render.isConchApp){
+				this.nativeInput.setPos(tx,ty);
+				this.nativeInput.setScale(sx,sy);
+			}
+		}
+
+		/**选中所有文本。*/
+		__proto.select=function(){
+			this.nativeInput.select();
+		}
+
+		/**@private 设置输入法（textarea或input）*/
+		__proto._setInputMethod=function(){
+			Input.input.parentElement && (Input.inputContainer.removeChild(Input.input));
+			Input.area.parentElement && (Input.inputContainer.removeChild(Input.area));
+			Input.inputElement=(this._multiline ? Input.area :Input.input);
+			Input.inputContainer.appendChild(Input.inputElement);
+		}
+
+		/**@private */
+		__proto._focusIn=function(){
+			laya.display.Input.isInputting=true;
+			var input=this.nativeInput;
+			this._focus=true;
+			var cssStyle=input.style;
+			cssStyle.whiteSpace=(this.wordWrap ? "pre-wrap" :"nowrap");
+			this._setPromptColor();
+			input.readOnly=!this._editable;
+			input.maxLength=this._maxChars;
+			var padding=this.padding;
+			input.type=this._type;
+			input.value=this._content;
+			input.placeholder=this._prompt;
+			Laya.stage.off("keydown",this,this._onKeyDown);
+			Laya.stage.on("keydown",this,this._onKeyDown);
+			Laya.stage.focus=this;
+			this.event("focus");
+			if (Browser.onPC)input.focus();
+			var temp=this._text;
+			this._text=null;
+			this.typeset();
+			input.setColor(this._originColor);
+			input.setFontSize(this.fontSize);
+			input.setFontFace(this.font);
+			if (Render.isConchApp){
+				input.setMultiAble && input.setMultiAble(this._multiline);
+			}
+			cssStyle.lineHeight=(this.leading+this.fontSize)+"px";
+			cssStyle.fontStyle=(this.italic ? "italic" :"normal");
+			cssStyle.fontWeight=(this.bold ? "bold" :"normal");
+			cssStyle.textAlign=this.align;
+			cssStyle.padding="0 0";
+			this._syncInputTransform();
+			if (!Render.isConchApp && Browser.onPC)
+				Laya.timer.frameLoop(1,this,this._syncInputTransform);
+		}
+
+		// 设置DOM输入框提示符颜色。
+		__proto._setPromptColor=function(){
+			Input.promptStyleDOM=Browser.getElementById("promptStyle");
+			if (!Input.promptStyleDOM){
+				Input.promptStyleDOM=Browser.createElement("style");
+				Browser.document.head.appendChild(Input.promptStyleDOM);
+			}
+			Input.promptStyleDOM.innerText="input::-webkit-input-placeholder, textarea::-webkit-input-placeholder {"+"color:"+this._promptColor+"}"+"input:-moz-placeholder, textarea:-moz-placeholder {"+"color:"+this._promptColor+"}"+"input::-moz-placeholder, textarea::-moz-placeholder {"+"color:"+this._promptColor+"}"+"input:-ms-input-placeholder, textarea:-ms-input-placeholder {"+"color:"+this._promptColor+"}";
+		}
+
+		/**@private */
+		__proto._focusOut=function(){
+			laya.display.Input.isInputting=false;
+			this._focus=false;
+			this._text=null;
+			this._content=this.nativeInput.value;
+			if (!this._content){
+				_super.prototype._$set_text.call(this,this._prompt);
+				_super.prototype._$set_color.call(this,this._promptColor);
+				}else {
+				_super.prototype._$set_text.call(this,this._content);
+				_super.prototype._$set_color.call(this,this._originColor);
+			}
+			Laya.stage.off("keydown",this,this._onKeyDown);
+			Laya.stage.focus=null;
+			this.event("blur");
+			if (Render.isConchApp)this.nativeInput.blur();
+			Browser.onPC && Laya.timer.clear(this,this._syncInputTransform);
+			Laya.stage.off("mousedown",this,this._checkBlur);
+		}
+
+		/**@private */
+		__proto._onKeyDown=function(e){
+			if (e.keyCode===13){
+				if (Browser.onMobile && !this._multiline)
+					this.focus=false;
+				this.event("enter");
+			}
+		}
+
+		__proto.changeText=function(text){
+			this._content=text;
+			if (this._focus){
+				this.nativeInput.value=text || '';
+				this.event("change");
+			}else
+			_super.prototype.changeText.call(this,text);
+		}
+
+		/**@inheritDoc */
+		__getset(0,__proto,'color',_super.prototype._$get_color,function(value){
+			if (this._focus)
+				this.nativeInput.setColor(value);
+			_super.prototype._$set_color.call(this,this._content?value:this._promptColor);
+			this._originColor=value;
+		});
+
+		//[Deprecated]
+		__getset(0,__proto,'inputElementYAdjuster',function(){
+			console.warn("deprecated: 由于即使设置了该值，在各平台和浏览器之间也不一定一致，inputElementYAdjuster已弃用。");
+			return 0;
+			},function(value){
+			console.warn("deprecated: 由于即使设置了该值，在各平台和浏览器之间也不一定一致，inputElementYAdjuster已弃用。");
+		});
+
+		/**表示是否是多行输入框。*/
+		__getset(0,__proto,'multiline',function(){
+			return this._multiline;
+			},function(value){
+			this._multiline=value;
+			this.valign=value ? "top" :"middle";
+		});
+
+		/**
+		*字符数量限制，默认为10000。
+		*设置字符数量限制时，小于等于0的值将会限制字符数量为10000。
+		*/
+		__getset(0,__proto,'maxChars',function(){
+			return this._maxChars;
+			},function(value){
+			if (value <=0)
+				value=1E5;
+			this._maxChars=value;
+		});
+
+		/**@inheritDoc */
+		__getset(0,__proto,'text',function(){
+			if (this._focus)
+				return this.nativeInput.value;
+			else
+			return this._content || "";
+			},function(value){
+			_super.prototype._$set_color.call(this,this._originColor);
+			value+='';
+			if (this._focus){
+				this.nativeInput.value=value || '';
+				this.event("change");
+				}else {
+				if (!this._multiline)
+					value=value.replace(/\r?\n/g,'');
+				this._content=value;
+				if (value)
+					_super.prototype._$set_text.call(this,value);
+				else {
+					_super.prototype._$set_text.call(this,this._prompt);
+					_super.prototype._$set_color.call(this,this.promptColor);
+				}
+			}
+		});
+
+		/**
+		*获取对输入框的引用实例。
+		*/
+		__getset(0,__proto,'nativeInput',function(){
+			return this._multiline ? Input.area :Input.input;
+		});
+
+		/**
+		*设置输入提示符。
+		*/
+		__getset(0,__proto,'prompt',function(){
+			return this._prompt;
+			},function(value){
+			if (!this._text && value)
+				_super.prototype._$set_color.call(this,this._promptColor);
+			this.promptColor=this._promptColor;
+			if (this._text)
+				_super.prototype._$set_text.call(this,(this._text==this._prompt)?value:this._text);
+			else
+			_super.prototype._$set_text.call(this,value);
+			this._prompt=value;
+		});
+
+		// 因此 调用focus接口是无法都在移动平台立刻弹出键盘的
+		/**
+		*表示焦点是否在显示对象上。
+		*/
+		__getset(0,__proto,'focus',function(){
+			return this._focus;
+			},function(value){
+			var input=this.nativeInput;
+			if (this._focus!==value){
+				if (value){
+					input.target && (input.target.focus=false);
+					input.target=this;
+					this._setInputMethod();
+					this._focusIn();
+					}else {
+					input.target=null;
+					this._focusOut();
+					input.blur();
+					if (Render.isConchApp){
+						input.setPos(-10000,-10000);
+					}else if (Input.inputContainer.contains(input))
+					Input.inputContainer.removeChild(input);
+				}
+			}
+		});
+
+		/**限制输入的字符。*/
+		__getset(0,__proto,'restrict',function(){
+			if (this._restrictPattern){
+				return this._restrictPattern.source;
+			}
+			return "";
+			},function(pattern){
+			if (pattern){
+				pattern="[^"+pattern+"]";
+				if (pattern.indexOf("^^")>-1)
+					pattern=pattern.replace("^^","");
+				this._restrictPattern=new RegExp(pattern,"g");
+			}else
+			this._restrictPattern=null;
+		});
+
+		/**
+		*是否可编辑。
+		*/
+		__getset(0,__proto,'editable',function(){
+			return this._editable;
+			},function(value){
+			this._editable=value;
+		});
+
+		/**
+		*设置输入提示符颜色。
+		*/
+		__getset(0,__proto,'promptColor',function(){
+			return this._promptColor;
+			},function(value){
+			this._promptColor=value;
+			if (!this._content)_super.prototype._$set_color.call(this,value);
+		});
+
+		/**
+		*输入框类型为Input静态常量之一。
+		*平台兼容性参见http://www.w3school.com.cn/html5/html_5_form_input_types.asp。
+		*/
+		__getset(0,__proto,'type',function(){
+			return this._type;
+			},function(value){
+			if (value=="password")
+				this._getCSSStyle().password=true;
+			else
+			this._getCSSStyle().password=false;
+			this._type=value;
+		});
+
+		//[Deprecated]
+		__getset(0,__proto,'inputElementXAdjuster',function(){
+			console.warn("deprecated: 由于即使设置了该值，在各平台和浏览器之间也不一定一致，inputElementXAdjuster已弃用。");
+			return 0;
+			},function(value){
+			console.warn("deprecated: 由于即使设置了该值，在各平台和浏览器之间也不一定一致，inputElementXAdjuster已弃用。");
+		});
+
+		//[Deprecated(replacement="Input.type")]
+		__getset(0,__proto,'asPassword',function(){
+			return this._getCSSStyle().password;
+			},function(value){
+			this._getCSSStyle().password=value;
+			this._type="password";
+			console.warn("deprecated: 使用type=\"password\"替代设置asPassword, asPassword将在下次重大更新时删去");
+			this.isChanged=true;
+		});
+
+		Input.__init__=function(){
+			Input._createInputElement();
+			if (Browser.onMobile)
+				Render.canvas.addEventListener(Input.IOS_IFRAME ? "click" :"touchend",Input._popupInputMethod);
+		}
+
+		Input._popupInputMethod=function(e){
+			if (!laya.display.Input.isInputting)return;
+			var input=laya.display.Input.inputElement;
+			input.focus();
+		}
+
+		Input._createInputElement=function(){
+			Input._initInput(Input.area=Browser.createElement("textarea"));
+			Input._initInput(Input.input=Browser.createElement("input"));
+			Input.inputContainer=Browser.createElement("div");
+			Input.inputContainer.style.position="absolute";
+			Input.inputContainer.style.zIndex=1E5;
+			Browser.container.appendChild(Input.inputContainer);
+			Input.inputContainer.setPos=function (x,y){Input.inputContainer.style.left=x+'px';Input.inputContainer.style.top=y+'px';};
+		}
+
+		Input._initInput=function(input){
+			var style=input.style;
+			style.cssText="position:absolute;overflow:hidden;resize:none;transform-origin:0 0;-webkit-transform-origin:0 0;-moz-transform-origin:0 0;-o-transform-origin:0 0;";
+			style.resize='none';
+			style.backgroundColor='transparent';
+			style.border='none';
+			style.outline='none';
+			style.zIndex=1;
+			input.addEventListener('input',Input._processInputting);
+			input.addEventListener('mousemove',Input._stopEvent);
+			input.addEventListener('mousedown',Input._stopEvent);
+			input.addEventListener('touchmove',Input._stopEvent);
+			if(!Render.isConchApp){
+				input.setColor=function (color){input.style.color=color;};
+				input.setFontSize=function (fontSize){input.style.fontSize=fontSize+'px';};
+				input.setSize=function (w,h){input.style.width=w+'px';input.style.height=h+'px';};
+			}
+			input.setFontFace=function (fontFace){input.style.fontFamily=fontFace;};
+		}
+
+		Input._processInputting=function(e){
+			var input=laya.display.Input.inputElement.target;
+			if (!input)return;
+			var value=laya.display.Input.inputElement.value;
+			if (input._restrictPattern){
+				value=value.replace(/\u2006|\x27/g,"");
+				if (input._restrictPattern.test(value)){
+					value=value.replace(input._restrictPattern,"");
+					laya.display.Input.inputElement.value=value;
+				}
+			}
+			input._text=value;
+			input.event("input");
+		}
+
+		Input._stopEvent=function(e){
+			if (e.type=='touchmove')
+				e.preventDefault();
+			e.stopPropagation && e.stopPropagation();
+		}
+
+		Input.TYPE_TEXT="text";
+		Input.TYPE_PASSWORD="password";
+		Input.TYPE_EMAIL="email";
+		Input.TYPE_URL="url";
+		Input.TYPE_NUMBER="number";
+		Input.TYPE_RANGE="range";
+		Input.TYPE_DATE="date";
+		Input.TYPE_MONTH="month";
+		Input.TYPE_WEEK="week";
+		Input.TYPE_TIME="time";
+		Input.TYPE_DATE_TIME="datetime";
+		Input.TYPE_DATE_TIME_LOCAL="datetime-local";
+		Input.TYPE_SEARCH="search";
+		Input.input=null
+		Input.area=null
+		Input.inputElement=null
+		Input.inputContainer=null
+		Input.confirmButton=null
+		Input.promptStyleDOM=null
+		Input.inputHeight=45;
+		Input.isInputting=false;
+		__static(Input,
+		['IOS_IFRAME',function(){return this.IOS_IFRAME=(Browser.onIOS && Browser.window.top !=Browser.window.self);}
+		]);
+		return Input;
+	})(Text)
 
 
 	/**
@@ -33827,107 +34012,6 @@ var Laya=window.Laya=(function(window,document){
 
 
 	/**
-	*使用 <code>VSlider</code> 控件，用户可以通过在滑块轨道的终点之间移动滑块来选择值。
-	*<p> <code>VSlider</code> 控件采用垂直方向。滑块轨道从下往上扩展，而标签位于轨道的左右两侧。</p>
-	*
-	*@example 以下示例代码，创建了一个 <code>VSlider</code> 实例。
-	*<listing version="3.0">
-	*package
-	*{
-		*import laya.ui.HSlider;
-		*import laya.ui.VSlider;
-		*import laya.utils.Handler;
-		*public class VSlider_Example
-		*{
-			*private var vSlider:VSlider;
-			*public function VSlider_Example()
-			*{
-				*Laya.init(640,800);//设置游戏画布宽高。
-				*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
-				*Laya.loader.load(["resource/ui/vslider.png","resource/ui/vslider$bar.png"],Handler.create(this,onLoadComplete));//加载资源。
-				*}
-			*private function onLoadComplete():void
-			*{
-				*vSlider=new VSlider();//创建一个 VSlider 类的实例对象 vSlider 。
-				*vSlider.skin="resource/ui/vslider.png";//设置 vSlider 的皮肤。
-				*vSlider.min=0;//设置 vSlider 最低位置值。
-				*vSlider.max=10;//设置 vSlider 最高位置值。
-				*vSlider.value=2;//设置 vSlider 当前位置值。
-				*vSlider.tick=1;//设置 vSlider 刻度值。
-				*vSlider.x=100;//设置 vSlider 对象的属性 x 的值，用于控制 vSlider 对象的显示位置。
-				*vSlider.y=100;//设置 vSlider 对象的属性 y 的值，用于控制 vSlider 对象的显示位置。
-				*vSlider.changeHandler=new Handler(this,onChange);//设置 vSlider 位置变化处理器。
-				*Laya.stage.addChild(vSlider);//把 vSlider 添加到显示列表。
-				*}
-			*private function onChange(value:Number):void
-			*{
-				*trace("滑块的位置： value="+value);
-				*}
-			*}
-		*}
-	*</listing>
-	*<listing version="3.0">
-	*Laya.init(640,800);//设置游戏画布宽高
-	*Laya.stage.bgColor="#efefef";//设置画布的背景颜色
-	*var vSlider;
-	*Laya.loader.load(["resource/ui/vslider.png","resource/ui/vslider$bar.png"],laya.utils.Handler.create(this,onLoadComplete));//加载资源。
-	*function onLoadComplete(){
-		*vSlider=new laya.ui.VSlider();//创建一个 VSlider 类的实例对象 vSlider 。
-		*vSlider.skin="resource/ui/vslider.png";//设置 vSlider 的皮肤。
-		*vSlider.min=0;//设置 vSlider 最低位置值。
-		*vSlider.max=10;//设置 vSlider 最高位置值。
-		*vSlider.value=2;//设置 vSlider 当前位置值。
-		*vSlider.tick=1;//设置 vSlider 刻度值。
-		*vSlider.x=100;//设置 vSlider 对象的属性 x 的值，用于控制 vSlider 对象的显示位置。
-		*vSlider.y=100;//设置 vSlider 对象的属性 y 的值，用于控制 vSlider 对象的显示位置。
-		*vSlider.changeHandler=new laya.utils.Handler(this,onChange);//设置 vSlider 位置变化处理器。
-		*Laya.stage.addChild(vSlider);//把 vSlider 添加到显示列表。
-		*}
-	*function onChange(value){
-		*console.log("滑块的位置： value="+value);
-		*}
-	*</listing>
-	*<listing version="3.0">
-	*import HSlider=laya.ui.HSlider;
-	*import VSlider=laya.ui.VSlider;
-	*import Handler=laya.utils.Handler;
-	*class VSlider_Example {
-		*private vSlider:VSlider;
-		*constructor(){
-			*Laya.init(640,800);//设置游戏画布宽高。
-			*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
-			*Laya.loader.load(["resource/ui/vslider.png","resource/ui/vslider$bar.png"],Handler.create(this,this.onLoadComplete));//加载资源。
-			*}
-		*private onLoadComplete():void {
-			*this.vSlider=new VSlider();//创建一个 VSlider 类的实例对象 vSlider 。
-			*this.vSlider.skin="resource/ui/vslider.png";//设置 vSlider 的皮肤。
-			*this.vSlider.min=0;//设置 vSlider 最低位置值。
-			*this.vSlider.max=10;//设置 vSlider 最高位置值。
-			*this.vSlider.value=2;//设置 vSlider 当前位置值。
-			*this.vSlider.tick=1;//设置 vSlider 刻度值。
-			*this.vSlider.x=100;//设置 vSlider 对象的属性 x 的值，用于控制 vSlider 对象的显示位置。
-			*this.vSlider.y=100;//设置 vSlider 对象的属性 y 的值，用于控制 vSlider 对象的显示位置。
-			*this.vSlider.changeHandler=new Handler(this,this.onChange);//设置 vSlider 位置变化处理器。
-			*Laya.stage.addChild(this.vSlider);//把 vSlider 添加到显示列表。
-			*}
-		*private onChange(value:number):void {
-			*console.log("滑块的位置： value="+value);
-			*}
-		*}
-	*</listing>
-	*@see laya.ui.Slider
-	*/
-	//class laya.ui.VSlider extends laya.ui.Slider
-	var VSlider=(function(_super){
-		function VSlider(){VSlider.__super.call(this);;
-		};
-
-		__class(VSlider,'laya.ui.VSlider',_super);
-		return VSlider;
-	})(Slider)
-
-
-	/**
 	*<code>TextInput</code> 类用于创建显示对象以显示和输入文本。
 	*
 	*@example 以下示例代码，创建了一个 <code>TextInput</code> 实例。
@@ -34243,6 +34327,107 @@ var Laya=window.Laya=(function(window,document){
 
 
 	/**
+	*使用 <code>VSlider</code> 控件，用户可以通过在滑块轨道的终点之间移动滑块来选择值。
+	*<p> <code>VSlider</code> 控件采用垂直方向。滑块轨道从下往上扩展，而标签位于轨道的左右两侧。</p>
+	*
+	*@example 以下示例代码，创建了一个 <code>VSlider</code> 实例。
+	*<listing version="3.0">
+	*package
+	*{
+		*import laya.ui.HSlider;
+		*import laya.ui.VSlider;
+		*import laya.utils.Handler;
+		*public class VSlider_Example
+		*{
+			*private var vSlider:VSlider;
+			*public function VSlider_Example()
+			*{
+				*Laya.init(640,800);//设置游戏画布宽高。
+				*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
+				*Laya.loader.load(["resource/ui/vslider.png","resource/ui/vslider$bar.png"],Handler.create(this,onLoadComplete));//加载资源。
+				*}
+			*private function onLoadComplete():void
+			*{
+				*vSlider=new VSlider();//创建一个 VSlider 类的实例对象 vSlider 。
+				*vSlider.skin="resource/ui/vslider.png";//设置 vSlider 的皮肤。
+				*vSlider.min=0;//设置 vSlider 最低位置值。
+				*vSlider.max=10;//设置 vSlider 最高位置值。
+				*vSlider.value=2;//设置 vSlider 当前位置值。
+				*vSlider.tick=1;//设置 vSlider 刻度值。
+				*vSlider.x=100;//设置 vSlider 对象的属性 x 的值，用于控制 vSlider 对象的显示位置。
+				*vSlider.y=100;//设置 vSlider 对象的属性 y 的值，用于控制 vSlider 对象的显示位置。
+				*vSlider.changeHandler=new Handler(this,onChange);//设置 vSlider 位置变化处理器。
+				*Laya.stage.addChild(vSlider);//把 vSlider 添加到显示列表。
+				*}
+			*private function onChange(value:Number):void
+			*{
+				*trace("滑块的位置： value="+value);
+				*}
+			*}
+		*}
+	*</listing>
+	*<listing version="3.0">
+	*Laya.init(640,800);//设置游戏画布宽高
+	*Laya.stage.bgColor="#efefef";//设置画布的背景颜色
+	*var vSlider;
+	*Laya.loader.load(["resource/ui/vslider.png","resource/ui/vslider$bar.png"],laya.utils.Handler.create(this,onLoadComplete));//加载资源。
+	*function onLoadComplete(){
+		*vSlider=new laya.ui.VSlider();//创建一个 VSlider 类的实例对象 vSlider 。
+		*vSlider.skin="resource/ui/vslider.png";//设置 vSlider 的皮肤。
+		*vSlider.min=0;//设置 vSlider 最低位置值。
+		*vSlider.max=10;//设置 vSlider 最高位置值。
+		*vSlider.value=2;//设置 vSlider 当前位置值。
+		*vSlider.tick=1;//设置 vSlider 刻度值。
+		*vSlider.x=100;//设置 vSlider 对象的属性 x 的值，用于控制 vSlider 对象的显示位置。
+		*vSlider.y=100;//设置 vSlider 对象的属性 y 的值，用于控制 vSlider 对象的显示位置。
+		*vSlider.changeHandler=new laya.utils.Handler(this,onChange);//设置 vSlider 位置变化处理器。
+		*Laya.stage.addChild(vSlider);//把 vSlider 添加到显示列表。
+		*}
+	*function onChange(value){
+		*console.log("滑块的位置： value="+value);
+		*}
+	*</listing>
+	*<listing version="3.0">
+	*import HSlider=laya.ui.HSlider;
+	*import VSlider=laya.ui.VSlider;
+	*import Handler=laya.utils.Handler;
+	*class VSlider_Example {
+		*private vSlider:VSlider;
+		*constructor(){
+			*Laya.init(640,800);//设置游戏画布宽高。
+			*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
+			*Laya.loader.load(["resource/ui/vslider.png","resource/ui/vslider$bar.png"],Handler.create(this,this.onLoadComplete));//加载资源。
+			*}
+		*private onLoadComplete():void {
+			*this.vSlider=new VSlider();//创建一个 VSlider 类的实例对象 vSlider 。
+			*this.vSlider.skin="resource/ui/vslider.png";//设置 vSlider 的皮肤。
+			*this.vSlider.min=0;//设置 vSlider 最低位置值。
+			*this.vSlider.max=10;//设置 vSlider 最高位置值。
+			*this.vSlider.value=2;//设置 vSlider 当前位置值。
+			*this.vSlider.tick=1;//设置 vSlider 刻度值。
+			*this.vSlider.x=100;//设置 vSlider 对象的属性 x 的值，用于控制 vSlider 对象的显示位置。
+			*this.vSlider.y=100;//设置 vSlider 对象的属性 y 的值，用于控制 vSlider 对象的显示位置。
+			*this.vSlider.changeHandler=new Handler(this,this.onChange);//设置 vSlider 位置变化处理器。
+			*Laya.stage.addChild(this.vSlider);//把 vSlider 添加到显示列表。
+			*}
+		*private onChange(value:number):void {
+			*console.log("滑块的位置： value="+value);
+			*}
+		*}
+	*</listing>
+	*@see laya.ui.Slider
+	*/
+	//class laya.ui.VSlider extends laya.ui.Slider
+	var VSlider=(function(_super){
+		function VSlider(){VSlider.__super.call(this);;
+		};
+
+		__class(VSlider,'laya.ui.VSlider',_super);
+		return VSlider;
+	})(Slider)
+
+
+	/**
 	*@private
 	*/
 	//class laya.display.GraphicAnimation extends laya.display.FrameAnimation
@@ -34523,6 +34708,7 @@ var Laya=window.Laya=(function(window,document){
 			this.maxDayEnable=null;
 			this.dayCountInput=null;
 			this.clickControlEnable=null;
+			this.addToStockBtn=null;
 			KLineViewUI.__super.call(this);
 		}
 
@@ -34536,7 +34722,7 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		__static(KLineViewUI,
-		['uiView',function(){return this.uiView={"type":"View","props":{"width":800,"height":400},"child":[{"type":"ComboBox","props":{"y":9,"x":8,"var":"stockSelect","skin":"comp/combobox.png","scrollBarSkin":"comp/vscroll.png","labels":"000233,600322","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":9,"x":114,"var":"playBtn","skin":"comp/button.png","label":"play","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Label","props":{"y":13,"x":225,"width":147,"var":"infoTxt","text":"label","height":20,"color":"#ffffff"}},{"type":"TextInput","props":{"y":43,"x":8,"width":90,"var":"stockInput","text":"002234","skin":"comp/textinput.png","height":22,"color":"#f1dede"}},{"type":"Button","props":{"y":42,"x":114,"var":"playInputBtn","skin":"comp/button.png","label":"play","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"CheckBox","props":{"y":45,"x":226,"var":"enableAnimation","skin":"comp/checkbox.png","selected":true,"label":"开启动画","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":39,"x":301,"var":"detailBtn","skin":"comp/button.png","label":"详情","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":80,"x":11,"var":"preBtn","skin":"comp/button.png","label":"pre","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":80,"x":100,"var":"nextBtn","skin":"comp/button.png","label":"next","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"AnalyserList","props":{"var":"analyserList","top":10,"runtime":"view.plugins.AnalyserList","right":10}},{"type":"PropPanel","props":{"y":0,"var":"propPanel","runtime":"stock.prop.PropPanel","right":180}},{"type":"HScrollBar","props":{"y":101,"x":225,"width":166,"var":"dayScroll","skin":"comp/hscroll.png","height":13}},{"type":"CheckBox","props":{"y":76,"x":226,"var":"maxDayEnable","skin":"comp/checkbox.png","selected":false,"label":"天数限制","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"TextInput","props":{"y":73,"x":300,"width":90,"var":"dayCountInput","text":"180","skin":"comp/textinput.png","height":22,"color":"#f1dede"}},{"type":"CheckBox","props":{"y":77,"x":403,"var":"clickControlEnable","skin":"comp/checkbox.png","selected":true,"label":"单击平移","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}}]};}
+		['uiView',function(){return this.uiView={"type":"View","props":{"width":800,"height":400},"child":[{"type":"ComboBox","props":{"y":9,"x":8,"var":"stockSelect","skin":"comp/combobox.png","scrollBarSkin":"comp/vscroll.png","labels":"000233,600322","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":9,"x":114,"var":"playBtn","skin":"comp/button.png","label":"play","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Label","props":{"y":13,"x":225,"width":147,"var":"infoTxt","text":"label","height":20,"color":"#ffffff"}},{"type":"TextInput","props":{"y":43,"x":8,"width":90,"var":"stockInput","text":"002234","skin":"comp/textinput.png","height":22,"color":"#f1dede"}},{"type":"Button","props":{"y":42,"x":114,"var":"playInputBtn","skin":"comp/button.png","label":"play","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"CheckBox","props":{"y":45,"x":226,"var":"enableAnimation","skin":"comp/checkbox.png","selected":true,"label":"开启动画","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":39,"x":301,"var":"detailBtn","skin":"comp/button.png","label":"详情","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":80,"x":11,"var":"preBtn","skin":"comp/button.png","label":"pre","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":80,"x":100,"var":"nextBtn","skin":"comp/button.png","label":"next","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"AnalyserList","props":{"var":"analyserList","top":10,"runtime":"view.plugins.AnalyserList","right":10}},{"type":"PropPanel","props":{"y":0,"var":"propPanel","runtime":"stock.prop.PropPanel","right":180}},{"type":"HScrollBar","props":{"y":101,"x":225,"width":166,"var":"dayScroll","skin":"comp/hscroll.png","height":13}},{"type":"CheckBox","props":{"y":76,"x":226,"var":"maxDayEnable","skin":"comp/checkbox.png","selected":false,"label":"天数限制","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"TextInput","props":{"y":73,"x":300,"width":90,"var":"dayCountInput","text":"180","skin":"comp/textinput.png","height":22,"color":"#f1dede"}},{"type":"CheckBox","props":{"y":77,"x":403,"var":"clickControlEnable","skin":"comp/checkbox.png","selected":true,"label":"单击平移","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":39,"x":383,"var":"addToStockBtn","skin":"comp/button.png","label":"加自选","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}}]};}
 		]);
 		return KLineViewUI;
 	})(View)
@@ -34549,6 +34735,7 @@ var Laya=window.Laya=(function(window,document){
 			this.stockListView=null;
 			this.kLineView=null;
 			this.selectView=null;
+			this.realTimeView=null;
 			MainViewUI.__super.call(this);
 		}
 
@@ -34558,12 +34745,13 @@ var Laya=window.Laya=(function(window,document){
 			View.regComponent("view.StockView",StockView);
 			View.regComponent("view.KLineView",KLineView);
 			View.regComponent("view.SelectStockView",SelectStockView);
+			View.regComponent("view.RealTimeView",RealTimeView);
 			laya.ui.Component.prototype.createChildren.call(this);
 			this.createView(MainViewUI.uiView);
 		}
 
 		__static(MainViewUI,
-		['uiView',function(){return this.uiView={"type":"View","props":{"width":445,"height":400},"child":[{"type":"Tab","props":{"y":4,"x":4,"var":"typeSelect","skin":"comp/tab.png","selectedIndex":0,"labels":"股票列表,K线动画,选股","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"StockView","props":{"var":"stockListView","top":40,"runtime":"view.StockView","right":10,"left":10,"bottom":10}},{"type":"KLineView","props":{"var":"kLineView","top":40,"runtime":"view.KLineView","right":10,"left":10,"bottom":10}},{"type":"SelectStockView","props":{"var":"selectView","top":40,"runtime":"view.SelectStockView","right":10,"left":10,"bottom":10}}]};}
+		['uiView',function(){return this.uiView={"type":"View","props":{"width":445,"height":400},"child":[{"type":"Tab","props":{"y":4,"x":4,"var":"typeSelect","skin":"comp/tab.png","selectedIndex":0,"labels":"股票列表,K线动画,选股,自选","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"StockView","props":{"var":"stockListView","top":40,"runtime":"view.StockView","right":10,"left":10,"bottom":10}},{"type":"KLineView","props":{"var":"kLineView","top":40,"runtime":"view.KLineView","right":10,"left":10,"bottom":10}},{"type":"SelectStockView","props":{"var":"selectView","top":40,"runtime":"view.SelectStockView","right":10,"left":10,"bottom":10}},{"type":"RealTime","props":{"var":"realTimeView","top":40,"runtime":"view.RealTimeView","right":10,"left":10,"bottom":10}}]};}
 		]);
 		return MainViewUI;
 	})(View)
@@ -34587,6 +34775,54 @@ var Laya=window.Laya=(function(window,document){
 		['uiView',function(){return this.uiView={"type":"View","props":{},"child":[{"type":"List","props":{"y":0,"x":2,"width":160,"var":"list","vScrollBarSkin":"comp/vscroll.png","height":193},"child":[{"type":"Box","props":{"y":0,"x":0,"width":148,"renderType":"render","height":17},"child":[{"type":"Label","props":{"width":80,"text":"limittxt","name":"nameTxt","height":17,"color":"#e0211d"}},{"type":"CheckBox","props":{"x":92,"skin":"comp/checkbox.png","name":"ifShow","label":"启用","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}}]}]}]};}
 		]);
 		return AnalyserListUI;
+	})(View)
+
+
+	//class ui.realtime.RealTimeUI extends laya.ui.View
+	var RealTimeUI=(function(_super){
+		function RealTimeUI(){
+			this.list=null;
+			this.autoFresh=null;
+			this.freshBtn=null;
+			this.stockInput=null;
+			this.addBtn=null;
+			RealTimeUI.__super.call(this);
+		}
+
+		__class(RealTimeUI,'ui.realtime.RealTimeUI',_super);
+		var __proto=RealTimeUI.prototype;
+		__proto.createChildren=function(){
+			View.regComponent("view.realtime.RealTimeItem",RealTimeItem);
+			laya.ui.Component.prototype.createChildren.call(this);
+			this.createView(RealTimeUI.uiView);
+		}
+
+		__static(RealTimeUI,
+		['uiView',function(){return this.uiView={"type":"View","props":{"width":445,"height":400},"child":[{"type":"List","props":{"y":10,"x":10,"var":"list","vScrollBarSkin":"comp/vscroll.png","top":30,"right":10,"repeatX":1,"left":10,"bottom":10},"child":[{"type":"StockRealTimeItem","props":{"y":0,"x":0,"runtime":"view.realtime.RealTimeItem","renderType":"render"}}]},{"type":"CheckBox","props":{"y":7,"x":7,"width":61,"var":"autoFresh","skin":"comp/checkbox.png","label":"自动刷新","height":19,"labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":3,"x":90,"var":"freshBtn","skin":"comp/button.png","label":"刷新","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"TextInput","props":{"y":5,"x":185,"width":90,"var":"stockInput","text":"002234","skin":"comp/textinput.png","height":22,"color":"#f1dede"}},{"type":"Button","props":{"y":4,"x":285,"var":"addBtn","skin":"comp/button.png","label":"添加","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}}]};}
+		]);
+		return RealTimeUI;
+	})(View)
+
+
+	//class ui.realtime.StockRealTimeItemUI extends laya.ui.View
+	var StockRealTimeItemUI=(function(_super){
+		function StockRealTimeItemUI(){
+			this.txt=null;
+			this.delBtn=null;
+			StockRealTimeItemUI.__super.call(this);
+		}
+
+		__class(StockRealTimeItemUI,'ui.realtime.StockRealTimeItemUI',_super);
+		var __proto=StockRealTimeItemUI.prototype;
+		__proto.createChildren=function(){
+			laya.ui.Component.prototype.createChildren.call(this);
+			this.createView(StockRealTimeItemUI.uiView);
+		}
+
+		__static(StockRealTimeItemUI,
+		['uiView',function(){return this.uiView={"type":"View","props":{"width":402,"height":25},"child":[{"type":"Box","props":{"width":402,"height":25},"child":[{"type":"Label","props":{"wordWrap":true,"var":"txt","top":0,"text":"this is a list","skin":"comp/label.png","right":0,"name":"label","left":0,"fontSize":14,"color":"#efe82f","bottom":0,"borderColor":"#fb125d"}}]},{"type":"Button","props":{"y":0,"x":328,"var":"delBtn","skin":"comp/button.png","label":"删除","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}}]};}
+		]);
+		return StockRealTimeItemUI;
 	})(View)
 
 
@@ -35845,10 +36081,15 @@ var Laya=window.Laya=(function(window,document){
 			this.on("mousedown",this,this.onMMouseDown);
 			this.on("mouseup",this,this.onMMouseUp);
 			this.enableAnimation.selected=false;
+			this.addToStockBtn.on("mousedown",this,this.onAddToStock);
 		}
 
 		__class(KLineView,'view.KLineView',_super);
 		var __proto=KLineView.prototype;
+		__proto.onAddToStock=function(){
+			Notice.notify("AddMyStock",this.kLine.tStock);
+		}
+
 		__proto.onMMouseDown=function(e){
 			this.isMyMouseDown=false;
 			if (e.target !=this)return;
@@ -36039,7 +36280,7 @@ var Laya=window.Laya=(function(window,document){
 		__class(MainView,'view.MainView',_super);
 		var __proto=MainView.prototype;
 		__proto.init=function(){
-			this.views=[this.stockListView,this.kLineView,this.selectView];
+			this.views=[this.stockListView,this.kLineView,this.selectView,this.realTimeView];
 			this.typeSelect.selectHandler=new Handler(this,this.updateSelect);
 			this.updateSelect();
 			this.stockListView.init();
@@ -36059,8 +36300,10 @@ var Laya=window.Laya=(function(window,document){
 				tV=this.views[i];
 				if (i !=this.typeSelect.selectedIndex){
 					tV.visible=false;
+					tV.removeSelf();
 					}else{
 					tV.visible=true;
+					this.addChild(tV);
 				}
 			}
 		}
@@ -36175,6 +36418,148 @@ var Laya=window.Laya=(function(window,document){
 
 		return AnalyserList;
 	})(AnalyserListUI)
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class view.RealTimeView extends ui.realtime.RealTimeUI
+	var RealTimeView=(function(_super){
+		function RealTimeView(){
+			this.stockList=[];
+			RealTimeView.__super.call(this);
+			this.recoverData();
+			this.fresh();
+			Notice.listen("StockFresh",this,this.fresh);
+			StockJsonP.I.freshData();
+			this.checkAuto();
+			this.on("display",this,this.mDisplayChanged);
+			this.on("undisplay",this,this.mDisplayChanged);
+			this.addBtn.on("mousedown",this,this.onAddClick);
+			this.autoFresh.on("change",this,this.checkAuto);
+			Notice.listen("AddMyStock",this,this.addStockAndSave);
+			Notice.listen("Remove_MyStock",this,this.removeStockAndSave);
+		}
+
+		__class(RealTimeView,'view.RealTimeView',_super);
+		var __proto=RealTimeView.prototype;
+		__proto.recoverData=function(){
+			var data;
+			data=LocalStorage.getJSON("Mystocks");
+			if (data && (data instanceof Array)){
+				this.stockList=data;
+				}else{
+				this.addStock("000912");
+			};
+			var i=0,len=0;
+			len=this.stockList.length;
+			for (i=0;i < len;i++){
+				this.addStock(this.stockList[i]);
+			}
+		}
+
+		__proto.saveData=function(){
+			LocalStorage.setJSON("Mystocks",this.stockList);
+		}
+
+		__proto.onAddClick=function(){
+			this.addStockAndSave(this.stockInput.text);
+		}
+
+		__proto.addStockAndSave=function(stock){
+			this.addStock(stock);
+			this.saveData();
+			StockJsonP.I.freshData();
+		}
+
+		//debugger;
+		__proto.removeStockAndSave=function(stock){
+			this.removeStock(stock);
+			this.saveData();
+			this.fresh();
+		}
+
+		__proto.mDisplayChanged=function(){
+			this.checkAuto();
+		}
+
+		__proto.checkAuto=function(){
+			if (this.autoFresh.selected&&this.displayedInStage){
+				StockJsonP.I.startFresh();
+				}else{
+				StockJsonP.I.stopFresh();
+			}
+		}
+
+		__proto.addStock=function(stock){
+			if (!stock)return;
+			stock=StockJsonP.getAdptStockStr(stock);
+			StockJsonP.I.addStock(stock);
+			if (this.stockList.indexOf(stock)< 0)this.stockList.push(stock);
+		}
+
+		__proto.removeStock=function(stock){
+			stock=StockJsonP.getAdptStockStr(stock);
+			var i=0,len=0;
+			len=this.stockList.length;
+			for (i=0;i < len;i++){
+				if (this.stockList[i]==stock){
+					this.stockList.splice(i,1);
+					return;
+				}
+			}
+		}
+
+		__proto.fresh=function(){
+			this.list.array=this.stockList;
+		}
+
+		RealTimeView.DataSign="Mystocks";
+		return RealTimeView;
+	})(RealTimeUI)
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class view.realtime.RealTimeItem extends ui.realtime.StockRealTimeItemUI
+	var RealTimeItem=(function(_super){
+		function RealTimeItem(){
+			this.stock=null;
+			RealTimeItem.__super.call(this);
+			this.delBtn.on("mousedown",this,this.onDeleteBtn);
+			this.on("doubleclick",this,this.onDoubleClick);
+		}
+
+		__class(RealTimeItem,'view.realtime.RealTimeItem',_super);
+		var __proto=RealTimeItem.prototype;
+		__proto.initByStock=function(stock){
+			this.stock=stock;
+			this.txt.text=stock;
+			var dataO;
+			dataO=StockJsonP.I.getStockData(stock);
+			if (dataO){
+				this.txt.text=dataO.code+","+dataO.name+","+dataO.price+","+StockTools.getGoodPercent((dataO.price-dataO.close)/dataO.close)+"%";
+			}
+		}
+
+		__proto.onDoubleClick=function(){
+			Notice.notify("Show_Stock_KLine",StockJsonP.getPureStock(this.stock));
+		}
+
+		__proto.onDeleteBtn=function(){
+			Notice.notify("Remove_MyStock",this.stock);
+		}
+
+		__getset(0,__proto,'dataSource',_super.prototype._$get_dataSource,function(value){
+			_super.prototype._$set_dataSource.call(this,value);
+			this.initByStock(value);
+		});
+
+		return RealTimeItem;
+	})(StockRealTimeItemUI)
 
 
 	/**
@@ -36637,6 +37022,26 @@ var Laya=window.Laya=(function(window,document){
 	*...
 	*@author ww
 	*/
+	//class laya.debug.view.nodeInfo.nodetree.NodeTreeSetting extends laya.debug.ui.debugui.NodeTreeSettingUI
+	var NodeTreeSetting=(function(_super){
+		function NodeTreeSetting(){
+			NodeTreeSetting.__super.call(this);
+			Base64AtlasManager.replaceRes(NodeTreeSettingUI.uiView);
+			this.createView(NodeTreeSettingUI.uiView);
+		}
+
+		__class(NodeTreeSetting,'laya.debug.view.nodeInfo.nodetree.NodeTreeSetting',_super);
+		var __proto=NodeTreeSetting.prototype;
+		//inits();
+		__proto.createChildren=function(){}
+		return NodeTreeSetting;
+	})(NodeTreeSettingUI)
+
+
+	/**
+	*...
+	*@author ww
+	*/
 	//class laya.debug.view.nodeInfo.nodetree.NodeTree extends laya.debug.ui.debugui.NodeTreeUI
 	var NodeTree=(function(_super){
 		function NodeTree(){
@@ -36880,26 +37285,6 @@ var Laya=window.Laya=(function(window,document){
 	*...
 	*@author ww
 	*/
-	//class laya.debug.view.nodeInfo.nodetree.NodeTreeSetting extends laya.debug.ui.debugui.NodeTreeSettingUI
-	var NodeTreeSetting=(function(_super){
-		function NodeTreeSetting(){
-			NodeTreeSetting.__super.call(this);
-			Base64AtlasManager.replaceRes(NodeTreeSettingUI.uiView);
-			this.createView(NodeTreeSettingUI.uiView);
-		}
-
-		__class(NodeTreeSetting,'laya.debug.view.nodeInfo.nodetree.NodeTreeSetting',_super);
-		var __proto=NodeTreeSetting.prototype;
-		//inits();
-		__proto.createChildren=function(){}
-		return NodeTreeSetting;
-	})(NodeTreeSettingUI)
-
-
-	/**
-	*...
-	*@author ww
-	*/
 	//class laya.debug.view.nodeInfo.nodetree.ObjectCreate extends laya.debug.ui.debugui.ObjectCreateUI
 	var ObjectCreate=(function(_super){
 		function ObjectCreate(){
@@ -37050,7 +37435,7 @@ var Laya=window.Laya=(function(window,document){
 	})(ToolBarUI)
 
 
-	Laya.__init([EventDispatcher,LoaderManager,Browser,Render,View,LocalStorage,Timer]);
+	Laya.__init([LoaderManager,EventDispatcher,Browser,LocalStorage,Render,View,Timer]);
 	new StockMain();
 
 })(window,document,Laya);
