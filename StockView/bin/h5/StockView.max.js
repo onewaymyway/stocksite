@@ -36541,7 +36541,8 @@ var Laya=window.Laya=(function(window,document){
 			var dataO;
 			dataO=StockJsonP.I.getStockData(stock);
 			if (dataO){
-				this.txt.text=dataO.code+","+dataO.name+","+dataO.price+","+StockTools.getGoodPercent((dataO.price-dataO.close)/dataO.close)+"%";
+				this.txt.text=dataO.code+","+dataO.name+","+dataO.price+","+StockTools.getGoodPercent((dataO.price-dataO.close)/ dataO.close)+"%";
+				this.txt.color=dataO.price-dataO.close > 0?"#ff0000":"#00ff00";
 			}
 		}
 
