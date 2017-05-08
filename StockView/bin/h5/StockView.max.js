@@ -1443,7 +1443,7 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		StockTools.getGoodPercent=function(v){
-			return Math.floor(v *1000)/ 10;
+			return Math.floor(v *10000)/ 100;
 		}
 
 		StockTools.getGoodPercentList=function(arr){
