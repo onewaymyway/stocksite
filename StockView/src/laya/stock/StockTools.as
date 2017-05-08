@@ -22,7 +22,7 @@ package laya.stock
 		public static var highDays:Array = [7, 15, 30, 45, 60];
 		public static function getGoodPercent(v:Number):Number
 		{
-			return Math.floor(v * 1000) / 10;
+			return Math.floor(v * 10000) / 100;
 		}
 		public static function getGoodPercentList(arr:Array):Array
 		{
