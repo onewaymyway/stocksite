@@ -1,6 +1,9 @@
 package tests 
 {
+	import laya.tools.SinaMData;
+	import laya.utils.Handler;
 	import stock.sinastock.DataTool;
+	import stock.views.MDLine;
 	/**
 	 * ...
 	 * @author ww
@@ -11,7 +14,10 @@ package tests
 		public function TestSinaData() 
 		{
 			Laya.init(1000, 900);
-			testData();
+			Laya.stage.bgColor = "#ffffff";
+			//testData();
+			//testData2();
+			testData3();
 		}
 		private function testData():void
 		{
@@ -24,6 +30,37 @@ package tests
 			var dataL:Array;
 			dataL = DataTool.fB(dataArr);
 			trace(dataL);
+		}
+		private function testData2():void
+		{
+			var MDData:SinaMData;
+			MDData = new SinaMData();
+			MDData.completeHandler = new Handler(this, onStockCP);
+			MDData.getData("600012");
+			
+		}
+		private function onStockCP(data:*):void
+		{
+			trace("stockData:",data);
+		}
+		private function testData3():void
+		{
+			var mdLine:MDLine;
+			mdLine = new MDLine();
+			mdLine.setStock("000912");
+			mdLine.lineHeight = 400;
+			mdLine.lineWidth = 850;
+			mdLine.pos(10, 400);
+			mdLine.setUpGrids();
+			mdLine.addStock("002795");
+			mdLine.addStock("002349");
+			mdLine.addStock("600282");
+			mdLine.addStock("300076");
+			mdLine.addStock("sh000001");
+			mdLine.addStock("sz399001");
+			
+			Laya.stage.addChild(mdLine);
+			mdLine.startFresh();
 		}
 	}
 

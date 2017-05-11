@@ -36,13 +36,17 @@ package stock.sinastock
             t.splice(360, 3);
 			var c:int = Math.floor(t.length/3)*3;
             for (var i:int, s:Array = [], p:int = 0, d:int = 0, u:int = 0; c > u; u += 3)
-                d = Math.floor(u / 3),
+			{
+				 d = Math.floor(u / 3);
+				if (t[u + 1] <= 0) continue; 
                 s[s.length] = {
                     //time: o[d],
                     avg_price: t[u] / 1e3,
                     price: t[u + 1] / 1e3,
                     volume: t[u + 2] / 100
                 };
+			}
+               
             return s;
         }
 		

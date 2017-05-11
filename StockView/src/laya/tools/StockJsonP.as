@@ -15,7 +15,7 @@ package laya.tools
 			
 		}
 		public static var I:StockJsonP = new StockJsonP();
-		public static function getStockData(stock:String, complete:Handler):void
+		public static function getStockData2(stock:String, complete:Handler):void
 		{
 			var scp:*= Browser.createElement("script");
 			Browser.document.body.appendChild(scp);
@@ -82,7 +82,7 @@ package laya.tools
 			}
 			
 		}
-		public function getStockData(stock:String):Object
+		public static function getStockData(stock:String):Object
 		{
 			return stockDataO[stock];
 		}
@@ -140,7 +140,7 @@ package laya.tools
 		"time"];
 		
 		public static var stockDataO:Object = { };
-		private function parserStockData(stock:String):void
+		public static function parserStockData(stock:String):void
 		{
 			//hq_str_sh601003:"柳钢股份,4.590,4.560,5.020,5.020,4.500,5.020,0.000,82832806,402364911.000,14983707,5.020,1224300,5.010,381700,5.000,515762,4.990,127600,4.980,0,0.000,0,0.000,0,0.000,0,0.000,0,0.000,2017-05-05,15:00:00,00"
 			var tStr:String;

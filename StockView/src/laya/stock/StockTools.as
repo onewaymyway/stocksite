@@ -18,7 +18,26 @@ package laya.stock
 			//stockUrl = "res/stockdata/" + "002694" + ".csv";
 			return stockUrl;
 		}
+		public static function getAdptStockStr(stock:String):String
+		{
+			var tChar:String;
+			tChar = stock.charAt(0);
+			if (tChar == "s") return stock;
+			if (stock.charAt(0)=="6")
+			{
+				return "sh"+stock;
+			}
+			return "sz" + stock;
+		}
 		
+		public static function getPureStock(stock:String):String
+		{
+			if (stock.length > 6)
+			{
+				stock = stock.substr(2, 6);
+			}
+			return stock;
+		}
 		public static var highDays:Array = [7, 15, 30, 45, 60];
 		public static function getGoodPercent(v:Number):Number
 		{
