@@ -5,6 +5,7 @@ package {
 	import laya.stock.analysers.AnalyserBase;
 	import laya.stock.analysers.KLineAnalyser;
 	import laya.stock.analysers.lines.PositionLine;
+	import laya.stock.analysers.staticinfo.PositionStatic;
 	import laya.stock.StockTools;
 	import laya.structs.RankInfo;
 	import laya.utils.Browser;
@@ -41,6 +42,7 @@ package {
 			FileTools.init2();
 		}
 		
+		public var scriptPath:String;
 		private function parseCMD(args:Array):void {
 			scriptPath = args[1];
 			if (args[2]) {
@@ -116,6 +118,7 @@ package {
 			posAnalyser30.maxBuyLose = -0.1;
 			analysers.push(posAnalyser30);
 			
+			analysers.push(new PositionStatic());
 			var i:int, len:int;
 			len = analysers.length;
 			var tAnalyser:AnalyserBase;

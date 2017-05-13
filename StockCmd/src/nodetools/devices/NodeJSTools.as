@@ -22,7 +22,7 @@ package nodetools.devices
 			trace("argv:", argv);
 			return argv;
 		}
-		public static function parseArgToObj(args:Array, start:int = 0, target:Object):void
+		public static function parseArgToObj(args:Array, start:int = 0, target:Object=null):void
 		{
 			var i:int, len:int;
 			len = args.length;
