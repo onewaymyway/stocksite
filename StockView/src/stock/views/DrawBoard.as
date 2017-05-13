@@ -19,6 +19,12 @@ package stock.views
 			xRate = lineWidth / xMax;
 			yRate = lineHeight / yMax;
 		}
+		
+		public function fresh():void
+		{
+			
+		}
+		
 		public var yRate:Number;
 		public var xRate:Number;
 		public function getAdptYV(v:Number):Number

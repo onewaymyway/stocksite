@@ -146,7 +146,7 @@ package laya.stock.analysers {
 		}
 		
 		override public function addToConfigTypes(types:Array):void {
-			var tData:RankInfo;
+			var tData:Object;
 			var tAnalyserInfos:Array;
 			tData = {};
 			tData.label = "kline";

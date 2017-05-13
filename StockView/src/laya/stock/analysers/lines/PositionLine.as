@@ -51,8 +51,8 @@ package laya.stock.analysers.lines {
 				positionList.push(getWinLoseData(ValueTools.mParseFloat(days[i]), dataList));
 			}
 			var gridLine:Array;
-			var gridValue:Number;
-			gridValue = barHeight * gridLineValue;
+			//var gridValue:Number;
+			//gridValue = barHeight * gridLineValue;
 			gridLine = [];
 			var values:Array;
 			values = gridLineValue.split(",");
@@ -147,7 +147,7 @@ package laya.stock.analysers.lines {
 		
 		override public function addToConfigTypes(types:Array):void 
 		{
-			var tData:RankInfo;
+			var tData:Object;
 			var tAnalyserInfos:Array;
 			var sign:String;
 			sign = "exp" + dayCount;
@@ -190,9 +190,9 @@ package laya.stock.analysers.lines {
 			sign = "exp" + dayCount;
 			
 			var winLose:Array;
-			winLose = DataUtils.getWinLoseInfo(this.disDataList, this.dayCount, this.disDataList.length - 1);
+			winLose = DataUtils.getWinLoseInfo(this.disDataList, parseInt(this.dayCount), this.disDataList.length - 1);
 			var posBuy:Object;
-			posBuy = this.getWinLoseData(this.dayCount, this.disDataList);
+			posBuy = this.getWinLoseData(parseInt(this.dayCount), this.disDataList);
 			var expO:Object = {};
 			showData[sign] = expO;
 			expO.code = showData.code;

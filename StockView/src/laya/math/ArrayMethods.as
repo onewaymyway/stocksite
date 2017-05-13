@@ -13,7 +13,7 @@ package laya.math
 		}
 		public static function findFirstLowThen(v:int, arr:Array, startPos:int,step:int=1):int
 		{
-			
+			return 0;
 		}
 		public static function findPos(v:int, arr:Array,key:String=null):Array
 		{
@@ -53,7 +53,7 @@ package laya.math
 			{
 				tIndex = index - i;
 				if (tIndex <= 0) return false;
-				if (dataList[tIndex] > tv) return false;
+				if (dataList[tIndex] > tV) return false;
 				
 			}
 			return true;

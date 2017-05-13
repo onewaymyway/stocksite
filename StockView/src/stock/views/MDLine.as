@@ -23,6 +23,11 @@ package stock.views {
 		{
 			drawGrids(this);
 		}
+		
+		override public function fresh():void 
+		{
+			freshData();
+		}
 		public var stock:String;
 		public var MDData:SinaMData;
 		public var stockList:Array=[];
