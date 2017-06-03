@@ -2,6 +2,7 @@ package stock.views
 {
 	import laya.display.Graphics;
 	import laya.display.Sprite;
+	import laya.events.Event;
 	import laya.math.DataUtils;
 	import laya.math.GraphicUtils;
 	import laya.net.Loader;
@@ -26,6 +27,7 @@ package stock.views
 			//analyser = new KLineAnalyser();
 			
 			analysers.push(new KLineAnalyser());
+			_myLoader = new Loader();
 		}
 		public var analysers:Array;
 		//public var analyser:KLineAnalyser;
@@ -34,6 +36,7 @@ package stock.views
 		public var stockUrl:String;
 		public var gridWidth:int = 3;
 		public var start:int = 0;
+		private var _myLoader:Loader;
 		public function setStock(stock:String):void
 		{
 			Laya.timer.clear(this, timeEffect);
@@ -43,7 +46,9 @@ package stock.views
 			stockUrl = "https://onewaymyway.github.io/stockdata/stockdatas/" + stock + ".csv";
 			//stockUrl = "res/stockdata/" + stock + ".csv";
 			stockUrl = StockTools.getStockCsvPath(stock);
-			Laya.loader.load(stockUrl, Handler.create(this, dataLoaded), null, Loader.TEXT);
+			_myLoader.once(Event.COMPLETE, this, dataLoaded);
+			_myLoader.load(stockUrl, Loader.TEXT);
+			//Laya.loader.load(stockUrl, Handler.create(this, dataLoaded), null, Loader.TEXT);
 		}
 		private function dataErr():void
 		{

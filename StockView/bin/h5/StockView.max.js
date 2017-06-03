@@ -21653,6 +21653,7 @@ var Laya=window.Laya=(function(window,document){
 			this.stockUrl=null;
 			this.gridWidth=3;
 			this.start=0;
+			this._myLoader=null;
 			this.stockData=null;
 			this.dataList=null;
 			this.disDataList=null;
@@ -21665,6 +21666,7 @@ var Laya=window.Laya=(function(window,document){
 			KLine.__super.call(this);
 			this.analysers=[];
 			this.analysers.push(new KLineAnalyser());
+			this._myLoader=new Loader();
 		}
 
 		__class(KLine,'stock.views.KLine',_super);
@@ -21676,9 +21678,11 @@ var Laya=window.Laya=(function(window,document){
 			this.tStock=stock;
 			this.stockUrl="https://onewaymyway.github.io/stockdata/stockdatas/"+stock+".csv";
 			this.stockUrl=StockTools.getStockCsvPath(stock);
-			Laya.loader.load(this.stockUrl,Handler.create(this,this.dataLoaded),null,"text");
+			this._myLoader.once("complete",this,this.dataLoaded);
+			this._myLoader.load(this.stockUrl,"text");
 		}
 
+		//Laya.loader.load(stockUrl,Handler.create(this,dataLoaded),null,Loader.TEXT);
 		__proto.dataErr=function(){
 			this.showMsg("dataErr");
 		}
@@ -37824,7 +37828,7 @@ var Laya=window.Laya=(function(window,document){
 
 
 /*
-1 file:///D:/stocksite.git/trunk/StockView/src/stock/views/KLine.as (423):warning:tTxt This variable is not defined.
-2 file:///D:/stocksite.git/trunk/StockView/src/stock/views/KLine.as (425):warning:tTxt This variable is not defined.
-3 file:///D:/stocksite.git/trunk/StockView/src/stock/views/KLine.as (426):warning:tTxt This variable is not defined.
+1 file:///D:/stocksite.git/trunk/StockView/src/stock/views/KLine.as (427):warning:tTxt This variable is not defined.
+2 file:///D:/stocksite.git/trunk/StockView/src/stock/views/KLine.as (429):warning:tTxt This variable is not defined.
+3 file:///D:/stocksite.git/trunk/StockView/src/stock/views/KLine.as (430):warning:tTxt This variable is not defined.
 */
