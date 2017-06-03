@@ -10,6 +10,7 @@ package stock.views
 	import laya.stock.StockTools;
 	import laya.utils.Handler;
 	import msgs.MsgConst;
+	import stock.StockBasicInfo;
 	import stock.StockData;
 	/**
 	 * ...
@@ -70,7 +71,7 @@ package stock.views
 		}
 		public function showMsg(msg:String):void
 		{
-			event("msg",msg);
+			event("msg",StockBasicInfo.I.getStockName(tStock)+":"+msg);
 		}
 		public var stockData:StockData;
 		public var dataList:Array;

@@ -31,7 +31,7 @@ package view.realtime
 			this.stock = stock;
 			txt.text = stock;
 			var dataO:Object;
-			dataO = StockJsonP.I.getStockData(stock);
+			dataO = StockJsonP.getStockData(stock);
 			if (dataO)
 			{
 				txt.text = dataO.code + "," + dataO.name + "," + dataO.price + "," + StockTools.getGoodPercent((dataO.price-dataO.close) / dataO.close) + "%";
