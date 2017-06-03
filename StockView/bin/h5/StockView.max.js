@@ -36528,7 +36528,6 @@ var Laya=window.Laya=(function(window,document){
 		__proto.init=function(){
 			var tLabel;
 			tLabel=StockBasicInfo.I.stockCodeList.join(",");
-			console.log("tLabel",tLabel);
 			this.stockSelect.labels=tLabel;
 			this.stockSelect.selectedIndex=0;
 			this.stockSelect.selectHandler=new Handler(this,this.onSelect);

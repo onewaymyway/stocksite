@@ -190,7 +190,7 @@ package view {
 			//stockSelect.labels = "300383,000546,000725,002064,600139";
 			var tLabel:String;
 			tLabel = StockBasicInfo.I.stockCodeList.join(",");
-			trace("tLabel", tLabel);
+			//trace("tLabel", tLabel);
 			stockSelect.labels = tLabel;
 			stockSelect.selectedIndex = 0;
 			stockSelect.selectHandler = new Handler(this, onSelect);
