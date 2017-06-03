@@ -1568,6 +1568,79 @@ var Laya=window.Laya=(function(window,document){
 	*...
 	*@author ww
 	*/
+	//class laya.tools.SinaMData
+	var SinaMData=(function(){
+		function SinaMData(){
+			this.stock=null;
+			this.completeHandler=null;
+			this.basic=null;
+			this.dataArr=null;
+			this.color=null;
+			this.color=SinaMData.getRandomColor();
+		}
+
+		__class(SinaMData,'laya.tools.SinaMData');
+		var __proto=SinaMData.prototype;
+		//https://hq.sinajs.cn/?list=ml_sh600012
+		__proto.getData=function(stock){
+			stock=StockTools.getAdptStockStr(stock);
+			this.stock=stock;
+			this.basic=null;
+			this.getBasicFromServer();
+		}
+
+		__proto.getBasicFromServer=function(){
+			var path;
+			path="https://hq.sinajs.cn/list="+this.stock;;
+			JsonP.getData(path,Handler.create(this,this.basicComplete));
+		}
+
+		__proto.basicComplete=function(){
+			StockJsonP.parserStockData(this.stock);
+			this.basic=StockJsonP.getStockData(this.stock);
+			this.getDataFromServer();
+		}
+
+		__proto.getDataFromServer=function(){
+			if (!this.basic)return;
+			JsonP.getData("https://hq.sinajs.cn/?list=ml_"+this.stock,Handler.create(this,this.dataComplete));
+		}
+
+		__proto.dataComplete=function(){
+			this.parserStockData(this.stock);
+		}
+
+		__proto.parserStockData=function(stock){
+			var tStr;
+			tStr="hq_str_ml_"+stock;
+			if (Browser.window[tStr]){
+				SinaMData.parseStockStrToData(stock,Browser.window[tStr]);
+				if (this.completeHandler){
+					this.dataArr=SinaMData.stockDataDic[stock];
+					this.completeHandler.runWith([this]);
+				}
+			}
+		}
+
+		SinaMData.getRandomColor=function(){
+			return ColorTool.getRGBStr([Math.random()*100,Math.random()*100,Math.random()*255]);
+			return ColorTool.getRGBStr([Math.random()*255,Math.random()*255,Math.random()*255]);
+		}
+
+		SinaMData.parseStockStrToData=function(stock,dataStr){
+			SinaMData.stockDataDic[stock]=DataTool.parseMinutesData(dataStr);
+			Notice.notify("MD"+stock,SinaMData.stockDataDic[stock]);
+		}
+
+		SinaMData.stockDataDic={};
+		return SinaMData;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
 	//class laya.tools.StockJsonP
 	var StockJsonP=(function(){
 		function StockJsonP(){
@@ -1755,6 +1828,8 @@ var Laya=window.Laya=(function(window,document){
 		MsgConst.Stock_Data_Inited="DataInited";
 		MsgConst.Add_MyStock="AddMyStock";
 		MsgConst.Remove_MyStock="Remove_MyStock";
+		MsgConst.Add_MDLine="Add_MDLine";
+		MsgConst.Remove_MDLine="Remove_MDLine";
 		return MsgConst;
 	})()
 
@@ -2123,6 +2198,60 @@ var Laya=window.Laya=(function(window,document){
 		Handler._pool=[];
 		Handler._gid=1;
 		return Handler;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class stock.sinastock.DataTool
+	var DataTool=(function(){
+		function DataTool(){}
+		__class(DataTool,'stock.sinastock.DataTool');
+		DataTool.c2b=function(e){
+			e=e.replace(" ","+");
+			var t=DataTool.BStr.indexOf(e);
+			return t >=0 ? t :0
+		}
+
+		DataTool.db=function(e){
+			if (!e)
+				return [];
+			for (var t=0,a=0,r=[],n=0,i=0,l=0,s=e.length;s > l;l++)
+			t=this.c2b(e.charAt(l)),
+			a=6 & i ? 7 & i ^ 7 :5,
+			n |=t >> 5-a << (7 ^ i)-a,
+			64767==n && 63==t && (n=65535),
+			i > 25 && (i-=32,
+			r[r.length]=n,
+			n=0),
+			n |=(t & (1 << 5-a)-1)<< (7 | i)+4+a,
+			i+=6;
+			return r;
+		}
+
+		DataTool.fB=function(t){
+			t.splice(360,3);
+			var c=Math.floor(t.length/3)*3;
+			for (var i=0,s=[],p=0,d=0,u=0;c > u;u+=3){
+				d=Math.floor(u / 3);
+				if (t[u+1] <=0)continue ;
+				s[s.length]={
+					avg_price:t[u] / 1e3,
+					price:t[u+1] / 1e3,
+					volume:t[u+2] / 100
+				};
+			}
+			return s;
+		}
+
+		DataTool.parseMinutesData=function(dataStr){
+			return DataTool.fB(DataTool.db(dataStr));
+		}
+
+		DataTool.BStr="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+		return DataTool;
 	})()
 
 
@@ -21481,6 +21610,40 @@ var Laya=window.Laya=(function(window,document){
 	*...
 	*@author ww
 	*/
+	//class stock.views.DrawBoard extends laya.display.Sprite
+	var DrawBoard=(function(_super){
+		function DrawBoard(){
+			this.lineHeight=400;
+			this.lineWidth=800;
+			this.yRate=NaN;
+			this.xRate=NaN;
+			DrawBoard.__super.call(this);
+		}
+
+		__class(DrawBoard,'stock.views.DrawBoard',_super);
+		var __proto=DrawBoard.prototype;
+		__proto.setDataSize=function(xMax,yMax){
+			this.xRate=this.lineWidth / xMax;
+			this.yRate=this.lineHeight / yMax;
+		}
+
+		__proto.fresh=function(){}
+		__proto.getAdptYV=function(v){
+			return-DataUtils.mParseFloat(v)*this.yRate;
+		}
+
+		__proto.getAdptXV=function(v){
+			return DataUtils.mParseFloat(v)*this.xRate;
+		}
+
+		return DrawBoard;
+	})(Sprite)
+
+
+	/**
+	*...
+	*@author ww
+	*/
 	//class stock.views.KLine extends laya.display.Sprite
 	var KLine=(function(_super){
 		function KLine(){
@@ -24507,6 +24670,164 @@ var Laya=window.Laya=(function(window,document){
 
 		return Box;
 	})(Component)
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class stock.views.MDLine extends stock.views.DrawBoard
+	var MDLine=(function(_super){
+		function MDLine(){
+			this.stockSp=null;
+			this.stock=null;
+			this.MDData=null;
+			this.stockList=[];
+			this.maxXCount=241;
+			this.topLine=1.1;
+			this.bottomLine=0.9;
+			MDLine.__super.call(this);
+			this.stockSp=new Sprite();
+			this.addChild(this.stockSp);
+			this.MDData=new SinaMData();
+			this.MDData.completeHandler=new Handler(this,this.onStockData);
+		}
+
+		__class(MDLine,'stock.views.MDLine',_super);
+		var __proto=MDLine.prototype;
+		__proto.setUpGrids=function(){
+			this.drawGrids(this);
+		}
+
+		__proto.fresh=function(){
+			this.freshData();
+		}
+
+		__proto.addStock=function(stock){
+			var mdData;
+			mdData=new SinaMData();
+			var sp;
+			sp=new Sprite();
+			this.addChild(sp);
+			sp.name=StockTools.getAdptStockStr(stock);
+			mdData.completeHandler=new Handler(this,this.onStockData,[mdData,sp]);
+			mdData.getData(stock);
+			this.stockList.push(mdData);
+		}
+
+		__proto.removeStock=function(stock){
+			var i=0,len=0;
+			len=this.stockList.length;
+			var tStockStr;
+			var tMDData;
+			tStockStr=StockTools.getAdptStockStr(stock);
+			for (i=0;i < len;i++){
+				tMDData=this.stockList[i];
+				if (tMDData.stock==tStockStr){
+					this.stockList.splice(i,1);
+				}
+			};
+			var tChild;
+			tChild=this.getChildByName(tStockStr);
+			if (tChild)tChild.removeSelf();
+		}
+
+		__proto.setStock=function(stock){
+			this.MDData.getData(stock);
+		}
+
+		__proto.freshData=function(){
+			if (!this.displayedInStage)return;
+			this.MDData.getDataFromServer();
+			var i=0,len=0;
+			len=this.stockList.length;
+			var tStockData;
+			for (i=0;i < len;i++){
+				tStockData=this.stockList[i];
+				tStockData.getDataFromServer();
+			}
+		}
+
+		__proto.startFresh=function(interval){
+			(interval===void 0)&& (interval=5000);
+			Laya.timer.loop(interval,this,this.freshData);
+		}
+
+		__proto.stopFresh=function(){
+			Laya.timer.clear(this,this.freshData);
+		}
+
+		__proto.setRateSize=function(baseLine){
+			var maxP=NaN;
+			maxP=baseLine *this.topLine;
+			var minP=NaN;
+			minP=baseLine *this.bottomLine;
+			var d=NaN;
+			d=maxP-minP;
+			this.setDataSize(this.maxXCount,d);
+			return minP;
+		}
+
+		__proto.onStockData=function(mdData,sp){
+			if (!sp)sp=this.stockSp;
+			var data
+			data=mdData.dataArr;
+			var basic;
+			basic=mdData.basic;
+			sp.graphics.clear();
+			var color;
+			color=mdData.color;
+			var preClose=NaN;
+			preClose=parseFloat(basic.close);
+			var minP=NaN;
+			minP=this.setRateSize(preClose);
+			var i=0,len=0;
+			len=data.length;
+			var preX=NaN;
+			var preY=NaN;
+			var xpos=NaN;
+			var yPos=NaN;
+			for (i=1;i < len;i++){
+				preX=this.getAdptXV(i-1);
+				preY=this.getAdptYV(data[i-1].price-minP);
+				xpos=this.getAdptXV(i);
+				yPos=this.getAdptYV(data[i].price-minP);
+				sp.graphics.drawLine(preX,preY,xpos,yPos,color);
+			}
+		}
+
+		//this.graphics.drawCircle(xpos,yPos,2,"#ff0000");
+		__proto.drawGrids=function(sp){
+			if (!sp)sp=this;
+			sp.graphics.clear();
+			var minP=NaN;
+			minP=this.setRateSize(1);
+			var rates;
+			rates=[];
+			var i=0,len=0;
+			var tV=NaN;
+			tV=0.9;
+			var tDrawV=NaN;
+			var color;
+			while (tV <=1.1){
+				tDrawV=tV;
+				if (tV < 1){
+					color="#00ff00";
+				}
+				else if (tV==1){
+					color="#00ffff";
+				}
+				else {
+					color="#ff0000";
+				}
+				sp.graphics.drawLine(this.getAdptXV(0),this.getAdptYV(tDrawV-minP),this.getAdptXV(this.maxXCount),this.getAdptYV(tDrawV-minP),color);
+				sp.graphics.fillText(StockTools.getGoodPercent(tV-1)+"%",this.getAdptXV(this.maxXCount),this.getAdptYV(tDrawV-minP)-6,null,color,"left");
+				tV+=0.01;
+			}
+		}
+
+		return MDLine;
+	})(DrawBoard)
 
 
 	/**
@@ -34707,9 +35028,7 @@ var Laya=window.Laya=(function(window,document){
 			this.createView(PropPanelUI.uiView);
 		}
 
-		__static(PropPanelUI,
-		['uiView',function(){return this.uiView={"type":"View","props":{"width":230,"height":400},"child":[{"type":"Label","props":{"y":18,"x":18,"width":80,"var":"title","text":"属性设置","height":20,"color":"#e72b28"}},{"type":"Button","props":{"y":13,"x":100,"var":"okBtn","skin":"comp/button.png","label":"应用设置","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Box","props":{"y":45,"x":13,"width":190,"var":"propBox","height":237}}]};}
-		]);
+		PropPanelUI.uiView={"type":"View","props":{"width":230,"height":400},"child":[{"type":"Label","props":{"y":18,"x":18,"width":80,"var":"title","text":"属性设置","height":20,"color":"#e72b28"}},{"type":"Button","props":{"y":13,"x":100,"var":"okBtn","skin":"comp/button.png","label":"应用设置","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Box","props":{"y":45,"x":13,"width":190,"var":"propBox","height":237}}]};
 		return PropPanelUI;
 	})(View)
 
@@ -34745,9 +35064,7 @@ var Laya=window.Laya=(function(window,document){
 			this.createView(KLineViewUI.uiView);
 		}
 
-		__static(KLineViewUI,
-		['uiView',function(){return this.uiView={"type":"View","props":{"width":800,"height":400},"child":[{"type":"ComboBox","props":{"y":9,"x":8,"var":"stockSelect","skin":"comp/combobox.png","scrollBarSkin":"comp/vscroll.png","labels":"000233,600322","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":9,"x":114,"var":"playBtn","skin":"comp/button.png","label":"play","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Label","props":{"y":13,"x":225,"width":147,"var":"infoTxt","text":"label","height":20,"color":"#ffffff"}},{"type":"TextInput","props":{"y":43,"x":8,"width":90,"var":"stockInput","text":"002234","skin":"comp/textinput.png","height":22,"color":"#f1dede"}},{"type":"Button","props":{"y":42,"x":114,"var":"playInputBtn","skin":"comp/button.png","label":"play","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"CheckBox","props":{"y":45,"x":226,"var":"enableAnimation","skin":"comp/checkbox.png","selected":true,"label":"开启动画","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":39,"x":301,"var":"detailBtn","skin":"comp/button.png","label":"详情","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":80,"x":11,"var":"preBtn","skin":"comp/button.png","label":"pre","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":80,"x":100,"var":"nextBtn","skin":"comp/button.png","label":"next","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"AnalyserList","props":{"var":"analyserList","top":10,"runtime":"view.plugins.AnalyserList","right":10}},{"type":"PropPanel","props":{"y":0,"var":"propPanel","runtime":"stock.prop.PropPanel","right":180}},{"type":"HScrollBar","props":{"y":101,"x":225,"width":166,"var":"dayScroll","skin":"comp/hscroll.png","height":13}},{"type":"CheckBox","props":{"y":76,"x":226,"var":"maxDayEnable","skin":"comp/checkbox.png","selected":false,"label":"天数限制","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"TextInput","props":{"y":73,"x":300,"width":90,"var":"dayCountInput","text":"180","skin":"comp/textinput.png","height":22,"color":"#f1dede"}},{"type":"CheckBox","props":{"y":77,"x":403,"var":"clickControlEnable","skin":"comp/checkbox.png","selected":true,"label":"单击平移","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":39,"x":383,"var":"addToStockBtn","skin":"comp/button.png","label":"加自选","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}}]};}
-		]);
+		KLineViewUI.uiView={"type":"View","props":{"width":800,"height":400},"child":[{"type":"ComboBox","props":{"y":9,"x":8,"var":"stockSelect","skin":"comp/combobox.png","scrollBarSkin":"comp/vscroll.png","labels":"000233,600322","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":9,"x":114,"var":"playBtn","skin":"comp/button.png","label":"play","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Label","props":{"y":13,"x":225,"width":147,"var":"infoTxt","text":"label","height":20,"color":"#ffffff"}},{"type":"TextInput","props":{"y":43,"x":8,"width":90,"var":"stockInput","text":"002234","skin":"comp/textinput.png","height":22,"color":"#f1dede"}},{"type":"Button","props":{"y":42,"x":114,"var":"playInputBtn","skin":"comp/button.png","label":"play","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"CheckBox","props":{"y":45,"x":226,"var":"enableAnimation","skin":"comp/checkbox.png","selected":true,"label":"开启动画","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":39,"x":301,"var":"detailBtn","skin":"comp/button.png","label":"详情","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":80,"x":11,"var":"preBtn","skin":"comp/button.png","label":"pre","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":80,"x":100,"var":"nextBtn","skin":"comp/button.png","label":"next","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"AnalyserList","props":{"var":"analyserList","top":10,"runtime":"view.plugins.AnalyserList","right":10}},{"type":"PropPanel","props":{"y":0,"var":"propPanel","runtime":"stock.prop.PropPanel","right":180}},{"type":"HScrollBar","props":{"y":101,"x":225,"width":166,"var":"dayScroll","skin":"comp/hscroll.png","height":13}},{"type":"CheckBox","props":{"y":76,"x":226,"var":"maxDayEnable","skin":"comp/checkbox.png","selected":false,"label":"天数限制","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"TextInput","props":{"y":73,"x":300,"width":90,"var":"dayCountInput","text":"180","skin":"comp/textinput.png","height":22,"color":"#f1dede"}},{"type":"CheckBox","props":{"y":77,"x":403,"var":"clickControlEnable","skin":"comp/checkbox.png","selected":true,"label":"单击平移","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":39,"x":383,"var":"addToStockBtn","skin":"comp/button.png","label":"加自选","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}}]};
 		return KLineViewUI;
 	})(View)
 
@@ -34774,9 +35091,7 @@ var Laya=window.Laya=(function(window,document){
 			this.createView(MainViewUI.uiView);
 		}
 
-		__static(MainViewUI,
-		['uiView',function(){return this.uiView={"type":"View","props":{"width":445,"height":400},"child":[{"type":"Tab","props":{"y":4,"x":4,"var":"typeSelect","skin":"comp/tab.png","selectedIndex":0,"labels":"股票列表,K线动画,选股,自选","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"StockView","props":{"var":"stockListView","top":40,"runtime":"view.StockView","right":10,"left":10,"bottom":10}},{"type":"KLineView","props":{"var":"kLineView","top":40,"runtime":"view.KLineView","right":10,"left":10,"bottom":10}},{"type":"SelectStockView","props":{"var":"selectView","top":40,"runtime":"view.SelectStockView","right":10,"left":10,"bottom":10}},{"type":"RealTime","props":{"var":"realTimeView","top":40,"runtime":"view.RealTimeView","right":10,"left":10,"bottom":10}}]};}
-		]);
+		MainViewUI.uiView={"type":"View","props":{"width":445,"height":400},"child":[{"type":"Tab","props":{"y":4,"x":4,"var":"typeSelect","skin":"comp/tab.png","selectedIndex":0,"labels":"股票列表,K线动画,选股,自选","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"StockView","props":{"var":"stockListView","top":40,"runtime":"view.StockView","right":10,"left":10,"bottom":10}},{"type":"KLineView","props":{"var":"kLineView","top":40,"runtime":"view.KLineView","right":10,"left":10,"bottom":10}},{"type":"SelectStockView","props":{"var":"selectView","top":40,"runtime":"view.SelectStockView","right":10,"left":10,"bottom":10}},{"type":"RealTime","props":{"var":"realTimeView","top":40,"runtime":"view.RealTimeView","right":10,"left":10,"bottom":10}}]};
 		return MainViewUI;
 	})(View)
 
@@ -34795,9 +35110,7 @@ var Laya=window.Laya=(function(window,document){
 			this.createView(AnalyserListUI.uiView);
 		}
 
-		__static(AnalyserListUI,
-		['uiView',function(){return this.uiView={"type":"View","props":{},"child":[{"type":"List","props":{"y":0,"x":2,"width":160,"var":"list","vScrollBarSkin":"comp/vscroll.png","height":193},"child":[{"type":"Box","props":{"y":0,"x":0,"width":148,"renderType":"render","height":17},"child":[{"type":"Label","props":{"width":80,"text":"limittxt","name":"nameTxt","height":17,"color":"#e0211d"}},{"type":"CheckBox","props":{"x":92,"skin":"comp/checkbox.png","name":"ifShow","label":"启用","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}}]}]}]};}
-		]);
+		AnalyserListUI.uiView={"type":"View","props":{},"child":[{"type":"List","props":{"y":0,"x":2,"width":160,"var":"list","vScrollBarSkin":"comp/vscroll.png","height":193},"child":[{"type":"Box","props":{"y":0,"x":0,"width":148,"renderType":"render","height":17},"child":[{"type":"Label","props":{"width":80,"text":"limittxt","name":"nameTxt","height":17,"color":"#e0211d"}},{"type":"CheckBox","props":{"x":92,"skin":"comp/checkbox.png","name":"ifShow","label":"启用","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}}]}]}]};
 		return AnalyserListUI;
 	})(View)
 
@@ -34810,6 +35123,7 @@ var Laya=window.Laya=(function(window,document){
 			this.freshBtn=null;
 			this.stockInput=null;
 			this.addBtn=null;
+			this.showMDCheck=null;
 			RealTimeUI.__super.call(this);
 		}
 
@@ -34821,9 +35135,7 @@ var Laya=window.Laya=(function(window,document){
 			this.createView(RealTimeUI.uiView);
 		}
 
-		__static(RealTimeUI,
-		['uiView',function(){return this.uiView={"type":"View","props":{"width":445,"height":400},"child":[{"type":"List","props":{"y":10,"x":10,"var":"list","vScrollBarSkin":"comp/vscroll.png","top":30,"right":10,"repeatX":1,"left":10,"bottom":10},"child":[{"type":"StockRealTimeItem","props":{"y":0,"x":0,"runtime":"view.realtime.RealTimeItem","renderType":"render"}}]},{"type":"CheckBox","props":{"y":7,"x":7,"width":61,"var":"autoFresh","skin":"comp/checkbox.png","label":"自动刷新","height":19,"labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":3,"x":90,"var":"freshBtn","skin":"comp/button.png","label":"刷新","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"TextInput","props":{"y":5,"x":185,"width":90,"var":"stockInput","text":"002234","skin":"comp/textinput.png","height":22,"color":"#f1dede"}},{"type":"Button","props":{"y":4,"x":285,"var":"addBtn","skin":"comp/button.png","label":"添加","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}}]};}
-		]);
+		RealTimeUI.uiView={"type":"View","props":{"width":445,"height":400},"child":[{"type":"List","props":{"y":10,"x":10,"var":"list","vScrollBarSkin":"comp/vscroll.png","top":30,"right":10,"repeatX":1,"left":10,"bottom":10},"child":[{"type":"StockRealTimeItem","props":{"y":0,"x":0,"runtime":"view.realtime.RealTimeItem","renderType":"render"}}]},{"type":"CheckBox","props":{"y":7,"x":7,"width":61,"var":"autoFresh","skin":"comp/checkbox.png","label":"自动刷新","height":19,"labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":3,"x":90,"var":"freshBtn","skin":"comp/button.png","label":"刷新","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"TextInput","props":{"y":5,"x":185,"width":90,"var":"stockInput","text":"002234","skin":"comp/textinput.png","height":22,"color":"#f1dede"}},{"type":"Button","props":{"y":4,"x":285,"var":"addBtn","skin":"comp/button.png","label":"添加","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"CheckBox","props":{"y":8,"x":364,"width":61,"var":"showMDCheck","skin":"comp/checkbox.png","label":"分时图","height":19,"labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}}]};
 		return RealTimeUI;
 	})(View)
 
@@ -34833,6 +35145,7 @@ var Laya=window.Laya=(function(window,document){
 		function StockRealTimeItemUI(){
 			this.txt=null;
 			this.delBtn=null;
+			this.showLine=null;
 			StockRealTimeItemUI.__super.call(this);
 		}
 
@@ -34843,9 +35156,7 @@ var Laya=window.Laya=(function(window,document){
 			this.createView(StockRealTimeItemUI.uiView);
 		}
 
-		__static(StockRealTimeItemUI,
-		['uiView',function(){return this.uiView={"type":"View","props":{"width":402,"height":25},"child":[{"type":"Box","props":{"width":402,"height":25},"child":[{"type":"Label","props":{"wordWrap":true,"var":"txt","top":0,"text":"this is a list","skin":"comp/label.png","right":0,"name":"label","left":0,"fontSize":14,"color":"#efe82f","bottom":0,"borderColor":"#fb125d"}}]},{"type":"Button","props":{"y":0,"x":328,"var":"delBtn","skin":"comp/button.png","label":"删除","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}}]};}
-		]);
+		StockRealTimeItemUI.uiView={"type":"View","props":{"width":402,"height":25},"child":[{"type":"Box","props":{"width":402,"height":25},"child":[{"type":"Label","props":{"wordWrap":true,"var":"txt","top":0,"text":"this is a list","skin":"comp/label.png","right":0,"name":"label","left":0,"fontSize":14,"color":"#efe82f","bottom":0,"borderColor":"#fb125d"}}]},{"type":"Button","props":{"y":0,"x":328,"var":"delBtn","skin":"comp/button.png","label":"删除","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"CheckBox","props":{"y":5,"x":281,"var":"showLine","skin":"comp/checkbox.png","label":"分时","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}}]};
 		return StockRealTimeItemUI;
 	})(View)
 
@@ -34866,9 +35177,7 @@ var Laya=window.Laya=(function(window,document){
 			this.createView(SelectStockViewUI.uiView);
 		}
 
-		__static(SelectStockViewUI,
-		['uiView',function(){return this.uiView={"type":"View","props":{"width":445,"height":400},"child":[{"type":"List","props":{"var":"list","vScrollBarSkin":"comp/vscroll.png","top":30,"right":10,"left":10,"bottom":10},"child":[{"type":"Box","props":{"y":0,"x":0,"width":168,"name":"render","height":61},"child":[{"type":"Label","props":{"wordWrap":true,"top":0,"text":"this is a list","skin":"comp/label.png","right":0,"name":"label","left":0,"fontSize":14,"color":"#efe82f","bottom":0,"borderColor":"#fb125d"}}]}]},{"type":"Label","props":{"y":-41,"width":271,"var":"tip","text":"股票代码:当前盈利:最高盈利","right":40,"height":42,"color":"#f33713"}},{"type":"ComboBox","props":{"y":3,"visibleNum":15,"var":"typeSelect","skin":"comp/combobox.png","selectedIndex":0,"scrollBarSkin":"comp/vscroll.png","right":20,"labels":"KLine,Position","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}}]};}
-		]);
+		SelectStockViewUI.uiView={"type":"View","props":{"width":445,"height":400},"child":[{"type":"List","props":{"var":"list","vScrollBarSkin":"comp/vscroll.png","top":30,"right":10,"left":10,"bottom":10},"child":[{"type":"Box","props":{"y":0,"x":0,"width":168,"name":"render","height":61},"child":[{"type":"Label","props":{"wordWrap":true,"top":0,"text":"this is a list","skin":"comp/label.png","right":0,"name":"label","left":0,"fontSize":14,"color":"#efe82f","bottom":0,"borderColor":"#fb125d"}}]}]},{"type":"Label","props":{"y":-41,"width":271,"var":"tip","text":"股票代码:当前盈利:最高盈利","right":40,"height":42,"color":"#f33713"}},{"type":"ComboBox","props":{"y":3,"visibleNum":15,"var":"typeSelect","skin":"comp/combobox.png","selectedIndex":0,"scrollBarSkin":"comp/vscroll.png","right":20,"labels":"KLine,Position","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}}]};
 		return SelectStockViewUI;
 	})(View)
 
@@ -34887,9 +35196,7 @@ var Laya=window.Laya=(function(window,document){
 			this.createView(StockViewUI.uiView);
 		}
 
-		__static(StockViewUI,
-		['uiView',function(){return this.uiView={"type":"View","props":{"width":445,"height":400},"child":[{"type":"List","props":{"x":20,"width":405,"var":"stockList","vScrollBarSkin":"comp/vscroll.png","top":30,"right":20,"left":20,"height":360,"bottom":20},"child":[{"type":"Box","props":{"width":120,"renderType":"render","height":80},"child":[{"type":"Image","props":{"width":100,"skin":"comp/image.png","name":"img","height":75}}]}]},{"type":"Label","props":{"y":7,"x":8,"width":149,"text":"点击查看详情，注意不要屏蔽弹窗","height":12,"color":"#f3ecec"}}]};}
-		]);
+		StockViewUI.uiView={"type":"View","props":{"width":445,"height":400},"child":[{"type":"List","props":{"x":20,"width":405,"var":"stockList","vScrollBarSkin":"comp/vscroll.png","top":30,"right":20,"left":20,"height":360,"bottom":20},"child":[{"type":"Box","props":{"width":120,"renderType":"render","height":80},"child":[{"type":"Image","props":{"width":100,"skin":"comp/image.png","name":"img","height":75}}]}]},{"type":"Label","props":{"y":7,"x":8,"width":149,"text":"点击查看详情，注意不要屏蔽弹窗","height":12,"color":"#f3ecec"}}]};
 		return StockViewUI;
 	})(View)
 
@@ -36452,6 +36759,7 @@ var Laya=window.Laya=(function(window,document){
 	var RealTimeItem=(function(_super){
 		function RealTimeItem(){
 			this.stock=null;
+			this.isSettingV=false;
 			RealTimeItem.__super.call(this);
 			this.delBtn.on("mousedown",this,this.onDeleteBtn);
 			this.on("doubleclick",this,this.onDoubleClick);
@@ -36467,6 +36775,20 @@ var Laya=window.Laya=(function(window,document){
 			if (dataO){
 				this.txt.text=dataO.code+","+dataO.name+","+dataO.price+","+StockTools.getGoodPercent((dataO.price-dataO.close)/ dataO.close)+"%";
 				this.txt.color=dataO.price-dataO.close > 0?"#ff0000":"#00ff00";
+				this.isSettingV=true;
+				this.showLine.selected=RealTimeItem.showStockDic[stock];
+				this.showLine.on("change",this,this.onShowLineChange);
+				this.isSettingV=false;
+			}
+		}
+
+		__proto.onShowLineChange=function(){
+			if (this.isSettingV)return;
+			RealTimeItem.showStockDic[this.stock]=this.showLine.selected;
+			if (this.showLine.selected){
+				Notice.notify("Add_MDLine",[this.stock]);
+				}else{
+				Notice.notify("Remove_MDLine",[this.stock]);
 			}
 		}
 
@@ -36483,6 +36805,7 @@ var Laya=window.Laya=(function(window,document){
 			this.initByStock(value);
 		});
 
+		RealTimeItem.showStockDic={};
 		return RealTimeItem;
 	})(StockRealTimeItemUI)
 
@@ -36494,8 +36817,10 @@ var Laya=window.Laya=(function(window,document){
 	//class view.RealTimeView extends ui.realtime.RealTimeUI
 	var RealTimeView=(function(_super){
 		function RealTimeView(){
+			this.mdView=null;
 			this.stockList=[];
 			RealTimeView.__super.call(this);
+			this.mdView=new MDLine();
 			this.recoverData();
 			this.fresh();
 			Notice.listen("StockFresh",this,this.fresh);
@@ -36507,10 +36832,43 @@ var Laya=window.Laya=(function(window,document){
 			this.autoFresh.on("change",this,this.checkAuto);
 			Notice.listen("AddMyStock",this,this.addStockAndSave);
 			Notice.listen("Remove_MyStock",this,this.removeStockAndSave);
+			Notice.listen("Add_MDLine",this,this.addMdStock);
+			Notice.listen("Remove_MDLine",this,this.removeMdStock);
+			this.showMDCheck.on("change",this,this.showMDChange);
 		}
 
 		__class(RealTimeView,'view.RealTimeView',_super);
 		var __proto=RealTimeView.prototype;
+		__proto.showMDChange=function(){
+			this.showMDView(this.showMDCheck.selected);
+		}
+
+		__proto.addMdStock=function(stock){
+			this.mdView.addStock(stock);
+		}
+
+		__proto.removeMdStock=function(stock){
+			this.mdView.removeStock(stock);
+		}
+
+		__proto.changeSize=function(){
+			laya.ui.Component.prototype.changeSize.call(this);
+			this.mdView.lineHeight=this.height;
+			this.mdView.lineWidth=this.width;
+			this.mdView.pos(0,this.mdView.lineHeight);
+			this.mdView.setUpGrids();
+		}
+
+		__proto.showMDView=function(show){
+			if (show){
+				this.addChildAt(this.mdView,0);
+				this.mdView.startFresh();
+				}else{
+				this.mdView.removeSelf();
+				this.mdView.stopFresh();
+			}
+		}
+
 		__proto.recoverData=function(){
 			var data;
 			data=LocalStorage.getJSON("Mystocks");
