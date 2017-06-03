@@ -3,6 +3,7 @@ package stock.views
 	import laya.display.Sprite;
 	import laya.math.DataUtils;
 	import laya.stock.analysers.AnalyserBase;
+	import laya.ui.Box;
 	
 	/**
 	 * ...

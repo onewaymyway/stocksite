@@ -27,6 +27,9 @@ package msgs
 		
 		public static const Add_MyStock:String = "AddMyStock";
 		public static const Remove_MyStock:String = "Remove_MyStock";
+		
+		public static const Add_MDLine:String = "Add_MDLine";
+		public static const Remove_MDLine:String = "Remove_MDLine";
 	}
 
 }

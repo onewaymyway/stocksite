@@ -34,7 +34,7 @@ package laya.tools
 			stock = StockTools.getAdptStockStr(stock);
 			this.stock = stock;
 			basic = null;
-			color = "#" + StockTools.getPureStock(stock);
+			//color = "#" + StockTools.getPureStock(stock);
 			getBasicFromServer();
 		}
 		public function getBasicFromServer():void

@@ -26,6 +26,8 @@ package view.realtime
 			
 			initByStock(value);
 		}
+		public static var showStockDic:Object = { };
+		private var isSettingV:Boolean = false;
 		public function initByStock(stock:String):void
 		{
 			this.stock = stock;
@@ -36,6 +38,22 @@ package view.realtime
 			{
 				txt.text = dataO.code + "," + dataO.name + "," + dataO.price + "," + StockTools.getGoodPercent((dataO.price-dataO.close) / dataO.close) + "%";
 				txt.color = dataO.price-dataO.close > 0?"#ff0000":"#00ff00";
+				isSettingV = true;
+				showLine.selected = showStockDic[stock];
+				showLine.on(Event.CHANGE, this, onShowLineChange);
+				isSettingV = false;
+			}
+		}
+		private function onShowLineChange():void
+		{
+			if (isSettingV) return;
+			showStockDic[stock] = showLine.selected;
+			if (showLine.selected)
+			{
+				Notice.notify(MsgConst.Add_MDLine, [stock]);
+			}else
+			{
+				Notice.notify(MsgConst.Remove_MDLine, [stock]);
 			}
 		}
 		private function onDoubleClick():void

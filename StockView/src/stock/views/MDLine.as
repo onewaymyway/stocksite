@@ -1,4 +1,5 @@
 package stock.views {
+	import laya.display.Node;
 	import laya.display.Sprite;
 	import laya.math.DataUtils;
 	import laya.stock.StockTools;
@@ -38,16 +39,37 @@ package stock.views {
 			var sp:Sprite;
 			sp = new Sprite();
 			addChild(sp);
+			sp.name=StockTools.getAdptStockStr(stock);
 			
 			mdData.completeHandler = new Handler(this, onStockData, [mdData, sp]);
 			mdData.getData(stock);
 			stockList.push(mdData);
+		}
+		public function removeStock(stock:String):void
+		{
+			var i:int, len:int;
+			len = stockList.length;
+			var tStockStr:String;
+			var tMDData:SinaMData;
+			tStockStr = StockTools.getAdptStockStr(stock);
+			for (i = 0; i < len; i++)
+			{
+				tMDData = stockList[i];
+				if (tMDData.stock == tStockStr)
+				{
+					stockList.splice(i, 1);
+				}
+			}
+			var tChild:Node;
+			tChild = this.getChildByName(tStockStr);
+			if (tChild) tChild.removeSelf();
 		}
 		public function setStock(stock:String):void {
 			MDData.getData(stock);
 		}
 		
 		public function freshData():void {
+			if (!displayedInStage) return;
 			MDData.getDataFromServer();
 			var i:int, len:int;
 			len = stockList.length;
@@ -89,8 +111,8 @@ package stock.views {
 			data = mdData.dataArr;
 			var basic:Object;
 			basic = mdData.basic;
-			trace("stockData:", data);
-			trace("basic:", basic);
+			//trace("stockData:", data);
+			//trace("basic:", basic);
 			sp.graphics.clear();
 			var color:String;
 			color = mdData.color;
