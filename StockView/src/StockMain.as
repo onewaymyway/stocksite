@@ -39,7 +39,7 @@ package
 			//testKLine();
 			//testKlineView();
 			StockBasicInfo.I.init(Loader.getRes(PathConfig.stockBasic));
-			trace(StockBasicInfo.I.stockList);
+			//trace(StockBasicInfo.I.stockList);
 			//StockBasicInfo.I.stockList.sort(MathUtil.sortByKey("totals", false, true));
 			testMainView();
 			//testStockInfo();

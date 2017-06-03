@@ -2277,7 +2277,6 @@ var Laya=window.Laya=(function(window,document){
 		//DebugTool.init();
 		__proto.start=function(){
 			StockBasicInfo.I.init(Loader.getRes(PathConfig.stockBasic));
-			console.log(StockBasicInfo.I.stockList);
 			this.testMainView();
 		}
 
