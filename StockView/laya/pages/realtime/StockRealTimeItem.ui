@@ -2,7 +2,7 @@
     "x":0,
     "type":"View",
     "selectedBox":1,
-    "selecteID":4,
+    "selecteID":6,
     "props":{"width":402,"sceneWidth":402,"sceneHeight":25,"sceneColor":"#000000","height":25},
     "nodeParent":-1,
     "label":"View",
@@ -48,6 +48,19 @@
             "isAniNode":true,
             "hasChild":false,
             "compId":4,
+            "child":[
+                ]
+        },
+        {
+            "x":15,
+            "type":"CheckBox",
+            "props":{"y":5,"x":281,"var":"showLine","skin":"comp/checkbox.png","label":"分时"},
+            "nodeParent":1,
+            "label":"CheckBox(showLine)",
+            "isDirectory":false,
+            "isAniNode":true,
+            "hasChild":false,
+            "compId":6,
             "child":[
                 ]
         }],
