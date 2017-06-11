@@ -29,7 +29,8 @@ package laya.stock.analysers.lines
 			len = avList.length;
 			for (i = 0; i < len; i++)
 			{
-				avPoints.push([i,(disDataList[i]["close"]/avList[i])*lineHeight]);
+				avPoints.push([i, (disDataList[i]["close"] / avList[i]) * lineHeight]);
+				//avPoints.push([i,avList[i]*lineHeight]);
 			}
 			return [avPoints,color,offY];
 		}
@@ -45,7 +46,7 @@ package laya.stock.analysers.lines
 			{
 				rst.push(["drawLinesEx",avgs[i]]);
 			}
-			rst.push(["drawLinesEx",[[[0,lineHeight],[disDataList.length-1,lineHeight]]],"#ff0000",offY]);
+			rst.push(["drawLinesEx",[[[0,lineHeight],[disDataList.length-1,lineHeight]],"#ff0000",offY]]);
 			return rst;
 		}
 	}
