@@ -426,6 +426,7 @@ package stock.views
 			var i:int, len:int;
 			len = values.length;
 			var tValue:Number;
+			var tTxt:String;
 			for (i = 0; i < len; i++)
 			{
 				tValue = values;
