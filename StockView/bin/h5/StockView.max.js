@@ -19349,13 +19349,16 @@ var Laya=window.Laya=(function(window,document){
 		function StrongLine(){
 			this.lineHeight=100;
 			this.offY=10;
+			this.buyCount=3;
+			this.sellCount=1;
 			StrongLine.__super.call(this);
+			this.days="4";
 		}
 
 		__class(StrongLine,'laya.stock.analysers.lines.StrongLine',_super);
 		var __proto=StrongLine.prototype;
 		__proto.initParamKeys=function(){
-			this.paramkeys=["days","colors","lineHeight","offY"];
+			this.paramkeys=["days","colors","lineHeight","offY","buyCount","sellCount"];
 		}
 
 		__proto.getAverageData=function(dayCount,color){
@@ -19365,10 +19368,48 @@ var Laya=window.Laya=(function(window,document){
 			avPoints=[];
 			var i=0,len=0;
 			len=avList.length;
+			var strongList=[];
 			for (i=0;i < len;i++){
 				avPoints.push([i,(this.disDataList[i]["close"] / avList[i])*this.lineHeight]);
+				strongList.push(this.disDataList[i]["close"] / avList[i]);
+			};
+			var rst;
+			rst=[[avPoints,color,this.offY],this.makeBuys(strongList)];
+			return rst;
+		}
+
+		__proto.makeBuys=function(strongList){
+			var buys;
+			buys=[];
+			var i=0,len=0;
+			len=strongList.length;
+			var tState=0;
+			var bigger=0;
+			var smaller=0;
+			bigger=0;
+			smaller=0;
+			var preSign;
+			for (i=0;i < len;i++){
+				if (strongList[i]==1)continue ;
+				if (strongList[i] >=1){
+					bigger++;
+					smaller=0
+					}else{
+					smaller++;
+					bigger=0;
+				}
+				if (bigger==this.buyCount){
+					if (preSign=="buy"){
+					}
+					preSign="buy";
+					buys.push(["buy",i]);
+				}
+				if (smaller==this.sellCount){
+					preSign="sell";
+					buys.push(["sell",i]);
+				}
 			}
-			return [avPoints,color,this.offY];
+			return buys;
 		}
 
 		__proto.getDrawCmds=function(){
@@ -19379,7 +19420,8 @@ var Laya=window.Laya=(function(window,document){
 			var i=0,len=0;
 			len=avgs.length;
 			for (i=0;i < len;i++){
-				rst.push(["drawLinesEx",avgs[i]]);
+				rst.push(["drawLinesEx",avgs[i][0]]);
+				rst.push(["drawTexts",[avgs[i][1],"low",30,"#00ff00",true,"#00ff00"]]);
 			}
 			rst.push(["drawLinesEx",[[[0,this.lineHeight],[this.disDataList.length-1,this.lineHeight]],"#ff0000",this.offY]]);
 			return rst;
