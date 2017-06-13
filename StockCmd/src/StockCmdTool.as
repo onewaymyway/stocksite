@@ -17,6 +17,7 @@ package {
 	import nodetools.devices.OSInfo;
 	import nodetools.devices.SystemSetting;
 	import stock.StockData;
+	import stockcmd.GreatKLineWorker;
 	import stockcmd.RankWorker;
 	import stockcmd.RunConfig;
 	
@@ -37,6 +38,7 @@ package {
 		private function regWorkers():void
 		{
 			RankWorker;
+			GreatKLineWorker;
 		}
 		private function init():void {
 			

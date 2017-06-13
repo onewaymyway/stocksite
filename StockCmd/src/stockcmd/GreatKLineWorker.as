@@ -1,5 +1,6 @@
 package stockcmd 
 {
+	import laya.stock.analysers.ChanAnalyser;
 	import nodetools.devices.FileManager;
 	import nodetools.devices.FileTools;
 	import stock.StockData;
@@ -19,6 +20,7 @@ package stockcmd
 				trace("file not found:", RunConfig.filePath);
 				return;
 			}
+			analyser = new ChanAnalyser();
 			if (FileTools.isDirectory(RunConfig.filePath)) {
 				workDir(RunConfig.filePath);
 			}
@@ -46,7 +48,7 @@ package stockcmd
 		}
 		
 		public var analysers:Array;
-		
+		private var analyser:ChanAnalyser;
 		public function analyserAFile(path:String, rst:Array = null):void {
 			trace("work:", path);
 			var data:String;
@@ -56,9 +58,26 @@ package stockcmd
 			stockData = new StockData();
 			stockData.init(data);
 			if (stockData.dataList.length < 2) return;
-			
+			analyser.analyser(stockData,0,-1,true);
+			var tResult:Object;
+			tResult = analyser.resultData;
+			var pointList:Array;
+			pointList = tResult["points"];
+			var preData:Array;
+			var tData:Array;
+			var i:int, len:int;
+			len = pointList.length;
+			for (i = 0; i < len; i++)
+			{
+				tData = pointList[i];
+				if (preData)
+				{
+					
+				}
+			}
 		
 		}
+		
 	}
 
 }
