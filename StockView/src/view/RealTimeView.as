@@ -40,6 +40,13 @@ package view
 			
 			//showMDView(true);
 			showMDCheck.on(Event.CHANGE, this, showMDChange);
+			showListCheck.selected = true;
+			showListCheck.on(Event.CHANGE, this, showListChange);
+		}
+		
+		private function showListChange():void
+		{
+			list.visible = showListCheck.selected;
 		}
 		
 		private function showMDChange():void

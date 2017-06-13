@@ -58,6 +58,7 @@ package stock.views {
 				if (tMDData.stock == tStockStr)
 				{
 					stockList.splice(i, 1);
+					break;
 				}
 			}
 			var tChild:Node;
