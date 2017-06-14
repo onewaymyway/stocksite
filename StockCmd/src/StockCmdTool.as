@@ -62,7 +62,8 @@ package {
 		}
 		
 		public function work():void {
-			var clz:*=ClassTool.createObjByName(RunConfig.type);
+			var clz:*= ClassTool.createObjByName(RunConfig.type);
+			//var clz:*=ClassTool.createObjByName("GreatKLineWorker");
 			clz.work();
 		}
 		

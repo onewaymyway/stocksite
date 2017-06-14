@@ -4,6 +4,7 @@ package stockcmd
 	import laya.math.DataUtils;
 	import laya.maths.MathUtil;
 	import laya.stock.analysers.AnalyserBase;
+	import laya.stock.analysers.ChanAnalyser;
 	import laya.stock.analysers.KLineAnalyser;
 	import laya.stock.analysers.lines.PositionLine;
 	import laya.stock.analysers.staticinfo.PositionStatic;
@@ -91,6 +92,8 @@ package stockcmd
 			posAnalyser30.minBuyLose = -0.02;
 			posAnalyser30.maxBuyLose = -0.1;
 			analysers.push(posAnalyser30);
+			
+			analysers.push(new ChanAnalyser());
 			
 			analysers.push(new PositionStatic());
 			var i:int, len:int;
