@@ -20902,8 +20902,8 @@ var Laya=window.Laya=(function(window,document){
 			var tData;
 			var tAnalyserInfos;
 			tData={};
-			tData.label="Trend";
-			tData.sortParams=["TrendO.rate",true,false];
+			tData.label="TrendByRate";
+			tData.sortParams=["TrendO.rate",true,true];
 			tData.dataKey="TrendO";
 			tAnalyserInfos=[];
 			tAnalyserInfos.push(this.getParamsArr());
@@ -20912,8 +20912,8 @@ var Laya=window.Laya=(function(window,document){
 			tData.tpl="{#code#}:{#rate#}:{#day#}";
 			types.push(tData);
 			tData={};
-			tData.label="Trend";
-			tData.sortParams=["TrendO.day",true,false];
+			tData.label="TrendByDay";
+			tData.sortParams=["TrendO.day",true,true];
 			tData.dataKey="TrendO";
 			tAnalyserInfos=[];
 			tAnalyserInfos.push(this.getParamsArr());
