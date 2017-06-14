@@ -1475,6 +1475,7 @@ var Laya=window.Laya=(function(window,document){
 			posAnalyser30.minBuyLose=-0.02;
 			posAnalyser30.maxBuyLose=-0.1;
 			this.analysers.push(posAnalyser30);
+			this.analysers.push(new ChanAnalyser());
 			this.analysers.push(new PositionStatic());
 			var i=0,len=0;
 			len=this.analysers.length;
