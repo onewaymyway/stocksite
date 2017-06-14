@@ -1580,7 +1580,7 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		__proto.work=function(){
-			var clz=ClassTool.createObjByName("GreatKLineWorker");
+			var clz=ClassTool.createObjByName(RunConfig.type);
 			clz.work();
 		}
 
@@ -20433,6 +20433,11 @@ var Laya=window.Laya=(function(window,document){
 			else this.drawTexture(tex,x,y,width,height);
 		}
 
+		__proto.clear=function(recoverCmds){
+			(recoverCmds===void 0)&& (recoverCmds=true);
+			_super.prototype.clear.call(this,false);
+		}
+
 		/**
 		*当前实例的有效缩放网格数据。
 		*<p>如果设置为null,则在应用任何缩放转换时，将正常缩放整个显示对象。</p>
@@ -20869,16 +20874,18 @@ var Laya=window.Laya=(function(window,document){
 					if (tType=="top"){
 						tops.push(ChanKList.getIndex(tDataO.topO));
 						if (preData){
-							points.push([ChanKList.getIndex(tDataO.topO),"high"," "+StockTools.getGoodPercent((tDataO.top-preData.bottom)/preData.bottom)+"%"]);
-							}else{
+							points.push([ChanKList.getIndex(tDataO.topO),"high"," "+StockTools.getGoodPercent((tDataO.top-preData.bottom)/ preData.bottom)+"%"]);
+						}
+						else {
 							points.push([ChanKList.getIndex(tDataO.topO),"high"]);
 						}
 					}
 					if (tType=="bottom"){
 						bottoms.push(ChanKList.getIndex(tDataO.bottomO));
 						if (preData){
-							points.push([ChanKList.getIndex(tDataO.bottomO),"low"," "+StockTools.getGoodPercent((tDataO.bottom-preData.top)/preData.top)+"%"]);
-							}else{
+							points.push([ChanKList.getIndex(tDataO.bottomO),"low"," "+StockTools.getGoodPercent((tDataO.bottom-preData.top)/ preData.top)+"%"]);
+						}
+						else {
 							points.push([ChanKList.getIndex(tDataO.bottomO),"low"]);
 						}
 					}
@@ -20888,6 +20895,58 @@ var Laya=window.Laya=(function(window,document){
 			this.resultData["tops"]=tops;
 			this.resultData["bottoms"]=bottoms;
 			this.resultData["points"]=points;
+		}
+
+		__proto.addToConfigTypes=function(types){
+			var tData;
+			var tAnalyserInfos;
+			tData={};
+			tData.label="Trend";
+			tData.sortParams=["TrendO.rate",true,false];
+			tData.dataKey="TrendO";
+			tAnalyserInfos=[];
+			tAnalyserInfos.push(this.getParamsArr());
+			tData.analyserInfo=tAnalyserInfos;
+			tData.tip="股票:当前变化率:趋势持续天数";
+			tData.tpl="{#code#}:{#rate#}:{#day#}";
+			types.push(tData);
+			tData={};
+			tData.label="Trend";
+			tData.sortParams=["TrendO.day",true,false];
+			tData.dataKey="TrendO";
+			tAnalyserInfos=[];
+			tAnalyserInfos.push(this.getParamsArr());
+			tData.analyserInfo=tAnalyserInfos;
+			tData.tip="股票:当前变化率:趋势持续天数";
+			tData.tpl="{#code#}:{#rate#}:{#day#}";
+			types.push(tData);
+		}
+
+		__proto.addToShowData=function(showData){
+			var kLineO;
+			kLineO={};
+			kLineO.code=showData.code;
+			kLineO.day=0;
+			kLineO.rate=1;
+			var points;
+			points=this.resultData["points"];
+			if (points && points.length){
+				showData.TrendO=kLineO;
+				var lastData;
+				lastData=points[points.length-1];
+				var lastIndex=0;
+				lastIndex=lastData[0];
+				var lastType;
+				lastType=lastData[1];
+				var prePrice=NaN;
+				var tPrice=NaN;
+				var tIndex=0;
+				tIndex=this.disDataList.length-1;
+				prePrice=StockTools.getStockPriceEx(lastIndex,lastType,this);
+				tPrice=StockTools.getStockPriceEx(tIndex,"close",this);
+				kLineO.day=tIndex-lastIndex;
+				kLineO.rate=StockTools.getGoodPercent((tPrice-prePrice)/prePrice);
+			}
 		}
 
 		__proto.getDrawCmds=function(){
@@ -33655,8 +33714,10 @@ var Laya=window.Laya=(function(window,document){
 
 		/**@inheritDoc */
 		__getset(0,__proto,'height',_super.prototype._$get_height,function(value){
-			_super.prototype._$set_height.call(this,value);
-			this._setCellChanged();
+			if (value !=this._height){
+				_super.prototype._$set_height.call(this,value);
+				this._setCellChanged();
+			}
 		});
 
 		/**
@@ -33756,8 +33817,10 @@ var Laya=window.Laya=(function(window,document){
 
 		/**@inheritDoc */
 		__getset(0,__proto,'width',_super.prototype._$get_width,function(value){
-			_super.prototype._$set_width.call(this,value);
-			this._setCellChanged();
+			if (value !=this._width){
+				_super.prototype._$set_width.call(this,value);
+				this._setCellChanged();
+			}
 		});
 
 		/**
@@ -37265,7 +37328,7 @@ var Laya=window.Laya=(function(window,document){
 		__proto.changeValue=function(){
 			if (!this._sources)return;
 			if (!this._valueArr)return;
-			this.graphics.clear(true);
+			this.graphics.clear();
 			var texture;
 			texture=this._sources[0];
 			if (!texture)return;
