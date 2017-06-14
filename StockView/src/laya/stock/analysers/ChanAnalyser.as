@@ -115,8 +115,8 @@ package laya.stock.analysers {
 			var tData:Object;
 			var tAnalyserInfos:Array;
 			tData = {};
-			tData.label = "Trend";
-			tData.sortParams = ["TrendO.rate", true, false];
+			tData.label = "TrendByRate";
+			tData.sortParams = ["TrendO.rate", true, true];
 			tData.dataKey = "TrendO";
 			tAnalyserInfos = [];
 			tAnalyserInfos.push(this.getParamsArr());
@@ -127,8 +127,8 @@ package laya.stock.analysers {
 			types.push(tData);
 			
 			tData = {};
-			tData.label = "Trend";
-			tData.sortParams = ["TrendO.day", true, false];
+			tData.label = "TrendByDay";
+			tData.sortParams = ["TrendO.day", true, true];
 			tData.dataKey = "TrendO";
 			tAnalyserInfos = [];
 			tAnalyserInfos.push(this.getParamsArr());
