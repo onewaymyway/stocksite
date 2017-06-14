@@ -1,5 +1,6 @@
 package laya.stock 
 {
+	import laya.stock.analysers.AnalyserBase;
 	/**
 	 * ...
 	 * @author ww
@@ -53,6 +54,16 @@ package laya.stock
 			}
 			return arr;
 		}
+		public static function getStockPrice(index:int, type:String, dataList:Array):Number
+		{
+			return dataList[index][type];
+		}
+		
+		public static function getStockPriceEx(index:int, type:String, analyser:AnalyserBase):Number
+		{
+			return getStockPrice(index, type, analyser.disDataList);
+		}
+		
 		public static function getBuyStaticInfos(buyI:int, dataList:Array, rst:Object):void
 		{
 			var priceLast:Number;

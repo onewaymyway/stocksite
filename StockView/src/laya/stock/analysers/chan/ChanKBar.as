@@ -32,7 +32,7 @@ package laya.stock.analysers.chan
 		{
 			if (ChanKList.getIndex(kO.bottomO) == 79)
 			{
-				debugger;
+				//debugger;
 			}
 			switch(type)
 			{

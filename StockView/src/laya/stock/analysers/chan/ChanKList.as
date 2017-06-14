@@ -45,7 +45,7 @@ package laya.stock.analysers.chan
 				tI = getIndex(kList[i].topO);
 				if (tI > 49 && tI < 52)
 				{
-					debugger;
+					//debugger;
 				}
 				tType = DataUtils.getKLineType(kList, i, "top", "bottom");
 				
