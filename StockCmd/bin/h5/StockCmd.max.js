@@ -7116,6 +7116,7 @@ var Laya=window.Laya=(function(window,document){
 			funs.forEach(function(i){
 				to[i]=from[i];
 			});
+			return;
 			var canvasO=HTMLCanvasElement.prototype;
 			if (!Context.replaceCanvasGetSet(canvasO,"width"))return;
 			if (!Context.replaceCanvasGetSet(canvasO,"height"))return;
@@ -20908,8 +20909,8 @@ var Laya=window.Laya=(function(window,document){
 			tAnalyserInfos=[];
 			tAnalyserInfos.push(this.getParamsArr());
 			tData.analyserInfo=tAnalyserInfos;
-			tData.tip="股票:当前变化率:趋势持续天数";
-			tData.tpl="{#code#}:{#rate#}:{#day#}";
+			tData.tip="股票:当前变化率:趋势持续天数:平均变化率";
+			tData.tpl="{#code#}:{#rate#}%:{#day#}:{#mRate#}";
 			types.push(tData);
 			tData={};
 			tData.label="TrendByDay";
@@ -20918,8 +20919,18 @@ var Laya=window.Laya=(function(window,document){
 			tAnalyserInfos=[];
 			tAnalyserInfos.push(this.getParamsArr());
 			tData.analyserInfo=tAnalyserInfos;
-			tData.tip="股票:当前变化率:趋势持续天数";
-			tData.tpl="{#code#}:{#rate#}:{#day#}";
+			tData.tip="股票:当前变化率:趋势持续天数:平均变化率";
+			tData.tpl="{#code#}:{#rate#}%:{#day#}:{#mRate#}";
+			types.push(tData);
+			tData={};
+			tData.label="TrendByMRate";
+			tData.sortParams=["TrendO.mRate",true,true];
+			tData.dataKey="TrendO";
+			tAnalyserInfos=[];
+			tAnalyserInfos.push(this.getParamsArr());
+			tData.analyserInfo=tAnalyserInfos;
+			tData.tip="股票:当前变化率:趋势持续天数:平均变化率";
+			tData.tpl="{#code#}:{#rate#}%:{#day#}:{#mRate#}";
 			types.push(tData);
 		}
 
@@ -20946,7 +20957,8 @@ var Laya=window.Laya=(function(window,document){
 				prePrice=StockTools.getStockPriceEx(lastIndex,lastType,this);
 				tPrice=StockTools.getStockPriceEx(tIndex,"close",this);
 				kLineO.day=tIndex-lastIndex;
-				kLineO.rate=StockTools.getGoodPercent((tPrice-prePrice)/prePrice);
+				kLineO.rate=StockTools.getGoodPercent((tPrice-prePrice)/ prePrice);
+				kLineO.mRate=StockTools.getGoodPercent((tPrice-prePrice)/ (prePrice*kLineO.day));
 			}
 		}
 
