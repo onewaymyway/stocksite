@@ -394,6 +394,15 @@ var Laya=window.Laya=(function(window,document){
 	var ArrayMethods=(function(){
 		function ArrayMethods(){}
 		__class(ArrayMethods,'laya.math.ArrayMethods');
+		ArrayMethods.removeItem=function(arr,item){
+			var i=0;
+			for (i=arr.length-1;i >=0;i--){
+				if (arr[i]==item){
+					arr.splice(i,1);
+				}
+			}
+		}
+
 		ArrayMethods.findFirstLowThen=function(v,arr,startPos,step){
 			(step===void 0)&& (step=1);
 			return 0;
@@ -1112,7 +1121,6 @@ var Laya=window.Laya=(function(window,document){
 
 		__proto.merge=function(kO,type){
 			if (ChanKList.getIndex(kO.bottomO)==79){
-				debugger;
 			}
 			switch(type){
 				case "down":
@@ -1224,7 +1232,6 @@ var Laya=window.Laya=(function(window,document){
 				var tI=0;
 				tI=ChanKList.getIndex(this.kList[i].topO);
 				if (tI > 49 && tI < 52){
-					debugger;
 				}
 				tType=DataUtils.getKLineType(this.kList,i,"top","bottom");
 				if (tType !="unknow"){
@@ -1473,6 +1480,14 @@ var Laya=window.Laya=(function(window,document){
 			return arr;
 		}
 
+		StockTools.getStockPrice=function(index,type,dataList){
+			return dataList[index][type];
+		}
+
+		StockTools.getStockPriceEx=function(index,type,analyser){
+			return StockTools.getStockPrice(index,type,analyser.disDataList);
+		}
+
 		StockTools.getBuyStaticInfos=function(buyI,dataList,rst){
 			var priceLast=NaN;
 			var len=0;
@@ -1644,28 +1659,55 @@ var Laya=window.Laya=(function(window,document){
 	//class laya.tools.StockJsonP
 	var StockJsonP=(function(){
 		function StockJsonP(){
+			this.completeNotice=null;
 			this.listenStocks=[];
+			this.listenStockDic={};
 			this.tUrl=null;
+			this.changed=true;
+			this.completeNotice="StockFresh";
 		}
 
 		__class(StockJsonP,'laya.tools.StockJsonP');
 		var __proto=StockJsonP.prototype;
 		__proto.updateStockUrl=function(){
+			if (!this.changed)return;
 			if (this.listenStocks.length > 0){
 				this.tUrl=StockJsonP.getStockUrl(this.listenStocks);
 				}else{
 				this.tUrl=null;
 			}
+			this.changed=false;
 		}
 
 		__proto.addStock=function(stock){
+			if (this.listenStockDic[stock])return;
 			if (this.listenStocks.indexOf(stock)< 0){
+				this.listenStockDic[stock]=true;
 				this.listenStocks.push(stock);
-				this.updateStockUrl();
+				this.changed=true;
 			}
 		}
 
+		__proto.reset=function(){
+			this.listenStocks.length=0;
+			var key;
+			for (key in this.listenStockDic){
+				this.listenStockDic[key]=false;
+			}
+			this.changed=true;
+		}
+
+		__proto.removeStock=function(stock){
+			if (!this.listenStockDic[stock])return;
+			ArrayMethods.removeItem(this.listenStocks,stock);
+			this.listenStockDic[stock]=false;
+			this.changed=true;
+		}
+
 		__proto.freshData=function(){
+			if (this.changed){
+				this.updateStockUrl();
+			}
 			if (this.tUrl){
 				JsonP.getData(this.tUrl,Handler.create(this,this.dataComplete));
 			}
@@ -1686,7 +1728,7 @@ var Laya=window.Laya=(function(window,document){
 			for (i=0;i < len;i++){
 				StockJsonP.parserStockData(this.listenStocks[i]);
 			}
-			Notice.notify("StockFresh");
+			Notice.notify(this.completeNotice);
 		}
 
 		StockJsonP.getStockData2=function(stock,complete){
@@ -1723,6 +1765,7 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		StockJsonP.getStockData=function(stock){
+			stock=StockJsonP.getAdptStockStr(stock);
 			return StockJsonP.stockDataO[stock];
 		}
 
@@ -15583,16 +15626,18 @@ var Laya=window.Laya=(function(window,document){
 					if (tType=="top"){
 						tops.push(ChanKList.getIndex(tDataO.topO));
 						if (preData){
-							points.push([ChanKList.getIndex(tDataO.topO),"high"," "+StockTools.getGoodPercent((tDataO.top-preData.bottom)/preData.bottom)+"%"]);
-							}else{
+							points.push([ChanKList.getIndex(tDataO.topO),"high"," "+StockTools.getGoodPercent((tDataO.top-preData.bottom)/ preData.bottom)+"%"]);
+						}
+						else {
 							points.push([ChanKList.getIndex(tDataO.topO),"high"]);
 						}
 					}
 					if (tType=="bottom"){
 						bottoms.push(ChanKList.getIndex(tDataO.bottomO));
 						if (preData){
-							points.push([ChanKList.getIndex(tDataO.bottomO),"low"," "+StockTools.getGoodPercent((tDataO.bottom-preData.top)/preData.top)+"%"]);
-							}else{
+							points.push([ChanKList.getIndex(tDataO.bottomO),"low"," "+StockTools.getGoodPercent((tDataO.bottom-preData.top)/ preData.top)+"%"]);
+						}
+						else {
 							points.push([ChanKList.getIndex(tDataO.bottomO),"low"]);
 						}
 					}
@@ -15602,6 +15647,69 @@ var Laya=window.Laya=(function(window,document){
 			this.resultData["tops"]=tops;
 			this.resultData["bottoms"]=bottoms;
 			this.resultData["points"]=points;
+		}
+
+		__proto.addToConfigTypes=function(types){
+			var tData;
+			var tAnalyserInfos;
+			tData={};
+			tData.label="TrendByRate";
+			tData.sortParams=["TrendO.rate",true,true];
+			tData.dataKey="TrendO";
+			tAnalyserInfos=[];
+			tAnalyserInfos.push(this.getParamsArr());
+			tData.analyserInfo=tAnalyserInfos;
+			tData.tip="股票:当前变化率:趋势持续天数:平均变化率";
+			tData.tpl="{#code#}:{#rate#}%:{#day#}:{#mRate#}";
+			types.push(tData);
+			tData={};
+			tData.label="TrendByDay";
+			tData.sortParams=["TrendO.day",true,true];
+			tData.dataKey="TrendO";
+			tAnalyserInfos=[];
+			tAnalyserInfos.push(this.getParamsArr());
+			tData.analyserInfo=tAnalyserInfos;
+			tData.tip="股票:当前变化率:趋势持续天数:平均变化率";
+			tData.tpl="{#code#}:{#rate#}%:{#day#}:{#mRate#}";
+			types.push(tData);
+			tData={};
+			tData.label="TrendByMRate";
+			tData.sortParams=["TrendO.mRate",true,true];
+			tData.dataKey="TrendO";
+			tAnalyserInfos=[];
+			tAnalyserInfos.push(this.getParamsArr());
+			tData.analyserInfo=tAnalyserInfos;
+			tData.tip="股票:当前变化率:趋势持续天数:平均变化率";
+			tData.tpl="{#code#}:{#rate#}%:{#day#}:{#mRate#}";
+			types.push(tData);
+		}
+
+		__proto.addToShowData=function(showData){
+			var kLineO;
+			kLineO={};
+			kLineO.code=showData.code;
+			kLineO.day=0;
+			kLineO.rate=1;
+			var points;
+			points=this.resultData["points"];
+			if (points && points.length){
+				showData.TrendO=kLineO;
+				var lastData;
+				lastData=points[points.length-1];
+				var lastIndex=0;
+				lastIndex=lastData[0];
+				var lastType;
+				lastType=lastData[1];
+				var prePrice=NaN;
+				var tPrice=NaN;
+				var tIndex=0;
+				tIndex=this.disDataList.length-1;
+				prePrice=StockTools.getStockPriceEx(lastIndex,lastType,this);
+				tPrice=StockTools.getStockPriceEx(tIndex,"close",this);
+				kLineO.day=tIndex-lastIndex+1;
+				kLineO.rate=StockTools.getGoodPercent((tPrice-prePrice)/ prePrice);
+				kLineO.mRate=StockTools.getGoodPercent((tPrice-prePrice)/ (prePrice*kLineO.day));
+			}
 		}
 
 		__proto.getDrawCmds=function(){
@@ -35264,6 +35372,7 @@ var Laya=window.Laya=(function(window,document){
 			this.list=null;
 			this.tip=null;
 			this.typeSelect=null;
+			this.autoFresh=null;
 			SelectStockViewUI.__super.call(this);
 		}
 
@@ -35274,7 +35383,7 @@ var Laya=window.Laya=(function(window,document){
 			this.createView(SelectStockViewUI.uiView);
 		}
 
-		SelectStockViewUI.uiView={"type":"View","props":{"width":445,"height":400},"child":[{"type":"List","props":{"var":"list","vScrollBarSkin":"comp/vscroll.png","top":30,"right":10,"left":10,"bottom":10},"child":[{"type":"Box","props":{"y":0,"x":0,"width":168,"name":"render","height":61},"child":[{"type":"Label","props":{"wordWrap":true,"top":0,"text":"this is a list","skin":"comp/label.png","right":0,"name":"label","left":0,"fontSize":14,"color":"#efe82f","bottom":0,"borderColor":"#fb125d"}}]}]},{"type":"Label","props":{"y":-41,"width":271,"var":"tip","text":"股票代码:当前盈利:最高盈利","right":40,"height":42,"color":"#f33713"}},{"type":"ComboBox","props":{"y":3,"visibleNum":15,"var":"typeSelect","skin":"comp/combobox.png","selectedIndex":0,"scrollBarSkin":"comp/vscroll.png","right":20,"labels":"KLine,Position","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}}]};
+		SelectStockViewUI.uiView={"type":"View","props":{"width":445,"height":400},"child":[{"type":"List","props":{"var":"list","vScrollBarSkin":"comp/vscroll.png","top":30,"right":10,"left":10,"bottom":10},"child":[{"type":"Box","props":{"y":0,"x":0,"width":168,"name":"render","height":61},"child":[{"type":"Label","props":{"wordWrap":true,"top":0,"text":"this is a list","skin":"comp/label.png","right":0,"name":"label","left":0,"fontSize":14,"color":"#efe82f","bottom":0,"borderColor":"#fb125d"}},{"type":"Label","props":{"y":39,"x":72,"wordWrap":true,"width":96,"text":"this is a list","skin":"comp/label.png","name":"info","height":22,"fontSize":14,"color":"#efe82f","align":"right"}}]}]},{"type":"Label","props":{"y":-41,"width":271,"var":"tip","text":"股票代码:当前盈利:最高盈利","right":40,"height":42,"color":"#f33713"}},{"type":"ComboBox","props":{"y":3,"visibleNum":15,"var":"typeSelect","skin":"comp/combobox.png","selectedIndex":0,"scrollBarSkin":"comp/vscroll.png","right":20,"labels":"KLine,Position","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"CheckBox","props":{"y":10,"x":11,"width":75,"var":"autoFresh","skin":"comp/checkbox.png","selected":false,"label":"自动刷新","height":14,"labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}}]};
 		return SelectStockViewUI;
 	})(View)
 
@@ -36865,6 +36974,7 @@ var Laya=window.Laya=(function(window,document){
 		__class(RealTimeItem,'view.realtime.RealTimeItem',_super);
 		var __proto=RealTimeItem.prototype;
 		__proto.initByStock=function(stock){
+			if (!stock)return;
 			this.stock=stock;
 			this.txt.text=stock;
 			var dataO;
@@ -37029,6 +37139,7 @@ var Laya=window.Laya=(function(window,document){
 
 		__proto.removeStock=function(stock){
 			stock=StockJsonP.getAdptStockStr(stock);
+			StockJsonP.I.removeStock(stock);
 			var i=0,len=0;
 			len=this.stockList.length;
 			for (i=0;i < len;i++){
@@ -37057,6 +37168,7 @@ var Laya=window.Laya=(function(window,document){
 		function SelectStockView(){
 			this.dataUrl="last.json";
 			this.tType="kline";
+			this.stockDataGetter=null;
 			this.configO=null;
 			this.tDatas=null;
 			this.typeDic={};
@@ -37080,6 +37192,24 @@ var Laya=window.Laya=(function(window,document){
 			Notice.listen("Show_Pre_Select",this,this.pre);
 			this.tip.text="股票:当前盈利:最高盈利\n7天最大盈利,15天最大盈利,30天最大盈利,45天最大盈利\n买入日期";
 			this.typeSelect.on("change",this,this.onTypeChange);
+			this.stockDataGetter=new StockJsonP();
+			this.stockDataGetter.completeNotice="SelectStockDataChange";
+			Notice.listen("SelectStockDataChange",this,this.onStockDataChange);
+			this.autoFresh.on("change",this,this.onAutoFreshChange);
+			this.on("display",this,this.onAutoFreshChange);
+			this.on("undisplay",this,this.onAutoFreshChange);
+		}
+
+		__proto.onAutoFreshChange=function(){
+			if (this.autoFresh.selected&&this.displayedInStage){
+				this.stockDataGetter.startFresh();
+				}else{
+				this.stockDataGetter.stopFresh();
+			}
+		}
+
+		__proto.onStockDataChange=function(){
+			this.reRenderCells();
 		}
 
 		__proto.onTypeChange=function(){
@@ -37147,6 +37277,7 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		__proto.stockRender=function(cell,index){
+			this.callLater(this.resetStocks);
 			var item=cell.dataSource;
 			var label;
 			label=cell.getChildByName("label");
@@ -37154,6 +37285,58 @@ var Laya=window.Laya=(function(window,document){
 			dataO=ValueTools.getFlatKeyValue(item,this.tDataKey);
 			if (!this.tTpl)this.tTpl=SelectStockView.DefalutTpl;
 			label.text=ValueTools.getTplStr(this.tTpl,dataO);
+			this.renderStockRealTimeInfo(cell);
+		}
+
+		//label.text=dataO.code+":"+Math.floor(dataO.changePercent *100)+"%"+":"+Math.floor(dataO.highPercent *100)+"%"+"\n"+getStockChanges(dataO).join(",")+"\n"+dataO.lastDate;
+		__proto.renderStockRealTimeInfo=function(cell){
+			var item=cell.dataSource;
+			var label;
+			label=cell.getChildByName("info");
+			if (!item){
+				label.text="";
+				return;
+			};
+			var stockData;
+			stockData=StockJsonP.getStockData(item.code)
+			if (stockData){
+				label.text=""+StockTools.getGoodPercent((stockData.price-stockData.close)/ stockData.close)+"%";
+				}else{
+				label.text="";
+			}
+		}
+
+		__proto.reRenderCells=function(){
+			var cells;
+			cells=this.list.cells;
+			if (!cells)return;
+			var i=0,len=0;
+			len=cells.length;
+			var tCell;
+			for (i=0;i < len;i++){
+				tCell=cells[i];
+				if (tCell.dataSource && tCell.dataSource.code){
+					this.renderStockRealTimeInfo(tCell);
+				}
+			}
+		}
+
+		__proto.resetStocks=function(){
+			var cells;
+			cells=this.list.cells;
+			if (!cells)return;
+			var i=0,len=0;
+			len=cells.length;
+			this.stockDataGetter.reset();
+			var tCell;
+			for (i=0;i < len;i++){
+				tCell=cells[i];
+				if (tCell.dataSource && tCell.dataSource.code){
+					var adptCode;
+					adptCode=StockJsonP.getAdptStockStr(tCell.dataSource.code);
+					this.stockDataGetter.addStock(adptCode);
+				}
+			}
 		}
 
 		__proto.onMouseList=function(e,index){
@@ -37214,6 +37397,7 @@ var Laya=window.Laya=(function(window,document){
 			Notice.notify("Show_Stock_KLine",tData.code);
 		}
 
+		SelectStockView.SelectStockDataChange="SelectStockDataChange";
 		SelectStockView.DefalutTpl="{#code#}";
 		__static(SelectStockView,
 		['signList',function(){return this.signList=["high7","high15","high30","high45"];}
