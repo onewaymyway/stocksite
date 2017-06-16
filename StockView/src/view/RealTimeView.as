@@ -153,7 +153,9 @@ package view
 		public function removeStock(stock:String):void
 		{
 			//mdView.removeStock(stock);
-			stock=StockJsonP.getAdptStockStr(stock);
+			stock = StockJsonP.getAdptStockStr(stock);
+			//debugger;
+			StockJsonP.I.removeStock(stock);
 			var i:int, len:int;
 			len = stockList.length;
 			for (i = 0; i < len; i++)

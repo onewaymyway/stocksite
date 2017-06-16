@@ -1,8 +1,8 @@
 {
     "x":0,
     "type":"View",
-    "selectedBox":1,
-    "selecteID":6,
+    "selectedBox":3,
+    "selecteID":7,
     "props":{"width":445,"sceneColor":"#f1dcdc","height":400},
     "nodeParent":-1,
     "label":"View",
@@ -48,6 +48,20 @@
                             "compId":4,
                             "child":[
                                 ]
+                        },
+                        {
+                            "x":45,
+                            "type":"Label",
+                            "props":{"y":39,"x":72,"wordWrap":true,"width":96,"text":"this is a list","skin":"comp/label.png","name":"info","height":22,"fontSize":14,"color":"#efe82f","align":"right"},
+                            "nodeParent":3,
+                            "label":"Label(info)",
+                            "isDirectory":false,
+                            "isAniNode":false,
+                            "hasChild":false,
+                            "compId":7,
+                            "child":[
+                                ],
+                            "$HIDDEN":false
                         }]
                 }]
         },
@@ -74,6 +88,19 @@
             "isAniNode":true,
             "hasChild":false,
             "compId":6,
+            "child":[
+                ]
+        },
+        {
+            "x":15,
+            "type":"CheckBox",
+            "props":{"y":10,"x":11,"width":75,"var":"autoFresh","skin":"comp/checkbox.png","selected":false,"label":"自动刷新","height":14},
+            "nodeParent":1,
+            "label":"CheckBox(autoFresh)",
+            "isDirectory":false,
+            "isAniNode":true,
+            "hasChild":false,
+            "compId":8,
             "child":[
                 ]
         }],

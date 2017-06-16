@@ -1,6 +1,7 @@
 package laya.tools 
 {
 	import laya.debug.tools.Notice;
+	import laya.math.ArrayMethods;
 	import laya.utils.Browser;
 	import laya.utils.Handler;
 	/**
@@ -10,9 +11,10 @@ package laya.tools
 	public class StockJsonP 
 	{
 		public static const StockFresh:String = "StockFresh";
+		public var completeNotice:String;
 		public function StockJsonP() 
 		{
-			
+			completeNotice = StockFresh;
 		}
 		public static var I:StockJsonP = new StockJsonP();
 		public static function getStockData2(stock:String, complete:Handler):void
@@ -52,10 +54,13 @@ package laya.tools
 			}
 			return stock;
 		}
-		public var listenStocks:Array = [];
+		private var listenStocks:Array = [];
+		private var listenStockDic:Object = { };
 		public var tUrl:String;
+		public var changed:Boolean = true;
 		public function updateStockUrl():void
 		{
+			if (!changed) return;
 			if (listenStocks.length > 0)
 			{
 				tUrl = getStockUrl(listenStocks);
@@ -63,19 +68,45 @@ package laya.tools
 			{
 				tUrl = null;
 			}
+			changed = false;
 			
 		}
 		public function addStock(stock:String):void
 		{
+			if (listenStockDic[stock]) return;
 			if (listenStocks.indexOf(stock) < 0)
 			{
+				listenStockDic[stock] = true;
 				listenStocks.push(stock);
-				updateStockUrl();
+				changed = true;
 			}
 			
 		}
+		
+		public function reset():void
+		{
+			listenStocks.length = 0;
+			var key:String;
+			for (key in listenStockDic)
+			{
+				listenStockDic[key] = false;
+			}
+			changed = true;
+		}
+		
+		public function removeStock(stock:String):void
+		{
+			if (!listenStockDic[stock]) return;
+			ArrayMethods.removeItem(listenStocks, stock);
+			listenStockDic[stock] = false;
+			changed = true;
+		}
 		public function freshData():void
 		{
+			if (changed)
+			{
+				updateStockUrl();
+			}
 			if (tUrl)
 			{
 				JsonP.getData(tUrl, Handler.create(this, dataComplete));
@@ -84,6 +115,7 @@ package laya.tools
 		}
 		public static function getStockData(stock:String):Object
 		{
+			stock = getAdptStockStr(stock);
 			return stockDataO[stock];
 		}
 		public function startFresh(interval:int=5000):void
@@ -103,7 +135,7 @@ package laya.tools
 			{
 				parserStockData(listenStocks[i]);
 			}
-			Notice.notify(StockFresh);
+			Notice.notify(completeNotice);
 		}
 		private static const keys:Array = [
 		"name",

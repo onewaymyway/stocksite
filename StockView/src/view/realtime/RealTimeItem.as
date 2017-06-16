@@ -30,6 +30,7 @@ package view.realtime
 		private var isSettingV:Boolean = false;
 		public function initByStock(stock:String):void
 		{
+			if (!stock) return;
 			this.stock = stock;
 			txt.text = stock;
 			var dataO:Object;

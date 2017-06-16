@@ -11,6 +11,17 @@ package laya.math
 		{
 			
 		}
+		public static function removeItem(arr:Array, item:*):void
+		{
+			var i:int;
+			for (i = arr.length - 1; i >= 0; i--)
+			{
+				if (arr[i] == item)
+				{
+					arr.splice(i, 1);
+				}
+			}
+		}
 		public static function findFirstLowThen(v:int, arr:Array, startPos:int,step:int=1):int
 		{
 			return 0;

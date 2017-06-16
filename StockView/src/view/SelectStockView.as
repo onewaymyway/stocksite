@@ -4,6 +4,8 @@ package view {
 	import laya.math.ValueTools;
 	import laya.maths.MathUtil;
 	import laya.net.Loader;
+	import laya.stock.StockTools;
+	import laya.tools.StockJsonP;
 	import laya.ui.Box;
 	import laya.ui.Label;
 	import laya.utils.Browser;
@@ -22,7 +24,8 @@ package view {
 		}
 		public var dataUrl:String = "last.json";
 		public var tType:String = "kline";
-		
+		private var stockDataGetter:StockJsonP;
+		public static const SelectStockDataChange:String = "SelectStockDataChange";
 		public function init():void {
 			list.renderHandler = new Handler(this, stockRender);
 			list.array = [];
@@ -35,7 +38,30 @@ package view {
 			Notice.listen(MsgConst.Show_Pre_Select, this, pre);
 			tip.text = "股票:当前盈利:最高盈利\n7天最大盈利,15天最大盈利,30天最大盈利,45天最大盈利\n买入日期";
 			typeSelect.on(Event.CHANGE, this, onTypeChange);
+			stockDataGetter = new StockJsonP();
+			stockDataGetter.completeNotice = SelectStockDataChange;
+			Notice.listen(SelectStockDataChange, this, onStockDataChange);
+			autoFresh.on(Event.CHANGE, this, onAutoFreshChange);
+			this.on(Event.DISPLAY, this, onAutoFreshChange);
+			this.on(Event.UNDISPLAY, this, onAutoFreshChange);
 		}
+		
+		private function onAutoFreshChange():void
+		{
+			if (autoFresh.selected&&this.displayedInStage)
+			{
+				stockDataGetter.startFresh();
+			}else
+			{
+				stockDataGetter.stopFresh();
+			}
+		}
+		private function onStockDataChange():void
+		{
+			reRenderCells();
+		}
+		
+	
 		
 		private function onTypeChange():void {
 			tType = typeSelect.selectedLabel;
@@ -109,6 +135,7 @@ package view {
 		}
 		
 		public function stockRender(cell:Box, index:int):void {
+			callLater(resetStocks);
 			var item:Object = cell.dataSource;
 			var label:Label;
 			label = cell.getChildByName("label");
@@ -116,8 +143,69 @@ package view {
 			dataO = ValueTools.getFlatKeyValue(item, tDataKey);
 			if (!tTpl) tTpl = DefalutTpl;
 			label.text = ValueTools.getTplStr(tTpl, dataO);
+			renderStockRealTimeInfo(cell);
+			
 			//label.text = dataO.code + ":" + Math.floor(dataO.changePercent * 100) + "%" + ":" + Math.floor(dataO.highPercent * 100) + "%" + "\n" + getStockChanges(dataO).join(",") + "\n" + dataO.lastDate;
 		}
+		private function renderStockRealTimeInfo(cell:Box):void
+		{
+			var item:Object = cell.dataSource;	
+			var label:Label;
+			label = cell.getChildByName("info");
+			if (!item)
+			{
+				label.text = "";
+				return;
+			}
+			var stockData:Object;
+			stockData=StockJsonP.getStockData(item.code)
+			if (stockData)
+			{
+				label.text = ""+StockTools.getGoodPercent((stockData.price-stockData.close) / stockData.close) + "%";
+			}else
+			{
+				label.text = "";
+			}
+		}
+		
+		private function reRenderCells():void
+		{
+			var cells:Array;
+			cells = list.cells;
+			if (!cells) return;
+			var i:int, len:int;
+			len = cells.length;
+			var tCell:Object;
+			for (i = 0; i < len; i++)
+			{
+				tCell = cells[i];
+				if (tCell.dataSource && tCell.dataSource.code)
+				{
+					renderStockRealTimeInfo(tCell);
+				}
+			}
+		}
+		private function resetStocks():void
+		{
+			var cells:Array;
+			cells = list.cells;
+			if (!cells) return;
+			var i:int, len:int;
+			len = cells.length;
+			stockDataGetter.reset();
+			var tCell:Object;
+			for (i = 0; i < len; i++)
+			{
+				tCell = cells[i];
+				if (tCell.dataSource && tCell.dataSource.code)
+				{
+					var adptCode:String;
+					adptCode = StockJsonP.getAdptStockStr(tCell.dataSource.code);
+					stockDataGetter.addStock(adptCode);
+				}
+			}
+		}
+		
 		public var tI:int = 0;
 		private var preTime:Number = 0;
 		

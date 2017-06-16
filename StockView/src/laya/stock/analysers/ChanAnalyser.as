@@ -176,7 +176,7 @@ package laya.stock.analysers {
 				tIndex = disDataList.length - 1;
 				prePrice = StockTools.getStockPriceEx(lastIndex, lastType, this);
 				tPrice = StockTools.getStockPriceEx(tIndex, "close", this);
-				kLineO.day = tIndex-lastIndex;
+				kLineO.day = tIndex-lastIndex+1;
 				kLineO.rate = StockTools.getGoodPercent((tPrice-prePrice) / prePrice);
 				kLineO.mRate=StockTools.getGoodPercent((tPrice-prePrice) / (prePrice*kLineO.day));
 			}
