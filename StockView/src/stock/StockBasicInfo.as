@@ -24,10 +24,13 @@ package stock
 			var i:int, len:int;
 			len = stockList.length;
 			stockCodeList = [];
+			var tCode:String;
 			for (i = 0; i < len; i++)
 			{
-				stockDic[stockList[i]["code"]] = stockList[i];
-				stockCodeList.push(stockList[i]["code"]);
+				stockList[i]["code"]=StockTools.getPureStock(stockList[i]["code"]);
+				tCode = stockList[i]["code"];
+				stockDic[tCode] = stockList[i];
+				stockCodeList.push(tCode);
 			}
 		}
 		public function getStockData(code:String):Object

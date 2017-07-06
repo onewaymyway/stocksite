@@ -37,6 +37,15 @@ package laya.stock
 			{
 				stock = stock.substr(2, 6);
 			}
+			if (stock.length < 6)
+			{
+				var count:int;
+				count = 6 - stock.length;
+				for (i = 0; i < len; i++)
+				{
+					stock = "0" + stock;
+				}
+			}
 			return stock;
 		}
 		public static var highDays:Array = [7, 15, 30, 45, 60];
