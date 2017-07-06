@@ -41,7 +41,8 @@ package laya.stock
 			{
 				var count:int;
 				count = 6 - stock.length;
-				for (i = 0; i < len; i++)
+				var i:int;
+				for (i = 0; i < count; i++)
 				{
 					stock = "0" + stock;
 				}

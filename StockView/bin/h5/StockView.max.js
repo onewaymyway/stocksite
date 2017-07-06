@@ -1467,7 +1467,8 @@ var Laya=window.Laya=(function(window,document){
 			if (stock.length < 6){
 				var count=0;
 				count=6-stock.length;
-				for (/*no*/this.i=0;/*no*/this.i < /*no*/this.len;/*no*/this.i++){
+				var i=0;
+				for (i=0;i < count;i++){
 					stock="0"+stock;
 				}
 			}
@@ -38119,11 +38120,3 @@ var Laya=window.Laya=(function(window,document){
 	new StockMain();
 
 })(window,document,Laya);
-
-
-/*
-1 file:///D:/stocksite.git/trunk/StockView/src/laya/stock/StockTools.as (42):warning:i This variable is not defined.
-2 file:///D:/stocksite.git/trunk/StockView/src/laya/stock/StockTools.as (42):warning:i This variable is not defined.
-3 file:///D:/stocksite.git/trunk/StockView/src/laya/stock/StockTools.as (42):warning:len This variable is not defined.
-4 file:///D:/stocksite.git/trunk/StockView/src/laya/stock/StockTools.as (42):warning:i This variable is not defined.
-*/
