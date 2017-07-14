@@ -898,6 +898,20 @@ var Laya=window.Laya=(function(window,document){
 			return tps.join("");
 		}
 
+		ValueTools.getFlatKeyValueStr=function(obj,key){
+			var str;
+			str=ValueTools.getFlatKeyValue(obj,key);
+			if (!str)return "";
+			return str;
+		}
+
+		ValueTools.getFlatKeyValueNum=function(obj,key){
+			var str;
+			str=ValueTools.getFlatKeyValue(obj,key);
+			if (!str)return 0
+			return str;
+		}
+
 		ValueTools.getFlatKeyValue=function(obj,key){
 			if (!obj)
 				return null;
@@ -963,9 +977,11 @@ var Laya=window.Laya=(function(window,document){
 			}
 			else {
 				_sortFun=forceNum ? ValueTools.sortNumSmallFirst :ValueTools.sortSmallFirst;
-			}
+			};
+			var getKeyFun;
+			getKeyFun=forceNum?ValueTools.getFlatKeyValueNum:ValueTools.getFlatKeyValueStr;
 			return function (a,b){
-				return _sortFun(ValueTools.getFlatKeyValue(a,key),ValueTools.getFlatKeyValue(b,key));
+				return _sortFun(getKeyFun(a,key),getKeyFun(b,key));
 			}
 		}
 
@@ -15819,6 +15835,7 @@ var Laya=window.Laya=(function(window,document){
 				kLineO.mRate=StockTools.getGoodPercent((tPrice-prePrice)/ (prePrice *kLineO.day));
 				var buys;
 				buys=this.resultData["buys"];
+				kLineO.lastBuy="0000";
 				if (buys&&buys.length>0){
 					kLineO.lastBuy=this.dataList[buys[buys.length-1][1]]["date"];
 				}
