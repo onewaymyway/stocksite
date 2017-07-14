@@ -15641,13 +15641,14 @@ var Laya=window.Laya=(function(window,document){
 		function ChanAnalyser(){
 			this.ifShowIndex=0;
 			this.showRaw=0;
+			this.onlyBuy=0;
 			ChanAnalyser.__super.call(this);
 		}
 
 		__class(ChanAnalyser,'laya.stock.analysers.ChanAnalyser',_super);
 		var __proto=ChanAnalyser.prototype;
 		__proto.initParamKeys=function(){
-			this.paramkeys=["ifShowIndex","showRaw"];
+			this.paramkeys=["ifShowIndex","showRaw","onlyBuy"];
 		}
 
 		__proto.analyseWork=function(){
@@ -15744,9 +15745,9 @@ var Laya=window.Laya=(function(window,document){
 
 		__proto.addToConfigTypes=function(types){
 			var mTpl;
-			mTpl="{#code#}:{#rate#}%:{#day#}:{#mRate#}";
+			mTpl="{#code#}:{#rate#}%:{#day#}:{#mRate#}\n{#lastBuy#}";
 			var mTip;
-			mTip="股票:当前变化率:趋势持续天数:平均变化率";
+			mTip="股票:当前变化率:趋势持续天数:平均变化率\n最后购买时间";
 			var tData;
 			var tAnalyserInfos;
 			tData={};
@@ -15827,7 +15828,8 @@ var Laya=window.Laya=(function(window,document){
 		__proto.getDrawCmds=function(){
 			var rst;
 			rst=[];
-			rst.push(["drawPointsLineEx",[this.resultData["points"]]]);
+			if(!this.onlyBuy)
+				rst.push(["drawPointsLineEx",[this.resultData["points"]]]);
 			if (this.ifShowIndex)
 				rst.push(["drawTexts",[this.resultData["indexs"],"low",30,"#00ff00",true,"#00ff00"]]);
 			rst.push(["drawTexts",[this.resultData["buys"],"low",50,"#ff0000",true,"#ff0000"]]);
