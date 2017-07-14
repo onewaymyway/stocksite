@@ -2,6 +2,7 @@ package laya.stock.analysers {
 	import laya.math.DataUtils;
 	import laya.stock.analysers.chan.ChanKBar;
 	import laya.stock.analysers.chan.ChanKList;
+	import laya.stock.analysers.chan.ChanTrend;
 	import laya.stock.StockTools;
 	
 	/**
@@ -16,9 +17,10 @@ package laya.stock.analysers {
 		}
 		public var ifShowIndex:int = 0;
 		public var showRaw:int = 0;
+		public var onlyBuy:int = 0;
 		
 		override public function initParamKeys():void {
-			paramkeys = ["ifShowIndex", "showRaw"];
+			paramkeys = ["ifShowIndex", "showRaw", "onlyBuy"];
 		}
 		
 		override public function analyseWork():void {
@@ -78,40 +80,60 @@ package laya.stock.analysers {
 			var points:Array;
 			points = [];
 			var preData:ChanKBar;
+			
+			var tIndex:int;
+			
+			var pointWithPriceList:Array;
+			pointWithPriceList = [];
 			for (i = 0; i < len; i++) {
 				tArr = cPointList[i];
 				tType = tArr[0];
 				tDataO = tArr[1];
 				if (tType != DataUtils.K_Unknow) {
 					if (tType == DataUtils.K_Top) {
-						tops.push(ChanKList.getIndex(tDataO.topO));
+						tIndex = ChanKList.getIndex(tDataO.topO);
+						tops.push(tIndex);
+						pointWithPriceList.push([tIndex,"high",StockTools.getStockPriceEx(tIndex,"high",this)]);
 						if (preData) {
-							points.push([ChanKList.getIndex(tDataO.topO), "high", " " + StockTools.getGoodPercent((tDataO.top - preData.bottom) / preData.bottom) + "%"]);
+							points.push([tIndex, "high", " " + StockTools.getGoodPercent((tDataO.top - preData.bottom) / preData.bottom) + "%"]);
 						}
 						else {
-							points.push([ChanKList.getIndex(tDataO.topO), "high"]);
+							points.push([tIndex, "high"]);
 						}
 						
 					}
 					if (tType == DataUtils.K_Bottom) {
-						bottoms.push(ChanKList.getIndex(tDataO.bottomO));
+						tIndex = ChanKList.getIndex(tDataO.bottomO);
+						bottoms.push(tIndex);
+						pointWithPriceList.push([tIndex,"low",StockTools.getStockPriceEx(tIndex,"low",this)]);
 						if (preData) {
-							points.push([ChanKList.getIndex(tDataO.bottomO), "low", " " + StockTools.getGoodPercent((tDataO.bottom - preData.top) / preData.top) + "%"]);
+							points.push([tIndex, "low", " " + StockTools.getGoodPercent((tDataO.bottom - preData.top) / preData.top) + "%"]);
 						}
 						else {
-							points.push([ChanKList.getIndex(tDataO.bottomO), "low"]);
+							points.push([tIndex, "low"]);
 						}
 						
 					}
 					preData = tDataO;
 				}
 			}
+			
+			var chanTrend:ChanTrend;
+			chanTrend = new ChanTrend();
+			chanTrend.initByData(pointWithPriceList);
 			resultData["tops"] = tops;
 			resultData["bottoms"] = bottoms;
 			resultData["points"] = points;
+			resultData["types"] = chanTrend.typeList;
+			resultData["buys"] = chanTrend.buyList;
 		}
 		
 		override public function addToConfigTypes(types:Array):void {
+			
+			var mTpl:String;
+			mTpl = "{#code#}:{#rate#}%:{#day#}:{#mRate#}\n{#lastBuy#}";
+			var mTip:String;
+			mTip="股票:当前变化率:趋势持续天数:平均变化率\n最后购买时间";
 			var tData:Object;
 			var tAnalyserInfos:Array;
 			tData = {};
@@ -122,8 +144,8 @@ package laya.stock.analysers {
 			tAnalyserInfos.push(this.getParamsArr());
 			tData.analyserInfo = tAnalyserInfos;
 			
-			tData.tip = "股票:当前变化率:趋势持续天数:平均变化率";
-			tData.tpl = "{#code#}:{#rate#}%:{#day#}:{#mRate#}";
+			tData.tip = mTip;
+			tData.tpl =mTpl;
 			types.push(tData);
 			
 			tData = {};
@@ -134,8 +156,8 @@ package laya.stock.analysers {
 			tAnalyserInfos.push(this.getParamsArr());
 			tData.analyserInfo = tAnalyserInfos;
 			
-			tData.tip = "股票:当前变化率:趋势持续天数:平均变化率";
-			tData.tpl = "{#code#}:{#rate#}%:{#day#}:{#mRate#}";
+			tData.tip = mTip;
+			tData.tpl = mTpl;
 			types.push(tData);
 			
 			tData = {};
@@ -146,8 +168,20 @@ package laya.stock.analysers {
 			tAnalyserInfos.push(this.getParamsArr());
 			tData.analyserInfo = tAnalyserInfos;
 			
-			tData.tip = "股票:当前变化率:趋势持续天数:平均变化率";
-			tData.tpl = "{#code#}:{#rate#}%:{#day#}:{#mRate#}";
+			tData.tip = mTip;
+			tData.tpl = mTpl;
+			types.push(tData);
+			
+			tData = {};
+			tData.label = "TrendByBuy";
+			tData.sortParams = ["TrendO.lastBuy", true, false];
+			tData.dataKey = "TrendO";
+			tAnalyserInfos = [];
+			tAnalyserInfos.push(this.getParamsArr());
+			tData.analyserInfo = tAnalyserInfos;
+			
+			tData.tip = mTip;
+			tData.tpl = mTpl;
 			types.push(tData);
 		}
 		
@@ -178,7 +212,15 @@ package laya.stock.analysers {
 				tPrice = StockTools.getStockPriceEx(tIndex, "close", this);
 				kLineO.day = tIndex-lastIndex+1;
 				kLineO.rate = StockTools.getGoodPercent((tPrice-prePrice) / prePrice);
-				kLineO.mRate=StockTools.getGoodPercent((tPrice-prePrice) / (prePrice*kLineO.day));
+				kLineO.mRate = StockTools.getGoodPercent((tPrice-prePrice) / (prePrice * kLineO.day));
+				var buys:Array;
+				buys = resultData["buys"];
+				kLineO.lastBuy = "0000";
+				if (buys&&buys.length>0)
+				{
+					kLineO.lastBuy = dataList[buys[buys.length-1][1]]["date"];
+				}
+				
 			}
 		
 		}
@@ -189,10 +231,12 @@ package laya.stock.analysers {
 			
 			//rst.push(["drawPoints", [resultData["bottoms"], "low", 3, "#ffff00"]]);
 			//rst.push(["drawPoints", [resultData["tops"], "high", 3, "#00ff00"]]);
+			if(!onlyBuy)
 			rst.push(["drawPointsLineEx", [resultData["points"]]]);
 			if (ifShowIndex)
 				rst.push(["drawTexts", [resultData["indexs"], "low", 30, "#00ff00", true, "#00ff00"]]);
-			
+			//rst.push(["drawTexts", [resultData["types"], "low", 30, "#ffff00", true, "#ffff00"]]);
+			rst.push(["drawTexts", [resultData["buys"], "low", 50, "#ff0000", true, "#ff0000"]]);
 			//rst.push(["drawPointsLine", [resultData["maxs"], "high", -20]]);
 			//rst.push(["drawPointsLine", [resultData["mins"], "low", 20]]);
 			

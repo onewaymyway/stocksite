@@ -96,7 +96,21 @@ package laya.math {
 			}
 			return tps.join("");
 		}
+		public static function getFlatKeyValueStr(obj:Object, key:String):String
+		{
+			var str:String;
+			str = getFlatKeyValue(obj, key);
+			if (!str) return "";
+			return str;
+		}
 		
+		public static function getFlatKeyValueNum(obj:Object, key:String):int
+		{
+			var str:String;
+			str = getFlatKeyValue(obj, key);
+			if (!str) return 0
+			return str;
+		}
 		public static function getFlatKeyValue(obj:Object, key:String):* {
 			if (!obj)
 				return null;
@@ -197,8 +211,10 @@ package laya.math {
 			else {
 				_sortFun = forceNum ? sortNumSmallFirst : sortSmallFirst;
 			}
+			var getKeyFun:Function;
+			getKeyFun = forceNum?getFlatKeyValueNum:getFlatKeyValueStr;
 			return function(a:Object, b:Object):Number {
-				return _sortFun(getFlatKeyValue(a, key), getFlatKeyValue(b, key));
+				return _sortFun(getKeyFun(a, key), getKeyFun(b, key));
 			}
 		}
 	}
