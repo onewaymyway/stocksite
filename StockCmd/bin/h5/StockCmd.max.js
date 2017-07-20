@@ -2502,8 +2502,7 @@ var Laya=window.Laya=(function(window,document){
 			}
 			this._one=null;
 			this._render=this._renderEmpty;
-			this._sp && (this._sp._renderType &=~0x01);
-			this._sp && (this._sp._renderType &=~0x200);
+			this._sp && (this._sp._renderType &=~0x01 & ~0x200);
 			this._repaint();
 			if (this._vectorgraphArray){
 				for (i=0,len=this._vectorgraphArray.length;i < len;i++){
@@ -3830,6 +3829,12 @@ var Laya=window.Laya=(function(window,document){
 					list.push(e);
 				}
 			},true);
+			canvas.addEventListener("touchcancel",function(e){
+				if (MouseManager.enabled){
+					e.preventDefault();
+					list.push(e);
+				}
+			},true);
 			canvas.addEventListener('mousewheel',function(e){
 				if (MouseManager.enabled)list.push(e);
 			});
@@ -3990,6 +3995,7 @@ var Laya=window.Laya=(function(window,document){
 						}
 						break ;
 					case "touchend":
+					case "touchcancel":
 						MouseManager._isTouchRespond=true;
 						_this._isLeftMouse=true;
 						var touchends=evt.changedTouches;
@@ -5816,6 +5822,7 @@ var Laya=window.Laya=(function(window,document){
 		SoundManager._musicPosition=0;
 		SoundManager._musicCompleteHandler=null;
 		SoundManager._soundClass=null
+		SoundManager.autoReleaseSound=true;
 		return SoundManager;
 	})()
 
@@ -6007,16 +6014,10 @@ var Laya=window.Laya=(function(window,document){
 			Browser.container.appendChild(Render._mainCanvas.source);
 			Render._context=new RenderContext(width,height,isWebGl ? null :Render._mainCanvas);
 			Render._context.ctx.setIsMainContext();
-			if (Browser.onAndriod){
-				Browser.window.setInterval(Render.__loop_time,1000 / 60);
-				Browser.window.requestAnimationFrame(Render.__loop_ani);
-			}
-			else{
+			Browser.window.requestAnimationFrame(loop);
+			function loop (){
+				Laya.stage._loop();
 				Browser.window.requestAnimationFrame(loop);
-				function loop (){
-					Laya.stage._loop();
-					Browser.window.requestAnimationFrame(loop);
-				}
 			}
 			Laya.stage.on("visibilitychange",this,this._onVisibilitychange);
 		}
@@ -6047,17 +6048,6 @@ var Laya=window.Laya=(function(window,document){
 			return Render._mainCanvas.source;
 		});
 
-		Render.__loop_time=function(){
-			if (Render.__loop_time_id==Stat.loopCount)Laya.stage._loop();
-			Render.__loop_time_id=Stat.loopCount;
-		}
-
-		Render.__loop_ani=function(){
-			if (Render.__loop_ani_id==Stat.loopCount)Laya.stage._loop();
-			Render.__loop_ani_id=Stat.loopCount;
-			Browser.window.requestAnimationFrame(laya.renders.Render.__loop_ani);
-		}
-
 		Render._context=null
 		Render._mainCanvas=null
 		Render.WebGL=null
@@ -6070,15 +6060,13 @@ var Laya=window.Laya=(function(window,document){
 			return true;
 		}
 
-		Render.__loop_time_id=0;
-		Render.__loop_ani_id=0;
 		Render.__init$=function(){
 			window.ConchRenderType=window.ConchRenderType||1;
 			window.ConchRenderType|=(!window.conch?0:0x04);;{
 				Render.isConchNode=(window.ConchRenderType & 5)==5;
 				Render.isConchApp=(window.ConchRenderType & 0x04)==0x04;
 				Render.isConchWebGL=window.ConchRenderType==6;
-			};;;
+			};;
 		}
 
 		return Render;
@@ -16126,6 +16114,20 @@ var Laya=window.Laya=(function(window,document){
 			return tps.join("");
 		}
 
+		ValueTools.getFlatKeyValueStr=function(obj,key){
+			var str;
+			str=ValueTools.getFlatKeyValue(obj,key);
+			if (!str)return "";
+			return str;
+		}
+
+		ValueTools.getFlatKeyValueNum=function(obj,key){
+			var str;
+			str=ValueTools.getFlatKeyValue(obj,key);
+			if (!str)return 0
+			return str;
+		}
+
 		ValueTools.getFlatKeyValue=function(obj,key){
 			if (!obj)
 				return null;
@@ -16191,9 +16193,11 @@ var Laya=window.Laya=(function(window,document){
 			}
 			else {
 				_sortFun=forceNum ? ValueTools.sortNumSmallFirst :ValueTools.sortSmallFirst;
-			}
+			};
+			var getKeyFun;
+			getKeyFun=forceNum?ValueTools.getFlatKeyValueNum:ValueTools.getFlatKeyValueStr;
 			return function (a,b){
-				return _sortFun(ValueTools.getFlatKeyValue(a,key),ValueTools.getFlatKeyValue(b,key));
+				return _sortFun(getKeyFun(a,key),getKeyFun(b,key));
 			}
 		}
 
@@ -18727,6 +18731,7 @@ var Laya=window.Laya=(function(window,document){
 				if (this.url==SoundManager._tMusic){
 					AudioSound._initMusicAudio();
 					tAd=AudioSound._musicAudio;
+					tAd.src=this.url;
 					}else{
 					tAd=tAd ? tAd :ad.cloneNode(true);
 				}
@@ -19078,7 +19083,7 @@ var Laya=window.Laya=(function(window,document){
 
 	/**
 	*<p> <code>HttpRequest</code> 通过封装 HTML <code>XMLHttpRequest</code> 对象提供了对 HTTP 协议的完全的访问，包括做出 POST 和 HEAD 请求以及普通的 GET 请求的能力。 <code>HttpRequest</code> 只提供以异步的形式返回 Web 服务器的响应，并且能够以文本或者二进制的形式返回内容。</p>
-	*<p><b>注意：</b>建议每次请求都使用新的 <code>HttpRequest</code> 对象，因为每次调用该对象的send方法时，都会清空之前设置的数据，并重置 HTTP 请求的状态，这会导致之前还未返回响应的请求被重置，从而得不到之前请求的响应结果。
+	*<p><b>注意：</b>建议每次请求都使用新的 <code>HttpRequest</code> 对象，因为每次调用该对象的send方法时，都会清空之前设置的数据，并重置 HTTP 请求的状态，这会导致之前还未返回响应的请求被重置，从而得不到之前请求的响应结果。</p>
 	*/
 	//class laya.net.HttpRequest extends laya.events.EventDispatcher
 	var HttpRequest=(function(_super){
@@ -19785,7 +19790,7 @@ var Laya=window.Laya=(function(window,document){
 
 		/**
 		*<p>加载资源。资源加载错误时，本对象会派发 Event.ERROR 事件，事件回调参数值为加载出错的资源地址。</p>
-		*<p>因为返回值为 LoaderManager 对象本身，所以可以使用如下语法：loaderManager.load(...).load(...);</p>
+		*<p>因为返回值为 LoaderManager 对象本身，所以可以使用如下语法：Laya.loader.load(...).load(...);</p>
 		*@param url 要加载的单个资源地址或资源信息数组。比如：简单数组：["a.png","b.png"]；复杂数组[{url:"a.png",type:Loader.IMAGE,size:100,priority:1},{url:"b.json",type:Loader.JSON,size:50,priority:1}]。
 		*@param complete 加载结束回调。根据url类型不同分为2种情况：1. url为String类型，也就是单个资源地址，如果加载成功，则回调参数值为加载完成的资源，否则为null；2. url为数组类型，指定了一组要加载的资源，如果全部加载成功，则回调参数值为true，否则为false。
 		*@param progress 加载进度回调。回调参数值为当前资源的加载进度信息(0-1)。
@@ -20401,16 +20406,18 @@ var Laya=window.Laya=(function(window,document){
 		__proto.destroy=function(forceDispose){
 			(forceDispose===void 0)&& (forceDispose=false);
 			if (this.bitmap && (this.bitmap).useNum > 0){
+				var temp=this.bitmap;
 				if (forceDispose){
-					this.bitmap.dispose();
-					(this.bitmap).useNum=0;
+					this.bitmap=null;
+					temp.dispose();
+					(temp).useNum=0;
 					}else {
-					(this.bitmap).useNum--;
-					if ((this.bitmap).useNum==0){
-						this.bitmap.dispose();
+					(temp).useNum--;
+					if ((temp).useNum==0){
+						this.bitmap=null;
+						temp.dispose();
 					}
 				}
-				this.bitmap=null;
 				if (this.url && this===Laya.loader.getRes(this.url))Laya.loader.clearRes(this.url,forceDispose);
 				this._loaded=false;
 			}
@@ -21108,13 +21115,14 @@ var Laya=window.Laya=(function(window,document){
 		function ChanAnalyser(){
 			this.ifShowIndex=0;
 			this.showRaw=0;
+			this.onlyBuy=0;
 			ChanAnalyser.__super.call(this);
 		}
 
 		__class(ChanAnalyser,'laya.stock.analysers.ChanAnalyser',_super);
 		var __proto=ChanAnalyser.prototype;
 		__proto.initParamKeys=function(){
-			this.paramkeys=["ifShowIndex","showRaw"];
+			this.paramkeys=["ifShowIndex","showRaw","onlyBuy"];
 		}
 
 		__proto.analyseWork=function(){
@@ -21285,8 +21293,10 @@ var Laya=window.Laya=(function(window,document){
 				kLineO.mRate=StockTools.getGoodPercent((tPrice-prePrice)/ (prePrice *kLineO.day));
 				var buys;
 				buys=this.resultData["buys"];
+				kLineO.lastBuy="0000";
 				if (buys&&buys.length>0){
 					kLineO.lastBuy=this.dataList[buys[buys.length-1][1]]["date"];
+					StockTools.getBuyStaticInfos(buys[buys.length-1][1],this.disDataList,kLineO);
 				}
 			}
 		}
@@ -21294,7 +21304,8 @@ var Laya=window.Laya=(function(window,document){
 		__proto.getDrawCmds=function(){
 			var rst;
 			rst=[];
-			rst.push(["drawPointsLineEx",[this.resultData["points"]]]);
+			if(!this.onlyBuy)
+				rst.push(["drawPointsLineEx",[this.resultData["points"]]]);
 			if (this.ifShowIndex)
 				rst.push(["drawTexts",[this.resultData["indexs"],"low",30,"#00ff00",true,"#00ff00"]]);
 			rst.push(["drawTexts",[this.resultData["buys"],"low",50,"#ff0000",true,"#ff0000"]]);
@@ -22128,7 +22139,8 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		/**
-		*设置对象bounds大小，如果有设置，则不再通过getBounds计算，合理使用能提高性能。
+		*<p>设置对象在自身坐标系下的边界范围。与 <code>getSelfBounds</code> 对应。当 autoSize==true 时，会影响对象宽高。设置后，当需要获取自身边界范围时，就不再需要计算，合理使用能提高性能。比如 <code>getBounds</code> 会优先使用 <code>setBounds</code> 指定的值，如果没有指定则进行计算，此计算会对性能消耗比较大。</p>
+		*<p><b>注意：</b> <code>setBounds</code> 与 <code>getBounds</code> 并非对应相等关系， <code>getBounds</code> 获取的是本对象在父容器坐标系下的边界范围，通过设置 <code>setBounds</code> 会影响 <code>getBounds</code> 的结果。</p>
 		*@param bound bounds矩形区域
 		*/
 		__proto.setBounds=function(bound){
@@ -22137,7 +22149,7 @@ var Laya=window.Laya=(function(window,document){
 
 		/**
 		*<p>获取本对象在父容器坐标系的矩形显示区域。</p>
-		*<p><b>注意：</b>计算量较大，尽量少用。</p>
+		*<p><b>注意：</b> 1.计算量较大，尽量少用，如果需要频繁使用，可以通过手动设置 <code>setBounds</code> 来缓存自身边界信息，从而避免比较消耗性能的计算。2. <code>setBounds</code> 与 <code>getBounds</code> 并非对应相等关系， <code>getBounds</code> 获取的是本对象在父容器坐标系下的边界范围，通过设置 <code>setBounds</code> 会影响 <code>getBounds</code> 的结果。</p>
 		*@return 矩形区域。
 		*/
 		__proto.getBounds=function(){
@@ -22146,8 +22158,8 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		/**
-		*获取本对象在自己坐标系的矩形显示区域。
-		*<p><b>注意：</b>计算量较大，尽量少用。</p>
+		*获取对象在自身坐标系的边界范围。与 <code>setBounds</code> 对应。
+		*<p><b>注意：</b>计算量较大，尽量少用，如果需要频繁使用，可以提前手动设置 <code>setBounds</code> 来缓存自身边界信息，从而避免比较消耗性能的计算。</p>
 		*@return 矩形区域。
 		*/
 		__proto.getSelfBounds=function(){
@@ -23121,6 +23133,7 @@ var Laya=window.Laya=(function(window,document){
 			if (style._tf.skewX!==value){
 				style.setSkewX(value);
 				this._tfChanged=true;
+				this.conchModel && this.conchModel.skew(value,style._tf.skewY);
 				this._renderType |=0x04;
 				var p=this._parent;
 				if (p && p._repaint===0){
@@ -23639,7 +23652,8 @@ var Laya=window.Laya=(function(window,document){
 			this.isStopped=true;
 			SoundManager.removeChannel(this);
 			this.completeHandler=null;
-			Laya.timer.once(5000,null,SoundManager.disposeSoundIfNotUsed,[this.url],false);
+			if(SoundManager.autoReleaseSound)
+				Laya.timer.once(5000,null,SoundManager.disposeSoundIfNotUsed,[this.url],false);
 		}
 
 		__proto.pause=function(){
@@ -23651,7 +23665,8 @@ var Laya=window.Laya=(function(window,document){
 				this.gain.disconnect();
 			this.isStopped=true;
 			SoundManager.removeChannel(this);
-			Laya.timer.once(5000,null,SoundManager.disposeSoundIfNotUsed,[this.url],false);
+			if(SoundManager.autoReleaseSound)
+				Laya.timer.once(5000,null,SoundManager.disposeSoundIfNotUsed,[this.url],false);
 		}
 
 		__proto.resume=function(){
@@ -23719,6 +23734,7 @@ var Laya=window.Laya=(function(window,document){
 		*彻底清理资源。
 		*/
 		__proto.dispose=function(){
+			if (this.disposed)return;
 			this._resourceManager.removeResource(this);
 			_super.prototype.dispose.call(this);
 		}
