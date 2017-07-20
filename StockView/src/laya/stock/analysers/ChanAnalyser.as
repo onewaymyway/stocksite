@@ -218,7 +218,8 @@ package laya.stock.analysers {
 				kLineO.lastBuy = "0000";
 				if (buys&&buys.length>0)
 				{
-					kLineO.lastBuy = dataList[buys[buys.length-1][1]]["date"];
+					kLineO.lastBuy = dataList[buys[buys.length - 1][1]]["date"];
+					StockTools.getBuyStaticInfos(buys[buys.length - 1][1], disDataList, kLineO);
 				}
 				
 			}
