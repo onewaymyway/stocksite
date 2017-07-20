@@ -21219,9 +21219,9 @@ var Laya=window.Laya=(function(window,document){
 
 		__proto.addToConfigTypes=function(types){
 			var mTpl;
-			mTpl="{#code#}:{#rate#}%:{#day#}:{#mRate#}\n{#lastBuy#}\n{#changePercent#}%:{#highPercent#}%\n{#high7#}%,{#high15#}%,{#high30#}%,{#high45#}%";
+			mTpl="{#code#}:{#rate#}%:{#day#}:{#mRate#}\n{#lastBuy#}:{#changePercent#}%:{#highPercent#}%\n{#high7#}%,{#high15#}%,{#high30#}%,{#high45#}%";
 			var mTip;
-			mTip="股票:当前变化率:趋势持续天数:平均变化率\n最后购买时间";
+			mTip="股票:当前变化率:趋势持续天数:平均变化率\n最后购买时间:当前盈利:最高盈利\n7天最大盈利,15天最大盈利,30天最大盈利,45天最大盈利";
 			var tData;
 			var tAnalyserInfos;
 			tData={};
