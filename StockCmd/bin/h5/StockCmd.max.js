@@ -21219,7 +21219,7 @@ var Laya=window.Laya=(function(window,document){
 
 		__proto.addToConfigTypes=function(types){
 			var mTpl;
-			mTpl="{#code#}:{#rate#}%:{#day#}:{#mRate#}\n{#lastBuy#}";
+			mTpl="{#code#}:{#rate#}%:{#day#}:{#mRate#}\n{#lastBuy#}\n{#changePercent#}%:{#highPercent#}%\n{#high7#}%,{#high15#}%,{#high30#}%,{#high45#}%";
 			var mTip;
 			mTip="股票:当前变化率:趋势持续天数:平均变化率\n最后购买时间";
 			var tData;
