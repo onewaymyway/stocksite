@@ -46,6 +46,7 @@ package nodetools.server
 		
 		public function onClose(code:Number,reason:String):void
 		{
+			serverO.removeClient(this);
 		}
 		
 		public function onOpen():void
