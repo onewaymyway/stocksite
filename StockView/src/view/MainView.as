@@ -20,7 +20,7 @@ package view
 		public var views:Array;
 		public function init():void
 		{
-			views = [stockListView,kLineView,selectView,realTimeView];
+			views = [stockListView,kLineView,selectView,realTimeView,logoView];
 			typeSelect.selectHandler = new Handler(this,updateSelect);
 			updateSelect();
 			stockListView.init();
