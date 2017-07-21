@@ -15761,9 +15761,9 @@ var Laya=window.Laya=(function(window,document){
 
 		__proto.addToConfigTypes=function(types){
 			var mTpl;
-			mTpl="{#code#}:{#rate#}%:{#day#}:{#mRate#}\n{#lastBuy#}";
+			mTpl="{#code#}:{#rate#}%:{#day#}:{#mRate#}\n{#lastBuy#}:{#changePercent#}%\n{#high7#}%,{#high15#}%,{#high30#}%,{#high45#}%";
 			var mTip;
-			mTip="股票:当前变化率:趋势持续天数:平均变化率\n最后购买时间";
+			mTip="股票:当前变化率:趋势持续天数:平均变化率\n最后购买时间:当前盈利\n7天最大盈利,15天最大盈利,30天最大盈利,45天最大盈利";
 			var tData;
 			var tAnalyserInfos;
 			tData={};
@@ -15838,6 +15838,7 @@ var Laya=window.Laya=(function(window,document){
 				kLineO.lastBuy="0000";
 				if (buys&&buys.length>0){
 					kLineO.lastBuy=this.dataList[buys[buys.length-1][1]]["date"];
+					StockTools.getBuyStaticInfos(buys[buys.length-1][1],this.disDataList,kLineO);
 				}
 			}
 		}
@@ -35416,6 +35417,7 @@ var Laya=window.Laya=(function(window,document){
 			this.kLineView=null;
 			this.selectView=null;
 			this.realTimeView=null;
+			this.logoView=null;
 			MainViewUI.__super.call(this);
 		}
 
@@ -35430,7 +35432,7 @@ var Laya=window.Laya=(function(window,document){
 			this.createView(MainViewUI.uiView);
 		}
 
-		MainViewUI.uiView={"type":"View","props":{"width":445,"height":400},"child":[{"type":"Tab","props":{"y":4,"x":4,"var":"typeSelect","skin":"comp/tab.png","selectedIndex":0,"labels":"股票列表,K线动画,选股,自选","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"StockView","props":{"var":"stockListView","top":40,"runtime":"view.StockView","right":10,"left":10,"bottom":10}},{"type":"KLineView","props":{"var":"kLineView","top":40,"runtime":"view.KLineView","right":10,"left":10,"bottom":10}},{"type":"SelectStockView","props":{"var":"selectView","top":40,"runtime":"view.SelectStockView","right":10,"left":10,"bottom":10}},{"type":"RealTime","props":{"var":"realTimeView","top":40,"runtime":"view.RealTimeView","right":10,"left":10,"bottom":10}}]};
+		MainViewUI.uiView={"type":"View","props":{"width":445,"height":400},"child":[{"type":"Tab","props":{"y":4,"x":4,"var":"typeSelect","skin":"comp/tab.png","selectedIndex":0,"labels":"股票列表,K线动画,选股,自选,扫码","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"StockView","props":{"var":"stockListView","top":40,"runtime":"view.StockView","right":10,"left":10,"bottom":10}},{"type":"KLineView","props":{"var":"kLineView","top":40,"runtime":"view.KLineView","right":10,"left":10,"bottom":10}},{"type":"SelectStockView","props":{"var":"selectView","top":40,"runtime":"view.SelectStockView","right":10,"left":10,"bottom":10}},{"type":"RealTime","props":{"var":"realTimeView","top":40,"runtime":"view.RealTimeView","right":10,"left":10,"bottom":10}},{"type":"Image","props":{"y":106,"var":"logoView","skin":"comp/logo.png","centerX":0}}]};
 		return MainViewUI;
 	})(View)
 
@@ -36952,7 +36954,7 @@ var Laya=window.Laya=(function(window,document){
 		__class(MainView,'view.MainView',_super);
 		var __proto=MainView.prototype;
 		__proto.init=function(){
-			this.views=[this.stockListView,this.kLineView,this.selectView,this.realTimeView];
+			this.views=[this.stockListView,this.kLineView,this.selectView,this.realTimeView,this.logoView];
 			this.typeSelect.selectHandler=new Handler(this,this.updateSelect);
 			this.updateSelect();
 			this.stockListView.init();
