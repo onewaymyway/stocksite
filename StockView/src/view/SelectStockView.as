@@ -161,7 +161,14 @@ package view {
 			stockData=StockJsonP.getStockData(item.code)
 			if (stockData)
 			{
-				label.text = ""+StockTools.getGoodPercent((stockData.price-stockData.close) / stockData.close) + "%";
+				label.text = "" + StockTools.getGoodPercent((stockData.price-stockData.close) / stockData.close) + "%";
+				if (stockData.price-stockData.close >= 0)
+				{
+					label.color = "#ff0000";
+				}else
+				{
+					label.color = "#00ff00";
+				}
 			}else
 			{
 				label.text = "";
