@@ -32,6 +32,7 @@ package {
 			parseCMD(NodeJSTools.getArgv());
 			DTrace.timeStart("StockCmdTool");
 			work();
+			//setTimeout(work, 1000);
 			DTrace.timeEnd("StockCmdTool");
 		}
 		

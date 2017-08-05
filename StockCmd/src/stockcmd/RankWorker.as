@@ -4,6 +4,7 @@ package stockcmd
 	import laya.math.DataUtils;
 	import laya.maths.MathUtil;
 	import laya.stock.analysers.AnalyserBase;
+	import laya.stock.analysers.AverageLineAnalyser;
 	import laya.stock.analysers.ChanAnalyser;
 	import laya.stock.analysers.KLineAnalyser;
 	import laya.stock.analysers.lines.PositionLine;
@@ -96,6 +97,8 @@ package stockcmd
 			analysers.push(new ChanAnalyser());
 			
 			analysers.push(new PositionStatic());
+			
+			analysers.push(new AverageLineAnalyser());
 			var i:int, len:int;
 			len = analysers.length;
 			var tAnalyser:AnalyserBase;
