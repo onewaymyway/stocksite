@@ -1476,6 +1476,7 @@ var Laya=window.Laya=(function(window,document){
 			this.analysers.push(posAnalyser30);
 			this.analysers.push(new ChanAnalyser());
 			this.analysers.push(new PositionStatic());
+			this.analysers.push(new AverageLineAnalyser());
 			var i=0,len=0;
 			len=this.analysers.length;
 			var tAnalyser;
@@ -2981,7 +2982,7 @@ var Laya=window.Laya=(function(window,document){
 		__proto.drawLines=function(x,y,points,lineColor,lineWidth){
 			(lineWidth===void 0)&& (lineWidth=1);
 			var tId=0;
-			if (!points || points.length < 1)return;
+			if (!points || points.length < 4)return;
 			if (Render.isWebGL){
 				tId=VectorGraphManager.getInstance().getId();
 				if (this._vectorgraphArray==null)this._vectorgraphArray=[];
@@ -3105,9 +3106,9 @@ var Laya=window.Laya=(function(window,document){
 		*绘制路径。
 		*@param x 开始绘制的 X 轴位置。
 		*@param y 开始绘制的 Y 轴位置。
-		*@param paths 路径集合，路径支持以下格式：[["moveTo",x,y],["lineTo",x,y,x,y,x,y],["arcTo",x1,y1,x2,y2,r],["closePath"]]。
-		*@param brush （可选）刷子定义，支持以下设置{fillStyle}。
-		*@param pen （可选）画笔定义，支持以下设置{strokeStyle,lineWidth,lineJoin,lineCap,miterLimit}。
+		*@param paths 路径集合，路径支持以下格式：[["moveTo",x,y],["lineTo",x,y],["arcTo",x1,y1,x2,y2,r],["closePath"]]。
+		*@param brush （可选）刷子定义，支持以下设置{fillStyle:"#FF0000"}。
+		*@param pen （可选）画笔定义，支持以下设置{strokeStyle,lineWidth,lineJoin:"bevel|round|miter",lineCap:"butt|round|square",miterLimit}。
 		*/
 		__proto.drawPath=function(x,y,paths,brush,pen){
 			var arr=[x,y,paths,brush,pen];
@@ -19268,9 +19269,11 @@ var Laya=window.Laya=(function(window,document){
 			(cache===void 0)&& (cache=true);
 			(ignoreCache===void 0)&& (ignoreCache=false);
 			this._url=url;
-			if (url.indexOf("data:image")===0)type="image";
-			else url=URL.formatURL(url);
-			this._type=type || (type=this.getTypeFromUrl(url));
+			if (url.indexOf("data:image")===0)this._type=type="image";
+			else {
+				this._type=type || (type=this.getTypeFromUrl(url));
+				url=URL.formatURL(url);
+			}
 			this._cache=cache;
 			this._data=null;
 			if (!ignoreCache && Loader.loadedMap[url]){
@@ -20876,6 +20879,91 @@ var Laya=window.Laya=(function(window,document){
 	*...
 	*@author ww
 	*/
+	//class laya.stock.analysers.lines.AverageLine extends laya.stock.analysers.AnalyserBase
+	var AverageLine=(function(_super){
+		function AverageLine(){
+			this.days="12,26";
+			this.colors="#00ffff,#ffff00";
+			this.priceType="close";
+			AverageLine.__super.call(this);
+		}
+
+		__class(AverageLine,'laya.stock.analysers.lines.AverageLine',_super);
+		var __proto=AverageLine.prototype;
+		__proto.initParamKeys=function(){
+			this.paramkeys=["days","colors","priceType"];
+		}
+
+		__proto.analyseWork=function(){
+			this.doAverages();
+		}
+
+		__proto.getDays=function(){
+			var daysArr;
+			daysArr=this.days.split(",");
+			var i=0,len=0;
+			var rst;
+			rst=[];
+			len=daysArr.length;
+			var tDay=0;
+			for (i=0;i < len;i++){
+				tDay=Math.floor(ValueTools.mParseFloat(daysArr[i]));
+				if (tDay > 0){
+					rst.push(tDay);
+				}
+			}
+			return rst;
+		}
+
+		__proto.doAverages=function(){
+			var avgs;
+			avgs=[];
+			var daysList;
+			daysList=this.getDays();
+			var i=0,len=0;
+			len=daysList.length;
+			var colorList;
+			colorList=this.colors.split(",");
+			for (i=0;i < len;i++){
+				avgs.push(this.getAverageData(daysList[i],colorList[i%colorList.length]));
+			}
+			this.resultData["averages"]=avgs;
+		}
+
+		__proto.getAverageData=function(dayCount,color){
+			var avList;
+			avList=DataUtils.getAverage(this.disDataList,dayCount,this.priceType);
+			var avPoints
+			avPoints=[];
+			var i=0,len=0;
+			len=avList.length;
+			for (i=0;i < len;i++){
+				avPoints.push([i,avList[i]]);
+			}
+			return [avPoints,color];
+		}
+
+		__proto.getDrawCmds=function(){
+			var rst;
+			rst=[];
+			var avgs;
+			avgs=this.resultData["averages"];
+			var i=0,len=0;
+			len=avgs.length;
+			for (i=0;i < len;i++){
+				rst.push(["drawLines",avgs[i]]);
+			}
+			return rst;
+		}
+
+		return AverageLine;
+	})(AnalyserBase)
+
+
+	/**
+	*...
+	*@author ww
+	*/
 	//class laya.stock.analysers.bars.VolumeBar extends laya.stock.analysers.AnalyserBase
 	var VolumeBar=(function(_super){
 		function VolumeBar(){
@@ -21491,91 +21579,6 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		return KLineAnalyser;
-	})(AnalyserBase)
-
-
-	/**
-	*...
-	*@author ww
-	*/
-	//class laya.stock.analysers.lines.AverageLine extends laya.stock.analysers.AnalyserBase
-	var AverageLine=(function(_super){
-		function AverageLine(){
-			this.days="12,26";
-			this.colors="#00ffff,#ffff00";
-			this.priceType="close";
-			AverageLine.__super.call(this);
-		}
-
-		__class(AverageLine,'laya.stock.analysers.lines.AverageLine',_super);
-		var __proto=AverageLine.prototype;
-		__proto.initParamKeys=function(){
-			this.paramkeys=["days","colors","priceType"];
-		}
-
-		__proto.analyseWork=function(){
-			this.doAverages();
-		}
-
-		__proto.getDays=function(){
-			var daysArr;
-			daysArr=this.days.split(",");
-			var i=0,len=0;
-			var rst;
-			rst=[];
-			len=daysArr.length;
-			var tDay=0;
-			for (i=0;i < len;i++){
-				tDay=Math.floor(ValueTools.mParseFloat(daysArr[i]));
-				if (tDay > 0){
-					rst.push(tDay);
-				}
-			}
-			return rst;
-		}
-
-		__proto.doAverages=function(){
-			var avgs;
-			avgs=[];
-			var daysList;
-			daysList=this.getDays();
-			var i=0,len=0;
-			len=daysList.length;
-			var colorList;
-			colorList=this.colors.split(",");
-			for (i=0;i < len;i++){
-				avgs.push(this.getAverageData(daysList[i],colorList[i%colorList.length]));
-			}
-			this.resultData["averages"]=avgs;
-		}
-
-		__proto.getAverageData=function(dayCount,color){
-			var avList;
-			avList=DataUtils.getAverage(this.disDataList,dayCount,this.priceType);
-			var avPoints
-			avPoints=[];
-			var i=0,len=0;
-			len=avList.length;
-			for (i=0;i < len;i++){
-				avPoints.push([i,avList[i]]);
-			}
-			return [avPoints,color];
-		}
-
-		__proto.getDrawCmds=function(){
-			var rst;
-			rst=[];
-			var avgs;
-			avgs=this.resultData["averages"];
-			var i=0,len=0;
-			len=avgs.length;
-			for (i=0;i < len;i++){
-				rst.push(["drawLines",avgs[i]]);
-			}
-			return rst;
-		}
-
-		return AverageLine;
 	})(AnalyserBase)
 
 
@@ -22220,6 +22223,7 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		/**
+		*
 		*@private
 		*获取自己坐标系的显示区域多边形顶点列表
 		*@param ifRotate （可选）当前的显示对象链是否由旋转
@@ -23837,6 +23841,80 @@ var Laya=window.Laya=(function(window,document){
 		LoaderHook.isInited=false;
 		return LoaderHook;
 	})(LoaderManager)
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class laya.stock.analysers.AverageLineAnalyser extends laya.stock.analysers.lines.AverageLine
+	var AverageLineAnalyser=(function(_super){
+		function AverageLineAnalyser(){
+			AverageLineAnalyser.__super.call(this);
+			this.days="5,12,26";
+			this.colors="#ff0000,#00ffff,#ffff00";
+		}
+
+		__class(AverageLineAnalyser,'laya.stock.analysers.AverageLineAnalyser',_super);
+		var __proto=AverageLineAnalyser.prototype;
+		__proto.addToConfigTypes=function(types){
+			var tData;
+			var tAnalyserInfos;
+			var sign;
+			sign="average";
+			tData={};
+			tData.label="AvgTrend";
+			tData.sortParams=[sign+".day",true,true];
+			tData.dataKey=sign;
+			tData.tpl="{#code#}:exp:{#day#}";
+			tAnalyserInfos=[];
+			tAnalyserInfos.push(this.getParamsArr());
+			tData.analyserInfo=tAnalyserInfos;
+			tData.tip="average 多头";
+			types.push(tData);
+		}
+
+		__proto.addToShowData=function(showData){
+			var kLineO;
+			kLineO={};
+			kLineO.code=showData.code;
+			kLineO.day=0;
+			var avgs;
+			avgs=this.resultData["averages"];
+			var i=0,len=0;
+			len=avgs.length;
+			var upCount=0;
+			var tI=0;
+			tI=this.disDataList.length-1;
+			while (tI >=0){
+				if (this.isUpTrend(avgs,tI)){
+					tI--;
+					upCount++;
+					}else{
+					break ;
+				}
+			}
+			kLineO.day=upCount;
+			showData["average"]=kLineO;
+		}
+
+		__proto.isUpTrend=function(avgs,index){
+			var i=0,len=0;
+			len=avgs.length;
+			var preLine;
+			var tLine;
+			for (i=1;i < len;i++){
+				preLine=avgs[i-1];
+				tLine=avgs[i];
+				if (tLine[1] > preLine[1]){
+					return false;
+				}
+			}
+			return true;
+		}
+
+		return AverageLineAnalyser;
+	})(AverageLine)
 
 
 	/**
@@ -29309,6 +29387,7 @@ var Laya=window.Laya=(function(window,document){
 		__getset(0,__proto,'stateNum',function(){
 			return this._stateNum;
 			},function(value){
+			value=parseInt(value);
 			if (this._stateNum !=value){
 				this._stateNum=value < 1 ? 1 :value > 3 ? 3 :value;
 				this.callLater(this.changeClips);
@@ -32071,6 +32150,7 @@ var Laya=window.Laya=(function(window,document){
 					value=UIUtils.adptString(value+"");
 				this._tf.text=value;
 				this.event("change");
+				if (!this._width || !this._height)this.onCompResize();
 			}
 		});
 
@@ -32977,6 +33057,9 @@ var Laya=window.Laya=(function(window,document){
 			var skewX=params[11],skewY=params[12]
 			width=params[3];
 			height=params[4];
+			if (width==0 || height==0)url=null;
+			if (width==-1)width=0;
+			if (height==-1)height=0;
 			var tex;
 			rst.skin=url;
 			rst.width=width;
@@ -33175,7 +33258,7 @@ var Laya=window.Laya=(function(window,document){
 		GraphicAnimation._I=null
 		GraphicAnimation._rootMatrix=null
 		__static(GraphicAnimation,
-		['_drawTextureCmd',function(){return this._drawTextureCmd=[["skin",null],["x",0],["y",0],["width",0],["height",0],["pivotX",0],["pivotY",0],["scaleX",1],["scaleY",1],["rotation",0],["alpha",1],["skewX",0],["skewY",0],["anchorX",0],["anchorY",0]];},'_tempMt',function(){return this._tempMt=new Matrix();}
+		['_drawTextureCmd',function(){return this._drawTextureCmd=[["skin",null],["x",0],["y",0],["width",-1],["height",-1],["pivotX",0],["pivotY",0],["scaleX",1],["scaleY",1],["rotation",0],["alpha",1],["skewX",0],["skewY",0],["anchorX",0],["anchorY",0]];},'_tempMt',function(){return this._tempMt=new Matrix();}
 		]);
 		GraphicAnimation.__init$=function(){
 			//class GraphicNode
@@ -35129,6 +35212,122 @@ var Laya=window.Laya=(function(window,document){
 
 
 	/**
+	*<code>CheckBox</code> 组件显示一个小方框，该方框内可以有选中标记。
+	*<code>CheckBox</code> 组件还可以显示可选的文本标签，默认该标签位于 CheckBox 右侧。
+	*<p><code>CheckBox</code> 使用 <code>dataSource</code>赋值时的的默认属性是：<code>selected</code>。</p>
+	*
+	*@example <caption>以下示例代码，创建了一个 <code>CheckBox</code> 实例。</caption>
+	*package
+	*{
+		*import laya.ui.CheckBox;
+		*import laya.utils.Handler;
+		*public class CheckBox_Example
+		*{
+			*public function CheckBox_Example()
+			*{
+				*Laya.init(640,800);//设置游戏画布宽高。
+				*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
+				*Laya.loader.load("resource/ui/check.png",Handler.create(this,onLoadComplete));//加载资源。
+				*}
+			*private function onLoadComplete():void
+			*{
+				*trace("资源加载完成！");
+				*var checkBox:CheckBox=new CheckBox("resource/ui/check.png","这个是一个CheckBox组件。");//创建一个 CheckBox 类的实例对象 checkBox ,传入它的皮肤skin和标签label。
+				*checkBox.x=100;//设置 checkBox 对象的属性 x 的值，用于控制 checkBox 对象的显示位置。
+				*checkBox.y=100;//设置 checkBox 对象的属性 y 的值，用于控制 checkBox 对象的显示位置。
+				*checkBox.clickHandler=new Handler(this,onClick,[checkBox]);//设置 checkBox 的点击事件处理器。
+				*Laya.stage.addChild(checkBox);//将此 checkBox 对象添加到显示列表。
+				*}
+			*private function onClick(checkBox:CheckBox):void
+			*{
+				*trace("输出选中状态: checkBox.selected = "+checkBox.selected);
+				*}
+			*}
+		*}
+	*@example
+	*Laya.init(640,800);//设置游戏画布宽高
+	*Laya.stage.bgColor="#efefef";//设置画布的背景颜色
+	*Laya.loader.load("resource/ui/check.png",laya.utils.Handler.create(this,loadComplete));//加载资源
+	*function loadComplete()
+	*{
+		*console.log("资源加载完成！");
+		*var checkBox:laya.ui.CheckBox=new laya.ui.CheckBox("resource/ui/check.png","这个是一个CheckBox组件。");//创建一个 CheckBox 类的类的实例对象 checkBox ,传入它的皮肤skin和标签label。
+		*checkBox.x=100;//设置 checkBox 对象的属性 x 的值，用于控制 checkBox 对象的显示位置。
+		*checkBox.y=100;//设置 checkBox 对象的属性 y 的值，用于控制 checkBox 对象的显示位置。
+		*checkBox.clickHandler=new laya.utils.Handler(this,this.onClick,[checkBox],false);//设置 checkBox 的点击事件处理器。
+		*Laya.stage.addChild(checkBox);//将此 checkBox 对象添加到显示列表。
+		*}
+	*function onClick(checkBox)
+	*{
+		*console.log("checkBox.selected = ",checkBox.selected);
+		*}
+	*@example
+	*import CheckBox=laya.ui.CheckBox;
+	*import Handler=laya.utils.Handler;
+	*class CheckBox_Example{
+		*constructor()
+		*{
+			*Laya.init(640,800);
+			*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
+			*Laya.loader.load("resource/ui/check.png",Handler.create(this,this.onLoadComplete));//加载资源。
+			*}
+		*private onLoadComplete()
+		*{
+			*var checkBox:CheckBox=new CheckBox("resource/ui/check.png","这个是一个CheckBox组件。");//创建一个 CheckBox 类的实例对象 checkBox ,传入它的皮肤skin和标签label。
+			*checkBox.x=100;//设置 checkBox 对象的属性 x 的值，用于控制 checkBox 对象的显示位置。
+			*checkBox.y=100;//设置 checkBox 对象的属性 y 的值，用于控制 checkBox 对象的显示位置。
+			*checkBox.clickHandler=new Handler(this,this.onClick,[checkBox]);//设置 checkBox 的点击事件处理器。
+			*Laya.stage.addChild(checkBox);//将此 checkBox 对象添加到显示列表。
+			*}
+		*private onClick(checkBox:CheckBox):void
+		*{
+			*console.log("输出选中状态: checkBox.selected = "+checkBox.selected);
+			*}
+		*}
+	*/
+	//class laya.ui.CheckBox extends laya.ui.Button
+	var CheckBox=(function(_super){
+		/**
+		*创建一个新的 <code>CheckBox</code> 组件实例。
+		*@param skin 皮肤资源地址。
+		*@param label 文本标签的内容。
+		*/
+		function CheckBox(skin,label){
+			(label===void 0)&& (label="");
+			CheckBox.__super.call(this,skin,label);
+		}
+
+		__class(CheckBox,'laya.ui.CheckBox',_super);
+		var __proto=CheckBox.prototype;
+		/**@inheritDoc */
+		__proto.preinitialize=function(){
+			laya.ui.Component.prototype.preinitialize.call(this);
+			this.toggle=true;
+			this._autoSize=false;
+		}
+
+		/**@inheritDoc */
+		__proto.initialize=function(){
+			_super.prototype.initialize.call(this);
+			this.createText();
+			this._text.align="left";
+			this._text.valign="top";
+			this._text.width=0;
+		}
+
+		/**@inheritDoc */
+		__getset(0,__proto,'dataSource',_super.prototype._$get_dataSource,function(value){
+			this._dataSource=value;
+			if ((typeof value=='boolean'))this.selected=value;
+			else if ((typeof value=='string'))this.selected=value==="true";
+			else _super.prototype._$set_dataSource.call(this,value);
+		});
+
+		return CheckBox;
+	})(Button)
+
+
+	/**
 	*<code>Panel</code> 是一个面板容器类。
 	*/
 	//class laya.ui.Panel extends laya.ui.Box
@@ -35443,122 +35642,6 @@ var Laya=window.Laya=(function(window,document){
 
 		return Panel;
 	})(Box)
-
-
-	/**
-	*<code>CheckBox</code> 组件显示一个小方框，该方框内可以有选中标记。
-	*<code>CheckBox</code> 组件还可以显示可选的文本标签，默认该标签位于 CheckBox 右侧。
-	*<p><code>CheckBox</code> 使用 <code>dataSource</code>赋值时的的默认属性是：<code>selected</code>。</p>
-	*
-	*@example <caption>以下示例代码，创建了一个 <code>CheckBox</code> 实例。</caption>
-	*package
-	*{
-		*import laya.ui.CheckBox;
-		*import laya.utils.Handler;
-		*public class CheckBox_Example
-		*{
-			*public function CheckBox_Example()
-			*{
-				*Laya.init(640,800);//设置游戏画布宽高。
-				*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
-				*Laya.loader.load("resource/ui/check.png",Handler.create(this,onLoadComplete));//加载资源。
-				*}
-			*private function onLoadComplete():void
-			*{
-				*trace("资源加载完成！");
-				*var checkBox:CheckBox=new CheckBox("resource/ui/check.png","这个是一个CheckBox组件。");//创建一个 CheckBox 类的实例对象 checkBox ,传入它的皮肤skin和标签label。
-				*checkBox.x=100;//设置 checkBox 对象的属性 x 的值，用于控制 checkBox 对象的显示位置。
-				*checkBox.y=100;//设置 checkBox 对象的属性 y 的值，用于控制 checkBox 对象的显示位置。
-				*checkBox.clickHandler=new Handler(this,onClick,[checkBox]);//设置 checkBox 的点击事件处理器。
-				*Laya.stage.addChild(checkBox);//将此 checkBox 对象添加到显示列表。
-				*}
-			*private function onClick(checkBox:CheckBox):void
-			*{
-				*trace("输出选中状态: checkBox.selected = "+checkBox.selected);
-				*}
-			*}
-		*}
-	*@example
-	*Laya.init(640,800);//设置游戏画布宽高
-	*Laya.stage.bgColor="#efefef";//设置画布的背景颜色
-	*Laya.loader.load("resource/ui/check.png",laya.utils.Handler.create(this,loadComplete));//加载资源
-	*function loadComplete()
-	*{
-		*console.log("资源加载完成！");
-		*var checkBox:laya.ui.CheckBox=new laya.ui.CheckBox("resource/ui/check.png","这个是一个CheckBox组件。");//创建一个 CheckBox 类的类的实例对象 checkBox ,传入它的皮肤skin和标签label。
-		*checkBox.x=100;//设置 checkBox 对象的属性 x 的值，用于控制 checkBox 对象的显示位置。
-		*checkBox.y=100;//设置 checkBox 对象的属性 y 的值，用于控制 checkBox 对象的显示位置。
-		*checkBox.clickHandler=new laya.utils.Handler(this,this.onClick,[checkBox],false);//设置 checkBox 的点击事件处理器。
-		*Laya.stage.addChild(checkBox);//将此 checkBox 对象添加到显示列表。
-		*}
-	*function onClick(checkBox)
-	*{
-		*console.log("checkBox.selected = ",checkBox.selected);
-		*}
-	*@example
-	*import CheckBox=laya.ui.CheckBox;
-	*import Handler=laya.utils.Handler;
-	*class CheckBox_Example{
-		*constructor()
-		*{
-			*Laya.init(640,800);
-			*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
-			*Laya.loader.load("resource/ui/check.png",Handler.create(this,this.onLoadComplete));//加载资源。
-			*}
-		*private onLoadComplete()
-		*{
-			*var checkBox:CheckBox=new CheckBox("resource/ui/check.png","这个是一个CheckBox组件。");//创建一个 CheckBox 类的实例对象 checkBox ,传入它的皮肤skin和标签label。
-			*checkBox.x=100;//设置 checkBox 对象的属性 x 的值，用于控制 checkBox 对象的显示位置。
-			*checkBox.y=100;//设置 checkBox 对象的属性 y 的值，用于控制 checkBox 对象的显示位置。
-			*checkBox.clickHandler=new Handler(this,this.onClick,[checkBox]);//设置 checkBox 的点击事件处理器。
-			*Laya.stage.addChild(checkBox);//将此 checkBox 对象添加到显示列表。
-			*}
-		*private onClick(checkBox:CheckBox):void
-		*{
-			*console.log("输出选中状态: checkBox.selected = "+checkBox.selected);
-			*}
-		*}
-	*/
-	//class laya.ui.CheckBox extends laya.ui.Button
-	var CheckBox=(function(_super){
-		/**
-		*创建一个新的 <code>CheckBox</code> 组件实例。
-		*@param skin 皮肤资源地址。
-		*@param label 文本标签的内容。
-		*/
-		function CheckBox(skin,label){
-			(label===void 0)&& (label="");
-			CheckBox.__super.call(this,skin,label);
-		}
-
-		__class(CheckBox,'laya.ui.CheckBox',_super);
-		var __proto=CheckBox.prototype;
-		/**@inheritDoc */
-		__proto.preinitialize=function(){
-			laya.ui.Component.prototype.preinitialize.call(this);
-			this.toggle=true;
-			this._autoSize=false;
-		}
-
-		/**@inheritDoc */
-		__proto.initialize=function(){
-			_super.prototype.initialize.call(this);
-			this.createText();
-			this._text.align="left";
-			this._text.valign="top";
-			this._text.width=0;
-		}
-
-		/**@inheritDoc */
-		__getset(0,__proto,'dataSource',_super.prototype._$get_dataSource,function(value){
-			this._dataSource=value;
-			if ((typeof value=='boolean'))this.selected=value;
-			else if ((typeof value=='string'))this.selected=value==="true";
-			else _super.prototype._$set_dataSource.call(this,value);
-		});
-
-		return CheckBox;
-	})(Button)
 
 
 	/**
@@ -38182,103 +38265,6 @@ var Laya=window.Laya=(function(window,document){
 
 
 	/**
-	*使用 <code>VSlider</code> 控件，用户可以通过在滑块轨道的终点之间移动滑块来选择值。
-	*<p> <code>VSlider</code> 控件采用垂直方向。滑块轨道从下往上扩展，而标签位于轨道的左右两侧。</p>
-	*
-	*@example <caption>以下示例代码，创建了一个 <code>VSlider</code> 实例。</caption>
-	*package
-	*{
-		*import laya.ui.HSlider;
-		*import laya.ui.VSlider;
-		*import laya.utils.Handler;
-		*public class VSlider_Example
-		*{
-			*private var vSlider:VSlider;
-			*public function VSlider_Example()
-			*{
-				*Laya.init(640,800);//设置游戏画布宽高。
-				*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
-				*Laya.loader.load(["resource/ui/vslider.png","resource/ui/vslider$bar.png"],Handler.create(this,onLoadComplete));//加载资源。
-				*}
-			*private function onLoadComplete():void
-			*{
-				*vSlider=new VSlider();//创建一个 VSlider 类的实例对象 vSlider 。
-				*vSlider.skin="resource/ui/vslider.png";//设置 vSlider 的皮肤。
-				*vSlider.min=0;//设置 vSlider 最低位置值。
-				*vSlider.max=10;//设置 vSlider 最高位置值。
-				*vSlider.value=2;//设置 vSlider 当前位置值。
-				*vSlider.tick=1;//设置 vSlider 刻度值。
-				*vSlider.x=100;//设置 vSlider 对象的属性 x 的值，用于控制 vSlider 对象的显示位置。
-				*vSlider.y=100;//设置 vSlider 对象的属性 y 的值，用于控制 vSlider 对象的显示位置。
-				*vSlider.changeHandler=new Handler(this,onChange);//设置 vSlider 位置变化处理器。
-				*Laya.stage.addChild(vSlider);//把 vSlider 添加到显示列表。
-				*}
-			*private function onChange(value:Number):void
-			*{
-				*trace("滑块的位置： value="+value);
-				*}
-			*}
-		*}
-	*@example
-	*Laya.init(640,800);//设置游戏画布宽高
-	*Laya.stage.bgColor="#efefef";//设置画布的背景颜色
-	*var vSlider;
-	*Laya.loader.load(["resource/ui/vslider.png","resource/ui/vslider$bar.png"],laya.utils.Handler.create(this,onLoadComplete));//加载资源。
-	*function onLoadComplete(){
-		*vSlider=new laya.ui.VSlider();//创建一个 VSlider 类的实例对象 vSlider 。
-		*vSlider.skin="resource/ui/vslider.png";//设置 vSlider 的皮肤。
-		*vSlider.min=0;//设置 vSlider 最低位置值。
-		*vSlider.max=10;//设置 vSlider 最高位置值。
-		*vSlider.value=2;//设置 vSlider 当前位置值。
-		*vSlider.tick=1;//设置 vSlider 刻度值。
-		*vSlider.x=100;//设置 vSlider 对象的属性 x 的值，用于控制 vSlider 对象的显示位置。
-		*vSlider.y=100;//设置 vSlider 对象的属性 y 的值，用于控制 vSlider 对象的显示位置。
-		*vSlider.changeHandler=new laya.utils.Handler(this,onChange);//设置 vSlider 位置变化处理器。
-		*Laya.stage.addChild(vSlider);//把 vSlider 添加到显示列表。
-		*}
-	*function onChange(value){
-		*console.log("滑块的位置： value="+value);
-		*}
-	*@example
-	*import HSlider=laya.ui.HSlider;
-	*import VSlider=laya.ui.VSlider;
-	*import Handler=laya.utils.Handler;
-	*class VSlider_Example {
-		*private vSlider:VSlider;
-		*constructor(){
-			*Laya.init(640,800);//设置游戏画布宽高。
-			*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
-			*Laya.loader.load(["resource/ui/vslider.png","resource/ui/vslider$bar.png"],Handler.create(this,this.onLoadComplete));//加载资源。
-			*}
-		*private onLoadComplete():void {
-			*this.vSlider=new VSlider();//创建一个 VSlider 类的实例对象 vSlider 。
-			*this.vSlider.skin="resource/ui/vslider.png";//设置 vSlider 的皮肤。
-			*this.vSlider.min=0;//设置 vSlider 最低位置值。
-			*this.vSlider.max=10;//设置 vSlider 最高位置值。
-			*this.vSlider.value=2;//设置 vSlider 当前位置值。
-			*this.vSlider.tick=1;//设置 vSlider 刻度值。
-			*this.vSlider.x=100;//设置 vSlider 对象的属性 x 的值，用于控制 vSlider 对象的显示位置。
-			*this.vSlider.y=100;//设置 vSlider 对象的属性 y 的值，用于控制 vSlider 对象的显示位置。
-			*this.vSlider.changeHandler=new Handler(this,this.onChange);//设置 vSlider 位置变化处理器。
-			*Laya.stage.addChild(this.vSlider);//把 vSlider 添加到显示列表。
-			*}
-		*private onChange(value:number):void {
-			*console.log("滑块的位置： value="+value);
-			*}
-		*}
-	*@see laya.ui.Slider
-	*/
-	//class laya.ui.VSlider extends laya.ui.Slider
-	var VSlider=(function(_super){
-		function VSlider(){VSlider.__super.call(this);;
-		};
-
-		__class(VSlider,'laya.ui.VSlider',_super);
-		return VSlider;
-	})(Slider)
-
-
-	/**
 	*<code>TextInput</code> 类用于创建显示对象以显示和输入文本。
 	*
 	*@example <caption>以下示例代码，创建了一个 <code>TextInput</code> 实例。</caption>
@@ -38599,6 +38585,103 @@ var Laya=window.Laya=(function(window,document){
 
 		return TextInput;
 	})(Label)
+
+
+	/**
+	*使用 <code>VSlider</code> 控件，用户可以通过在滑块轨道的终点之间移动滑块来选择值。
+	*<p> <code>VSlider</code> 控件采用垂直方向。滑块轨道从下往上扩展，而标签位于轨道的左右两侧。</p>
+	*
+	*@example <caption>以下示例代码，创建了一个 <code>VSlider</code> 实例。</caption>
+	*package
+	*{
+		*import laya.ui.HSlider;
+		*import laya.ui.VSlider;
+		*import laya.utils.Handler;
+		*public class VSlider_Example
+		*{
+			*private var vSlider:VSlider;
+			*public function VSlider_Example()
+			*{
+				*Laya.init(640,800);//设置游戏画布宽高。
+				*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
+				*Laya.loader.load(["resource/ui/vslider.png","resource/ui/vslider$bar.png"],Handler.create(this,onLoadComplete));//加载资源。
+				*}
+			*private function onLoadComplete():void
+			*{
+				*vSlider=new VSlider();//创建一个 VSlider 类的实例对象 vSlider 。
+				*vSlider.skin="resource/ui/vslider.png";//设置 vSlider 的皮肤。
+				*vSlider.min=0;//设置 vSlider 最低位置值。
+				*vSlider.max=10;//设置 vSlider 最高位置值。
+				*vSlider.value=2;//设置 vSlider 当前位置值。
+				*vSlider.tick=1;//设置 vSlider 刻度值。
+				*vSlider.x=100;//设置 vSlider 对象的属性 x 的值，用于控制 vSlider 对象的显示位置。
+				*vSlider.y=100;//设置 vSlider 对象的属性 y 的值，用于控制 vSlider 对象的显示位置。
+				*vSlider.changeHandler=new Handler(this,onChange);//设置 vSlider 位置变化处理器。
+				*Laya.stage.addChild(vSlider);//把 vSlider 添加到显示列表。
+				*}
+			*private function onChange(value:Number):void
+			*{
+				*trace("滑块的位置： value="+value);
+				*}
+			*}
+		*}
+	*@example
+	*Laya.init(640,800);//设置游戏画布宽高
+	*Laya.stage.bgColor="#efefef";//设置画布的背景颜色
+	*var vSlider;
+	*Laya.loader.load(["resource/ui/vslider.png","resource/ui/vslider$bar.png"],laya.utils.Handler.create(this,onLoadComplete));//加载资源。
+	*function onLoadComplete(){
+		*vSlider=new laya.ui.VSlider();//创建一个 VSlider 类的实例对象 vSlider 。
+		*vSlider.skin="resource/ui/vslider.png";//设置 vSlider 的皮肤。
+		*vSlider.min=0;//设置 vSlider 最低位置值。
+		*vSlider.max=10;//设置 vSlider 最高位置值。
+		*vSlider.value=2;//设置 vSlider 当前位置值。
+		*vSlider.tick=1;//设置 vSlider 刻度值。
+		*vSlider.x=100;//设置 vSlider 对象的属性 x 的值，用于控制 vSlider 对象的显示位置。
+		*vSlider.y=100;//设置 vSlider 对象的属性 y 的值，用于控制 vSlider 对象的显示位置。
+		*vSlider.changeHandler=new laya.utils.Handler(this,onChange);//设置 vSlider 位置变化处理器。
+		*Laya.stage.addChild(vSlider);//把 vSlider 添加到显示列表。
+		*}
+	*function onChange(value){
+		*console.log("滑块的位置： value="+value);
+		*}
+	*@example
+	*import HSlider=laya.ui.HSlider;
+	*import VSlider=laya.ui.VSlider;
+	*import Handler=laya.utils.Handler;
+	*class VSlider_Example {
+		*private vSlider:VSlider;
+		*constructor(){
+			*Laya.init(640,800);//设置游戏画布宽高。
+			*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
+			*Laya.loader.load(["resource/ui/vslider.png","resource/ui/vslider$bar.png"],Handler.create(this,this.onLoadComplete));//加载资源。
+			*}
+		*private onLoadComplete():void {
+			*this.vSlider=new VSlider();//创建一个 VSlider 类的实例对象 vSlider 。
+			*this.vSlider.skin="resource/ui/vslider.png";//设置 vSlider 的皮肤。
+			*this.vSlider.min=0;//设置 vSlider 最低位置值。
+			*this.vSlider.max=10;//设置 vSlider 最高位置值。
+			*this.vSlider.value=2;//设置 vSlider 当前位置值。
+			*this.vSlider.tick=1;//设置 vSlider 刻度值。
+			*this.vSlider.x=100;//设置 vSlider 对象的属性 x 的值，用于控制 vSlider 对象的显示位置。
+			*this.vSlider.y=100;//设置 vSlider 对象的属性 y 的值，用于控制 vSlider 对象的显示位置。
+			*this.vSlider.changeHandler=new Handler(this,this.onChange);//设置 vSlider 位置变化处理器。
+			*Laya.stage.addChild(this.vSlider);//把 vSlider 添加到显示列表。
+			*}
+		*private onChange(value:number):void {
+			*console.log("滑块的位置： value="+value);
+			*}
+		*}
+	*@see laya.ui.Slider
+	*/
+	//class laya.ui.VSlider extends laya.ui.Slider
+	var VSlider=(function(_super){
+		function VSlider(){VSlider.__super.call(this);;
+		};
+
+		__class(VSlider,'laya.ui.VSlider',_super);
+		return VSlider;
+	})(Slider)
 
 
 	//class laya.debug.ui.debugui.comps.ListItemUI extends laya.ui.View
@@ -39222,6 +39305,7 @@ var Laya=window.Laya=(function(window,document){
 			this.kLineView=null;
 			this.selectView=null;
 			this.realTimeView=null;
+			this.logoView=null;
 			MainViewUI.__super.call(this);
 		}
 
@@ -39236,7 +39320,7 @@ var Laya=window.Laya=(function(window,document){
 			this.createView(MainViewUI.uiView);
 		}
 
-		MainViewUI.uiView={"type":"View","props":{"width":445,"height":400},"child":[{"type":"Tab","props":{"y":4,"x":4,"var":"typeSelect","skin":"comp/tab.png","selectedIndex":0,"labels":"股票列表,K线动画,选股,自选","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"StockView","props":{"var":"stockListView","top":40,"runtime":"view.StockView","right":10,"left":10,"bottom":10}},{"type":"KLineView","props":{"var":"kLineView","top":40,"runtime":"view.KLineView","right":10,"left":10,"bottom":10}},{"type":"SelectStockView","props":{"var":"selectView","top":40,"runtime":"view.SelectStockView","right":10,"left":10,"bottom":10}},{"type":"RealTime","props":{"var":"realTimeView","top":40,"runtime":"view.RealTimeView","right":10,"left":10,"bottom":10}}]};
+		MainViewUI.uiView={"type":"View","props":{"width":445,"height":400},"child":[{"type":"Tab","props":{"y":4,"x":4,"var":"typeSelect","skin":"comp/tab.png","selectedIndex":0,"labels":"股票列表,K线动画,选股,自选,扫码","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"StockView","props":{"var":"stockListView","top":40,"runtime":"view.StockView","right":10,"left":10,"bottom":10}},{"type":"KLineView","props":{"var":"kLineView","top":40,"runtime":"view.KLineView","right":10,"left":10,"bottom":10}},{"type":"SelectStockView","props":{"var":"selectView","top":40,"runtime":"view.SelectStockView","right":10,"left":10,"bottom":10}},{"type":"RealTime","props":{"var":"realTimeView","top":40,"runtime":"view.RealTimeView","right":10,"left":10,"bottom":10}},{"type":"Image","props":{"y":106,"var":"logoView","skin":"comp/logo.png","centerX":0}}]};
 		return MainViewUI;
 	})(View)
 
@@ -39283,49 +39367,6 @@ var Laya=window.Laya=(function(window,document){
 
 		RealTimeUI.uiView={"type":"View","props":{"width":445,"height":400},"child":[{"type":"List","props":{"y":10,"x":10,"var":"list","vScrollBarSkin":"comp/vscroll.png","top":30,"right":10,"repeatX":1,"left":10,"bottom":10},"child":[{"type":"StockRealTimeItem","props":{"y":0,"x":0,"runtime":"view.realtime.RealTimeItem","renderType":"render"}}]},{"type":"CheckBox","props":{"y":7,"x":7,"width":61,"var":"autoFresh","skin":"comp/checkbox.png","label":"自动刷新","height":19,"labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":3,"x":90,"var":"freshBtn","skin":"comp/button.png","label":"刷新","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"TextInput","props":{"y":5,"x":185,"width":90,"var":"stockInput","text":"002234","skin":"comp/textinput.png","height":22,"color":"#f1dede"}},{"type":"Button","props":{"y":4,"x":285,"var":"addBtn","skin":"comp/button.png","label":"添加","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"CheckBox","props":{"y":8,"x":364,"width":61,"var":"showMDCheck","skin":"comp/checkbox.png","label":"分时图","height":19,"labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"CheckBox","props":{"y":8,"x":425,"width":61,"var":"showListCheck","skin":"comp/checkbox.png","label":"列表","height":19,"labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}}]};
 		return RealTimeUI;
-	})(View)
-
-
-	//class ui.realtime.StockRealTimeItemUI extends laya.ui.View
-	var StockRealTimeItemUI=(function(_super){
-		function StockRealTimeItemUI(){
-			this.txt=null;
-			this.delBtn=null;
-			this.showLine=null;
-			StockRealTimeItemUI.__super.call(this);
-		}
-
-		__class(StockRealTimeItemUI,'ui.realtime.StockRealTimeItemUI',_super);
-		var __proto=StockRealTimeItemUI.prototype;
-		__proto.createChildren=function(){
-			laya.ui.Component.prototype.createChildren.call(this);
-			this.createView(StockRealTimeItemUI.uiView);
-		}
-
-		StockRealTimeItemUI.uiView={"type":"View","props":{"width":402,"height":25},"child":[{"type":"Box","props":{"width":402,"height":25},"child":[{"type":"Label","props":{"wordWrap":true,"var":"txt","top":0,"text":"this is a list","skin":"comp/label.png","right":0,"name":"label","left":0,"fontSize":14,"color":"#efe82f","bottom":0,"borderColor":"#fb125d"}}]},{"type":"Button","props":{"y":0,"x":328,"var":"delBtn","skin":"comp/button.png","label":"删除","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"CheckBox","props":{"y":5,"x":281,"var":"showLine","skin":"comp/checkbox.png","label":"分时","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}}]};
-		return StockRealTimeItemUI;
-	})(View)
-
-
-	//class ui.SelectStockViewUI extends laya.ui.View
-	var SelectStockViewUI=(function(_super){
-		function SelectStockViewUI(){
-			this.list=null;
-			this.tip=null;
-			this.typeSelect=null;
-			this.autoFresh=null;
-			SelectStockViewUI.__super.call(this);
-		}
-
-		__class(SelectStockViewUI,'ui.SelectStockViewUI',_super);
-		var __proto=SelectStockViewUI.prototype;
-		__proto.createChildren=function(){
-			laya.ui.Component.prototype.createChildren.call(this);
-			this.createView(SelectStockViewUI.uiView);
-		}
-
-		SelectStockViewUI.uiView={"type":"View","props":{"width":445,"height":400},"child":[{"type":"List","props":{"var":"list","vScrollBarSkin":"comp/vscroll.png","top":30,"right":10,"left":10,"bottom":10},"child":[{"type":"Box","props":{"y":0,"x":0,"width":168,"name":"render","height":61},"child":[{"type":"Label","props":{"wordWrap":true,"top":0,"text":"this is a list","skin":"comp/label.png","right":0,"name":"label","left":0,"fontSize":14,"color":"#efe82f","bottom":0,"borderColor":"#fb125d"}},{"type":"Label","props":{"y":39,"x":72,"wordWrap":true,"width":96,"text":"this is a list","skin":"comp/label.png","name":"info","height":22,"fontSize":14,"color":"#efe82f","align":"right"}}]}]},{"type":"Label","props":{"y":-41,"width":271,"var":"tip","text":"股票代码:当前盈利:最高盈利","right":40,"height":42,"color":"#f33713"}},{"type":"ComboBox","props":{"y":3,"visibleNum":15,"var":"typeSelect","skin":"comp/combobox.png","selectedIndex":0,"scrollBarSkin":"comp/vscroll.png","right":20,"labels":"KLine,Position","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"CheckBox","props":{"y":10,"x":11,"width":75,"var":"autoFresh","skin":"comp/checkbox.png","selected":false,"label":"自动刷新","height":14,"labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}}]};
-		return SelectStockViewUI;
 	})(View)
 
 
@@ -39386,6 +39427,49 @@ var Laya=window.Laya=(function(window,document){
 		HBox.BOTTOM="bottom";
 		return HBox;
 	})(LayoutBox)
+
+
+	//class ui.realtime.StockRealTimeItemUI extends laya.ui.View
+	var StockRealTimeItemUI=(function(_super){
+		function StockRealTimeItemUI(){
+			this.txt=null;
+			this.delBtn=null;
+			this.showLine=null;
+			StockRealTimeItemUI.__super.call(this);
+		}
+
+		__class(StockRealTimeItemUI,'ui.realtime.StockRealTimeItemUI',_super);
+		var __proto=StockRealTimeItemUI.prototype;
+		__proto.createChildren=function(){
+			laya.ui.Component.prototype.createChildren.call(this);
+			this.createView(StockRealTimeItemUI.uiView);
+		}
+
+		StockRealTimeItemUI.uiView={"type":"View","props":{"width":402,"height":25},"child":[{"type":"Box","props":{"width":402,"height":25},"child":[{"type":"Label","props":{"wordWrap":true,"var":"txt","top":0,"text":"this is a list","skin":"comp/label.png","right":0,"name":"label","left":0,"fontSize":14,"color":"#efe82f","bottom":0,"borderColor":"#fb125d"}}]},{"type":"Button","props":{"y":0,"x":328,"var":"delBtn","skin":"comp/button.png","label":"删除","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"CheckBox","props":{"y":5,"x":281,"var":"showLine","skin":"comp/checkbox.png","label":"分时","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}}]};
+		return StockRealTimeItemUI;
+	})(View)
+
+
+	//class ui.SelectStockViewUI extends laya.ui.View
+	var SelectStockViewUI=(function(_super){
+		function SelectStockViewUI(){
+			this.list=null;
+			this.tip=null;
+			this.typeSelect=null;
+			this.autoFresh=null;
+			SelectStockViewUI.__super.call(this);
+		}
+
+		__class(SelectStockViewUI,'ui.SelectStockViewUI',_super);
+		var __proto=SelectStockViewUI.prototype;
+		__proto.createChildren=function(){
+			laya.ui.Component.prototype.createChildren.call(this);
+			this.createView(SelectStockViewUI.uiView);
+		}
+
+		SelectStockViewUI.uiView={"type":"View","props":{"width":445,"height":400},"child":[{"type":"List","props":{"var":"list","vScrollBarSkin":"comp/vscroll.png","top":30,"right":10,"left":10,"bottom":10},"child":[{"type":"Box","props":{"y":0,"x":0,"width":168,"name":"render","height":61},"child":[{"type":"Label","props":{"wordWrap":true,"top":0,"text":"this is a list","skin":"comp/label.png","right":0,"name":"label","left":0,"fontSize":14,"color":"#efe82f","bottom":0,"borderColor":"#fb125d"}},{"type":"Label","props":{"y":39,"x":72,"wordWrap":true,"width":96,"text":"this is a list","skin":"comp/label.png","name":"info","height":22,"fontSize":14,"color":"#efe82f","align":"right"}}]}]},{"type":"Label","props":{"y":-41,"width":271,"var":"tip","text":"股票代码:当前盈利:最高盈利","right":40,"height":42,"color":"#f33713"}},{"type":"ComboBox","props":{"y":3,"visibleNum":15,"var":"typeSelect","skin":"comp/combobox.png","selectedIndex":0,"scrollBarSkin":"comp/vscroll.png","right":20,"labels":"KLine,Position","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"CheckBox","props":{"y":10,"x":11,"width":75,"var":"autoFresh","skin":"comp/checkbox.png","selected":false,"label":"自动刷新","height":14,"labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}}]};
+		return SelectStockViewUI;
+	})(View)
 
 
 	//class ui.StockViewUI extends laya.ui.View
@@ -39953,25 +40037,6 @@ var Laya=window.Laya=(function(window,document){
 	*...
 	*@author ww
 	*/
-	//class laya.debug.view.nodeInfo.nodetree.FindNodeSmall extends laya.debug.ui.debugui.FindNodeSmallUI
-	var FindNodeSmall=(function(_super){
-		function FindNodeSmall(){
-			FindNodeSmall.__super.call(this);
-			Base64AtlasManager.replaceRes(FindNodeSmallUI.uiView);
-			this.createView(FindNodeSmallUI.uiView);
-		}
-
-		__class(FindNodeSmall,'laya.debug.view.nodeInfo.nodetree.FindNodeSmall',_super);
-		var __proto=FindNodeSmall.prototype;
-		__proto.createChildren=function(){}
-		return FindNodeSmall;
-	})(FindNodeSmallUI)
-
-
-	/**
-	*...
-	*@author ww
-	*/
 	//class laya.debug.view.nodeInfo.nodetree.FindNode extends laya.debug.ui.debugui.FindNodeUI
 	var FindNode=(function(_super){
 		function FindNode(){
@@ -39988,6 +40053,25 @@ var Laya=window.Laya=(function(window,document){
 
 		return FindNode;
 	})(FindNodeUI)
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class laya.debug.view.nodeInfo.nodetree.FindNodeSmall extends laya.debug.ui.debugui.FindNodeSmallUI
+	var FindNodeSmall=(function(_super){
+		function FindNodeSmall(){
+			FindNodeSmall.__super.call(this);
+			Base64AtlasManager.replaceRes(FindNodeSmallUI.uiView);
+			this.createView(FindNodeSmallUI.uiView);
+		}
+
+		__class(FindNodeSmall,'laya.debug.view.nodeInfo.nodetree.FindNodeSmall',_super);
+		var __proto=FindNodeSmall.prototype;
+		__proto.createChildren=function(){}
+		return FindNodeSmall;
+	})(FindNodeSmallUI)
 
 
 	/**
@@ -40092,6 +40176,26 @@ var Laya=window.Laya=(function(window,document){
 		__proto.createChildren=function(){}
 		return NodeTool;
 	})(NodeToolUI)
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class laya.debug.view.nodeInfo.nodetree.NodeTreeSetting extends laya.debug.ui.debugui.NodeTreeSettingUI
+	var NodeTreeSetting=(function(_super){
+		function NodeTreeSetting(){
+			NodeTreeSetting.__super.call(this);
+			Base64AtlasManager.replaceRes(NodeTreeSettingUI.uiView);
+			this.createView(NodeTreeSettingUI.uiView);
+		}
+
+		__class(NodeTreeSetting,'laya.debug.view.nodeInfo.nodetree.NodeTreeSetting',_super);
+		var __proto=NodeTreeSetting.prototype;
+		//inits();
+		__proto.createChildren=function(){}
+		return NodeTreeSetting;
+	})(NodeTreeSettingUI)
 
 
 	/**
@@ -40335,26 +40439,6 @@ var Laya=window.Laya=(function(window,document){
 		]);
 		return NodeTree;
 	})(NodeTreeUI)
-
-
-	/**
-	*...
-	*@author ww
-	*/
-	//class laya.debug.view.nodeInfo.nodetree.NodeTreeSetting extends laya.debug.ui.debugui.NodeTreeSettingUI
-	var NodeTreeSetting=(function(_super){
-		function NodeTreeSetting(){
-			NodeTreeSetting.__super.call(this);
-			Base64AtlasManager.replaceRes(NodeTreeSettingUI.uiView);
-			this.createView(NodeTreeSettingUI.uiView);
-		}
-
-		__class(NodeTreeSetting,'laya.debug.view.nodeInfo.nodetree.NodeTreeSetting',_super);
-		var __proto=NodeTreeSetting.prototype;
-		//inits();
-		__proto.createChildren=function(){}
-		return NodeTreeSetting;
-	})(NodeTreeSettingUI)
 
 
 	/**
@@ -40850,7 +40934,7 @@ var Laya=window.Laya=(function(window,document){
 		__class(MainView,'view.MainView',_super);
 		var __proto=MainView.prototype;
 		__proto.init=function(){
-			this.views=[this.stockListView,this.kLineView,this.selectView,this.realTimeView];
+			this.views=[this.stockListView,this.kLineView,this.selectView,this.realTimeView,this.logoView];
 			this.typeSelect.selectHandler=new Handler(this,this.updateSelect);
 			this.updateSelect();
 			this.stockListView.init();
@@ -41334,6 +41418,11 @@ var Laya=window.Laya=(function(window,document){
 			stockData=StockJsonP.getStockData(item.code)
 			if (stockData){
 				label.text=""+StockTools.getGoodPercent((stockData.price-stockData.close)/ stockData.close)+"%";
+				if (stockData.price-stockData.close >=0){
+					label.color="#ff0000";
+					}else{
+					label.color="#00ff00";
+				}
 				}else{
 				label.text="";
 			}
