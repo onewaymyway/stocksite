@@ -15418,6 +15418,91 @@ var Laya=window.Laya=(function(window,document){
 	*...
 	*@author ww
 	*/
+	//class laya.stock.analysers.lines.AverageLine extends laya.stock.analysers.AnalyserBase
+	var AverageLine=(function(_super){
+		function AverageLine(){
+			this.days="12,26";
+			this.colors="#00ffff,#ffff00";
+			this.priceType="close";
+			AverageLine.__super.call(this);
+		}
+
+		__class(AverageLine,'laya.stock.analysers.lines.AverageLine',_super);
+		var __proto=AverageLine.prototype;
+		__proto.initParamKeys=function(){
+			this.paramkeys=["days","colors","priceType"];
+		}
+
+		__proto.analyseWork=function(){
+			this.doAverages();
+		}
+
+		__proto.getDays=function(){
+			var daysArr;
+			daysArr=this.days.split(",");
+			var i=0,len=0;
+			var rst;
+			rst=[];
+			len=daysArr.length;
+			var tDay=0;
+			for (i=0;i < len;i++){
+				tDay=Math.floor(ValueTools.mParseFloat(daysArr[i]));
+				if (tDay > 0){
+					rst.push(tDay);
+				}
+			}
+			return rst;
+		}
+
+		__proto.doAverages=function(){
+			var avgs;
+			avgs=[];
+			var daysList;
+			daysList=this.getDays();
+			var i=0,len=0;
+			len=daysList.length;
+			var colorList;
+			colorList=this.colors.split(",");
+			for (i=0;i < len;i++){
+				avgs.push(this.getAverageData(daysList[i],colorList[i%colorList.length]));
+			}
+			this.resultData["averages"]=avgs;
+		}
+
+		__proto.getAverageData=function(dayCount,color){
+			var avList;
+			avList=DataUtils.getAverage(this.disDataList,dayCount,this.priceType);
+			var avPoints
+			avPoints=[];
+			var i=0,len=0;
+			len=avList.length;
+			for (i=0;i < len;i++){
+				avPoints.push([i,avList[i]]);
+			}
+			return [avPoints,color];
+		}
+
+		__proto.getDrawCmds=function(){
+			var rst;
+			rst=[];
+			var avgs;
+			avgs=this.resultData["averages"];
+			var i=0,len=0;
+			len=avgs.length;
+			for (i=0;i < len;i++){
+				rst.push(["drawLines",avgs[i]]);
+			}
+			return rst;
+		}
+
+		return AverageLine;
+	})(AnalyserBase)
+
+
+	/**
+	*...
+	*@author ww
+	*/
 	//class laya.stock.analysers.bars.VolumeBar extends laya.stock.analysers.AnalyserBase
 	var VolumeBar=(function(_super){
 		function VolumeBar(){
@@ -16033,91 +16118,6 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		return KLineAnalyser;
-	})(AnalyserBase)
-
-
-	/**
-	*...
-	*@author ww
-	*/
-	//class laya.stock.analysers.lines.AverageLine extends laya.stock.analysers.AnalyserBase
-	var AverageLine=(function(_super){
-		function AverageLine(){
-			this.days="12,26";
-			this.colors="#00ffff,#ffff00";
-			this.priceType="close";
-			AverageLine.__super.call(this);
-		}
-
-		__class(AverageLine,'laya.stock.analysers.lines.AverageLine',_super);
-		var __proto=AverageLine.prototype;
-		__proto.initParamKeys=function(){
-			this.paramkeys=["days","colors","priceType"];
-		}
-
-		__proto.analyseWork=function(){
-			this.doAverages();
-		}
-
-		__proto.getDays=function(){
-			var daysArr;
-			daysArr=this.days.split(",");
-			var i=0,len=0;
-			var rst;
-			rst=[];
-			len=daysArr.length;
-			var tDay=0;
-			for (i=0;i < len;i++){
-				tDay=Math.floor(ValueTools.mParseFloat(daysArr[i]));
-				if (tDay > 0){
-					rst.push(tDay);
-				}
-			}
-			return rst;
-		}
-
-		__proto.doAverages=function(){
-			var avgs;
-			avgs=[];
-			var daysList;
-			daysList=this.getDays();
-			var i=0,len=0;
-			len=daysList.length;
-			var colorList;
-			colorList=this.colors.split(",");
-			for (i=0;i < len;i++){
-				avgs.push(this.getAverageData(daysList[i],colorList[i%colorList.length]));
-			}
-			this.resultData["averages"]=avgs;
-		}
-
-		__proto.getAverageData=function(dayCount,color){
-			var avList;
-			avList=DataUtils.getAverage(this.disDataList,dayCount,this.priceType);
-			var avPoints
-			avPoints=[];
-			var i=0,len=0;
-			len=avList.length;
-			for (i=0;i < len;i++){
-				avPoints.push([i,avList[i]]);
-			}
-			return [avPoints,color];
-		}
-
-		__proto.getDrawCmds=function(){
-			var rst;
-			rst=[];
-			var avgs;
-			avgs=this.resultData["averages"];
-			var i=0,len=0;
-			len=avgs.length;
-			for (i=0;i < len;i++){
-				rst.push(["drawLines",avgs[i]]);
-			}
-			return rst;
-		}
-
-		return AverageLine;
 	})(AnalyserBase)
 
 
@@ -19612,6 +19612,81 @@ var Laya=window.Laya=(function(window,document){
 		UIEvent.HIDE_TIP="hidetip";
 		return UIEvent;
 	})(Event)
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class laya.stock.analysers.AverageLineAnalyser extends laya.stock.analysers.lines.AverageLine
+	var AverageLineAnalyser=(function(_super){
+		function AverageLineAnalyser(){
+			AverageLineAnalyser.__super.call(this);
+			this.days="5,12,26";
+			this.colors="#ff0000,#00ffff,#ffff00";
+		}
+
+		__class(AverageLineAnalyser,'laya.stock.analysers.AverageLineAnalyser',_super);
+		var __proto=AverageLineAnalyser.prototype;
+		__proto.addToConfigTypes=function(types){
+			var tData;
+			var tAnalyserInfos;
+			var sign;
+			sign="average";
+			tData={};
+			tData.label="AvgTrend";
+			tData.sortParams=[sign+".day",true,true];
+			tData.dataKey=sign;
+			tData.tpl="{#code#}:day:{#day#}";
+			tAnalyserInfos=[];
+			tAnalyserInfos.push(this.getParamsArr());
+			tData.analyserInfo=tAnalyserInfos;
+			tData.tip="average 多头";
+			types.push(tData);
+		}
+
+		__proto.addToShowData=function(showData){
+			var kLineO;
+			kLineO={};
+			kLineO.code=showData.code;
+			kLineO.day=0;
+			kLineO.rate=0;
+			var avgs;
+			avgs=this.resultData["averages"];
+			var i=0,len=0;
+			len=avgs.length;
+			var upCount=0;
+			var tI=0;
+			tI=this.disDataList.length-1;
+			while (tI >=0){
+				if (this.isUpTrend(avgs,tI)){
+					tI--;
+					upCount++;
+					}else{
+					break ;
+				}
+			}
+			kLineO.day=upCount;
+			showData["average"]=kLineO;
+		}
+
+		__proto.isUpTrend=function(avgs,index){
+			var i=0,len=0;
+			len=avgs.length;
+			var preLine;
+			var tLine;
+			for (i=1;i < len;i++){
+				preLine=avgs[i-1][0][index];
+				tLine=avgs[i][0][index];
+				if (tLine[1] > preLine[1]){
+					return false;
+				}
+			}
+			return true;
+		}
+
+		return AverageLineAnalyser;
+	})(AverageLine)
 
 
 	/**
@@ -36740,6 +36815,7 @@ var Laya=window.Laya=(function(window,document){
 			analyserClassList.push(PositionLine);
 			analyserClassList.push(ChanAnalyser);
 			analyserClassList.push(StrongLine);
+			analyserClassList.push(AverageLineAnalyser);
 			this.analyserList.initAnalysers(analyserClassList);
 			this.addChild(this.kLine);
 			var stock;
@@ -37098,66 +37174,6 @@ var Laya=window.Laya=(function(window,document){
 	*...
 	*@author ww
 	*/
-	//class view.realtime.RealTimeItem extends ui.realtime.StockRealTimeItemUI
-	var RealTimeItem=(function(_super){
-		function RealTimeItem(){
-			this.stock=null;
-			this.isSettingV=false;
-			RealTimeItem.__super.call(this);
-			this.delBtn.on("mousedown",this,this.onDeleteBtn);
-			this.on("doubleclick",this,this.onDoubleClick);
-		}
-
-		__class(RealTimeItem,'view.realtime.RealTimeItem',_super);
-		var __proto=RealTimeItem.prototype;
-		__proto.initByStock=function(stock){
-			if (!stock)return;
-			this.stock=stock;
-			this.txt.text=stock;
-			var dataO;
-			dataO=StockJsonP.getStockData(stock);
-			if (dataO){
-				this.txt.text=dataO.code+","+dataO.name+","+dataO.price+","+StockTools.getGoodPercent((dataO.price-dataO.close)/ dataO.close)+"%";
-				this.txt.color=dataO.price-dataO.close > 0?"#ff0000":"#00ff00";
-				this.isSettingV=true;
-				this.showLine.selected=RealTimeItem.showStockDic[stock];
-				this.showLine.on("change",this,this.onShowLineChange);
-				this.isSettingV=false;
-			}
-		}
-
-		__proto.onShowLineChange=function(){
-			if (this.isSettingV)return;
-			RealTimeItem.showStockDic[this.stock]=this.showLine.selected;
-			if (this.showLine.selected){
-				Notice.notify("Add_MDLine",[this.stock]);
-				}else{
-				Notice.notify("Remove_MDLine",[this.stock]);
-			}
-		}
-
-		__proto.onDoubleClick=function(){
-			Notice.notify("Show_Stock_KLine",StockJsonP.getPureStock(this.stock));
-		}
-
-		__proto.onDeleteBtn=function(){
-			Notice.notify("Remove_MyStock",this.stock);
-		}
-
-		__getset(0,__proto,'dataSource',_super.prototype._$get_dataSource,function(value){
-			_super.prototype._$set_dataSource.call(this,value);
-			this.initByStock(value);
-		});
-
-		RealTimeItem.showStockDic={};
-		return RealTimeItem;
-	})(StockRealTimeItemUI)
-
-
-	/**
-	*...
-	*@author ww
-	*/
 	//class view.RealTimeView extends ui.realtime.RealTimeUI
 	var RealTimeView=(function(_super){
 		function RealTimeView(){
@@ -37294,6 +37310,66 @@ var Laya=window.Laya=(function(window,document){
 		RealTimeView.DataSign="Mystocks";
 		return RealTimeView;
 	})(RealTimeUI)
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class view.realtime.RealTimeItem extends ui.realtime.StockRealTimeItemUI
+	var RealTimeItem=(function(_super){
+		function RealTimeItem(){
+			this.stock=null;
+			this.isSettingV=false;
+			RealTimeItem.__super.call(this);
+			this.delBtn.on("mousedown",this,this.onDeleteBtn);
+			this.on("doubleclick",this,this.onDoubleClick);
+		}
+
+		__class(RealTimeItem,'view.realtime.RealTimeItem',_super);
+		var __proto=RealTimeItem.prototype;
+		__proto.initByStock=function(stock){
+			if (!stock)return;
+			this.stock=stock;
+			this.txt.text=stock;
+			var dataO;
+			dataO=StockJsonP.getStockData(stock);
+			if (dataO){
+				this.txt.text=dataO.code+","+dataO.name+","+dataO.price+","+StockTools.getGoodPercent((dataO.price-dataO.close)/ dataO.close)+"%";
+				this.txt.color=dataO.price-dataO.close > 0?"#ff0000":"#00ff00";
+				this.isSettingV=true;
+				this.showLine.selected=RealTimeItem.showStockDic[stock];
+				this.showLine.on("change",this,this.onShowLineChange);
+				this.isSettingV=false;
+			}
+		}
+
+		__proto.onShowLineChange=function(){
+			if (this.isSettingV)return;
+			RealTimeItem.showStockDic[this.stock]=this.showLine.selected;
+			if (this.showLine.selected){
+				Notice.notify("Add_MDLine",[this.stock]);
+				}else{
+				Notice.notify("Remove_MDLine",[this.stock]);
+			}
+		}
+
+		__proto.onDoubleClick=function(){
+			Notice.notify("Show_Stock_KLine",StockJsonP.getPureStock(this.stock));
+		}
+
+		__proto.onDeleteBtn=function(){
+			Notice.notify("Remove_MyStock",this.stock);
+		}
+
+		__getset(0,__proto,'dataSource',_super.prototype._$get_dataSource,function(value){
+			_super.prototype._$set_dataSource.call(this,value);
+			this.initByStock(value);
+		});
+
+		RealTimeItem.showStockDic={};
+		return RealTimeItem;
+	})(StockRealTimeItemUI)
 
 
 	/**
@@ -37834,26 +37910,6 @@ var Laya=window.Laya=(function(window,document){
 	*...
 	*@author ww
 	*/
-	//class laya.debug.view.nodeInfo.nodetree.NodeTreeSetting extends laya.debug.ui.debugui.NodeTreeSettingUI
-	var NodeTreeSetting=(function(_super){
-		function NodeTreeSetting(){
-			NodeTreeSetting.__super.call(this);
-			Base64AtlasManager.replaceRes(NodeTreeSettingUI.uiView);
-			this.createView(NodeTreeSettingUI.uiView);
-		}
-
-		__class(NodeTreeSetting,'laya.debug.view.nodeInfo.nodetree.NodeTreeSetting',_super);
-		var __proto=NodeTreeSetting.prototype;
-		//inits();
-		__proto.createChildren=function(){}
-		return NodeTreeSetting;
-	})(NodeTreeSettingUI)
-
-
-	/**
-	*...
-	*@author ww
-	*/
 	//class laya.debug.view.nodeInfo.nodetree.NodeTree extends laya.debug.ui.debugui.NodeTreeUI
 	var NodeTree=(function(_super){
 		function NodeTree(){
@@ -38097,6 +38153,26 @@ var Laya=window.Laya=(function(window,document){
 	*...
 	*@author ww
 	*/
+	//class laya.debug.view.nodeInfo.nodetree.NodeTreeSetting extends laya.debug.ui.debugui.NodeTreeSettingUI
+	var NodeTreeSetting=(function(_super){
+		function NodeTreeSetting(){
+			NodeTreeSetting.__super.call(this);
+			Base64AtlasManager.replaceRes(NodeTreeSettingUI.uiView);
+			this.createView(NodeTreeSettingUI.uiView);
+		}
+
+		__class(NodeTreeSetting,'laya.debug.view.nodeInfo.nodetree.NodeTreeSetting',_super);
+		var __proto=NodeTreeSetting.prototype;
+		//inits();
+		__proto.createChildren=function(){}
+		return NodeTreeSetting;
+	})(NodeTreeSettingUI)
+
+
+	/**
+	*...
+	*@author ww
+	*/
 	//class laya.debug.view.nodeInfo.nodetree.ObjectCreate extends laya.debug.ui.debugui.ObjectCreateUI
 	var ObjectCreate=(function(_super){
 		function ObjectCreate(){
@@ -38247,7 +38323,7 @@ var Laya=window.Laya=(function(window,document){
 	})(ToolBarUI)
 
 
-	Laya.__init([EventDispatcher,LoaderManager,Render,Browser,LocalStorage,View,Timer]);
+	Laya.__init([LoaderManager,EventDispatcher,Render,Browser,LocalStorage,View,Timer]);
 	new StockMain();
 
 })(window,document,Laya);
