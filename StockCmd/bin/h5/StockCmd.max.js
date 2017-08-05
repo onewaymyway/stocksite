@@ -23866,7 +23866,7 @@ var Laya=window.Laya=(function(window,document){
 			tData.label="AvgTrend";
 			tData.sortParams=[sign+".day",true,true];
 			tData.dataKey=sign;
-			tData.tpl="{#code#}:exp:{#day#}";
+			tData.tpl="{#code#}:day:{#day#}";
 			tAnalyserInfos=[];
 			tAnalyserInfos.push(this.getParamsArr());
 			tData.analyserInfo=tAnalyserInfos;
@@ -23879,6 +23879,7 @@ var Laya=window.Laya=(function(window,document){
 			kLineO={};
 			kLineO.code=showData.code;
 			kLineO.day=0;
+			kLineO.rate=0;
 			var avgs;
 			avgs=this.resultData["averages"];
 			var i=0,len=0;
@@ -23904,8 +23905,8 @@ var Laya=window.Laya=(function(window,document){
 			var preLine;
 			var tLine;
 			for (i=1;i < len;i++){
-				preLine=avgs[i-1];
-				tLine=avgs[i];
+				preLine=avgs[i-1][0][index];
+				tLine=avgs[i][0][index];
 				if (tLine[1] > preLine[1]){
 					return false;
 				}
