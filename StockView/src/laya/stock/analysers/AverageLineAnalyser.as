@@ -1,6 +1,7 @@
 package laya.stock.analysers 
 {
 	import laya.stock.analysers.lines.AverageLine;
+	import laya.stock.StockTools;
 	
 	/**
 	 * ...
@@ -18,19 +19,58 @@ package laya.stock.analysers
 		
 		override public function addToConfigTypes(types:Array):void 
 		{
+			var mTpl:String;
+			mTpl = "{#code#}:{#rate#}%:{#day#}:{#mRate#}\n{#lastBuy#}:{#changePercent#}%\n{#high7#}%,{#high15#}%,{#high30#}%,{#high45#}%";
+			var mTip:String;
+			mTip="股票:当前变化率:趋势持续天数:平均变化率\n最后购买时间:当前盈利\n7天最大盈利,15天最大盈利,30天最大盈利,45天最大盈利";
 			var tData:Object;
 			var tAnalyserInfos:Array;
-			var sign:String;
-			sign = "average";
 			tData = {};
-			tData.label = "AvgTrend";
-			tData.sortParams = [sign+".day", true, true];
-			tData.dataKey = sign;
-			tData.tpl = "{#code#}:day:{#day#}";
+			tData.label = "AvgByRate";
+			tData.sortParams = ["averageO.rate", true, true];
+			tData.dataKey = "averageO";
 			tAnalyserInfos = [];
 			tAnalyserInfos.push(this.getParamsArr());
 			tData.analyserInfo = tAnalyserInfos;
-			tData.tip = "average 多头";
+			
+			tData.tip = mTip;
+			tData.tpl =mTpl;
+			types.push(tData);
+			
+			tData = {};
+			tData.label = "AvgByDay";
+			tData.sortParams = ["averageO.day", true, true];
+			tData.dataKey = "averageO";
+			tAnalyserInfos = [];
+			tAnalyserInfos.push(this.getParamsArr());
+			tData.analyserInfo = tAnalyserInfos;
+			
+			tData.tip = mTip;
+			tData.tpl = mTpl;
+			types.push(tData);
+			
+			tData = {};
+			tData.label = "AvgByMRate";
+			tData.sortParams = ["averageO.mRate", true, true];
+			tData.dataKey = "averageO";
+			tAnalyserInfos = [];
+			tAnalyserInfos.push(this.getParamsArr());
+			tData.analyserInfo = tAnalyserInfos;
+			
+			tData.tip = mTip;
+			tData.tpl = mTpl;
+			types.push(tData);
+			
+			tData = {};
+			tData.label = "AvgByBuy";
+			tData.sortParams = ["averageO.lastBuy", true, false];
+			tData.dataKey = "averageO";
+			tAnalyserInfos = [];
+			tAnalyserInfos.push(this.getParamsArr());
+			tData.analyserInfo = tAnalyserInfos;
+			
+			tData.tip = mTip;
+			tData.tpl = mTpl;
 			types.push(tData);
 			
 		}
@@ -43,6 +83,7 @@ package laya.stock.analysers
 			kLineO.code = showData.code;
 			kLineO.day = 0;
 			kLineO.rate = 0;
+			kLineO.last
 			
 			var avgs:Array;
 			avgs = resultData["averages"];
@@ -63,7 +104,23 @@ package laya.stock.analysers
 				}
 			}
 			kLineO.day = upCount;
-			showData["average"] = kLineO;
+			if (tI < 0) tI = 0;
+			if (upCount > 0)
+			{
+				kLineO.lastBuy = disDataList[tI]["date"];
+				var prePrice:Number;
+				var tPrice:Number;
+				var tIndex:int;
+				var lastIndex:int = tI;
+				tIndex = disDataList.length - 1;
+				prePrice = StockTools.getStockPriceEx(lastIndex, "close", this);
+				tPrice = StockTools.getStockPriceEx(tIndex, "close", this);
+				kLineO.rate = StockTools.getGoodPercent((tPrice-prePrice) / prePrice);
+				kLineO.mRate = StockTools.getGoodPercent((tPrice-prePrice) / (prePrice * upCount));
+				kLineO.lastBuy = disDataList[lastIndex]["date"];
+				StockTools.getBuyStaticInfos(lastIndex, disDataList, kLineO);
+			}
+			showData["averageO"] = kLineO;
 			
 		}
 		
