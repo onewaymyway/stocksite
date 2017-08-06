@@ -66,6 +66,7 @@ package laya.events {
 					e.preventDefault();
 					list.push(e);
 					_this.mouseDownTime = Browser.now();
+					runEvent();
 				}
 			});
 			canvas.addEventListener('mouseup', function(e:*):void {
@@ -73,6 +74,7 @@ package laya.events {
 					e.preventDefault();
 					list.push(e);
 					_this.mouseDownTime = -Browser.now();
+					runEvent();
 				}
 			}, true);
 			canvas.addEventListener('mousemove', function(e:*):void {
@@ -82,13 +84,16 @@ package laya.events {
 					if (now - _this._lastMoveTimer < 10) return;
 					_this._lastMoveTimer = now;
 					list.push(e);
+					runEvent();
 				}
 			}, true);
 			canvas.addEventListener("mouseout", function(e:*):void {
 				if (enabled) list.push(e);
+				runEvent();
 			})
 			canvas.addEventListener("mouseover", function(e:*):void {
 				if (enabled) list.push(e);
+				runEvent();
 			})
 			canvas.addEventListener("touchstart", function(e:*):void {
 				if (enabled) {
@@ -97,6 +102,7 @@ package laya.events {
 					if (!Input.isInputting) e.preventDefault();
 					_this.mouseDownTime = Browser.now();
 				}
+				runEvent();
 			});
 			canvas.addEventListener("touchend", function(e:*):void {
 				if (enabled) {
@@ -104,15 +110,19 @@ package laya.events {
 					list.push(e);
 					_this.mouseDownTime = -Browser.now();
 				}
+				runEvent();
 			}, true);
 			canvas.addEventListener("touchmove", function(e:*):void {
 				if (enabled) {
 					e.preventDefault();
 					list.push(e);
+					runEvent();
 				}
+				
 			}, true);
 			canvas.addEventListener('mousewheel', function(e:*):void {
 				if (enabled) list.push(e);
+				runEvent();
 			});
 			canvas.addEventListener('DOMMouseScroll', function(e:*):void {
 				if (enabled) list.push(e);
