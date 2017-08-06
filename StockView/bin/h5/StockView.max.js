@@ -9410,6 +9410,116 @@ var Laya=window.Laya=(function(window,document){
 
 
 	/**
+	*<code>Keyboard</code> 类的属性是一些常数，这些常数表示控制游戏时最常用的键。
+	*/
+	//class laya.events.Keyboard
+	var Keyboard=(function(){
+		function Keyboard(){};
+		__class(Keyboard,'laya.events.Keyboard');
+		Keyboard.NUMBER_0=48;
+		Keyboard.NUMBER_1=49;
+		Keyboard.NUMBER_2=50;
+		Keyboard.NUMBER_3=51;
+		Keyboard.NUMBER_4=52;
+		Keyboard.NUMBER_5=53;
+		Keyboard.NUMBER_6=54;
+		Keyboard.NUMBER_7=55;
+		Keyboard.NUMBER_8=56;
+		Keyboard.NUMBER_9=57;
+		Keyboard.A=65;
+		Keyboard.B=66;
+		Keyboard.C=67;
+		Keyboard.D=68;
+		Keyboard.E=69;
+		Keyboard.F=70;
+		Keyboard.G=71;
+		Keyboard.H=72;
+		Keyboard.I=73;
+		Keyboard.J=74;
+		Keyboard.K=75;
+		Keyboard.L=76;
+		Keyboard.M=77;
+		Keyboard.N=78;
+		Keyboard.O=79;
+		Keyboard.P=80;
+		Keyboard.Q=81;
+		Keyboard.R=82;
+		Keyboard.S=83;
+		Keyboard.T=84;
+		Keyboard.U=85;
+		Keyboard.V=86;
+		Keyboard.W=87;
+		Keyboard.X=88;
+		Keyboard.Y=89;
+		Keyboard.Z=90;
+		Keyboard.F1=112;
+		Keyboard.F2=113;
+		Keyboard.F3=114;
+		Keyboard.F4=115;
+		Keyboard.F5=116;
+		Keyboard.F6=117;
+		Keyboard.F7=118;
+		Keyboard.F8=119;
+		Keyboard.F9=120;
+		Keyboard.F10=121;
+		Keyboard.F11=122;
+		Keyboard.F12=123;
+		Keyboard.F13=124;
+		Keyboard.F14=125;
+		Keyboard.F15=126;
+		Keyboard.NUMPAD=21;
+		Keyboard.NUMPAD_0=96;
+		Keyboard.NUMPAD_1=97;
+		Keyboard.NUMPAD_2=98;
+		Keyboard.NUMPAD_3=99;
+		Keyboard.NUMPAD_4=100;
+		Keyboard.NUMPAD_5=101;
+		Keyboard.NUMPAD_6=102;
+		Keyboard.NUMPAD_7=103;
+		Keyboard.NUMPAD_8=104;
+		Keyboard.NUMPAD_9=105;
+		Keyboard.NUMPAD_ADD=107;
+		Keyboard.NUMPAD_DECIMAL=110;
+		Keyboard.NUMPAD_DIVIDE=111;
+		Keyboard.NUMPAD_ENTER=108;
+		Keyboard.NUMPAD_MULTIPLY=106;
+		Keyboard.NUMPAD_SUBTRACT=109;
+		Keyboard.SEMICOLON=186;
+		Keyboard.EQUAL=187;
+		Keyboard.COMMA=188;
+		Keyboard.MINUS=189;
+		Keyboard.PERIOD=190;
+		Keyboard.SLASH=191;
+		Keyboard.BACKQUOTE=192;
+		Keyboard.LEFTBRACKET=219;
+		Keyboard.BACKSLASH=220;
+		Keyboard.RIGHTBRACKET=221;
+		Keyboard.QUOTE=222;
+		Keyboard.ALTERNATE=18;
+		Keyboard.BACKSPACE=8;
+		Keyboard.CAPS_LOCK=20;
+		Keyboard.COMMAND=15;
+		Keyboard.CONTROL=17;
+		Keyboard.DELETE=46;
+		Keyboard.ENTER=13;
+		Keyboard.ESCAPE=27;
+		Keyboard.PAGE_UP=33;
+		Keyboard.PAGE_DOWN=34;
+		Keyboard.END=35;
+		Keyboard.HOME=36;
+		Keyboard.LEFT=37;
+		Keyboard.UP=38;
+		Keyboard.RIGHT=39;
+		Keyboard.DOWN=40;
+		Keyboard.SHIFT=16;
+		Keyboard.SPACE=32;
+		Keyboard.TAB=9;
+		Keyboard.INSERT=45;
+		return Keyboard;
+	})()
+
+
+	/**
 	*<p><code>KeyBoardManager</code> 是键盘事件管理类。</p>
 	*<p>该类从浏览器中接收键盘事件，并派发该事件。
 	*派发事件时若 Stage.focus 为空则只从 Stage 上派发该事件，否则将从 Stage.focus 对象开始一直冒泡派发该事件。
@@ -9509,6 +9619,7 @@ var Laya=window.Laya=(function(window,document){
 					e.preventDefault();
 					list.push(e);
 					_this.mouseDownTime=Browser.now();
+					_$this.runEvent();
 				}
 			});
 			canvas.addEventListener('mouseup',function(e){
@@ -9516,6 +9627,7 @@ var Laya=window.Laya=(function(window,document){
 					e.preventDefault();
 					list.push(e);
 					_this.mouseDownTime=-Browser.now();
+					_$this.runEvent();
 				}
 			},true);
 			canvas.addEventListener('mousemove',function(e){
@@ -9525,13 +9637,16 @@ var Laya=window.Laya=(function(window,document){
 					if (now-_this._lastMoveTimer < 10)return;
 					_this._lastMoveTimer=now;
 					list.push(e);
+					_$this.runEvent();
 				}
 			},true);
 			canvas.addEventListener("mouseout",function(e){
 				if (MouseManager.enabled)list.push(e);
+				_$this.runEvent();
 			})
 			canvas.addEventListener("mouseover",function(e){
 				if (MouseManager.enabled)list.push(e);
+				_$this.runEvent();
 			})
 			canvas.addEventListener("touchstart",function(e){
 				if (MouseManager.enabled){
@@ -9540,6 +9655,7 @@ var Laya=window.Laya=(function(window,document){
 					if (!Input.isInputting)e.preventDefault();
 					_this.mouseDownTime=Browser.now();
 				}
+				_$this.runEvent();
 			});
 			canvas.addEventListener("touchend",function(e){
 				if (MouseManager.enabled){
@@ -9547,15 +9663,18 @@ var Laya=window.Laya=(function(window,document){
 					list.push(e);
 					_this.mouseDownTime=-Browser.now();
 				}
+				_$this.runEvent();
 			},true);
 			canvas.addEventListener("touchmove",function(e){
 				if (MouseManager.enabled){
 					e.preventDefault();
 					list.push(e);
+					_$this.runEvent();
 				}
 			},true);
 			canvas.addEventListener('mousewheel',function(e){
 				if (MouseManager.enabled)list.push(e);
+				_$this.runEvent();
 			});
 			canvas.addEventListener('DOMMouseScroll',function(e){
 				if (MouseManager.enabled)list.push(e);
@@ -15370,36 +15489,6 @@ var Laya=window.Laya=(function(window,document){
 	})()
 
 
-	/**
-	*...
-	*@author dongketao
-	*/
-	//class PathFinding.core.Node
-	var Node$1=(function(){
-		function Node(x,y,walkable){
-			this.x=0;
-			this.y=0;
-			this.g=0;
-			this.f=0;
-			this.h=0;
-			this.by=0;
-			this.parent=null;
-			this.opened=null;
-			this.closed=null;
-			this.tested=null;
-			this.retainCount=null;
-			this.walkable=false;
-			(walkable===void 0)&& (walkable=true);
-			this.x=x;
-			this.y=y;
-			this.walkable=walkable;
-		}
-
-		__class(Node,'PathFinding.core.Node',null,'Node$1');
-		return Node;
-	})()
-
-
 	/**全局配置*/
 	//class UIConfig
 	var UIConfig=(function(){
@@ -19629,19 +19718,51 @@ var Laya=window.Laya=(function(window,document){
 		__class(AverageLineAnalyser,'laya.stock.analysers.AverageLineAnalyser',_super);
 		var __proto=AverageLineAnalyser.prototype;
 		__proto.addToConfigTypes=function(types){
+			var mTpl;
+			mTpl="{#code#}:{#rate#}%:{#day#}:{#mRate#}\n{#lastBuy#}:{#changePercent#}%\n{#high7#}%,{#high15#}%,{#high30#}%,{#high45#}%";
+			var mTip;
+			mTip="股票:当前变化率:趋势持续天数:平均变化率\n最后购买时间:当前盈利\n7天最大盈利,15天最大盈利,30天最大盈利,45天最大盈利";
 			var tData;
 			var tAnalyserInfos;
-			var sign;
-			sign="average";
 			tData={};
-			tData.label="AvgTrend";
-			tData.sortParams=[sign+".day",true,true];
-			tData.dataKey=sign;
-			tData.tpl="{#code#}:day:{#day#}";
+			tData.label="AvgByRate";
+			tData.sortParams=["averageO.rate",true,true];
+			tData.dataKey="averageO";
 			tAnalyserInfos=[];
 			tAnalyserInfos.push(this.getParamsArr());
 			tData.analyserInfo=tAnalyserInfos;
-			tData.tip="average 多头";
+			tData.tip=mTip;
+			tData.tpl=mTpl;
+			types.push(tData);
+			tData={};
+			tData.label="AvgByDay";
+			tData.sortParams=["averageO.day",true,true];
+			tData.dataKey="averageO";
+			tAnalyserInfos=[];
+			tAnalyserInfos.push(this.getParamsArr());
+			tData.analyserInfo=tAnalyserInfos;
+			tData.tip=mTip;
+			tData.tpl=mTpl;
+			types.push(tData);
+			tData={};
+			tData.label="AvgByMRate";
+			tData.sortParams=["averageO.mRate",true,true];
+			tData.dataKey="averageO";
+			tAnalyserInfos=[];
+			tAnalyserInfos.push(this.getParamsArr());
+			tData.analyserInfo=tAnalyserInfos;
+			tData.tip=mTip;
+			tData.tpl=mTpl;
+			types.push(tData);
+			tData={};
+			tData.label="AvgByBuy";
+			tData.sortParams=["averageO.lastBuy",true,false];
+			tData.dataKey="averageO";
+			tAnalyserInfos=[];
+			tAnalyserInfos.push(this.getParamsArr());
+			tData.analyserInfo=tAnalyserInfos;
+			tData.tip=mTip;
+			tData.tpl=mTpl;
 			types.push(tData);
 		}
 
@@ -19651,6 +19772,7 @@ var Laya=window.Laya=(function(window,document){
 			kLineO.code=showData.code;
 			kLineO.day=0;
 			kLineO.rate=0;
+			kLineO.last;
 			var avgs;
 			avgs=this.resultData["averages"];
 			var i=0,len=0;
@@ -19667,7 +19789,22 @@ var Laya=window.Laya=(function(window,document){
 				}
 			}
 			kLineO.day=upCount;
-			showData["average"]=kLineO;
+			if (tI < 0)tI=0;
+			if (upCount > 0){
+				kLineO.lastBuy=this.disDataList[tI]["date"];
+				var prePrice=NaN;
+				var tPrice=NaN;
+				var tIndex=0;
+				var lastIndex=tI;
+				tIndex=this.disDataList.length-1;
+				prePrice=StockTools.getStockPriceEx(lastIndex,"close",this);
+				tPrice=StockTools.getStockPriceEx(tIndex,"close",this);
+				kLineO.rate=StockTools.getGoodPercent((tPrice-prePrice)/ prePrice);
+				kLineO.mRate=StockTools.getGoodPercent((tPrice-prePrice)/ (prePrice *upCount));
+				kLineO.lastBuy=this.disDataList[lastIndex]["date"];
+				StockTools.getBuyStaticInfos(lastIndex,this.disDataList,kLineO);
+			}
+			showData["averageO"]=kLineO;
 		}
 
 		__proto.isUpTrend=function(avgs,index){
@@ -36833,15 +36970,34 @@ var Laya=window.Laya=(function(window,document){
 			this.on("mouseup",this,this.onMMouseUp);
 			this.enableAnimation.selected=false;
 			this.addToStockBtn.on("mousedown",this,this.onAddToStock);
+			this.on("keydown",this,this.onKeyDown);
 		}
 
 		__class(KLineView,'view.KLineView',_super);
 		var __proto=KLineView.prototype;
+		__proto.onKeyDown=function(e){
+			switch(e.keyCode){
+				case 40:
+					this.onNext();
+					break ;
+				case 38:
+					this.onPre();
+					break ;
+				case 37:
+					this.dayScroll.value=this.dayScroll.value-1;
+					break ;
+				case 39:
+					this.dayScroll.value=this.dayScroll.value+1;
+					break ;
+				}
+		}
+
 		__proto.onAddToStock=function(){
 			Notice.notify("AddMyStock",this.kLine.tStock);
 		}
 
 		__proto.onMMouseDown=function(e){
+			Laya.stage.focus=this;
 			this.isMyMouseDown=false;
 			if (e.target !=this)return;
 			this.isMyMouseDown=true;
@@ -37174,6 +37330,66 @@ var Laya=window.Laya=(function(window,document){
 	*...
 	*@author ww
 	*/
+	//class view.realtime.RealTimeItem extends ui.realtime.StockRealTimeItemUI
+	var RealTimeItem=(function(_super){
+		function RealTimeItem(){
+			this.stock=null;
+			this.isSettingV=false;
+			RealTimeItem.__super.call(this);
+			this.delBtn.on("mousedown",this,this.onDeleteBtn);
+			this.on("doubleclick",this,this.onDoubleClick);
+		}
+
+		__class(RealTimeItem,'view.realtime.RealTimeItem',_super);
+		var __proto=RealTimeItem.prototype;
+		__proto.initByStock=function(stock){
+			if (!stock)return;
+			this.stock=stock;
+			this.txt.text=stock;
+			var dataO;
+			dataO=StockJsonP.getStockData(stock);
+			if (dataO){
+				this.txt.text=dataO.code+","+dataO.name+","+dataO.price+","+StockTools.getGoodPercent((dataO.price-dataO.close)/ dataO.close)+"%";
+				this.txt.color=dataO.price-dataO.close > 0?"#ff0000":"#00ff00";
+				this.isSettingV=true;
+				this.showLine.selected=RealTimeItem.showStockDic[stock];
+				this.showLine.on("change",this,this.onShowLineChange);
+				this.isSettingV=false;
+			}
+		}
+
+		__proto.onShowLineChange=function(){
+			if (this.isSettingV)return;
+			RealTimeItem.showStockDic[this.stock]=this.showLine.selected;
+			if (this.showLine.selected){
+				Notice.notify("Add_MDLine",[this.stock]);
+				}else{
+				Notice.notify("Remove_MDLine",[this.stock]);
+			}
+		}
+
+		__proto.onDoubleClick=function(){
+			Notice.notify("Show_Stock_KLine",StockJsonP.getPureStock(this.stock));
+		}
+
+		__proto.onDeleteBtn=function(){
+			Notice.notify("Remove_MyStock",this.stock);
+		}
+
+		__getset(0,__proto,'dataSource',_super.prototype._$get_dataSource,function(value){
+			_super.prototype._$set_dataSource.call(this,value);
+			this.initByStock(value);
+		});
+
+		RealTimeItem.showStockDic={};
+		return RealTimeItem;
+	})(StockRealTimeItemUI)
+
+
+	/**
+	*...
+	*@author ww
+	*/
 	//class view.RealTimeView extends ui.realtime.RealTimeUI
 	var RealTimeView=(function(_super){
 		function RealTimeView(){
@@ -37310,66 +37526,6 @@ var Laya=window.Laya=(function(window,document){
 		RealTimeView.DataSign="Mystocks";
 		return RealTimeView;
 	})(RealTimeUI)
-
-
-	/**
-	*...
-	*@author ww
-	*/
-	//class view.realtime.RealTimeItem extends ui.realtime.StockRealTimeItemUI
-	var RealTimeItem=(function(_super){
-		function RealTimeItem(){
-			this.stock=null;
-			this.isSettingV=false;
-			RealTimeItem.__super.call(this);
-			this.delBtn.on("mousedown",this,this.onDeleteBtn);
-			this.on("doubleclick",this,this.onDoubleClick);
-		}
-
-		__class(RealTimeItem,'view.realtime.RealTimeItem',_super);
-		var __proto=RealTimeItem.prototype;
-		__proto.initByStock=function(stock){
-			if (!stock)return;
-			this.stock=stock;
-			this.txt.text=stock;
-			var dataO;
-			dataO=StockJsonP.getStockData(stock);
-			if (dataO){
-				this.txt.text=dataO.code+","+dataO.name+","+dataO.price+","+StockTools.getGoodPercent((dataO.price-dataO.close)/ dataO.close)+"%";
-				this.txt.color=dataO.price-dataO.close > 0?"#ff0000":"#00ff00";
-				this.isSettingV=true;
-				this.showLine.selected=RealTimeItem.showStockDic[stock];
-				this.showLine.on("change",this,this.onShowLineChange);
-				this.isSettingV=false;
-			}
-		}
-
-		__proto.onShowLineChange=function(){
-			if (this.isSettingV)return;
-			RealTimeItem.showStockDic[this.stock]=this.showLine.selected;
-			if (this.showLine.selected){
-				Notice.notify("Add_MDLine",[this.stock]);
-				}else{
-				Notice.notify("Remove_MDLine",[this.stock]);
-			}
-		}
-
-		__proto.onDoubleClick=function(){
-			Notice.notify("Show_Stock_KLine",StockJsonP.getPureStock(this.stock));
-		}
-
-		__proto.onDeleteBtn=function(){
-			Notice.notify("Remove_MyStock",this.stock);
-		}
-
-		__getset(0,__proto,'dataSource',_super.prototype._$get_dataSource,function(value){
-			_super.prototype._$set_dataSource.call(this,value);
-			this.initByStock(value);
-		});
-
-		RealTimeItem.showStockDic={};
-		return RealTimeItem;
-	})(StockRealTimeItemUI)
 
 
 	/**
@@ -38323,7 +38479,7 @@ var Laya=window.Laya=(function(window,document){
 	})(ToolBarUI)
 
 
-	Laya.__init([LoaderManager,EventDispatcher,Render,Browser,LocalStorage,View,Timer]);
+	Laya.__init([EventDispatcher,LoaderManager,Render,Browser,LocalStorage,View,Timer]);
 	new StockMain();
 
 })(window,document,Laya);
