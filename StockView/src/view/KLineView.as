@@ -1,6 +1,7 @@
 package view {
 	import laya.debug.tools.Notice;
 	import laya.events.Event;
+	import laya.events.Keyboard;
 	import laya.math.DataUtils;
 	import laya.math.ValueTools;
 	import laya.stock.analysers.AnalyserBase;
@@ -71,9 +72,27 @@ package view {
 			enableAnimation.selected = false;
 			
 			addToStockBtn.on(Event.MOUSE_DOWN, this, onAddToStock);
+			this.on(Event.KEY_DOWN, this, onKeyDown);
 		
 		}
-		
+		private function onKeyDown(e:Event):void
+		{
+			switch(e.keyCode)
+			{
+				case Keyboard.DOWN:
+					onNext();
+					break;
+				case Keyboard.UP:
+					onPre();
+					break;
+				case Keyboard.LEFT:
+					dayScroll.value = dayScroll.value - 1;
+					break;
+				case Keyboard.RIGHT:
+					dayScroll.value = dayScroll.value + 1;
+					break;
+			}
+		}
 		private function onAddToStock():void
 		{
 			Notice.notify(MsgConst.Add_MyStock,kLine.tStock );
@@ -82,6 +101,7 @@ package view {
 		private var isLongPress:Boolean = false;
 		private var isMyMouseDown:Boolean = false;
 		private function onMMouseDown(e:Event):void {
+			Laya.stage.focus = this;
 			isMyMouseDown = false;
 			if (e.target != this) return;
 			isMyMouseDown = true;
