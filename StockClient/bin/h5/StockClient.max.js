@@ -1,7 +1,7 @@
 var window = window || global;
 var document = document || (window.document = {});
 /***********************************/
-/*http://www.layabox.com  2017/3/23*/
+/*http://www.layabox.com 2017/01/16*/
 /***********************************/
 var Laya=window.Laya=(function(window,document){
 	var Laya={
@@ -187,7 +187,7 @@ var Laya=window.Laya=(function(window,document){
 	window.console=window.console || ({log:function(){}});
 	window.trace=window.console.log;
 	Error.prototype.throwError=function(){throw arguments;};
-	//String.prototype.substr=Laya.__substr;
+	String.prototype.substr=Laya.__substr;
 	Object.defineProperty(Array.prototype,'fixed',{enumerable: false});
 
 	return Laya;
@@ -380,112 +380,6 @@ var Laya=window.Laya=(function(window,document){
 		['conchMarket',function(){return this.conchMarket=window.conch?conchMarket:null;},'PlatformClass',function(){return this.PlatformClass=window.PlatformClass;}
 		]);
 		return Laya;
-	})()
-
-
-	/**
-	*...
-	*@author ww
-	*/
-	//class stock.StockSocket
-	var StockSocket=(function(){
-		function StockSocket(){
-			this.socket=null;
-			this.msgID=0;
-		}
-
-		__class(StockSocket,'stock.StockSocket');
-		var __proto=StockSocket.prototype;
-		__proto.connect=function(serverStr){
-			this.socket=new Socket("127.0.0.1",0,Byte);
-			this.socket.disableInput=true;
-			this.socket.connectByUrl(serverStr);
-			this.socket.on("open",this,this.onConnect);
-			this.socket.on("message",this,this.onMessage);
-			this.socket.on("error",this,this.onErr);
-			this.socket.on("close",this,this.onClose);
-		}
-
-		__proto.onConnect=function(){
-			console.log('socket connect');
-			this.sendJson({"type":"hello"});
-		}
-
-		__proto.onMessage=function(msg){
-			console.log('socket onMessage');
-			console.log("Msg:"+msg);
-		}
-
-		__proto.send=function(msg){
-			this.msgID++;
-			msg=msg+this.msgID;
-			console.log("try send:"+msg);
-			this.socket.send(msg);
-		}
-
-		__proto.sendJson=function(obj){
-			if (!obj)return;
-			this.socket.send(JSON.stringify(obj));
-		}
-
-		__proto.closeLater=function(){
-			this.socket.close();
-			console.log("after close");
-		}
-
-		__proto.onErr=function(e){
-			console.log('socket onErr',e);
-		}
-
-		__proto.onClose=function(){
-			console.log('socket onClose');
-		}
-
-		return StockSocket;
-	})()
-
-
-	/**
-	*...
-	*@author ww
-	*/
-	//class StockClient
-	var StockClient=(function(){
-		function StockClient(){
-			Laya.init(1000,900);
-			this.test();
-		}
-
-		__class(StockClient,'StockClient');
-		var __proto=StockClient.prototype;
-		__proto.test=function(){
-			var sk;
-			sk=new StockSocket();
-			debugger;
-			sk.connect("ws://orzooo.com:9909");
-		}
-
-		return StockClient;
-	})()
-
-
-	/**
-	*Config 用于配置一些全局参数。
-	*/
-	//class Config
-	var Config=(function(){
-		function Config(){};
-		__class(Config,'Config');
-		Config.WebGLTextCacheCount=500;
-		Config.atlasEnable=false;
-		Config.showCanvasMark=false;
-		Config.CPUMemoryLimit=120 *1024 *1024;
-		Config.GPUMemoryLimit=160 *1024 *1024;
-		Config.animationInterval=50;
-		Config.isAntialias=false;
-		Config.isAlpha=false;
-		Config.premultipliedAlpha=false;
-		return Config;
 	})()
 
 
@@ -780,6 +674,50 @@ var Laya=window.Laya=(function(window,document){
 		Handler._pool=[];
 		Handler._gid=1;
 		return Handler;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class StockClient
+	var StockClient=(function(){
+		function StockClient(){
+			Laya.init(1000,900);
+			this.test();
+		}
+
+		__class(StockClient,'StockClient');
+		var __proto=StockClient.prototype;
+		__proto.test=function(){
+			var sk;
+			sk=new StockSocket();
+			sk.connect("ws://127.0.0.1:9909");
+			debugger;
+		}
+
+		return StockClient;
+	})()
+
+
+	/**
+	*Config 用于配置一些全局参数。
+	*/
+	//class Config
+	var Config=(function(){
+		function Config(){};
+		__class(Config,'Config');
+		Config.WebGLTextCacheCount=500;
+		Config.atlasEnable=false;
+		Config.showCanvasMark=false;
+		Config.CPUMemoryLimit=120 *1024 *1024;
+		Config.GPUMemoryLimit=160 *1024 *1024;
+		Config.animationInterval=50;
+		Config.isAntialias=false;
+		Config.isAlpha=false;
+		Config.premultipliedAlpha=false;
+		return Config;
 	})()
 
 
@@ -2498,6 +2436,7 @@ var Laya=window.Laya=(function(window,document){
 					e.preventDefault();
 					list.push(e);
 					_this.mouseDownTime=Browser.now();
+					_$this.runEvent();
 				}
 			});
 			canvas.addEventListener('mouseup',function(e){
@@ -2505,6 +2444,7 @@ var Laya=window.Laya=(function(window,document){
 					e.preventDefault();
 					list.push(e);
 					_this.mouseDownTime=-Browser.now();
+					_$this.runEvent();
 				}
 			},true);
 			canvas.addEventListener('mousemove',function(e){
@@ -2514,13 +2454,16 @@ var Laya=window.Laya=(function(window,document){
 					if (now-_this._lastMoveTimer < 10)return;
 					_this._lastMoveTimer=now;
 					list.push(e);
+					_$this.runEvent();
 				}
 			},true);
 			canvas.addEventListener("mouseout",function(e){
 				if (MouseManager.enabled)list.push(e);
+				_$this.runEvent();
 			})
 			canvas.addEventListener("mouseover",function(e){
 				if (MouseManager.enabled)list.push(e);
+				_$this.runEvent();
 			})
 			canvas.addEventListener("touchstart",function(e){
 				if (MouseManager.enabled){
@@ -2529,6 +2472,7 @@ var Laya=window.Laya=(function(window,document){
 					if (!Input.isInputting)e.preventDefault();
 					_this.mouseDownTime=Browser.now();
 				}
+				_$this.runEvent();
 			});
 			canvas.addEventListener("touchend",function(e){
 				if (MouseManager.enabled){
@@ -2536,15 +2480,18 @@ var Laya=window.Laya=(function(window,document){
 					list.push(e);
 					_this.mouseDownTime=-Browser.now();
 				}
+				_$this.runEvent();
 			},true);
 			canvas.addEventListener("touchmove",function(e){
 				if (MouseManager.enabled){
 					e.preventDefault();
 					list.push(e);
+					_$this.runEvent();
 				}
 			},true);
 			canvas.addEventListener('mousewheel',function(e){
 				if (MouseManager.enabled)list.push(e);
+				_$this.runEvent();
 			});
 			canvas.addEventListener('DOMMouseScroll',function(e){
 				if (MouseManager.enabled)list.push(e);
@@ -5050,10 +4997,10 @@ var Laya=window.Laya=(function(window,document){
 				tRec=sprite.getSelfBounds();
 				tRec.x-=sprite.pivotX;
 				tRec.y-=sprite.pivotY;
-				tRec.x-=16;
-				tRec.y-=16;
-				tRec.width+=32;
-				tRec.height+=32;
+				tRec.x-=40;
+				tRec.y-=40;
+				tRec.width+=80;
+				tRec.height+=80;
 				tRec.x=Math.floor(tRec.x+x)-x;
 				tRec.y=Math.floor(tRec.y+y)-y;
 				tRec.width=Math.floor(tRec.width);
@@ -8401,6 +8348,117 @@ var Laya=window.Laya=(function(window,document){
 
 		return WordText;
 	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class stock.StockSocket extends laya.events.EventDispatcher
+	var StockSocket=(function(_super){
+		function StockSocket(){
+			this.socket=null;
+			this.userName=null;
+			this.isLogined=false;
+			this.msgID=0;
+			StockSocket.__super.call(this);
+		}
+
+		__class(StockSocket,'stock.StockSocket',_super);
+		var __proto=StockSocket.prototype;
+		__proto.connect=function(serverStr){
+			this.socket=new Socket("127.0.0.1",0,Byte);
+			this.socket.disableInput=true;
+			this.socket.connectByUrl(serverStr);
+			this.socket.on("open",this,this.onConnect);
+			this.socket.on("message",this,this.onMessage);
+			this.socket.on("error",this,this.onErr);
+			this.socket.on("close",this,this.onClose);
+		}
+
+		__proto.onConnect=function(){
+			console.log('socket connect');
+			this.sendJson({"type":"hello"});
+		}
+
+		__proto.onMessage=function(msg){
+			console.log('socket onMessage');
+			console.log("Msg:"+msg);
+			var dataO;
+			dataO=JSON.parse(msg);
+			var mData;
+			switch (dataO.type){
+				case "welcome":
+					this.login("deathnote","deathnotestock");
+					break ;
+				case "login":
+					this.isLogined=dataO.rst;
+					this.saveUserData("stocks",[123,234]);
+					break ;
+				case "SaveMyStocks":
+					this.getUserData("stocks");
+					break ;
+				case "GetStocks":
+					this.event("DataFromServer",dataO);
+					break ;
+				}
+		}
+
+		__proto.login=function(user,pwd){
+			var mData;
+			mData={};
+			mData.type="login";
+			mData.user=user;
+			mData.pwd=pwd;
+			this.userName=user;
+			this.sendJson(mData);
+		}
+
+		__proto.saveUserData=function(sign,data){
+			var mData;
+			mData={};
+			mData.type="SaveMyStocks";
+			mData.sign=sign;
+			mData.data=data;
+			this.sendJson(mData);
+		}
+
+		__proto.getUserData=function(sign){
+			/*no*/this.mData={};
+			/*no*/this.mData.type="GetStocks";
+			/*no*/this.mData.sign=sign;
+			this.sendJson(/*no*/this.mData);
+		}
+
+		__proto.send=function(msg){
+			this.msgID++;
+			msg=msg+this.msgID;
+			console.log("try send:"+msg);
+			this.socket.send(msg);
+		}
+
+		__proto.sendJson=function(obj){
+			if (!obj)
+				return;
+			this.socket.send(JSON.stringify(obj));
+		}
+
+		__proto.closeLater=function(){
+			this.socket.close();
+			console.log("after close");
+		}
+
+		__proto.onErr=function(e){
+			console.log('socket onErr',e);
+		}
+
+		__proto.onClose=function(){
+			console.log('socket onClose');
+		}
+
+		StockSocket.DataFromServer="DataFromServer";
+		return StockSocket;
+	})(EventDispatcher)
 
 
 	/**
@@ -15306,7 +15364,15 @@ var Laya=window.Laya=(function(window,document){
 	})(FileBitmap)
 
 
-	Laya.__init([LoaderManager,EventDispatcher,Render,Browser,LocalStorage,Timer]);
+	Laya.__init([EventDispatcher,LoaderManager,Render,Browser,LocalStorage,Timer]);
 	new StockClient();
 
 })(window,document,Laya);
+
+
+/*
+1 file:///D:/stocksite.git/trunk/StockClient/src/stock/StockSocket.as (79):warning:mData This variable is not defined.
+2 file:///D:/stocksite.git/trunk/StockClient/src/stock/StockSocket.as (80):warning:mData.type This variable is not defined.
+3 file:///D:/stocksite.git/trunk/StockClient/src/stock/StockSocket.as (81):warning:mData.sign This variable is not defined.
+4 file:///D:/stocksite.git/trunk/StockClient/src/stock/StockSocket.as (82):warning:mData This variable is not defined.
+*/

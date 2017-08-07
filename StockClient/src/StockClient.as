@@ -17,10 +17,11 @@ package
 		{
 			var sk:StockSocket;
 			sk = new StockSocket();
-			//sk.connect("ws://127.0.0.1:9909");
+			sk.connect("ws://127.0.0.1:9909");
 			debugger;
-			sk.connect("ws://orzooo.com:9909");
+			//sk.connect("ws://orzooo.com:9909");
 		}
+		
 	}
 
 }
