@@ -17,7 +17,7 @@
   <classpaths>
     <class path="src" />
     <class path="libs\laya\src" />
-    <class path="libs\stock" />
+    <class path="publibs" />
   </classpaths>
   <!-- Build options -->
   <build>

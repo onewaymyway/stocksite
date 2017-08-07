@@ -1,7 +1,7 @@
 var window = window || global;
 var document = document || (window.document = {});
 /***********************************/
-/*http://www.layabox.com  2017/3/23*/
+/*http://www.layabox.com 2017/01/16*/
 /***********************************/
 var Laya=window.Laya=(function(window,document){
 	var Laya={
@@ -187,7 +187,7 @@ var Laya=window.Laya=(function(window,document){
 	window.console=window.console || ({log:function(){}});
 	window.trace=window.console.log;
 	Error.prototype.throwError=function(){throw arguments;};
-	//String.prototype.substr=Laya.__substr;
+	String.prototype.substr=Laya.__substr;
 	Object.defineProperty(Array.prototype,'fixed',{enumerable: false});
 
 	return Laya;
@@ -221,6 +221,12 @@ var Laya=window.Laya=(function(window,document){
 	var NodeServer=(function(){
 		function NodeServer(){
 			Laya.init();
+			Device.init();
+			SystemSetting.isCMDVer=true;
+			OSInfo.init();
+			FileTools.init2();
+			SystemSetting.appPath=NodeJSTools.getMyPath();
+			UserSystem.UserPath=FileManager.getAppPath("user/");
 			this.test();
 		}
 
@@ -237,6 +243,747 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		return NodeServer;
+	})()
+
+
+	/**
+	*封装所有驱动级接口
+	*@author yung
+	*/
+	//class nodetools.devices.Device
+	var Device=(function(){
+		function Device(){};
+		__class(Device,'nodetools.devices.Device');
+		Device.init=function(){
+			Device.Buffer=Buffer;
+		}
+
+		Device.require=function(mod){
+			var rst;
+			rst=require(mod);
+			return rst;
+		}
+
+		Device.requireRemote=function(mod){
+			if (!Device.remote)return Device.require(mod);
+			return Device.remote.require(mod);
+		}
+
+		Device.app=null
+		Device.appName="LayaAir";
+		Device.appPath=null
+		Device.dataPath=null
+		Device.tempPath=null
+		Device.workPath=null
+		Device.userHome=null
+		Device.extensionPath=null
+		Device.remote=null
+		Device.Buffer=null
+		Device.electron=null
+		Device.win=null
+		return Device;
+	})()
+
+
+	/**文件管理类
+	*@author yung
+	*/
+	//class nodetools.devices.FileManager
+	var FileManager=(function(){
+		function FileManager(){};
+		__class(FileManager,'nodetools.devices.FileManager');
+		FileManager.getPath=function(basePath,relativePath){
+			return FileTools.getPath(basePath,relativePath);
+		}
+
+		FileManager.getRelativePath=function(basePath,targetPath){
+			return FileManager.adptToCommonUrl(FileTools.getRelativePath(basePath,targetPath));
+		}
+
+		FileManager.getAppPath=function(path){
+			return FileManager.getPath(SystemSetting.appPath,path);
+		}
+
+		FileManager.getDataPath=function(path){
+			return FileManager.getPath(Device.dataPath,path);
+		}
+
+		FileManager.getAppRelativePath=function(path){
+			return FileManager.getRelativePath(SystemSetting.appPath,path);
+		}
+
+		FileManager.getWorkPath=function(path){
+			return FileManager.getPath(SystemSetting.workPath,path);
+		}
+
+		FileManager.getWorkRelativePath=function(path){
+			return FileManager.adptToCommonUrl(FileManager.getRelativePath(SystemSetting.workPath,path));
+		}
+
+		FileManager.getResRelativePath=function(path){
+			return FileManager.adptToCommonUrl(""+FileManager.getRelativePath(SystemSetting.assetsPath,path));
+		}
+
+		FileManager.adptToCommonUrl=function(url){
+			return laya.debug.tools.StringTool.getReplace(url,"\\\\","/");
+		}
+
+		FileManager.adptToLocalUrl=function(url){
+			return FileTools.path.normalize(url);
+		}
+
+		FileManager.getResPath=function(path){
+			return FileManager.getPath(SystemSetting.assetsPath,path);
+		}
+
+		FileManager.getPagePath=function(path){
+			return FileManager.getPath(SystemSetting.pagesPath,path);
+		}
+
+		FileManager.getFileName=function(path){
+			return FileTools.path.basename(path).split(".")[0];
+		}
+
+		FileManager.createDirectory=function(path){
+			try {
+				FileTools.createDirectory(path);
+				}catch (e){
+				Sys.alert("Create folder failed:"+path);
+			}
+		}
+
+		FileManager.createTxtFile=function(path,value){
+			try {
+				FileTools.createFile(path,value);
+				}catch (e){
+				Sys.alert("Create file failed:"+path);
+			}
+		}
+
+		FileManager.createJSONFile=function(path,value){
+			try {
+				FileTools.createFile(path,JSON.stringify(value));
+				}catch (e){
+				Sys.alert("Create file failed:"+path);
+			}
+		}
+
+		FileManager.createBytesFile=function(path,bytes){
+			try {
+				FileTools.createFile(path,bytes);
+				}catch (e){
+				Sys.alert("Create file failed:"+path);
+			}
+		}
+
+		FileManager.removeFile=function(path){
+			FileTools.removeE(path);
+		}
+
+		FileManager.copyFile=function(from,to){
+			try {
+				FileTools.copyE(from,to);
+				}catch (e){
+				Sys.alert("Copy file failed:(from:"+from+" to:"+to+")");
+				console.log("Copy file failed:(from:"+from+" to:"+to+")");
+			}
+		}
+
+		FileManager.readTxtFile=function(path,errorAlert){
+			(errorAlert===void 0)&& (errorAlert=true);
+			try {
+				return FileTools.readFile(path);
+				}catch (e){
+				if (errorAlert)Sys.alert("Read file failed:"+path);
+			}
+			return null;
+		}
+
+		FileManager.readJSONFile=function(path,errorAlert){
+			(errorAlert===void 0)&& (errorAlert=true);
+			try {
+				var str=nodetools.devices.FileManager.readTxtFile(path);
+				return JSON.parse(str);
+				}catch (e){
+				if (errorAlert)Sys.alert("Read file failed:"+path);
+				debugger;
+			}
+			return null;
+		}
+
+		FileManager.readByteFile=function(path,errorAlert){
+			(errorAlert===void 0)&& (errorAlert=true);
+			try {
+				return FileTools.readFile(path);
+				}catch (e){
+				if (errorAlert)Sys.alert("Read file failed:"+path);
+			}
+			return null;
+		}
+
+		FileManager.getFileList=function(path){
+			return FileTools.getFileList(path);
+		}
+
+		FileManager.exists=function(path){
+			return FileTools.exist(path);
+		}
+
+		FileManager.getFileTree=function(path,hasExtension){
+			(hasExtension===void 0)&& (hasExtension=false);
+			var xml=findFiles(path);
+			function findFiles (path){
+				var node;
+				if (FileTools.exist(path)){
+					var fileName=FileTools.getFileName(path);
+					node=new /*no*/this.XMLElement("<item label='"+fileName+"' path='"+path+"' isDirectory='true'/>");
+					var a=FileTools.getDirFiles(path);
+					var f;
+					for(var $each_f in a){
+						f=a[$each_f];
+						f=FileTools.getPath(path,f);
+						if (FileTools.isDirectory(f)&& f.indexOf(".svn")==-1){
+							node.appendChild(findFiles(f));
+						}
+					}
+					var $each_f;
+					for($each_f in a){
+						f=a[$each_f];
+						f=FileTools.getPath(path,f);
+						if (FileTools.isDirectory(f)==false){
+							if (fileName.indexOf("$")==-1 && fileName.indexOf("@")==-1){
+								node.appendChild(new /*no*/this.XMLElement("<item label='"+fileName+"' path='"+f+"' isDirectory='false'/>"));
+							}
+						}
+					}
+				}
+				return node;
+			}
+			return xml
+		}
+
+		FileManager.rename=function(oldPath,newPath){
+			try {
+				FileTools.rename(oldPath,newPath);
+				}catch (e){
+				Sys.alert("Rename file failed:(from:"+oldPath+" to:"+newPath+")");
+			}
+		}
+
+		return FileManager;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class nodetools.devices.FileTools
+	var FileTools=(function(){
+		function FileTools(){}
+		__class(FileTools,'nodetools.devices.FileTools');
+		__getset(1,FileTools,'appPath',function(){
+			var rst;
+			var dirName;
+			dirName=__dirname;;
+			rst=FileTools.path.resolve(dirName,"../");
+			return rst;
+			var aPath;
+			aPath=/*no*/this.Browser.window.location.href;
+			aPath=aPath.replace("file:///","");
+			aPath=aPath.replace("/h5/index.html","");
+			aPath=aPath.split("index.")[0];
+			aPath=decodeURI(aPath);
+			return aPath;
+		});
+
+		__getset(1,FileTools,'workPath',function(){
+			return "workPath";
+		});
+
+		FileTools.init=function(){
+			FileTools.fs=Device.require("fs");
+			FileTools.path=Device.require("path");
+			FileTools.shell=Device.requireRemote("shell");
+			FileTools.tempApp=Device.remote.app.getDataPath();
+		}
+
+		FileTools.init2=function(){
+			FileTools.fs=Device.require("fs");
+			FileTools.path=Device.require("path");
+		}
+
+		FileTools.getSep=function(){
+			return FileTools.path.sep;
+		}
+
+		FileTools.getAbsPath=function(path){
+			return path;
+		}
+
+		FileTools.isAbsPath=function(path){
+			if(!path)return false;
+			if(path.indexOf(":")>0)return true;
+			if(path.substr(0,1)=="/")return true;
+			return false;
+		}
+
+		FileTools.getPath=function(basePath,relativePath){
+			return FileTools.path.join(basePath,relativePath);
+		}
+
+		FileTools.getRelativePath=function(basePath,targetPath){
+			return FileTools.path.relative(basePath,targetPath);
+		}
+
+		FileTools.getAppPath=function(path){
+			return FileTools.getPath(FileTools.appPath,path);
+		}
+
+		FileTools.getAppRelativePath=function(path){
+			return FileTools.getRelativePath(FileTools.appPath,path);
+		}
+
+		FileTools.getWorkPath=function(path){
+			return FileTools.getPath(FileTools.workPath,path);
+		}
+
+		FileTools.getWorkRelativePath=function(path){
+			return FileTools.getRelativePath(FileTools.workPath,path);
+		}
+
+		FileTools.getFileDir=function(path){
+			if (!path)return path;
+			if(nodetools.devices.FileTools.isDirectory(path))return path;
+			return nodetools.devices.FileTools.path.dirname(path);
+		}
+
+		FileTools.getParent=function(path){
+			if (!path)return path;
+			var lasti=0;
+			lasti=path.lastIndexOf(nodetools.devices.FileTools.path.sep);
+			return path.substring(0,lasti);
+		}
+
+		FileTools.getFileName=function(path){
+			return nodetools.devices.FileTools.path.basename(path).split(".")[0];
+		}
+
+		FileTools.getFileNameWithExtension=function(path){
+			if (path==null)
+				return null;
+			var a=path.split(nodetools.devices.FileTools.path.sep);
+			var file=a[a.length-1];
+			return file;
+		}
+
+		FileTools.getExtensionName=function(path){
+			if (path==null)
+				return null;
+			var a=path.split(".");
+			var file=a[a.length-1];
+			return file;
+		}
+
+		FileTools.createDirectory=function(path){
+			if (Boolean(path)){
+				FileTools.ensurePath(path);
+				if (!FileTools.fs.existsSync(path)){
+					FileTools.fs.mkdirSync(path);
+				}
+			}
+		}
+
+		FileTools.ensurePath=function(pathStr){
+			FileTools.mkdirsSync(pathStr,null);
+			return;
+			if (pathStr==null)return;
+			var sep;
+			sep=FileTools.path.sep;
+			var a=pathStr.split(sep);
+			var i=0,len=0;
+			var tPath;
+			tPath=a[0];
+			len=a.length-1;
+			for (i=1;i < len;i++){
+				tPath+=sep+a[i];
+				if (!FileTools.exist(tPath)){
+					FileTools.createDirectory(tPath);
+				}
+			}
+		}
+
+		FileTools.mkdirsSync=function(dirpath,mode){
+			if (!FileTools.fs.existsSync(dirpath)){
+				var pathtmp;
+				var pathParts=dirpath.split(FileTools.path.sep);
+				pathParts.pop();
+				var onWindows=OSInfo.type.indexOf("Windows")>-1;
+				if(!onWindows){
+					pathtmp="/"+pathParts[1];
+					pathParts.splice(0,2);
+				}
+				pathParts.forEach(function(dirname){
+					if (pathtmp){
+						pathtmp=FileTools.path.join(pathtmp,dirname);
+					}
+					else {
+						pathtmp=dirname;
+					}
+					if (!FileTools.fs.existsSync(pathtmp)){
+						if (!FileTools.fs.mkdirSync(pathtmp,mode)){
+							return false;
+						}
+					}
+				});
+			}
+			return true;
+		}
+
+		FileTools.createFile=function(path,value){
+			FileTools.ensurePath(path);
+			FileTools.fs.writeFileSync(path,value);
+		}
+
+		FileTools.toBuffer=function(ab){
+			var buffer=new Device.Buffer(ab.byteLength);
+			var view=new Uint8Array(ab);
+			for (var i=0;i < buffer.length;++i){
+				buffer[i]=view[i];
+			}
+			return buffer;
+		}
+
+		FileTools.readFile=function(path,encoding){
+			(encoding===void 0)&& (encoding="utf8");
+			if (FileTools.fs.existsSync(path)){
+				var rst;
+				rst=FileTools.fs.readFileSync(path,encoding);
+				if(((typeof rst=='string'))&&rst.charCodeAt(0)==65279&&encoding=="utf8"){
+					rst=rst.substr(1);
+				}
+				return rst;
+			}
+			return null;
+		}
+
+		FileTools.appendFile=function(path,data){
+			FileTools.fs.appendFileSync(path,data);
+		}
+
+		FileTools.moveToTrash=function(path){
+			if (FileTools.exist(path)){
+				if (FileTools.shell){
+					FileTools.shell.moveItemToTrash(path);
+					}else{
+					FileTools.removeE(path,false);
+				}
+			}
+		}
+
+		FileTools.removeFile=function(path,toTrash){
+			(toTrash===void 0)&& (toTrash=true);
+			if (toTrash){
+				FileTools.moveToTrash(path);
+				return;
+			}
+			if (Boolean(path)){
+				FileTools.fs.unlinkSync(path)
+			}
+		}
+
+		FileTools.removeE=function(path,toTrash){
+			(toTrash===void 0)&& (toTrash=true);
+			if (!FileTools.exist(path))
+				return;
+			if (FileTools.isDirectory(path)){
+				FileTools.removeDir(path,toTrash);
+			}
+			else{
+				FileTools.removeFile(path,toTrash);
+			}
+		}
+
+		FileTools.removeDir=function(path,toTrash){
+			(toTrash===void 0)&& (toTrash=true);
+			if (toTrash){
+				FileTools.moveToTrash(path);
+				return;
+			};
+			var files=[];
+			if (FileTools.fs.existsSync(path)){
+				files=FileTools.fs.readdirSync(path);
+				files.forEach(function(file,index){
+					var curPath=FileTools.getPath(path,file);
+					if (FileTools.fs.statSync(curPath).isDirectory()){
+						FileTools.removeDir(curPath);
+					}
+					else{
+						FileTools.fs.unlinkSync(curPath);
+					}
+				});
+				FileTools.fs.rmdirSync(path);
+			}
+		}
+
+		FileTools.exist=function(path){
+			if(!path)return false;
+			return FileTools.fs.existsSync(path);
+		}
+
+		FileTools.isDirectory=function(path){
+			var st;
+			try{
+				st=FileTools.fs.statSync(path);
+				}catch(e){
+				return false;
+			}
+			if(!st)return false;
+			return st.isDirectory();
+		}
+
+		FileTools.getStat=function(path){
+			return FileTools.fs.statSync(path);
+		}
+
+		FileTools.getMTime=function(path){
+			return FileTools.getStat(path).mtime;
+		}
+
+		FileTools.watch=function(path,callBack){
+			FileTools.watcherDic[path]=FileTools.fs.watch(path,callBack);
+			return FileTools.watcherDic[path];
+		}
+
+		FileTools.isDirWatched=function(path){
+			return FileTools.watcherDic.hasOwnProperty(path);
+		}
+
+		FileTools.unwatch=function(path){
+			if (FileTools.watcherDic[path]){
+				FileTools.watcherDic[path].close();
+				delete FileTools.watcherDic[path];
+			}
+		}
+
+		FileTools.copyE=function(from,to){
+			if (!FileTools.exist(from))
+				return;
+			if (FileTools.isDirectory(from)){
+				FileTools.copyDir(from,to);
+			}
+			else{
+				FileTools.copyFile(from,to);
+			}
+		}
+
+		FileTools.copyFile=function(from,to){
+			FileTools.createFile(to,FileTools.readFile(from,null));
+		}
+
+		FileTools.copyDir=function(from,to){
+			var files=[];
+			if (FileTools.fs.existsSync(from)){
+				FileTools.createDirectory(to);
+				files=FileTools.fs.readdirSync(from);
+				files.forEach(function(file,index){
+					var curPath=FileTools.getPath(from,file);
+					var tPath=FileTools.getPath(to,file);
+					if (FileTools.fs.statSync(curPath).isDirectory()){
+						FileTools.copyDir(curPath,tPath);
+					}
+					else{
+						FileTools.copyFile(curPath,tPath);
+					}
+				});
+			}
+		}
+
+		FileTools.walk=function(path,floor,handleFile,self){
+			(self===void 0)&& (self=false);
+			if(self)
+				handleFile(path,floor);
+			floor++;
+			var files=FileTools.fs.readdirSync(path);
+			files.forEach(function(item){
+				var tmpPath=FileTools.getPath(path,item);
+				if (tmpPath.indexOf(".svn")>-1)
+					return;
+				var stats=FileTools.fs.statSync(tmpPath);
+				if (stats.isDirectory()){
+					FileTools.walk(tmpPath,floor,handleFile);
+				}
+				else{
+					handleFile(tmpPath,floor);
+				}
+			});
+		}
+
+		FileTools.getFileList=function(path){
+			var arr=[];
+			if(!nodetools.devices.FileTools.exist(path))return arr;
+			FileTools.walk(path,0,findFiles);
+			function findFiles (spath,floor){
+				arr.push(spath);
+			}
+			return arr;
+		}
+
+		FileTools.getFileDesO=function(path){
+			if (!FileTools.exist(path))
+				return null;
+			var rst={};
+			rst.label=FileTools.getFileName(path);
+			rst.path=path;
+			if (FileTools.isDirectory(path)){
+				rst.files=[];
+				rst.dirs=[];
+				rst.childs=[];
+				rst.isDirectory=true;
+				}else{
+				rst.isDirectory=false;
+			}
+			return rst;
+		}
+
+		FileTools.getDirChildDirs=function(p){
+			var files=nodetools.devices.FileTools.getDirFiles(p);
+			var i=0,len=0;
+			var rst;
+			rst=[];
+			len=files.length;
+			for(i=0;i<len;i++){
+				files[i]=FileTools.path.join(p,files[i]);
+				if(nodetools.devices.FileTools.isDirectory(files[i])){
+					rst.push(files[i]);
+				}
+			}
+			return rst;
+		}
+
+		FileTools.getDirFiles=function(path){
+			var rst;
+			rst=FileTools.fs.readdirSync(path);
+			rst.sort(FileTools.folderFirst);
+			return rst;
+		}
+
+		FileTools.folderFirst=function(pathA,pathB){
+			var isFolderA=false;
+			isFolderA=pathA.indexOf(".")<0;
+			var isFolderB=false;
+			isFolderB=pathB.indexOf(".")<0;
+			var right=-1;
+			if(isFolderA){
+				if(!isFolderB){
+					return right;
+				}
+				return pathA<pathB?right:-right;
+			}
+			if(isFolderB){
+				return-right;
+			}
+			return pathA<pathB?right:-right;
+		}
+
+		FileTools.getFileTreeArr=function(path){
+			var tTreeO=FileTools.getFileTreeO(path);
+			var rst=[];
+			FileTools.getTreeArr(tTreeO,rst,false);
+			return rst;
+		}
+
+		FileTools.getTreeArr=function(treeO,arr,add){
+			(add===void 0)&& (add=true);
+			if(add)
+				arr.push(treeO);
+			var tArr=treeO.childs;
+			var i=0,len=tArr.length;
+			for(i=0;i<len;i++){
+				if(!add){
+					tArr[i].nodeParent=null;
+				}
+				if(tArr[i].isDirectory){
+					FileTools.getTreeArr(tArr[i],arr);
+					}else{
+					arr.push(tArr[i]);
+				}
+			}
+		}
+
+		FileTools.getFileTreeO=function(path){
+			var rst=FileTools.getFileDesO(path);
+			if (FileTools.fs.existsSync(path)){
+				var files=FileTools.getDirFiles(path);
+				var tO;
+				files.forEach(function(file,index){
+					var curPath=FileTools.getPath(path,file);
+					if (FileTools.fs.statSync(curPath).isDirectory()){
+						tO=FileTools.getFileTreeO(curPath);
+						tO.nodeParent=rst;
+						tO.hasChild=tO.childs.length > 0;
+						rst.dirs.push(tO);
+					}
+					else{
+						tO=FileTools.getFileDesO(curPath);
+						tO.nodeParent=rst;
+						tO.hasChild=false;
+						rst.files.push(tO);
+					}
+					tO.label=file;
+					rst.childs.push(tO);
+				});
+				rst.hasChild=rst.childs.length > 0;
+			}
+			return rst;
+		}
+
+		FileTools.isPathSame=function(a,b){
+			if(a.toLocaleLowerCase()==b.toLocaleLowerCase())return true;
+			return false;
+		}
+
+		FileTools.rename=function(oldPath,newPath){
+			if (!FileTools.exist(oldPath))
+				return;
+			if(FileTools.isPathSame(oldPath,newPath)){
+				/*no*/this.Alert.show("在移动文件到同一个位置！！");
+				return;
+			}
+			FileTools.copyE(oldPath,newPath);
+			FileTools.moveToTrash(oldPath);
+			return;
+			FileTools.fs.renameSync(oldPath,newPath);
+		}
+
+		FileTools.openItem=function(path){
+			FileTools.shell.openItem(path);
+		}
+
+		FileTools.showItemInFolder=function(path){
+			FileTools.shell.showItemInFolder(path);
+		}
+
+		FileTools.getFolder=function(path){
+			path=FileManager.adptToCommonUrl(path);
+			var idx=0;
+			idx=path.lastIndexOf(".");
+			if(idx>=0){
+				idx=path.lastIndexOf("/",idx);
+				if(idx>=0){
+					path=path.substr(0,idx);
+				}
+			}
+			return path;
+		}
+
+		FileTools.win=null
+		FileTools.fs=null
+		FileTools.path=null
+		FileTools.shell=null
+		FileTools.tempApp=null
+		FileTools.watcherDic={};
+		return FileTools;
 	})()
 
 
@@ -283,6 +1030,37 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		return NodeJSTools;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class nodetools.devices.OSInfo
+	var OSInfo=(function(){
+		function OSInfo(){}
+		__class(OSInfo,'nodetools.devices.OSInfo');
+		OSInfo.init=function(){
+			OSInfo.os=Device.require("os");
+			OSInfo.platform=OSInfo.os.platform();
+			OSInfo.tempdir=OSInfo.os.tmpdir();
+			OSInfo.type=OSInfo.os.type();
+			var tProcess;
+			tProcess=process;;
+			OSInfo.process=tProcess;
+			OSInfo.env=OSInfo.process.env;
+			console.log("type:",OSInfo.type);
+		}
+
+		OSInfo.os=null
+		OSInfo.platform=null
+		OSInfo.homedir=null
+		OSInfo.tempdir=null
+		OSInfo.type=null
+		OSInfo.process=null
+		OSInfo.env=null
+		return OSInfo;
 	})()
 
 
@@ -346,6 +1124,49 @@ var Laya=window.Laya=(function(window,document){
 	})()
 
 
+	/**系统配置
+	*@author ww
+	*/
+	//class nodetools.devices.SystemSetting
+	var SystemSetting=(function(){
+		function SystemSetting(){};
+		__class(SystemSetting,'nodetools.devices.SystemSetting');
+		SystemSetting.setProject=function(path){
+			if (FileTools.exist(path)){
+				SystemSetting.projectPath=path;
+				SystemSetting.projectName=FileTools.getFileName(path).replace(".laya","");
+				SystemSetting.workPath=FileTools.path.dirname(path);
+				SystemSetting.workPath=FileTools.path.dirname(SystemSetting.workPath);
+				SystemSetting.pagesPath=FileManager.getWorkPath("laya/pages");
+				SystemSetting.assetsPath=FileManager.getWorkPath("laya/assets");
+				SystemSetting.stylePath=FileManager.getWorkPath("laya/styles.xml");
+				SystemSetting.pageStylePath=FileManager.getWorkPath("laya/pageStyles.xml");
+				SystemSetting.tempPath=FileManager.getPath(FileTools.tempApp,"data/"+SystemSetting.projectName)
+				FileManager.createDirectory(SystemSetting.pagesPath);
+				FileManager.createDirectory(SystemSetting.assetsPath);
+				FileManager.createDirectory(SystemSetting.tempPath);
+			}
+		}
+
+		SystemSetting.workPath="";
+		SystemSetting.appPath="";
+		SystemSetting.projectName="";
+		SystemSetting.projectPath="";
+		SystemSetting.pagesPath="";
+		SystemSetting.assetsPath="";
+		SystemSetting.stylePath="";
+		SystemSetting.pageStylePath="";
+		SystemSetting.tempResPath="";
+		SystemSetting.tempVerPath="";
+		SystemSetting.tempPath="";
+		SystemSetting.lang="";
+		SystemSetting.ifShowRuleGrid=true;
+		SystemSetting.toCodeModeWhenPublicEnd=false;
+		SystemSetting.isCMDVer=false;
+		return SystemSetting;
+	})()
+
+
 	/**
 	*...
 	*@author ww
@@ -388,7 +1209,10 @@ var Laya=window.Laya=(function(window,document){
 			console.log('received: %s',message);
 		}
 
-		__proto.onClose=function(code,reason){}
+		__proto.onClose=function(code,reason){
+			this.serverO.removeClient(this);
+		}
+
 		__proto.onOpen=function(){
 			console.log("onOpen");
 			this.send("hihi new client");
@@ -457,6 +1281,105 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		return WSServer;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class stockserver.users.UserData
+	var UserData=(function(){
+		function UserData(){
+			this.userName=null;
+			this.isLogined=false;
+		}
+
+		__class(UserData,'stockserver.users.UserData');
+		var __proto=UserData.prototype;
+		__proto.login=function(userName,pwd){
+			this.userName=userName;
+			this.isLogined=UserSystem.I.login(userName,pwd);
+		}
+
+		return UserData;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class stockserver.users.UserSystem
+	var UserSystem=(function(){
+		function UserSystem(){}
+		__class(UserSystem,'stockserver.users.UserSystem');
+		var __proto=UserSystem.prototype;
+		__proto.isUserNameOK=function(userName){
+			return UserSystem.nameReg.test(userName);
+		}
+
+		__proto.isPwdOK=function(pwd){
+			return (UserSystem.pwdReg.test(pwd));
+		}
+
+		__proto.login=function(userName,userPwd){
+			if (!userName)return false;
+			var dataO;
+			dataO=this.getUserData(userName);
+			if (!dataO)return false;
+			return dataO.pwd==userPwd;
+		}
+
+		__proto.getUserPath=function(userName){
+			return FileManager.getPath(UserSystem.UserPath,userName+".data");
+		}
+
+		__proto.createUser=function(userName,userPwd){
+			if (!this.isUserNameOK(userName))return false;
+			var userPath;
+			userPath=this.getUserPath(userName);
+			if (FileManager.exists(userPath)){
+				return false;
+			};
+			var userData;
+			userData={};
+			userData.pwd=userPwd;
+			FileManager.createJSONFile(userPath,userData);
+			return true;
+		}
+
+		__proto.getUserData=function(userName){
+			var userPath;
+			userPath=this.getUserPath(userName);
+			if (!FileManager.exists(userPath)){
+				return null;
+			}
+			return FileManager.readJSONFile(userPath,false);
+		}
+
+		__proto.getUserDataEx=function(userName,sign){
+			var dataO;
+			dataO=this.getUserData(userName);
+			if (!dataO)return null;
+			return dataO[sign];
+		}
+
+		__proto.saveUserData=function(userName,sign,data){
+			var dataO;
+			dataO=this.getUserData(userName);
+			if (!dataO)return null;
+			dataO[sign]=data;
+			var userPath;
+			userPath=this.getUserPath(userName);
+			FileManager.createJSONFile(userPath,dataO);
+		}
+
+		UserSystem.UserPath=null
+		__static(UserSystem,
+		['I',function(){return this.I=new UserSystem();},'nameReg',function(){return this.nameReg=new RegExp("^[A-Za-z]+$");},'pwdReg',function(){return this.pwdReg=new RegExp("^[A-Za-z0-9]+$");}
+		]);
+		return UserSystem;
 	})()
 
 
@@ -1324,10 +2247,31 @@ var Laya=window.Laya=(function(window,document){
 	*...
 	*@author ww
 	*/
+	//class MsgTool
+	var MsgTool=(function(){
+		function MsgTool(){}
+		__class(MsgTool,'MsgTool');
+		MsgTool.createMsg=function(type,data){
+			var rst;
+			rst={};
+			rst.type=type;
+			rst.data=data;
+			return rst;
+		}
+
+		return MsgTool;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
 	//class stockserver.StockClient extends nodetools.server.WSClient
 	var StockClient=(function(_super){
 		function StockClient(){
 			this.mServer=null;
+			this.userData=new UserData();
 			StockClient.__super.call(this);
 		}
 
@@ -1340,13 +2284,30 @@ var Laya=window.Laya=(function(window,document){
 
 		__proto.onMessage=function(message){
 			console.log("StockClient:onMessage",message);
-			var str;
-			str=message;
-			console.log(str);
+			var data;
+			data=JSON.parse(message);
+			console.log(data);
+			if (data.type !="login" && !this.userData.isLogined){
+				return;
+			}
+			switch(data.type){
+				case "login":
+					this.userData.login(data.user,data.pwd);
+					this.sendJson({type:data.type,rst:this.userData.isLogined});
+					break ;
+				case "SaveMyStocks":
+					console.log("saveData:",data.sign,data.data);
+					UserSystem.I.saveUserData(this.userData.userName,data.sign,data.data);
+					this.sendJson({type:data.type,rst:1});
+					break ;
+				case "GetStocks":
+					this.sendJson({type:data.type,sign:data.sign,data:UserSystem.I.getUserDataEx(this.userData.userName,data.sign)});
+					break ;
+				}
 		}
 
 		__proto.onOpen=function(){
-			this.sendJson({"type":"welcome"});
+			this.sendJson(MsgTool.createMsg("welcome"));
 		}
 
 		return StockClient;
@@ -1373,3 +2334,12 @@ var Laya=window.Laya=(function(window,document){
 	new NodeServer();
 
 })(window,document,Laya);
+
+
+/*
+1 file:///D:/stocksite.git/trunk/NodeServer/src/nodetools/devices/FileManager.as (225):warning:XMLElement This variable is not defined.
+2 file:///D:/stocksite.git/trunk/NodeServer/src/nodetools/devices/FileManager.as (237):warning:XMLElement This variable is not defined.
+3 file:///D:/stocksite.git/trunk/NodeServer/src/nodetools/devices/FileTools.as (82):warning:Browser.window.location.href This variable is not defined.
+4 file:///D:/stocksite.git/trunk/NodeServer/src/nodetools/devices/FileTools.as (82):warning:Browser.window.location.href This variable is not defined.
+5 file:///D:/stocksite.git/trunk/NodeServer/src/nodetools/devices/FileTools.as (642):warning:Alert.show This variable is not defined.
+*/
