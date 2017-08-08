@@ -17,6 +17,8 @@
   <classpaths>
     <class path="src" />
     <class path="libs\laya\src" />
+    <class path="..\NodeServer\publibs" />
+    <class path="..\StockClient\src" />
   </classpaths>
   <!-- Build options -->
   <build>
