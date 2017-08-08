@@ -5,8 +5,10 @@ package view
 	import laya.net.LocalStorage;
 	import laya.tools.StockJsonP;
 	import msgs.MsgConst;
+	import stock.StockSocket;
 	import stock.views.MDLine;
 	import ui.realtime.RealTimeUI;
+	import view.netcomps.MainSocket;
 	
 	/**
 	 * ...
@@ -42,6 +44,48 @@ package view
 			showMDCheck.on(Event.CHANGE, this, showMDChange);
 			showListCheck.selected = true;
 			showListCheck.on(Event.CHANGE, this, showListChange);
+			netBox.visible = false;
+			MainSocket.I.socket.on(StockSocket.Logined, this, onLogin);
+			MainSocket.I.socket.on("stocks", this, onServerStock);
+			saveBtn.on(Event.MOUSE_DOWN, this, onSaveStocks);
+			loadBtn.on(Event.MOUSE_DOWN, this, onLoadStocks);
+		}
+		
+		
+		private function onServerStock(dataO:Object):void
+		{
+			trace("onServerStock:", dataO);
+			if (dataO.data)
+			{
+				var tArr:Array;
+				tArr = dataO.data;
+				switchStockList(tArr);
+				fresh();
+			}
+		}
+		private function onSaveStocks():void
+		{
+			MainSocket.I.socket.saveUserData("stocks",stockList);
+		}
+		
+		private function onLoadStocks():void
+		{
+			MainSocket.I.socket.getUserData("stocks");
+		}
+		private function onLogin():void
+		{
+			updateUIState();
+		}
+		
+		private function updateUIState():void
+		{
+			if (MainSocket.I.socket.isLogined)
+			{
+				netBox.visible = true;
+			} else
+			{
+				netBox.visible = false;
+			}
 		}
 		
 		private function showListChange():void
@@ -101,7 +145,21 @@ package view
 				addStock(stockList[i]);
 			}
 		}
-		
+		public function switchStockList(newList:Array):void
+		{
+			var i:int, len:int;
+			len = stockList.length;
+			for (i = len-1; i >=0; i--)
+			{
+				removeStock(stockList[i]);
+			}
+			stockList = newList;
+			len = stockList.length;
+			for (i = 0; i < len; i++)
+			{
+				addStock(stockList[i]);
+			}
+		}
 		private function saveData():void
 		{
 			LocalStorage.setJSON(DataSign, stockList);
