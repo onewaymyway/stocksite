@@ -159,6 +159,7 @@ package view
 			{
 				addStock(stockList[i]);
 			}
+			StockJsonP.I.freshData();
 		}
 		private function saveData():void
 		{
