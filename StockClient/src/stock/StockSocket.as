@@ -16,6 +16,7 @@ package stock {
 		public static const DataFromServer:String = "DataFromServer";
 		public static const Logined:String = "Logined";
 		public static const OnServerMsg:String = "OnServerMsg";
+		public static const Welcome:String = "Welcome";
 		
 		public function StockSocket() {
 			socket = new Socket("127.0.0.1", 0, Byte);
@@ -45,18 +46,20 @@ package stock {
 			var mData:Object;
 			switch (dataO.type) {
 				case StockMsg.Welcome: 
-					login("deathnote", "deathnotestock");
+					//login("deathnote", "deathnotestock");
+					event(Welcome);
 					break;
 				case StockMsg.Login: 
 					isLogined = dataO.rst;
 					event(Logined);
-					saveUserData("stocks", [123, 234]);
+					//saveUserData("stocks", [123, 234]);
 					break;
 				case StockMsg.SaveMyStocks: 
-					getUserData("stocks");
+					//getUserData("stocks");
 					break;
 				case StockMsg.GetStocks: 
 					event(DataFromServer, dataO);
+					event(dataO.sign, dataO);
 					break;
 			}
 			event(OnServerMsg, dataO);
