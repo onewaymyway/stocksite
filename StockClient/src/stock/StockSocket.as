@@ -8,23 +8,28 @@ package stock {
 	 * ...
 	 * @author ww
 	 */
-	public class StockSocket extends EventDispatcher{
+	public class StockSocket extends EventDispatcher {
 		private var socket:Socket;
 		public var userName:String;
 		public var isLogined:Boolean;
-		public static const DataFromServer:String="DataFromServer";
+		private var _serverStr:String;
+		public static const DataFromServer:String = "DataFromServer";
+		public static const Logined:String = "Logined";
+		public static const OnServerMsg:String = "OnServerMsg";
+		
 		public function StockSocket() {
-		
-		}
-		
-		public function connect(serverStr:String):void {
 			socket = new Socket("127.0.0.1", 0, Byte);
 			socket.disableInput = true;
-			socket.connectByUrl(serverStr);
+			
 			socket.on(Event.OPEN, this, onConnect);
 			socket.on(Event.MESSAGE, this, onMessage);
 			socket.on(Event.ERROR, this, onErr);
 			socket.on(Event.CLOSE, this, onClose);
+		}
+		
+		public function connect(serverStr:String):void {
+			_serverStr = serverStr;
+			socket.connectByUrl(serverStr);
 		}
 		
 		private function onConnect():void {
@@ -39,20 +44,22 @@ package stock {
 			dataO = JSON.parse(msg);
 			var mData:Object;
 			switch (dataO.type) {
-				case StockMsg.Welcome:
-					login("deathnote","deathnotestock");
+				case StockMsg.Welcome: 
+					login("deathnote", "deathnotestock");
 					break;
 				case StockMsg.Login: 
 					isLogined = dataO.rst;
-					saveUserData("stocks", [123,234]);
+					event(Logined);
+					saveUserData("stocks", [123, 234]);
 					break;
-				case StockMsg.SaveMyStocks:
+				case StockMsg.SaveMyStocks: 
 					getUserData("stocks");
 					break;
-				case StockMsg.GetStocks:
-					event(DataFromServer, dataO );
+				case StockMsg.GetStocks: 
+					event(DataFromServer, dataO);
 					break;
 			}
+			event(OnServerMsg, dataO);
 		}
 		
 		public function login(user:String, pwd:String):void {
@@ -65,8 +72,7 @@ package stock {
 			sendJson(mData);
 		}
 		
-		public function saveUserData(sign:String, data:*):void
-		{
+		public function saveUserData(sign:String, data:*):void {
 			var mData:Object;
 			mData = {};
 			mData.type = StockMsg.SaveMyStocks;
@@ -75,8 +81,7 @@ package stock {
 			sendJson(mData);
 		}
 		
-		public function getUserData(sign:String):void
-		{
+		public function getUserData(sign:String):void {
 			mData = {};
 			mData.type = StockMsg.GetStocks;
 			mData.sign = sign;
