@@ -38486,6 +38486,7 @@ var Laya=window.Laya=(function(window,document){
 			for (i=0;i < len;i++){
 				this.addStock(this.stockList[i]);
 			}
+			StockJsonP.I.freshData();
 		}
 
 		__proto.saveData=function(){
