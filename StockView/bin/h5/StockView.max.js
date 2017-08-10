@@ -22936,7 +22936,7 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		__proto.showLabel=function(label,time){
-			this.pos(Laya.stage.width *0.5-100,120);
+			this.pos(Laya.stage.width *0.5-100,20);
 			this._vbox.addChild(label);
 			Tween.to(label,{y:-20},time,Ease.cubicOut,null);
 			Laya.timer.once(time,this,this.clear,[label],false);

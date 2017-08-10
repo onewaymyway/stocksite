@@ -51,7 +51,7 @@ package laya.uicomps {
 		}
 		private function showLabel(label:Label,time:int):void
 		{
-			this.pos(Laya.stage.width * 0.5-100, 120);
+			this.pos(Laya.stage.width * 0.5-100, 20);
 			_vbox.addChild(label);
 			Tween.to(label,{y:-20},time,Ease.cubicOut,null);
 			Laya.timer.once(time,this,clear,[label],false);
