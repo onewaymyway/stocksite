@@ -59,7 +59,7 @@ package view.realtime
 				{
 					txt.text += " M:" + DateTools.getTimeStr(stockData.markTime);
 				}
-				if (stockData.markPrice&&dataO.price)
+				if (stockData.markPrice&&dataO&&dataO.price)
 				{
 					txt.text +=","+StockTools.getGoodPercent((dataO.price-stockData.markPrice) / stockData.markPrice) + "%"
 				}

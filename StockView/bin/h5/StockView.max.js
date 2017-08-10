@@ -38989,7 +38989,7 @@ var Laya=window.Laya=(function(window,document){
 				if (stockData.markTime){
 					this.txt.text+=" M:"+DateTools.getTimeStr(stockData.markTime);
 				}
-				if (stockData.markPrice&&dataO.price){
+				if (stockData.markPrice&&dataO&&dataO.price){
 					this.txt.text+=","+StockTools.getGoodPercent((dataO.price-stockData.markPrice)/ stockData.markPrice)+"%"
 				}
 			}
