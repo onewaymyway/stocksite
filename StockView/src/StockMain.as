@@ -4,6 +4,7 @@ package
 	import laya.display.Stage;
 	import laya.maths.MathUtil;
 	import laya.net.Loader;
+	import laya.tools.SohuDData;
 	import laya.tools.StockJsonP;
 	import laya.utils.Handler;
 	import laya.utils.Stat;
@@ -43,6 +44,7 @@ package
 			//StockBasicInfo.I.stockList.sort(MathUtil.sortByKey("totals", false, true));
 			testMainView();
 			//testStockInfo();
+			SohuDData.getData("601918",null);
 		}
 		private function begin():void
 		{

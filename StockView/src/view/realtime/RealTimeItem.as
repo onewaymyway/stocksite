@@ -3,9 +3,11 @@ package view.realtime
 	import laya.debug.tools.Notice;
 	import laya.events.Event;
 	import laya.stock.StockTools;
+	import laya.tools.DateTools;
 	import laya.tools.StockJsonP;
 	import msgs.MsgConst;
 	import ui.realtime.StockRealTimeItemUI;
+	import view.RealTimeView;
 	
 	/**
 	 * ...
@@ -17,7 +19,12 @@ package view.realtime
 		public function RealTimeItem() 
 		{
 			delBtn.on(Event.MOUSE_DOWN, this, onDeleteBtn);
+			markBtn.on(Event.MOUSE_DOWN, this, onMarkBtn);
 			this.on(Event.DOUBLE_CLICK, this, onDoubleClick);
+		}
+		private function onMarkBtn():void
+		{
+			Notice.notify(MsgConst.Mark_MyStock, stock);
 		}
 		public var stock:String;
 		override public function set dataSource(value:*):void 
@@ -28,9 +35,11 @@ package view.realtime
 		}
 		public static var showStockDic:Object = { };
 		private var isSettingV:Boolean = false;
-		public function initByStock(stock:String):void
+		public function initByStock(stockData:*):void
 		{
-			if (!stock) return;
+			if (!stockData) return;
+			var stock:String;
+			stock = RealTimeView.getStockCode(stockData);
 			this.stock = stock;
 			txt.text = stock;
 			var dataO:Object;
@@ -43,6 +52,17 @@ package view.realtime
 				showLine.selected = showStockDic[stock];
 				showLine.on(Event.CHANGE, this, onShowLineChange);
 				isSettingV = false;
+			}
+			if (stockData is Object)
+			{
+				if (stockData.markTime)
+				{
+					txt.text += " M:" + DateTools.getTimeStr(stockData.markTime);
+				}
+				if (stockData.markPrice&&dataO.price)
+				{
+					txt.text +=","+StockTools.getGoodPercent((dataO.price-stockData.markPrice) / stockData.markPrice) + "%"
+				}
 			}
 		}
 		private function onShowLineChange():void
