@@ -16077,6 +16077,232 @@ var Laya=window.Laya=(function(window,document){
 
 
 	/**
+	*
+	*@author ww
+	*@version 1.0
+	*
+	*@created 2016-10-20 下午4:14:49
+	*/
+	//class stock.tools.SMD5
+	var SMD5=(function(){
+		function SMD5(){}
+		__class(SMD5,'stock.tools.SMD5');
+		SMD5.safeAdd=function(x,y){
+			var lsw=(x & 0xFFFF)+(y & 0xFFFF);
+			var msw=(x >> 16)+(y >> 16)+(lsw >> 16);
+			return (msw << 16)| (lsw & 0xFFFF);
+		}
+
+		SMD5.bitRotateLeft=function(num,cnt){
+			return (num << cnt)| (num >>> (32-cnt))
+		}
+
+		SMD5.md5cmn=function(q,a,b,x,s,t){
+			return SMD5.safeAdd(SMD5.bitRotateLeft(SMD5.safeAdd(SMD5.safeAdd(a,q),SMD5.safeAdd(x,t)),s),b)
+		}
+
+		SMD5.md5ff=function(a,b,c,d,x,s,t){
+			return SMD5.md5cmn((b & c)| ((~b)& d),a,b,x,s,t)
+		}
+
+		SMD5.md5gg=function(a,b,c,d,x,s,t){
+			return SMD5.md5cmn((b & d)| (c & (~d)),a,b,x,s,t)
+		}
+
+		SMD5.md5hh=function(a,b,c,d,x,s,t){
+			return SMD5.md5cmn(b ^ c ^ d,a,b,x,s,t)
+		}
+
+		SMD5.md5ii=function(a,b,c,d,x,s,t){
+			return SMD5.md5cmn(c ^ (b | (~d)),a,b,x,s,t)
+		}
+
+		SMD5.binlMD5=function(x,len){
+			x[len >> 5] |=0x80 << (len % 32)
+			x[(((len+64)>>> 9)<< 4)+14]=len;
+			var i=0;
+			var olda=0;
+			var oldb=0;
+			var oldc=0;
+			var oldd=0;
+			var a=1732584193;
+			var b=-271733879;
+			var c=-1732584194;
+			var d=271733878;
+			for (i=0;i < x.length;i+=16){
+				olda=a
+				oldb=b
+				oldc=c
+				oldd=d
+				a=SMD5.md5ff(a,b,c,d,x[i],7,-680876936)
+				d=SMD5.md5ff(d,a,b,c,x[i+1],12,-389564586)
+				c=SMD5.md5ff(c,d,a,b,x[i+2],17,606105819)
+				b=SMD5.md5ff(b,c,d,a,x[i+3],22,-1044525330)
+				a=SMD5.md5ff(a,b,c,d,x[i+4],7,-176418897)
+				d=SMD5.md5ff(d,a,b,c,x[i+5],12,1200080426)
+				c=SMD5.md5ff(c,d,a,b,x[i+6],17,-1473231341)
+				b=SMD5.md5ff(b,c,d,a,x[i+7],22,-45705983)
+				a=SMD5.md5ff(a,b,c,d,x[i+8],7,1770035416)
+				d=SMD5.md5ff(d,a,b,c,x[i+9],12,-1958414417)
+				c=SMD5.md5ff(c,d,a,b,x[i+10],17,-42063)
+				b=SMD5.md5ff(b,c,d,a,x[i+11],22,-1990404162)
+				a=SMD5.md5ff(a,b,c,d,x[i+12],7,1804603682)
+				d=SMD5.md5ff(d,a,b,c,x[i+13],12,-40341101)
+				c=SMD5.md5ff(c,d,a,b,x[i+14],17,-1502002290)
+				b=SMD5.md5ff(b,c,d,a,x[i+15],22,1236535329)
+				a=SMD5.md5gg(a,b,c,d,x[i+1],5,-165796510)
+				d=SMD5.md5gg(d,a,b,c,x[i+6],9,-1069501632)
+				c=SMD5.md5gg(c,d,a,b,x[i+11],14,643717713)
+				b=SMD5.md5gg(b,c,d,a,x[i],20,-373897302)
+				a=SMD5.md5gg(a,b,c,d,x[i+5],5,-701558691)
+				d=SMD5.md5gg(d,a,b,c,x[i+10],9,38016083)
+				c=SMD5.md5gg(c,d,a,b,x[i+15],14,-660478335)
+				b=SMD5.md5gg(b,c,d,a,x[i+4],20,-405537848)
+				a=SMD5.md5gg(a,b,c,d,x[i+9],5,568446438)
+				d=SMD5.md5gg(d,a,b,c,x[i+14],9,-1019803690)
+				c=SMD5.md5gg(c,d,a,b,x[i+3],14,-187363961)
+				b=SMD5.md5gg(b,c,d,a,x[i+8],20,1163531501)
+				a=SMD5.md5gg(a,b,c,d,x[i+13],5,-1444681467)
+				d=SMD5.md5gg(d,a,b,c,x[i+2],9,-51403784)
+				c=SMD5.md5gg(c,d,a,b,x[i+7],14,1735328473)
+				b=SMD5.md5gg(b,c,d,a,x[i+12],20,-1926607734)
+				a=SMD5.md5hh(a,b,c,d,x[i+5],4,-378558)
+				d=SMD5.md5hh(d,a,b,c,x[i+8],11,-2022574463)
+				c=SMD5.md5hh(c,d,a,b,x[i+11],16,1839030562)
+				b=SMD5.md5hh(b,c,d,a,x[i+14],23,-35309556)
+				a=SMD5.md5hh(a,b,c,d,x[i+1],4,-1530992060)
+				d=SMD5.md5hh(d,a,b,c,x[i+4],11,1272893353)
+				c=SMD5.md5hh(c,d,a,b,x[i+7],16,-155497632)
+				b=SMD5.md5hh(b,c,d,a,x[i+10],23,-1094730640)
+				a=SMD5.md5hh(a,b,c,d,x[i+13],4,681279174)
+				d=SMD5.md5hh(d,a,b,c,x[i],11,-358537222)
+				c=SMD5.md5hh(c,d,a,b,x[i+3],16,-722521979)
+				b=SMD5.md5hh(b,c,d,a,x[i+6],23,76029189)
+				a=SMD5.md5hh(a,b,c,d,x[i+9],4,-640364487)
+				d=SMD5.md5hh(d,a,b,c,x[i+12],11,-421815835)
+				c=SMD5.md5hh(c,d,a,b,x[i+15],16,530742520)
+				b=SMD5.md5hh(b,c,d,a,x[i+2],23,-995338651)
+				a=SMD5.md5ii(a,b,c,d,x[i],6,-198630844)
+				d=SMD5.md5ii(d,a,b,c,x[i+7],10,1126891415)
+				c=SMD5.md5ii(c,d,a,b,x[i+14],15,-1416354905)
+				b=SMD5.md5ii(b,c,d,a,x[i+5],21,-57434055)
+				a=SMD5.md5ii(a,b,c,d,x[i+12],6,1700485571)
+				d=SMD5.md5ii(d,a,b,c,x[i+3],10,-1894986606)
+				c=SMD5.md5ii(c,d,a,b,x[i+10],15,-1051523)
+				b=SMD5.md5ii(b,c,d,a,x[i+1],21,-2054922799)
+				a=SMD5.md5ii(a,b,c,d,x[i+8],6,1873313359)
+				d=SMD5.md5ii(d,a,b,c,x[i+15],10,-30611744)
+				c=SMD5.md5ii(c,d,a,b,x[i+6],15,-1560198380)
+				b=SMD5.md5ii(b,c,d,a,x[i+13],21,1309151649)
+				a=SMD5.md5ii(a,b,c,d,x[i+4],6,-145523070)
+				d=SMD5.md5ii(d,a,b,c,x[i+11],10,-1120210379)
+				c=SMD5.md5ii(c,d,a,b,x[i+2],15,718787259)
+				b=SMD5.md5ii(b,c,d,a,x[i+9],21,-343485551)
+				a=SMD5.safeAdd(a,olda)
+				b=SMD5.safeAdd(b,oldb)
+				c=SMD5.safeAdd(c,oldc)
+				d=SMD5.safeAdd(d,oldd)
+			}
+			return [a,b,c,d]
+		}
+
+		SMD5.binl2rstr=function(input){
+			var i=0;
+			var output='';
+			var length32=input.length *32
+			for (i=0;i < length32;i+=8){
+				output+=String.fromCharCode((input[i >> 5] >>> (i % 32))& 0xFF)
+			}
+			return output;
+		}
+
+		SMD5.rstr2binl=function(input){
+			var i=0;
+			var output=[]
+			output[(input.length >> 2)-1]=undefined
+			for (i=0;i < output.length;i+=1){
+				output[i]=0
+			};
+			var length8=input.length *8
+			for (i=0;i < length8;i+=8){
+				output[i >> 5] |=(input.charCodeAt(i / 8)& 0xFF)<< (i % 32)
+			}
+			return output;
+		}
+
+		SMD5.rstrMD5=function(s){
+			return SMD5.binl2rstr(SMD5.binlMD5(SMD5.rstr2binl(s),s.length *8))
+		}
+
+		SMD5.rstrHMACMD5=function(key,data){
+			var i=0;
+			var bkey=SMD5.rstr2binl(key);
+			var ipad=[];
+			var opad=[];
+			var hash;
+			ipad[15]=opad[15]=undefined;
+			if (bkey.length > 16){
+				bkey=SMD5.binlMD5(bkey,key.length *8)
+			}
+			for (i=0;i < 16;i+=1){
+				ipad[i]=bkey[i] ^ 0x36363636
+				opad[i]=bkey[i] ^ 0x5C5C5C5C
+			}
+			hash=SMD5.binlMD5(ipad.concat(SMD5.rstr2binl(data)),512+data.length *8)
+			return SMD5.binl2rstr(SMD5.binlMD5(opad.concat(hash),512+128))
+		}
+
+		SMD5.rstr2hex=function(input){
+			var hexTab='0123456789abcdef';
+			var output='';
+			var x=0;
+			var i=0;
+			for (i=0;i < input.length;i+=1){
+				x=input.charCodeAt(i)
+				output+=hexTab.charAt((x >>> 4)& 0x0F)+
+				hexTab.charAt(x & 0x0F)
+			}
+			return output
+		}
+
+		SMD5.str2rstrUTF8=function(input){
+			return unescape(encodeURIComponent(input))
+		}
+
+		SMD5.rawMD5=function(s){
+			return SMD5.rstrMD5(SMD5.str2rstrUTF8(s))
+		}
+
+		SMD5.hexMD5=function(s){
+			return SMD5.rstr2hex(SMD5.rawMD5(s))
+		}
+
+		SMD5.rawHMACMD5=function(k,d){
+			return SMD5.rstrHMACMD5(SMD5.str2rstrUTF8(k),SMD5.str2rstrUTF8(d))
+		}
+
+		SMD5.hexHMACMD5=function(k,d){
+			return SMD5.rstr2hex(SMD5.rawHMACMD5(k,d))
+		}
+
+		SMD5.md5=function(string,key,raw){
+			if (!key){
+				if (!raw){
+					return SMD5.hexMD5(string)
+				}
+				return SMD5.rawMD5(string)
+			}
+			if (!raw){
+				return SMD5.hexHMACMD5(key,string)
+			}
+			return SMD5.rawHMACMD5(key,string)
+		}
+
+		return SMD5;
+	})()
+
+
+	/**
 	*...
 	*@author ww
 	*/
@@ -19727,6 +19953,7 @@ var Laya=window.Laya=(function(window,document){
 		function StockSocket(){
 			this.socket=null;
 			this.userName=null;
+			this.md5Pwd=null;
 			this.isLogined=false;
 			this._serverStr=null;
 			this.msgID=0;
@@ -19776,10 +20003,15 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		__proto.login=function(user,pwd){
+			this.loginRaw(user,SMD5.md5(pwd,user,null));
+		}
+
+		__proto.loginRaw=function(user,pwd){
 			var mData;
 			mData={};
 			mData.type="login";
 			mData.user=user;
+			this.md5Pwd=pwd;
 			mData.pwd=pwd;
 			this.userName=user;
 			this.sendJson(mData);
@@ -35810,107 +36042,6 @@ var Laya=window.Laya=(function(window,document){
 
 
 	/**
-	*使用 <code>VSlider</code> 控件，用户可以通过在滑块轨道的终点之间移动滑块来选择值。
-	*<p> <code>VSlider</code> 控件采用垂直方向。滑块轨道从下往上扩展，而标签位于轨道的左右两侧。</p>
-	*
-	*@example 以下示例代码，创建了一个 <code>VSlider</code> 实例。
-	*<listing version="3.0">
-	*package
-	*{
-		*import laya.ui.HSlider;
-		*import laya.ui.VSlider;
-		*import laya.utils.Handler;
-		*public class VSlider_Example
-		*{
-			*private var vSlider:VSlider;
-			*public function VSlider_Example()
-			*{
-				*Laya.init(640,800);//设置游戏画布宽高。
-				*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
-				*Laya.loader.load(["resource/ui/vslider.png","resource/ui/vslider$bar.png"],Handler.create(this,onLoadComplete));//加载资源。
-				*}
-			*private function onLoadComplete():void
-			*{
-				*vSlider=new VSlider();//创建一个 VSlider 类的实例对象 vSlider 。
-				*vSlider.skin="resource/ui/vslider.png";//设置 vSlider 的皮肤。
-				*vSlider.min=0;//设置 vSlider 最低位置值。
-				*vSlider.max=10;//设置 vSlider 最高位置值。
-				*vSlider.value=2;//设置 vSlider 当前位置值。
-				*vSlider.tick=1;//设置 vSlider 刻度值。
-				*vSlider.x=100;//设置 vSlider 对象的属性 x 的值，用于控制 vSlider 对象的显示位置。
-				*vSlider.y=100;//设置 vSlider 对象的属性 y 的值，用于控制 vSlider 对象的显示位置。
-				*vSlider.changeHandler=new Handler(this,onChange);//设置 vSlider 位置变化处理器。
-				*Laya.stage.addChild(vSlider);//把 vSlider 添加到显示列表。
-				*}
-			*private function onChange(value:Number):void
-			*{
-				*trace("滑块的位置： value="+value);
-				*}
-			*}
-		*}
-	*</listing>
-	*<listing version="3.0">
-	*Laya.init(640,800);//设置游戏画布宽高
-	*Laya.stage.bgColor="#efefef";//设置画布的背景颜色
-	*var vSlider;
-	*Laya.loader.load(["resource/ui/vslider.png","resource/ui/vslider$bar.png"],laya.utils.Handler.create(this,onLoadComplete));//加载资源。
-	*function onLoadComplete(){
-		*vSlider=new laya.ui.VSlider();//创建一个 VSlider 类的实例对象 vSlider 。
-		*vSlider.skin="resource/ui/vslider.png";//设置 vSlider 的皮肤。
-		*vSlider.min=0;//设置 vSlider 最低位置值。
-		*vSlider.max=10;//设置 vSlider 最高位置值。
-		*vSlider.value=2;//设置 vSlider 当前位置值。
-		*vSlider.tick=1;//设置 vSlider 刻度值。
-		*vSlider.x=100;//设置 vSlider 对象的属性 x 的值，用于控制 vSlider 对象的显示位置。
-		*vSlider.y=100;//设置 vSlider 对象的属性 y 的值，用于控制 vSlider 对象的显示位置。
-		*vSlider.changeHandler=new laya.utils.Handler(this,onChange);//设置 vSlider 位置变化处理器。
-		*Laya.stage.addChild(vSlider);//把 vSlider 添加到显示列表。
-		*}
-	*function onChange(value){
-		*console.log("滑块的位置： value="+value);
-		*}
-	*</listing>
-	*<listing version="3.0">
-	*import HSlider=laya.ui.HSlider;
-	*import VSlider=laya.ui.VSlider;
-	*import Handler=laya.utils.Handler;
-	*class VSlider_Example {
-		*private vSlider:VSlider;
-		*constructor(){
-			*Laya.init(640,800);//设置游戏画布宽高。
-			*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
-			*Laya.loader.load(["resource/ui/vslider.png","resource/ui/vslider$bar.png"],Handler.create(this,this.onLoadComplete));//加载资源。
-			*}
-		*private onLoadComplete():void {
-			*this.vSlider=new VSlider();//创建一个 VSlider 类的实例对象 vSlider 。
-			*this.vSlider.skin="resource/ui/vslider.png";//设置 vSlider 的皮肤。
-			*this.vSlider.min=0;//设置 vSlider 最低位置值。
-			*this.vSlider.max=10;//设置 vSlider 最高位置值。
-			*this.vSlider.value=2;//设置 vSlider 当前位置值。
-			*this.vSlider.tick=1;//设置 vSlider 刻度值。
-			*this.vSlider.x=100;//设置 vSlider 对象的属性 x 的值，用于控制 vSlider 对象的显示位置。
-			*this.vSlider.y=100;//设置 vSlider 对象的属性 y 的值，用于控制 vSlider 对象的显示位置。
-			*this.vSlider.changeHandler=new Handler(this,this.onChange);//设置 vSlider 位置变化处理器。
-			*Laya.stage.addChild(this.vSlider);//把 vSlider 添加到显示列表。
-			*}
-		*private onChange(value:number):void {
-			*console.log("滑块的位置： value="+value);
-			*}
-		*}
-	*</listing>
-	*@see laya.ui.Slider
-	*/
-	//class laya.ui.VSlider extends laya.ui.Slider
-	var VSlider=(function(_super){
-		function VSlider(){VSlider.__super.call(this);;
-		};
-
-		__class(VSlider,'laya.ui.VSlider',_super);
-		return VSlider;
-	})(Slider)
-
-
-	/**
 	*<code>TextInput</code> 类用于创建显示对象以显示和输入文本。
 	*
 	*@example 以下示例代码，创建了一个 <code>TextInput</code> 实例。
@@ -36223,6 +36354,107 @@ var Laya=window.Laya=(function(window,document){
 
 		return TextInput;
 	})(Label)
+
+
+	/**
+	*使用 <code>VSlider</code> 控件，用户可以通过在滑块轨道的终点之间移动滑块来选择值。
+	*<p> <code>VSlider</code> 控件采用垂直方向。滑块轨道从下往上扩展，而标签位于轨道的左右两侧。</p>
+	*
+	*@example 以下示例代码，创建了一个 <code>VSlider</code> 实例。
+	*<listing version="3.0">
+	*package
+	*{
+		*import laya.ui.HSlider;
+		*import laya.ui.VSlider;
+		*import laya.utils.Handler;
+		*public class VSlider_Example
+		*{
+			*private var vSlider:VSlider;
+			*public function VSlider_Example()
+			*{
+				*Laya.init(640,800);//设置游戏画布宽高。
+				*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
+				*Laya.loader.load(["resource/ui/vslider.png","resource/ui/vslider$bar.png"],Handler.create(this,onLoadComplete));//加载资源。
+				*}
+			*private function onLoadComplete():void
+			*{
+				*vSlider=new VSlider();//创建一个 VSlider 类的实例对象 vSlider 。
+				*vSlider.skin="resource/ui/vslider.png";//设置 vSlider 的皮肤。
+				*vSlider.min=0;//设置 vSlider 最低位置值。
+				*vSlider.max=10;//设置 vSlider 最高位置值。
+				*vSlider.value=2;//设置 vSlider 当前位置值。
+				*vSlider.tick=1;//设置 vSlider 刻度值。
+				*vSlider.x=100;//设置 vSlider 对象的属性 x 的值，用于控制 vSlider 对象的显示位置。
+				*vSlider.y=100;//设置 vSlider 对象的属性 y 的值，用于控制 vSlider 对象的显示位置。
+				*vSlider.changeHandler=new Handler(this,onChange);//设置 vSlider 位置变化处理器。
+				*Laya.stage.addChild(vSlider);//把 vSlider 添加到显示列表。
+				*}
+			*private function onChange(value:Number):void
+			*{
+				*trace("滑块的位置： value="+value);
+				*}
+			*}
+		*}
+	*</listing>
+	*<listing version="3.0">
+	*Laya.init(640,800);//设置游戏画布宽高
+	*Laya.stage.bgColor="#efefef";//设置画布的背景颜色
+	*var vSlider;
+	*Laya.loader.load(["resource/ui/vslider.png","resource/ui/vslider$bar.png"],laya.utils.Handler.create(this,onLoadComplete));//加载资源。
+	*function onLoadComplete(){
+		*vSlider=new laya.ui.VSlider();//创建一个 VSlider 类的实例对象 vSlider 。
+		*vSlider.skin="resource/ui/vslider.png";//设置 vSlider 的皮肤。
+		*vSlider.min=0;//设置 vSlider 最低位置值。
+		*vSlider.max=10;//设置 vSlider 最高位置值。
+		*vSlider.value=2;//设置 vSlider 当前位置值。
+		*vSlider.tick=1;//设置 vSlider 刻度值。
+		*vSlider.x=100;//设置 vSlider 对象的属性 x 的值，用于控制 vSlider 对象的显示位置。
+		*vSlider.y=100;//设置 vSlider 对象的属性 y 的值，用于控制 vSlider 对象的显示位置。
+		*vSlider.changeHandler=new laya.utils.Handler(this,onChange);//设置 vSlider 位置变化处理器。
+		*Laya.stage.addChild(vSlider);//把 vSlider 添加到显示列表。
+		*}
+	*function onChange(value){
+		*console.log("滑块的位置： value="+value);
+		*}
+	*</listing>
+	*<listing version="3.0">
+	*import HSlider=laya.ui.HSlider;
+	*import VSlider=laya.ui.VSlider;
+	*import Handler=laya.utils.Handler;
+	*class VSlider_Example {
+		*private vSlider:VSlider;
+		*constructor(){
+			*Laya.init(640,800);//设置游戏画布宽高。
+			*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
+			*Laya.loader.load(["resource/ui/vslider.png","resource/ui/vslider$bar.png"],Handler.create(this,this.onLoadComplete));//加载资源。
+			*}
+		*private onLoadComplete():void {
+			*this.vSlider=new VSlider();//创建一个 VSlider 类的实例对象 vSlider 。
+			*this.vSlider.skin="resource/ui/vslider.png";//设置 vSlider 的皮肤。
+			*this.vSlider.min=0;//设置 vSlider 最低位置值。
+			*this.vSlider.max=10;//设置 vSlider 最高位置值。
+			*this.vSlider.value=2;//设置 vSlider 当前位置值。
+			*this.vSlider.tick=1;//设置 vSlider 刻度值。
+			*this.vSlider.x=100;//设置 vSlider 对象的属性 x 的值，用于控制 vSlider 对象的显示位置。
+			*this.vSlider.y=100;//设置 vSlider 对象的属性 y 的值，用于控制 vSlider 对象的显示位置。
+			*this.vSlider.changeHandler=new Handler(this,this.onChange);//设置 vSlider 位置变化处理器。
+			*Laya.stage.addChild(this.vSlider);//把 vSlider 添加到显示列表。
+			*}
+		*private onChange(value:number):void {
+			*console.log("滑块的位置： value="+value);
+			*}
+		*}
+	*</listing>
+	*@see laya.ui.Slider
+	*/
+	//class laya.ui.VSlider extends laya.ui.Slider
+	var VSlider=(function(_super){
+		function VSlider(){VSlider.__super.call(this);;
+		};
+
+		__class(VSlider,'laya.ui.VSlider',_super);
+		return VSlider;
+	})(Slider)
 
 
 	/**
@@ -38153,6 +38385,7 @@ var Laya=window.Laya=(function(window,document){
 	//class view.netcomps.LoginView extends ui.netcomps.LoginViewUI
 	var LoginView=(function(_super){
 		function LoginView(){
+			this.DataSign="loginInfo";
 			LoginView.__super.call(this);
 			this.pwdInput.asPassword=true;
 			this.visible=false;
@@ -38167,6 +38400,15 @@ var Laya=window.Laya=(function(window,document){
 		var __proto=LoginView.prototype;
 		__proto.onConnected=function(){
 			this.visible=true;
+			this.tryLogin();
+		}
+
+		__proto.tryLogin=function(){
+			var data;
+			data=LocalStorage.getJSON(this.DataSign);
+			if (data && data.user && data.pwd){
+				MainSocket.I.socket.loginRaw(data.user,data.pwd);
+			}
 		}
 
 		__proto.onLoginBtn=function(){
@@ -38174,6 +38416,13 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		__proto.onLogin=function(){
+			if (MainSocket.I.socket.isLogined){
+				var userData;
+				userData={};
+				userData.user=MainSocket.I.socket.userName;
+				userData.pwd=MainSocket.I.socket.md5Pwd;
+				LocalStorage.setJSON(this.DataSign,userData);
+			}
 			this.updateUIState();
 		}
 
@@ -38944,25 +39193,6 @@ var Laya=window.Laya=(function(window,document){
 	*...
 	*@author ww
 	*/
-	//class laya.debug.view.nodeInfo.nodetree.FindNodeSmall extends laya.debug.ui.debugui.FindNodeSmallUI
-	var FindNodeSmall=(function(_super){
-		function FindNodeSmall(){
-			FindNodeSmall.__super.call(this);
-			Base64AtlasManager.replaceRes(FindNodeSmallUI.uiView);
-			this.createView(FindNodeSmallUI.uiView);
-		}
-
-		__class(FindNodeSmall,'laya.debug.view.nodeInfo.nodetree.FindNodeSmall',_super);
-		var __proto=FindNodeSmall.prototype;
-		__proto.createChildren=function(){}
-		return FindNodeSmall;
-	})(FindNodeSmallUI)
-
-
-	/**
-	*...
-	*@author ww
-	*/
 	//class laya.debug.view.nodeInfo.nodetree.FindNode extends laya.debug.ui.debugui.FindNodeUI
 	var FindNode=(function(_super){
 		function FindNode(){
@@ -38979,6 +39209,25 @@ var Laya=window.Laya=(function(window,document){
 
 		return FindNode;
 	})(FindNodeUI)
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class laya.debug.view.nodeInfo.nodetree.FindNodeSmall extends laya.debug.ui.debugui.FindNodeSmallUI
+	var FindNodeSmall=(function(_super){
+		function FindNodeSmall(){
+			FindNodeSmall.__super.call(this);
+			Base64AtlasManager.replaceRes(FindNodeSmallUI.uiView);
+			this.createView(FindNodeSmallUI.uiView);
+		}
+
+		__class(FindNodeSmall,'laya.debug.view.nodeInfo.nodetree.FindNodeSmall',_super);
+		var __proto=FindNodeSmall.prototype;
+		__proto.createChildren=function(){}
+		return FindNodeSmall;
+	})(FindNodeSmallUI)
 
 
 	/**
@@ -39509,8 +39758,8 @@ var Laya=window.Laya=(function(window,document){
 
 
 /*
-1 file:///D:/stocksite.git/trunk/StockClient/src/stock/StockSocket.as (84):warning:mData This variable is not defined.
-2 file:///D:/stocksite.git/trunk/StockClient/src/stock/StockSocket.as (85):warning:mData.type This variable is not defined.
-3 file:///D:/stocksite.git/trunk/StockClient/src/stock/StockSocket.as (86):warning:mData.sign This variable is not defined.
-4 file:///D:/stocksite.git/trunk/StockClient/src/stock/StockSocket.as (87):warning:mData This variable is not defined.
+1 file:///D:/stocksite.git/trunk/StockClient/src/stock/StockSocket.as (91):warning:mData This variable is not defined.
+2 file:///D:/stocksite.git/trunk/StockClient/src/stock/StockSocket.as (92):warning:mData.type This variable is not defined.
+3 file:///D:/stocksite.git/trunk/StockClient/src/stock/StockSocket.as (93):warning:mData.sign This variable is not defined.
+4 file:///D:/stocksite.git/trunk/StockClient/src/stock/StockSocket.as (94):warning:mData This variable is not defined.
 */

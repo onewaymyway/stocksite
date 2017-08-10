@@ -3,6 +3,7 @@ package stock {
 	import laya.events.EventDispatcher;
 	import laya.net.Socket;
 	import laya.utils.Byte;
+	import stock.tools.SMD5;
 	
 	/**
 	 * ...
@@ -11,6 +12,7 @@ package stock {
 	public class StockSocket extends EventDispatcher {
 		private var socket:Socket;
 		public var userName:String;
+		public var md5Pwd:String;
 		public var isLogined:Boolean;
 		private var _serverStr:String;
 		public static const DataFromServer:String = "DataFromServer";
@@ -66,15 +68,20 @@ package stock {
 		}
 		
 		public function login(user:String, pwd:String):void {
+			loginRaw(user, SMD5.md5(pwd, user, null));
+		}
+		
+		public function loginRaw(user:String, pwd:String):void
+		{
 			var mData:Object;
 			mData = {};
 			mData.type = StockMsg.Login;
 			mData.user = user;
+			md5Pwd = pwd;
 			mData.pwd = pwd;
 			userName = user;
 			sendJson(mData);
 		}
-		
 		public function saveUserData(sign:String, data:*):void {
 			var mData:Object;
 			mData = {};

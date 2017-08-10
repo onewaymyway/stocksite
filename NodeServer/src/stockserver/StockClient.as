@@ -40,7 +40,7 @@ package stockserver
 					sendJson({type:data.type,rst:userData.isLogined});
 					break;
 				case StockMsg.Regist:
-					sendJson( {type:data.type,rst:UserSystem.I.createUser(data.user,data.pwd});
+					sendJson( {type:data.type,rst:UserSystem.I.createUser(data.user,data.pwd)});
 					break;
 				case StockMsg.SaveMyStocks:
 					trace("saveData:", data.sign, data.data);

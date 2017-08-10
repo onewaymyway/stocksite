@@ -1,6 +1,7 @@
 package stockserver.users 
 {
 	import nodetools.devices.FileManager;
+	import stock.tools.SMD5;
 	/**
 	 * ...
 	 * @author ww
@@ -30,7 +31,7 @@ package stockserver.users
 			var dataO:Object;
 			dataO = getUserData(userName);
 			if (!dataO) return false;
-			return dataO.pwd == userPwd;
+			return SMD5.md5(dataO.pwd,userName,null) == userPwd;
 		}
 		
 		public function getUserPath(userName:String):String

@@ -1,6 +1,7 @@
 package view.netcomps 
 {
 	import laya.events.Event;
+	import laya.net.LocalStorage;
 	import stock.StockSocket;
 	import ui.netcomps.LoginViewUI;
 	
@@ -21,10 +22,21 @@ package view.netcomps
 			MainSocket.I.socket.on(StockSocket.Welcome, this, onConnected);
 			loginBtn.on(Event.MOUSE_DOWN, this, onLoginBtn);
 		}
-		
+		public var DataSign:String = "loginInfo";
 		private function onConnected():void
 		{
 			this.visible = true;
+			tryLogin();
+		}
+		
+		private function tryLogin():void
+		{
+			var data:Object;
+			data = LocalStorage.getJSON(DataSign);
+			if (data && data.user && data.pwd)
+			{
+				MainSocket.I.socket.loginRaw(data.user, data.pwd);
+			}
 		}
 		private function onLoginBtn():void
 		{
@@ -33,6 +45,14 @@ package view.netcomps
 		
 		private function onLogin():void
 		{
+			if (MainSocket.I.socket.isLogined)
+			{
+				var userData:Object;
+				userData = { };
+				userData.user = MainSocket.I.socket.userName;
+				userData.pwd = MainSocket.I.socket.md5Pwd;
+				LocalStorage.setJSON(DataSign, userData);
+			}
 			updateUIState();
 		}
 		
