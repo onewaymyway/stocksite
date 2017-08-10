@@ -39066,6 +39066,7 @@ var Laya=window.Laya=(function(window,document){
 
 		__proto.onAutoFreshChange=function(){
 			if (this.autoFresh.selected&&this.displayedInStage){
+				this.stockDataGetter.freshData();
 				this.stockDataGetter.startFresh();
 				}else{
 				this.stockDataGetter.stopFresh();

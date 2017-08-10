@@ -50,6 +50,7 @@ package view {
 		{
 			if (autoFresh.selected&&this.displayedInStage)
 			{
+				stockDataGetter.freshData();
 				stockDataGetter.startFresh();
 			}else
 			{
