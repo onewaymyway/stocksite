@@ -23,6 +23,7 @@ package laya.tools
 			{
 				scp.src = "";
 				Browser.removeElement(scp);
+				if(complete)
 				complete.run();
 			}
 		}
