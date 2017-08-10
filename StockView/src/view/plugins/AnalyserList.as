@@ -23,6 +23,12 @@ package view.plugins
 			list.renderHandler = new Handler(this, mRender);
 			list.array = [];
 			list.scrollBar.autoHide = true;
+			showSelect.on(Event.CHANGE, this, updateUIState);
+		}
+		
+		private function updateUIState():void
+		{
+			list.visible = showSelect.selected;
 		}
 		private var dataList:Array;
 		public function initAnalysers(analyserList:Array):void

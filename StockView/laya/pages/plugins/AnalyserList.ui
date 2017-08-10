@@ -2,8 +2,8 @@
     "x":0,
     "type":"View",
     "selectedBox":1,
-    "selecteID":6,
-    "props":{"sceneWidth":445,"sceneHeight":400,"sceneColor":"#000000"},
+    "selecteID":7,
+    "props":{"width":160,"sceneWidth":160,"sceneHeight":212,"sceneColor":"#000000","height":212},
     "nodeParent":-1,
     "label":"View",
     "isOpen":true,
@@ -15,7 +15,7 @@
         {
             "x":15,
             "type":"List",
-            "props":{"y":0,"x":2,"width":160,"var":"list","vScrollBarSkin":"comp/vscroll.png","height":193},
+            "props":{"y":19,"x":0,"width":160,"var":"list","vScrollBarSkin":"comp/vscroll.png","height":193},
             "nodeParent":1,
             "label":"List(list)",
             "isOpen":true,
@@ -63,6 +63,19 @@
                                 ]
                         }]
                 }]
+        },
+        {
+            "x":15,
+            "type":"CheckBox",
+            "props":{"y":0,"x":2,"var":"showSelect","skin":"comp/checkbox.png","selected":true,"label":"显示插件列表"},
+            "nodeParent":1,
+            "label":"CheckBox(showSelect)",
+            "isDirectory":false,
+            "isAniNode":true,
+            "hasChild":false,
+            "compId":7,
+            "child":[
+                ]
         }],
     "animations":[
         {

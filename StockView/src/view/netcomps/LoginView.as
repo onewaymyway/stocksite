@@ -18,6 +18,7 @@ package view.netcomps
 			pwdInput.asPassword = true;
 			this.visible = false;
 			MainSocket.I.serverStr = "ws://orzooo.com:9909";
+			//MainSocket.I.serverStr = "wss://orzooo.com:9909";
 			MainSocket.I.connect();
 			MainSocket.I.socket.on(StockSocket.Logined, this, onLogin);
 			MainSocket.I.socket.on(StockSocket.Welcome, this, onConnected);
