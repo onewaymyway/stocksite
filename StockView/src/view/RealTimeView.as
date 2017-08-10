@@ -4,6 +4,7 @@ package view
 	import laya.events.Event;
 	import laya.net.LocalStorage;
 	import laya.tools.StockJsonP;
+	import laya.uicomps.MessageManager;
 	import msgs.MsgConst;
 	import stock.StockSocket;
 	import stock.views.MDLine;
@@ -55,6 +56,7 @@ package view
 		private function onServerStock(dataO:Object):void
 		{
 			trace("onServerStock:", dataO);
+			MessageManager.I.show("get stock success");
 			if (dataO.data)
 			{
 				var tArr:Array;

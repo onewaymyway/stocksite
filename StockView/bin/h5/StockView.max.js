@@ -1951,103 +1951,6 @@ var Laya=window.Laya=(function(window,document){
 
 
 	/**
-	*...
-	*@author ww
-	*/
-	//class msgs.MsgConst
-	var MsgConst=(function(){
-		function MsgConst(){}
-		__class(MsgConst,'msgs.MsgConst');
-		MsgConst.Show_Stock_KLine="Show_Stock_KLine";
-		MsgConst.Show_Next_Select="Show_Next_Select";
-		MsgConst.Show_Pre_Select="Show_Pre_Select";
-		MsgConst.AnalyserListChange="AnalyserListChange";
-		MsgConst.Show_Analyser_Prop="Show_Analyser_Prop";
-		MsgConst.Set_Analyser_Prop="Set_Analyser_Prop";
-		MsgConst.Fresh_Analyser_Prop="Fresh_Analyser_Prop";
-		MsgConst.Stock_Data_Inited="DataInited";
-		MsgConst.Add_MyStock="AddMyStock";
-		MsgConst.Remove_MyStock="Remove_MyStock";
-		MsgConst.Add_MDLine="Add_MDLine";
-		MsgConst.Remove_MDLine="Remove_MDLine";
-		return MsgConst;
-	})()
-
-
-	/**
-	*...
-	*@author ww
-	*/
-	//class stock.CSVParser
-	var CSVParser=(function(){
-		function CSVParser(){
-			this.dataList=null;
-			this.numKeys=[];
-		}
-
-		__class(CSVParser,'stock.CSVParser');
-		var __proto=CSVParser.prototype;
-		__proto.adaptValues=function(){
-			var i=0,len=0;
-			len=this.dataList.length;
-			for (i=0;i < len;i++){
-				this.adptDataValues(this.dataList[i]);
-			}
-		}
-
-		__proto.adptDataValues=function(data){
-			var i=0,len=0;
-			len=this.numKeys.length;
-			var tKey;
-			for (i=0;i < len;i++){
-				tKey=this.numKeys[i];
-				data[tKey]=DataUtils.mParseFloat(data[tKey]);
-			}
-		}
-
-		__proto.init=function(csvStr){
-			csvStr=StringTool.getReplace(csvStr,"\r","");
-			var lines;
-			lines=csvStr.split("\n");
-			var keys;
-			keys=lines[0].split(",");
-			var i=0,len=0;
-			len=lines.length;
-			this.dataList=[];
-			var tArr;
-			var tStockO;
-			var j=0,jLen=0;
-			jLen=keys.length;
-			for (i=1;i < len;i++){
-				if (!lines[i])continue ;
-				tStockO={};
-				this.dataList.push(tStockO);
-				tArr=lines[i].split(",");
-				for (j=0;j < jLen;j++){
-					tStockO[keys[j]]=tArr[j];
-				}
-			}
-			this.adaptValues();
-		}
-
-		return CSVParser;
-	})()
-
-
-	/**
-	*...
-	*@author ww
-	*/
-	//class stock.PathConfig
-	var PathConfig=(function(){
-		function PathConfig(){}
-		__class(PathConfig,'stock.PathConfig');
-		PathConfig.stockBasic="res/stockinfo.csv";
-		return PathConfig;
-	})()
-
-
-	/**
 	*<code>EventDispatcher</code> 类是可调度事件的所有类的基类。
 	*/
 	//class laya.events.EventDispatcher
@@ -2338,6 +2241,103 @@ var Laya=window.Laya=(function(window,document){
 		Handler._pool=[];
 		Handler._gid=1;
 		return Handler;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class msgs.MsgConst
+	var MsgConst=(function(){
+		function MsgConst(){}
+		__class(MsgConst,'msgs.MsgConst');
+		MsgConst.Show_Stock_KLine="Show_Stock_KLine";
+		MsgConst.Show_Next_Select="Show_Next_Select";
+		MsgConst.Show_Pre_Select="Show_Pre_Select";
+		MsgConst.AnalyserListChange="AnalyserListChange";
+		MsgConst.Show_Analyser_Prop="Show_Analyser_Prop";
+		MsgConst.Set_Analyser_Prop="Set_Analyser_Prop";
+		MsgConst.Fresh_Analyser_Prop="Fresh_Analyser_Prop";
+		MsgConst.Stock_Data_Inited="DataInited";
+		MsgConst.Add_MyStock="AddMyStock";
+		MsgConst.Remove_MyStock="Remove_MyStock";
+		MsgConst.Add_MDLine="Add_MDLine";
+		MsgConst.Remove_MDLine="Remove_MDLine";
+		return MsgConst;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class stock.CSVParser
+	var CSVParser=(function(){
+		function CSVParser(){
+			this.dataList=null;
+			this.numKeys=[];
+		}
+
+		__class(CSVParser,'stock.CSVParser');
+		var __proto=CSVParser.prototype;
+		__proto.adaptValues=function(){
+			var i=0,len=0;
+			len=this.dataList.length;
+			for (i=0;i < len;i++){
+				this.adptDataValues(this.dataList[i]);
+			}
+		}
+
+		__proto.adptDataValues=function(data){
+			var i=0,len=0;
+			len=this.numKeys.length;
+			var tKey;
+			for (i=0;i < len;i++){
+				tKey=this.numKeys[i];
+				data[tKey]=DataUtils.mParseFloat(data[tKey]);
+			}
+		}
+
+		__proto.init=function(csvStr){
+			csvStr=StringTool.getReplace(csvStr,"\r","");
+			var lines;
+			lines=csvStr.split("\n");
+			var keys;
+			keys=lines[0].split(",");
+			var i=0,len=0;
+			len=lines.length;
+			this.dataList=[];
+			var tArr;
+			var tStockO;
+			var j=0,jLen=0;
+			jLen=keys.length;
+			for (i=1;i < len;i++){
+				if (!lines[i])continue ;
+				tStockO={};
+				this.dataList.push(tStockO);
+				tArr=lines[i].split(",");
+				for (j=0;j < jLen;j++){
+					tStockO[keys[j]]=tArr[j];
+				}
+			}
+			this.adaptValues();
+		}
+
+		return CSVParser;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class stock.PathConfig
+	var PathConfig=(function(){
+		function PathConfig(){}
+		__class(PathConfig,'stock.PathConfig');
+		PathConfig.stockBasic="res/stockinfo.csv";
+		return PathConfig;
 	})()
 
 
@@ -19993,6 +19993,7 @@ var Laya=window.Laya=(function(window,document){
 					this.event("Logined");
 					break ;
 				case "SaveMyStocks":
+					MessageManager.I.show("saveMessage success");
 					break ;
 				case "GetStocks":
 					this.event("DataFromServer",dataO);
@@ -20018,6 +20019,7 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		__proto.saveUserData=function(sign,data){
+			MessageManager.I.show("try saveUserData:"+sign);
 			var mData;
 			mData={};
 			mData.type="SaveMyStocks";
@@ -20027,6 +20029,7 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		__proto.getUserData=function(sign){
+			MessageManager.I.show("try getUserData:"+sign);
 			/*no*/this.mData={};
 			/*no*/this.mData.type="GetStocks";
 			/*no*/this.mData.sign=sign;
@@ -22805,6 +22808,61 @@ var Laya=window.Laya=(function(window,document){
 		WebAudioSoundChannel._tryCleanFailed=false;
 		return WebAudioSoundChannel;
 	})(SoundChannel)
+
+
+	/**消息管理器
+	*@author yung
+	*/
+	//class laya.uicomps.MessageManager extends laya.display.Sprite
+	var MessageManager=(function(_super){
+		function MessageManager(){
+			this.preTime=0;
+			MessageManager.__super.call(this);
+			this._vbox=new Box();
+			this.addChild(this._vbox);
+			this.setBounds(new Rectangle(0,0,150,150));
+			Laya.stage.addChild(this);
+		}
+
+		__class(MessageManager,'laya.uicomps.MessageManager',_super);
+		var __proto=MessageManager.prototype;
+		__proto.show=function(msg,color,time){
+			(color===void 0)&& (color="ff0000");
+			(time===void 0)&& (time=1000);
+			var label=new Label();
+			label.color="#"+color;
+			label.fontSize=14;
+			label.text=msg;
+			label.y=100;
+			label.height=30;
+			var delayTime=0;
+			var nowTime=0;
+			var startTime=0;
+			nowTime=Browser.now();
+			startTime=Math.max(this.preTime+500,nowTime);
+			delayTime=startTime-nowTime;
+			this.preTime=startTime;
+			Laya.timer.once(delayTime,this,this.showLabel,[label,time],false);
+		}
+
+		__proto.showLabel=function(label,time){
+			this.pos(Laya.stage.width *0.5-100,120);
+			this._vbox.addChild(label);
+			Tween.to(label,{y:-20},time,Ease.cubicOut,null);
+			Laya.timer.once(time,this,this.clear,[label],false);
+		}
+
+		__proto.clear=function(label){
+			label.removeSelf();
+		}
+
+		__getset(1,MessageManager,'I',function(){
+			return MessageManager._instance ? MessageManager._instance :MessageManager._instance=new MessageManager();
+		},laya.display.Sprite._$SET_I);
+
+		MessageManager._instance=null
+		return MessageManager;
+	})(Sprite)
 
 
 	/**
@@ -27654,6 +27712,27 @@ var Laya=window.Laya=(function(window,document){
 
 
 	/**
+	*
+	*@author ww
+	*@version 1.0
+	*
+	*@created 2015-9-29 上午11:17:35
+	*/
+	//class laya.debug.tools.debugUI.DButton extends laya.display.Text
+	var DButton=(function(_super){
+		function DButton(){
+			DButton.__super.call(this);
+			this.bgColor="#ffff00";
+			this.wordWrap=false;
+			this.mouseEnabled=true;
+		}
+
+		__class(DButton,'laya.debug.tools.debugUI.DButton',_super);
+		return DButton;
+	})(Text)
+
+
+	/**
 	*<code>ColorPicker</code> 组件将显示包含多个颜色样本的列表，用户可以从中选择颜色。
 	*
 	*@example 以下示例代码，创建了一个 <code>ColorPicker</code> 实例。
@@ -28503,27 +28582,6 @@ var Laya=window.Laya=(function(window,document){
 
 		return ComboBox;
 	})(Component)
-
-
-	/**
-	*
-	*@author ww
-	*@version 1.0
-	*
-	*@created 2015-9-29 上午11:17:35
-	*/
-	//class laya.debug.tools.debugUI.DButton extends laya.display.Text
-	var DButton=(function(_super){
-		function DButton(){
-			DButton.__super.call(this);
-			this.bgColor="#ffff00";
-			this.wordWrap=false;
-			this.mouseEnabled=true;
-		}
-
-		__class(DButton,'laya.debug.tools.debugUI.DButton',_super);
-		return DButton;
-	})(Text)
 
 
 	/**
@@ -36786,11 +36844,13 @@ var Laya=window.Laya=(function(window,document){
 	//class ui.netcomps.LoginViewUI extends laya.ui.View
 	var LoginViewUI=(function(_super){
 		function LoginViewUI(){
-			this.usernameTxt=null;
 			this.loginBox=null;
 			this.userNameInput=null;
 			this.pwdInput=null;
 			this.loginBtn=null;
+			this.loginedBox=null;
+			this.logoutBtn=null;
+			this.usernameTxt=null;
 			LoginViewUI.__super.call(this);
 		}
 
@@ -36801,7 +36861,7 @@ var Laya=window.Laya=(function(window,document){
 			this.createView(LoginViewUI.uiView);
 		}
 
-		LoginViewUI.uiView={"type":"View","props":{"width":288,"height":26},"child":[{"type":"Label","props":{"y":2,"x":8,"width":141,"visible":false,"var":"usernameTxt","text":"username","height":20,"color":"#ffffff"}},{"type":"Box","props":{"y":2,"x":6,"var":"loginBox"},"child":[{"type":"TextInput","props":{"width":96,"var":"userNameInput","skin":"comp/input_24.png","prompt":"username","height":22,"color":"#f6e1e1"}},{"type":"TextInput","props":{"x":107,"width":96,"var":"pwdInput","skin":"comp/input_24.png","prompt":"pwd","height":22,"color":"#f6e1e1"}},{"type":"Button","props":{"x":212,"var":"loginBtn","skin":"comp/button.png","label":"login","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}}]}]};
+		LoginViewUI.uiView={"type":"View","props":{"width":288,"height":26},"child":[{"type":"Box","props":{"y":2,"x":6,"var":"loginBox"},"child":[{"type":"TextInput","props":{"width":96,"var":"userNameInput","skin":"comp/input_24.png","prompt":"username","height":22,"color":"#f6e1e1"}},{"type":"TextInput","props":{"x":107,"width":96,"var":"pwdInput","skin":"comp/input_24.png","prompt":"pwd","height":22,"color":"#f6e1e1"}},{"type":"Button","props":{"x":212,"var":"loginBtn","skin":"comp/button.png","label":"login","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}}]},{"type":"Box","props":{"y":2,"x":8,"visible":false,"var":"loginedBox"},"child":[{"type":"Button","props":{"x":210,"var":"logoutBtn","skin":"comp/button.png","label":"logout","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Label","props":{"width":141,"visible":true,"var":"usernameTxt","text":"username","height":20,"color":"#ffffff"}}]}]};
 		return LoginViewUI;
 	})(View)
 
@@ -36892,7 +36952,7 @@ var Laya=window.Laya=(function(window,document){
 			this.createView(SelectStockViewUI.uiView);
 		}
 
-		SelectStockViewUI.uiView={"type":"View","props":{"width":445,"height":400},"child":[{"type":"List","props":{"var":"list","vScrollBarSkin":"comp/vscroll.png","top":30,"right":10,"left":10,"bottom":10},"child":[{"type":"Box","props":{"y":0,"x":0,"width":168,"name":"render","height":61},"child":[{"type":"Label","props":{"wordWrap":true,"top":0,"text":"this is a list","skin":"comp/label.png","right":0,"name":"label","left":0,"fontSize":14,"color":"#efe82f","bottom":0,"borderColor":"#fb125d"}},{"type":"Label","props":{"y":39,"x":72,"wordWrap":true,"width":96,"text":"this is a list","skin":"comp/label.png","name":"info","height":22,"fontSize":14,"color":"#efe82f","align":"right"}}]}]},{"type":"Label","props":{"y":-41,"width":271,"var":"tip","text":"股票代码:当前盈利:最高盈利","right":40,"height":42,"color":"#f33713"}},{"type":"ComboBox","props":{"y":3,"visibleNum":15,"var":"typeSelect","skin":"comp/combobox.png","selectedIndex":0,"scrollBarSkin":"comp/vscroll.png","right":20,"labels":"KLine,Position","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"CheckBox","props":{"y":10,"x":11,"width":75,"var":"autoFresh","skin":"comp/checkbox.png","selected":false,"label":"自动刷新","height":14,"labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}}]};
+		SelectStockViewUI.uiView={"type":"View","props":{"width":445,"height":400},"child":[{"type":"List","props":{"var":"list","vScrollBarSkin":"comp/vscroll.png","top":30,"right":10,"left":10,"bottom":10},"child":[{"type":"Box","props":{"y":0,"x":0,"width":168,"name":"render","height":61},"child":[{"type":"Label","props":{"wordWrap":true,"top":0,"text":"this is a list","skin":"comp/label.png","right":0,"name":"label","left":0,"fontSize":14,"color":"#efe82f","bottom":0,"borderColor":"#fb125d"}},{"type":"Label","props":{"y":39,"x":72,"wordWrap":true,"width":96,"text":"this is a list","skin":"comp/label.png","name":"info","height":22,"fontSize":14,"color":"#efe82f","align":"right"}}]}]},{"type":"Label","props":{"y":-41,"width":271,"var":"tip","text":"股票代码:当前盈利:最高盈利","right":320,"height":42,"color":"#f33713"}},{"type":"ComboBox","props":{"y":3,"visibleNum":15,"var":"typeSelect","skin":"comp/combobox.png","selectedIndex":0,"scrollBarSkin":"comp/vscroll.png","right":20,"labels":"KLine,Position","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"CheckBox","props":{"y":10,"x":11,"width":75,"var":"autoFresh","skin":"comp/checkbox.png","selected":false,"label":"自动刷新","height":14,"labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}}]};
 		return SelectStockViewUI;
 	})(View)
 
@@ -38394,11 +38454,22 @@ var Laya=window.Laya=(function(window,document){
 			MainSocket.I.socket.on("Logined",this,this.onLogin);
 			MainSocket.I.socket.on("Welcome",this,this.onConnected);
 			this.loginBtn.on("mousedown",this,this.onLoginBtn);
+			this.logoutBtn.on("mousedown",this,this.onLogOut);
 		}
 
 		__class(LoginView,'view.netcomps.LoginView',_super);
 		var __proto=LoginView.prototype;
+		__proto.onLogOut=function(){
+			MainSocket.I.socket.isLogined=false;
+			MainSocket.I.socket.md5Pwd="";
+			this.pwdInput.text="";
+			this.saveLoginData();
+			this.updateUIState();
+			MessageManager.I.show("logout success");
+		}
+
 		__proto.onConnected=function(){
+			MessageManager.I.show("Connect to server success");
 			this.visible=true;
 			this.tryLogin();
 		}
@@ -38407,32 +38478,40 @@ var Laya=window.Laya=(function(window,document){
 			var data;
 			data=LocalStorage.getJSON(this.DataSign);
 			if (data && data.user && data.pwd){
+				MessageManager.I.show("try login");
 				MainSocket.I.socket.loginRaw(data.user,data.pwd);
 			}
 		}
 
 		__proto.onLoginBtn=function(){
+			MessageManager.I.show("try login");
 			MainSocket.I.socket.login(this.userNameInput.text,this.pwdInput.text);
 		}
 
 		__proto.onLogin=function(){
 			if (MainSocket.I.socket.isLogined){
-				var userData;
-				userData={};
-				userData.user=MainSocket.I.socket.userName;
-				userData.pwd=MainSocket.I.socket.md5Pwd;
-				LocalStorage.setJSON(this.DataSign,userData);
+				this.saveLoginData();
 			}
 			this.updateUIState();
 		}
 
+		__proto.saveLoginData=function(){
+			var userData;
+			userData={};
+			userData.user=MainSocket.I.socket.userName;
+			userData.pwd=MainSocket.I.socket.md5Pwd;
+			LocalStorage.setJSON(this.DataSign,userData);
+		}
+
 		__proto.updateUIState=function(){
 			if (MainSocket.I.socket.isLogined){
-				this.usernameTxt.visible=true;
+				MessageManager.I.show("login success");
+				this.loginedBox.visible=true;
 				this.loginBox.visible=false;
 				this.usernameTxt.text=MainSocket.I.socket.userName;
 				}else{
-				this.usernameTxt.visible=false;
+				MessageManager.I.show("login fail");
+				this.loginedBox.visible=false;
 				this.loginBox.visible=true;
 			}
 		}
@@ -38553,66 +38632,6 @@ var Laya=window.Laya=(function(window,document){
 	*...
 	*@author ww
 	*/
-	//class view.realtime.RealTimeItem extends ui.realtime.StockRealTimeItemUI
-	var RealTimeItem=(function(_super){
-		function RealTimeItem(){
-			this.stock=null;
-			this.isSettingV=false;
-			RealTimeItem.__super.call(this);
-			this.delBtn.on("mousedown",this,this.onDeleteBtn);
-			this.on("doubleclick",this,this.onDoubleClick);
-		}
-
-		__class(RealTimeItem,'view.realtime.RealTimeItem',_super);
-		var __proto=RealTimeItem.prototype;
-		__proto.initByStock=function(stock){
-			if (!stock)return;
-			this.stock=stock;
-			this.txt.text=stock;
-			var dataO;
-			dataO=StockJsonP.getStockData(stock);
-			if (dataO){
-				this.txt.text=dataO.code+","+dataO.name+","+dataO.price+","+StockTools.getGoodPercent((dataO.price-dataO.close)/ dataO.close)+"%";
-				this.txt.color=dataO.price-dataO.close > 0?"#ff0000":"#00ff00";
-				this.isSettingV=true;
-				this.showLine.selected=RealTimeItem.showStockDic[stock];
-				this.showLine.on("change",this,this.onShowLineChange);
-				this.isSettingV=false;
-			}
-		}
-
-		__proto.onShowLineChange=function(){
-			if (this.isSettingV)return;
-			RealTimeItem.showStockDic[this.stock]=this.showLine.selected;
-			if (this.showLine.selected){
-				Notice.notify("Add_MDLine",[this.stock]);
-				}else{
-				Notice.notify("Remove_MDLine",[this.stock]);
-			}
-		}
-
-		__proto.onDoubleClick=function(){
-			Notice.notify("Show_Stock_KLine",StockJsonP.getPureStock(this.stock));
-		}
-
-		__proto.onDeleteBtn=function(){
-			Notice.notify("Remove_MyStock",this.stock);
-		}
-
-		__getset(0,__proto,'dataSource',_super.prototype._$get_dataSource,function(value){
-			_super.prototype._$set_dataSource.call(this,value);
-			this.initByStock(value);
-		});
-
-		RealTimeItem.showStockDic={};
-		return RealTimeItem;
-	})(StockRealTimeItemUI)
-
-
-	/**
-	*...
-	*@author ww
-	*/
 	//class view.RealTimeView extends ui.realtime.RealTimeUI
 	var RealTimeView=(function(_super){
 		function RealTimeView(){
@@ -38647,6 +38666,7 @@ var Laya=window.Laya=(function(window,document){
 		var __proto=RealTimeView.prototype;
 		__proto.onServerStock=function(dataO){
 			console.log("onServerStock:",dataO);
+			MessageManager.I.show("get stock success");
 			if (dataO.data){
 				var tArr;
 				tArr=dataO.data;
@@ -38798,6 +38818,66 @@ var Laya=window.Laya=(function(window,document){
 		RealTimeView.DataSign="Mystocks";
 		return RealTimeView;
 	})(RealTimeUI)
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class view.realtime.RealTimeItem extends ui.realtime.StockRealTimeItemUI
+	var RealTimeItem=(function(_super){
+		function RealTimeItem(){
+			this.stock=null;
+			this.isSettingV=false;
+			RealTimeItem.__super.call(this);
+			this.delBtn.on("mousedown",this,this.onDeleteBtn);
+			this.on("doubleclick",this,this.onDoubleClick);
+		}
+
+		__class(RealTimeItem,'view.realtime.RealTimeItem',_super);
+		var __proto=RealTimeItem.prototype;
+		__proto.initByStock=function(stock){
+			if (!stock)return;
+			this.stock=stock;
+			this.txt.text=stock;
+			var dataO;
+			dataO=StockJsonP.getStockData(stock);
+			if (dataO){
+				this.txt.text=dataO.code+","+dataO.name+","+dataO.price+","+StockTools.getGoodPercent((dataO.price-dataO.close)/ dataO.close)+"%";
+				this.txt.color=dataO.price-dataO.close > 0?"#ff0000":"#00ff00";
+				this.isSettingV=true;
+				this.showLine.selected=RealTimeItem.showStockDic[stock];
+				this.showLine.on("change",this,this.onShowLineChange);
+				this.isSettingV=false;
+			}
+		}
+
+		__proto.onShowLineChange=function(){
+			if (this.isSettingV)return;
+			RealTimeItem.showStockDic[this.stock]=this.showLine.selected;
+			if (this.showLine.selected){
+				Notice.notify("Add_MDLine",[this.stock]);
+				}else{
+				Notice.notify("Remove_MDLine",[this.stock]);
+			}
+		}
+
+		__proto.onDoubleClick=function(){
+			Notice.notify("Show_Stock_KLine",StockJsonP.getPureStock(this.stock));
+		}
+
+		__proto.onDeleteBtn=function(){
+			Notice.notify("Remove_MyStock",this.stock);
+		}
+
+		__getset(0,__proto,'dataSource',_super.prototype._$get_dataSource,function(value){
+			_super.prototype._$set_dataSource.call(this,value);
+			this.initByStock(value);
+		});
+
+		RealTimeItem.showStockDic={};
+		return RealTimeItem;
+	})(StockRealTimeItemUI)
 
 
 	/**
@@ -39193,6 +39273,25 @@ var Laya=window.Laya=(function(window,document){
 	*...
 	*@author ww
 	*/
+	//class laya.debug.view.nodeInfo.nodetree.FindNodeSmall extends laya.debug.ui.debugui.FindNodeSmallUI
+	var FindNodeSmall=(function(_super){
+		function FindNodeSmall(){
+			FindNodeSmall.__super.call(this);
+			Base64AtlasManager.replaceRes(FindNodeSmallUI.uiView);
+			this.createView(FindNodeSmallUI.uiView);
+		}
+
+		__class(FindNodeSmall,'laya.debug.view.nodeInfo.nodetree.FindNodeSmall',_super);
+		var __proto=FindNodeSmall.prototype;
+		__proto.createChildren=function(){}
+		return FindNodeSmall;
+	})(FindNodeSmallUI)
+
+
+	/**
+	*...
+	*@author ww
+	*/
 	//class laya.debug.view.nodeInfo.nodetree.FindNode extends laya.debug.ui.debugui.FindNodeUI
 	var FindNode=(function(_super){
 		function FindNode(){
@@ -39209,25 +39308,6 @@ var Laya=window.Laya=(function(window,document){
 
 		return FindNode;
 	})(FindNodeUI)
-
-
-	/**
-	*...
-	*@author ww
-	*/
-	//class laya.debug.view.nodeInfo.nodetree.FindNodeSmall extends laya.debug.ui.debugui.FindNodeSmallUI
-	var FindNodeSmall=(function(_super){
-		function FindNodeSmall(){
-			FindNodeSmall.__super.call(this);
-			Base64AtlasManager.replaceRes(FindNodeSmallUI.uiView);
-			this.createView(FindNodeSmallUI.uiView);
-		}
-
-		__class(FindNodeSmall,'laya.debug.view.nodeInfo.nodetree.FindNodeSmall',_super);
-		var __proto=FindNodeSmall.prototype;
-		__proto.createChildren=function(){}
-		return FindNodeSmall;
-	})(FindNodeSmallUI)
 
 
 	/**
@@ -39758,8 +39838,8 @@ var Laya=window.Laya=(function(window,document){
 
 
 /*
-1 file:///D:/stocksite.git/trunk/StockClient/src/stock/StockSocket.as (91):warning:mData This variable is not defined.
-2 file:///D:/stocksite.git/trunk/StockClient/src/stock/StockSocket.as (92):warning:mData.type This variable is not defined.
-3 file:///D:/stocksite.git/trunk/StockClient/src/stock/StockSocket.as (93):warning:mData.sign This variable is not defined.
-4 file:///D:/stocksite.git/trunk/StockClient/src/stock/StockSocket.as (94):warning:mData This variable is not defined.
+1 file:///D:/stocksite.git/trunk/StockClient/src/stock/StockSocket.as (95):warning:mData This variable is not defined.
+2 file:///D:/stocksite.git/trunk/StockClient/src/stock/StockSocket.as (96):warning:mData.type This variable is not defined.
+3 file:///D:/stocksite.git/trunk/StockClient/src/stock/StockSocket.as (97):warning:mData.sign This variable is not defined.
+4 file:///D:/stocksite.git/trunk/StockClient/src/stock/StockSocket.as (98):warning:mData This variable is not defined.
 */

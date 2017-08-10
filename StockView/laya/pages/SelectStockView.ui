@@ -1,8 +1,8 @@
 {
     "x":0,
     "type":"View",
-    "selectedBox":3,
-    "selecteID":7,
+    "selectedBox":1,
+    "selecteID":6,
     "props":{"width":445,"sceneColor":"#f1dcdc","height":400},
     "nodeParent":-1,
     "label":"View",
@@ -68,7 +68,7 @@
         {
             "x":15,
             "type":"Label",
-            "props":{"y":-41,"width":271,"var":"tip","text":"股票代码:当前盈利:最高盈利","styleSkin":"comp/label.png","right":40,"height":42,"color":"#f33713"},
+            "props":{"y":-41,"width":271,"var":"tip","text":"股票代码:当前盈利:最高盈利","styleSkin":"comp/label.png","right":320,"height":42,"color":"#f33713"},
             "nodeParent":1,
             "label":"Label(tip)",
             "isDirectory":false,

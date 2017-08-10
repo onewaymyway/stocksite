@@ -2,6 +2,7 @@ package stock {
 	import laya.events.Event;
 	import laya.events.EventDispatcher;
 	import laya.net.Socket;
+	import laya.uicomps.MessageManager;
 	import laya.utils.Byte;
 	import stock.tools.SMD5;
 	
@@ -58,6 +59,7 @@ package stock {
 					break;
 				case StockMsg.SaveMyStocks: 
 					//getUserData("stocks");
+					MessageManager.I.show("saveMessage success");
 					break;
 				case StockMsg.GetStocks: 
 					event(DataFromServer, dataO);
@@ -83,6 +85,7 @@ package stock {
 			sendJson(mData);
 		}
 		public function saveUserData(sign:String, data:*):void {
+			MessageManager.I.show("try saveUserData:"+sign);
 			var mData:Object;
 			mData = {};
 			mData.type = StockMsg.SaveMyStocks;
@@ -92,6 +95,7 @@ package stock {
 		}
 		
 		public function getUserData(sign:String):void {
+			MessageManager.I.show("try getUserData:"+sign);
 			mData = {};
 			mData.type = StockMsg.GetStocks;
 			mData.sign = sign;

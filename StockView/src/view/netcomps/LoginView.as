@@ -2,6 +2,7 @@ package view.netcomps
 {
 	import laya.events.Event;
 	import laya.net.LocalStorage;
+	import laya.uicomps.MessageManager;
 	import stock.StockSocket;
 	import ui.netcomps.LoginViewUI;
 	
@@ -21,25 +22,40 @@ package view.netcomps
 			MainSocket.I.socket.on(StockSocket.Logined, this, onLogin);
 			MainSocket.I.socket.on(StockSocket.Welcome, this, onConnected);
 			loginBtn.on(Event.MOUSE_DOWN, this, onLoginBtn);
+			logoutBtn.on(Event.MOUSE_DOWN, this, onLogOut);
 		}
+		
+		private function onLogOut():void
+		{
+			MainSocket.I.socket.isLogined = false;
+			MainSocket.I.socket.md5Pwd = "";
+			pwdInput.text = "";
+			saveLoginData();
+			updateUIState();
+			MessageManager.I.show("logout success");
+		}
+		
 		public var DataSign:String = "loginInfo";
 		private function onConnected():void
 		{
+			MessageManager.I.show("Connect to server success");
 			this.visible = true;
 			tryLogin();
 		}
 		
 		private function tryLogin():void
-		{
+		{	
 			var data:Object;
 			data = LocalStorage.getJSON(DataSign);
 			if (data && data.user && data.pwd)
 			{
+				MessageManager.I.show("try login");
 				MainSocket.I.socket.loginRaw(data.user, data.pwd);
 			}
 		}
 		private function onLoginBtn():void
 		{
+			MessageManager.I.show("try login");
 			MainSocket.I.socket.login(userNameInput.text, pwdInput.text);
 		}
 		
@@ -47,25 +63,32 @@ package view.netcomps
 		{
 			if (MainSocket.I.socket.isLogined)
 			{
-				var userData:Object;
+				saveLoginData();
+			}
+			updateUIState();
+		}
+		
+		private function saveLoginData():void
+		{
+			var userData:Object;
 				userData = { };
 				userData.user = MainSocket.I.socket.userName;
 				userData.pwd = MainSocket.I.socket.md5Pwd;
 				LocalStorage.setJSON(DataSign, userData);
-			}
-			updateUIState();
 		}
 		
 		private function updateUIState():void
 		{
 			if (MainSocket.I.socket.isLogined)
 			{
-				usernameTxt.visible = true;
+				MessageManager.I.show("login success");
+				loginedBox.visible = true;
 				loginBox.visible = false;
 				usernameTxt.text = MainSocket.I.socket.userName;
 			} else
 			{
-				usernameTxt.visible = false;
+				MessageManager.I.show("login fail");
+				loginedBox.visible = false;
 				loginBox.visible = true;
 			}
 		}
