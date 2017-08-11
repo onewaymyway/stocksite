@@ -217,9 +217,23 @@ package view {
 			stock = StockJsonP.getAdptStockStr(stock);
 			StockJsonP.I.addStock(stock);
 			//mdView.addStock(stock);
-			if (stockList.indexOf(stock) < 0)
+			if (!hasStock(stock))
 				stockList.push(stock);
 		
+		}
+		
+		private function hasStock(stock:String):Boolean
+		{
+			stock = getStockCode(stock);
+			stock = StockJsonP.getAdptStockStr(stock);
+			var i:int, len:int;
+			len = stockList.length;
+			for (i = 0; i < len; i++) {
+				if (getStockCode(stockList[i]) == stock) {
+					return true;
+				}
+			}
+			return false;
 		}
 		
 		public function removeStock(stock:String):void {

@@ -38921,8 +38921,21 @@ var Laya=window.Laya=(function(window,document){
 			stock=RealTimeView.getStockCode(stock);
 			stock=StockJsonP.getAdptStockStr(stock);
 			StockJsonP.I.addStock(stock);
-			if (this.stockList.indexOf(stock)< 0)
+			if (!this.hasStock(stock))
 				this.stockList.push(stock);
+		}
+
+		__proto.hasStock=function(stock){
+			stock=RealTimeView.getStockCode(stock);
+			stock=StockJsonP.getAdptStockStr(stock);
+			var i=0,len=0;
+			len=this.stockList.length;
+			for (i=0;i < len;i++){
+				if (RealTimeView.getStockCode(this.stockList[i])==stock){
+					return true;
+				}
+			}
+			return false;
 		}
 
 		__proto.removeStock=function(stock){
