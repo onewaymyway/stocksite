@@ -16122,36 +16122,6 @@ var Laya=window.Laya=(function(window,document){
 	})()
 
 
-	/**
-	*...
-	*@author dongketao
-	*/
-	//class PathFinding.core.Node
-	var Node$1=(function(){
-		function Node(x,y,walkable){
-			this.x=0;
-			this.y=0;
-			this.g=0;
-			this.f=0;
-			this.h=0;
-			this.by=0;
-			this.parent=null;
-			this.opened=null;
-			this.closed=null;
-			this.tested=null;
-			this.retainCount=null;
-			this.walkable=false;
-			(walkable===void 0)&& (walkable=true);
-			this.x=x;
-			this.y=y;
-			this.walkable=walkable;
-		}
-
-		__class(Node,'PathFinding.core.Node',null,'Node$1');
-		return Node;
-	})()
-
-
 	/**全局配置*/
 	//class UIConfig
 	var UIConfig=(function(){
@@ -38918,9 +38888,10 @@ var Laya=window.Laya=(function(window,document){
 		__proto.addStock=function(stock){
 			if (!stock)
 				return;
-			stock=RealTimeView.getStockCode(stock);
-			stock=StockJsonP.getAdptStockStr(stock);
-			StockJsonP.I.addStock(stock);
+			var stockCode;
+			stockCode=RealTimeView.getStockCode(stock);
+			stockCode=StockJsonP.getAdptStockStr(stockCode);
+			StockJsonP.I.addStock(stockCode);
 			if (!this.hasStock(stock))
 				this.stockList.push(stock);
 		}
@@ -39436,25 +39407,6 @@ var Laya=window.Laya=(function(window,document){
 	*...
 	*@author ww
 	*/
-	//class laya.debug.view.nodeInfo.nodetree.FindNodeSmall extends laya.debug.ui.debugui.FindNodeSmallUI
-	var FindNodeSmall=(function(_super){
-		function FindNodeSmall(){
-			FindNodeSmall.__super.call(this);
-			Base64AtlasManager.replaceRes(FindNodeSmallUI.uiView);
-			this.createView(FindNodeSmallUI.uiView);
-		}
-
-		__class(FindNodeSmall,'laya.debug.view.nodeInfo.nodetree.FindNodeSmall',_super);
-		var __proto=FindNodeSmall.prototype;
-		__proto.createChildren=function(){}
-		return FindNodeSmall;
-	})(FindNodeSmallUI)
-
-
-	/**
-	*...
-	*@author ww
-	*/
 	//class laya.debug.view.nodeInfo.nodetree.FindNode extends laya.debug.ui.debugui.FindNodeUI
 	var FindNode=(function(_super){
 		function FindNode(){
@@ -39471,6 +39423,25 @@ var Laya=window.Laya=(function(window,document){
 
 		return FindNode;
 	})(FindNodeUI)
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class laya.debug.view.nodeInfo.nodetree.FindNodeSmall extends laya.debug.ui.debugui.FindNodeSmallUI
+	var FindNodeSmall=(function(_super){
+		function FindNodeSmall(){
+			FindNodeSmall.__super.call(this);
+			Base64AtlasManager.replaceRes(FindNodeSmallUI.uiView);
+			this.createView(FindNodeSmallUI.uiView);
+		}
+
+		__class(FindNodeSmall,'laya.debug.view.nodeInfo.nodetree.FindNodeSmall',_super);
+		var __proto=FindNodeSmall.prototype;
+		__proto.createChildren=function(){}
+		return FindNodeSmall;
+	})(FindNodeSmallUI)
 
 
 	/**
@@ -40001,8 +39972,8 @@ var Laya=window.Laya=(function(window,document){
 
 
 /*
-1 file:///D:/stocksite.git/trunk/StockClient/src/stock/StockSocket.as (95):warning:mData This variable is not defined.
-2 file:///D:/stocksite.git/trunk/StockClient/src/stock/StockSocket.as (96):warning:mData.type This variable is not defined.
-3 file:///D:/stocksite.git/trunk/StockClient/src/stock/StockSocket.as (97):warning:mData.sign This variable is not defined.
-4 file:///D:/stocksite.git/trunk/StockClient/src/stock/StockSocket.as (98):warning:mData This variable is not defined.
+1 file:///D:/lovekxy/codes/python/stocksite.git/trunk/StockClient/src/stock/StockSocket.as (95):warning:mData This variable is not defined.
+2 file:///D:/lovekxy/codes/python/stocksite.git/trunk/StockClient/src/stock/StockSocket.as (96):warning:mData.type This variable is not defined.
+3 file:///D:/lovekxy/codes/python/stocksite.git/trunk/StockClient/src/stock/StockSocket.as (97):warning:mData.sign This variable is not defined.
+4 file:///D:/lovekxy/codes/python/stocksite.git/trunk/StockClient/src/stock/StockSocket.as (98):warning:mData This variable is not defined.
 */

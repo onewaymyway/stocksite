@@ -214,9 +214,10 @@ package view {
 		public function addStock(stock:String):void {
 			if (!stock)
 				return;
-			stock = getStockCode(stock);
-			stock = StockJsonP.getAdptStockStr(stock);
-			StockJsonP.I.addStock(stock);
+			var stockCode:String;
+			stockCode = getStockCode(stock);
+			stockCode = StockJsonP.getAdptStockStr(stockCode);
+			StockJsonP.I.addStock(stockCode);
 			//mdView.addStock(stock);
 			if (!hasStock(stock))
 				stockList.push(stock);
