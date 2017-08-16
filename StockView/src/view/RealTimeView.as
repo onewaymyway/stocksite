@@ -143,10 +143,11 @@ package view {
 			for (i = len - 1; i >= 0; i--) {
 				removeStock(stockList[i]);
 			}
-			stockList = newList;
-			len = stockList.length;
+			stockList.length = 0;
+			//stockList = newList;
+			len = newList.length;
 			for (i = 0; i < len; i++) {
-				addStock(stockList[i]);
+				addStock(newList[i]);
 			}
 			StockJsonP.I.freshData();
 		}
@@ -244,7 +245,7 @@ package view {
 			StockJsonP.I.removeStock(stock);
 			var i:int, len:int;
 			len = stockList.length;
-			for (i = 0; i < len; i++) {
+			for (i = len-1; i >=0; i--) {
 				if (getStockCode(stockList[i]) == stock) {
 					stockList.splice(i, 1);
 					return;
