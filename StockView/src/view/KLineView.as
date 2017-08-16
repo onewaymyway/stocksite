@@ -16,6 +16,7 @@ package view {
 	import laya.stock.analysers.lines.StrongLine;
 	import laya.stock.analysers.lines.WinRateLine;
 	import laya.tools.WebTools;
+	import laya.uicomps.MessageManager;
 	import laya.utils.Handler;
 	import msgs.MsgConst;
 	import stock.prop.PropPanel;
@@ -95,7 +96,8 @@ package view {
 		}
 		private function onAddToStock():void
 		{
-			Notice.notify(MsgConst.Add_MyStock,kLine.tStock );
+			Notice.notify(MsgConst.Add_MyStock, kLine.tStock );
+			MessageManager.I.show("add stock:"+kLine.tStock);
 		}
 		private var preMouseX:Number;
 		private var isLongPress:Boolean = false;

@@ -38276,6 +38276,7 @@ var Laya=window.Laya=(function(window,document){
 
 		__proto.onAddToStock=function(){
 			Notice.notify("AddMyStock",this.kLine.tStock);
+			MessageManager.I.show("add stock:"+this.kLine.tStock);
 		}
 
 		__proto.onMMouseDown=function(e){
