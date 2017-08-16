@@ -38851,10 +38851,10 @@ var Laya=window.Laya=(function(window,document){
 			for (i=len-1;i >=0;i--){
 				this.removeStock(this.stockList[i]);
 			}
-			this.stockList=newList;
-			len=this.stockList.length;
+			this.stockList.length=0;
+			len=newList.length;
 			for (i=0;i < len;i++){
-				this.addStock(this.stockList[i]);
+				this.addStock(newList[i]);
 			}
 			StockJsonP.I.freshData();
 		}
@@ -38944,7 +38944,7 @@ var Laya=window.Laya=(function(window,document){
 			StockJsonP.I.removeStock(stock);
 			var i=0,len=0;
 			len=this.stockList.length;
-			for (i=0;i < len;i++){
+			for (i=len-1;i >=0;i--){
 				if (RealTimeView.getStockCode(this.stockList[i])==stock){
 					this.stockList.splice(i,1);
 					return;
