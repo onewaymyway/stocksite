@@ -39306,6 +39306,7 @@ var Laya=window.Laya=(function(window,document){
 					this.stockDataGetter.addStock(adptCode);
 				}
 			}
+			if (this.autoFresh.selected)this.stockDataGetter.freshData();
 		}
 
 		__proto.onMouseList=function(e,index){

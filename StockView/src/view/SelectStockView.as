@@ -213,6 +213,7 @@ package view {
 					stockDataGetter.addStock(adptCode);
 				}
 			}
+			if (autoFresh.selected) stockDataGetter.freshData();
 		}
 		
 		public var tI:int = 0;
