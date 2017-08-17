@@ -149,6 +149,7 @@ package view {
 			for (i = 0; i < len; i++) {
 				addStock(newList[i]);
 			}
+			fresh();
 			StockJsonP.I.freshData();
 		}
 		
@@ -219,7 +220,7 @@ package view {
 			stockCode = StockJsonP.getAdptStockStr(stockCode);
 			StockJsonP.I.addStock(stockCode);
 			//mdView.addStock(stock);
-			if (!hasStock(stock))
+			if (!hasStock(stockCode))
 				stockList.push(stock);
 		
 		}
@@ -231,7 +232,7 @@ package view {
 			var i:int, len:int;
 			len = stockList.length;
 			for (i = 0; i < len; i++) {
-				if (getStockCode(stockList[i]) == stock) {
+				if (getAdptStockCode(stockList[i]) == stock) {
 					return true;
 				}
 			}
@@ -239,6 +240,7 @@ package view {
 		}
 		
 		public function removeStock(stock:String):void {
+			if (!stock) return;
 			//mdView.removeStock(stock);
 			stock = getStockCode(stock);
 			stock = StockJsonP.getAdptStockStr(stock);
@@ -247,13 +249,16 @@ package view {
 			var i:int, len:int;
 			len = stockList.length;
 			for (i = len-1; i >=0; i--) {
-				if (getStockCode(stockList[i]) == stock) {
+				if (getAdptStockCode(stockList[i]) == stock) {
 					stockList.splice(i, 1);
-					return;
 				}
 			}
 		}
 		
+		public static function getAdptStockCode(stock:*):String
+		{
+			return StockJsonP.getAdptStockStr(getStockCode(stock));
+		}
 		public static function getStockCode(stock:*):String {
 			if (stock is String)
 				return stock;
