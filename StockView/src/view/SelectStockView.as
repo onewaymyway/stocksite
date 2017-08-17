@@ -77,6 +77,7 @@ package view {
 			tDatas = configO["stocks"];
 			initByConfigO();
 			refreshData();
+			StockListManager.setStockList(list.array, tI);
 		}
 		private var typeDic:Object = {};
 		
@@ -235,6 +236,7 @@ package view {
 					return;
 				trace(tData);
 				setUpAnalyserData();
+				StockListManager.setStockList(list.array, tI);
 				Notice.notify(MsgConst.Show_Stock_KLine, tData.code);
 			}
 		}

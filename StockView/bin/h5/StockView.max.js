@@ -2354,6 +2354,7 @@ var Laya=window.Laya=(function(window,document){
 		MsgConst.Mark_MyStock="Mark_MyStock";
 		MsgConst.Add_MDLine="Add_MDLine";
 		MsgConst.Remove_MDLine="Remove_MDLine";
+		MsgConst.RealTimeItem_DoubleClick="RealTimeItem_DoubleClick";
 		return MsgConst;
 	})()
 
@@ -2574,6 +2575,65 @@ var Laya=window.Laya=(function(window,document){
 		['I',function(){return this.I=new MainSocket();}
 		]);
 		return MainSocket;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class view.StockListManager
+	var StockListManager=(function(){
+		function StockListManager(){}
+		__class(StockListManager,'view.StockListManager');
+		StockListManager.setStockList=function(stockList,tI){
+			StockListManager._tI=tI;
+			StockListManager._tStockList=stockList;
+		}
+
+		StockListManager.next=function(){
+			StockListManager._tI++;
+			StockListManager.showI(StockListManager._tI);
+		}
+
+		StockListManager.pre=function(){
+			StockListManager._tI--;
+			StockListManager.showI(StockListManager._tI);
+		}
+
+		StockListManager.showI=function(i){
+			if (!StockListManager._tStockList)
+				return;
+			var index=0;
+			index=i;
+			if (index < 0)
+				index=StockListManager._tStockList.length-1;
+			index=index % StockListManager._tStockList.length;
+			var tData;
+			tData=StockListManager._tStockList[index];
+			StockListManager._tI=index;
+			if (!tData)
+				return;
+			console.log(tData);
+			Notice.notify("Show_Stock_KLine",StockListManager.getStockCode(tData));
+		}
+
+		StockListManager.getStockCode=function(data){
+			if (!data)
+				return "601918";
+			var tStockStr;
+			if ((typeof data=='string')){
+				tStockStr=data;
+			}
+			else {
+				tStockStr=data.code;
+			}
+			return StockJsonP.getPureStock(tStockStr);
+		}
+
+		StockListManager._tI=0;
+		StockListManager._tStockList=null
+		return StockListManager;
 	})()
 
 
@@ -27802,27 +27862,6 @@ var Laya=window.Laya=(function(window,document){
 
 
 	/**
-	*
-	*@author ww
-	*@version 1.0
-	*
-	*@created 2015-9-29 上午11:17:35
-	*/
-	//class laya.debug.tools.debugUI.DButton extends laya.display.Text
-	var DButton=(function(_super){
-		function DButton(){
-			DButton.__super.call(this);
-			this.bgColor="#ffff00";
-			this.wordWrap=false;
-			this.mouseEnabled=true;
-		}
-
-		__class(DButton,'laya.debug.tools.debugUI.DButton',_super);
-		return DButton;
-	})(Text)
-
-
-	/**
 	*<code>ColorPicker</code> 组件将显示包含多个颜色样本的列表，用户可以从中选择颜色。
 	*
 	*@example 以下示例代码，创建了一个 <code>ColorPicker</code> 实例。
@@ -28672,6 +28711,27 @@ var Laya=window.Laya=(function(window,document){
 
 		return ComboBox;
 	})(Component)
+
+
+	/**
+	*
+	*@author ww
+	*@version 1.0
+	*
+	*@created 2015-9-29 上午11:17:35
+	*/
+	//class laya.debug.tools.debugUI.DButton extends laya.display.Text
+	var DButton=(function(_super){
+		function DButton(){
+			DButton.__super.call(this);
+			this.bgColor="#ffff00";
+			this.wordWrap=false;
+			this.mouseEnabled=true;
+		}
+
+		__class(DButton,'laya.debug.tools.debugUI.DButton',_super);
+		return DButton;
+	})(Text)
 
 
 	/**
@@ -38473,11 +38533,11 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		__proto.onPre=function(){
-			Notice.notify("Show_Pre_Select");
+			StockListManager.pre();
 		}
 
 		__proto.onNext=function(){
-			Notice.notify("Show_Next_Select");
+			StockListManager.next();
 		}
 
 		return KLineView;
@@ -38736,6 +38796,7 @@ var Laya=window.Laya=(function(window,document){
 			this.mdView=null;
 			this.stockList=[];
 			RealTimeView.__super.call(this);
+			this.list.renderHandler=new Handler(this,this.stockRenderHandler);
 			this.mdView=new MDLine();
 			this.recoverData();
 			this.fresh();
@@ -38759,10 +38820,15 @@ var Laya=window.Laya=(function(window,document){
 			MainSocket.I.socket.on("stocks",this,this.onServerStock);
 			this.saveBtn.on("mousedown",this,this.onSaveStocks);
 			this.loadBtn.on("mousedown",this,this.onLoadStocks);
+			Notice.listen("RealTimeItem_DoubleClick",this,this.onRealTimeDoubleClick);
 		}
 
 		__class(RealTimeView,'view.RealTimeView',_super);
 		var __proto=RealTimeView.prototype;
+		__proto.onRealTimeDoubleClick=function(index){
+			StockListManager.setStockList(this.list.array,index);
+		}
+
 		__proto.onServerStock=function(dataO){
 			console.log("onServerStock:",dataO);
 			MessageManager.I.show("get stock success");
@@ -38959,6 +39025,10 @@ var Laya=window.Laya=(function(window,document){
 			this.list.array=this.stockList;
 		}
 
+		__proto.stockRenderHandler=function(box,index){
+			box.index=index;
+		}
+
 		RealTimeView.getAdptStockCode=function(stock){
 			return StockJsonP.getAdptStockStr(RealTimeView.getStockCode(stock));
 		}
@@ -38981,6 +39051,7 @@ var Laya=window.Laya=(function(window,document){
 	//class view.realtime.RealTimeItem extends ui.realtime.StockRealTimeItemUI
 	var RealTimeItem=(function(_super){
 		function RealTimeItem(){
+			this.index=0;
 			this.stock=null;
 			this.isSettingV=false;
 			RealTimeItem.__super.call(this);
@@ -39032,6 +39103,7 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		__proto.onDoubleClick=function(){
+			Notice.notify("RealTimeItem_DoubleClick",this.index);
 			Notice.notify("Show_Stock_KLine",StockJsonP.getPureStock(this.stock));
 		}
 
@@ -39114,6 +39186,7 @@ var Laya=window.Laya=(function(window,document){
 			this.tDatas=this.configO["stocks"];
 			this.initByConfigO();
 			this.refreshData();
+			StockListManager.setStockList(this.list.array,this.tI);
 		}
 
 		__proto.initByConfigO=function(){
@@ -39250,6 +39323,7 @@ var Laya=window.Laya=(function(window,document){
 					return;
 				console.log(tData);
 				this.setUpAnalyserData();
+				StockListManager.setStockList(this.list.array,this.tI);
 				Notice.notify("Show_Stock_KLine",tData.code);
 			}
 		}
@@ -39443,25 +39517,6 @@ var Laya=window.Laya=(function(window,document){
 	*...
 	*@author ww
 	*/
-	//class laya.debug.view.nodeInfo.nodetree.FindNodeSmall extends laya.debug.ui.debugui.FindNodeSmallUI
-	var FindNodeSmall=(function(_super){
-		function FindNodeSmall(){
-			FindNodeSmall.__super.call(this);
-			Base64AtlasManager.replaceRes(FindNodeSmallUI.uiView);
-			this.createView(FindNodeSmallUI.uiView);
-		}
-
-		__class(FindNodeSmall,'laya.debug.view.nodeInfo.nodetree.FindNodeSmall',_super);
-		var __proto=FindNodeSmall.prototype;
-		__proto.createChildren=function(){}
-		return FindNodeSmall;
-	})(FindNodeSmallUI)
-
-
-	/**
-	*...
-	*@author ww
-	*/
 	//class laya.debug.view.nodeInfo.nodetree.FindNode extends laya.debug.ui.debugui.FindNodeUI
 	var FindNode=(function(_super){
 		function FindNode(){
@@ -39478,6 +39533,25 @@ var Laya=window.Laya=(function(window,document){
 
 		return FindNode;
 	})(FindNodeUI)
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class laya.debug.view.nodeInfo.nodetree.FindNodeSmall extends laya.debug.ui.debugui.FindNodeSmallUI
+	var FindNodeSmall=(function(_super){
+		function FindNodeSmall(){
+			FindNodeSmall.__super.call(this);
+			Base64AtlasManager.replaceRes(FindNodeSmallUI.uiView);
+			this.createView(FindNodeSmallUI.uiView);
+		}
+
+		__class(FindNodeSmall,'laya.debug.view.nodeInfo.nodetree.FindNodeSmall',_super);
+		var __proto=FindNodeSmall.prototype;
+		__proto.createChildren=function(){}
+		return FindNodeSmall;
+	})(FindNodeSmallUI)
 
 
 	/**

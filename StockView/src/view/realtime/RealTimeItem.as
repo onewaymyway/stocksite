@@ -15,7 +15,7 @@ package view.realtime
 	 */
 	public class RealTimeItem extends StockRealTimeItemUI 
 	{
-		
+		public var index:int;
 		public function RealTimeItem() 
 		{
 			delBtn.on(Event.MOUSE_DOWN, this, onDeleteBtn);
@@ -79,6 +79,7 @@ package view.realtime
 		}
 		private function onDoubleClick():void
 		{
+			Notice.notify(MsgConst.RealTimeItem_DoubleClick, index);
 			Notice.notify(MsgConst.Show_Stock_KLine, StockJsonP.getPureStock(stock));
 		}
 		private function onDeleteBtn():void

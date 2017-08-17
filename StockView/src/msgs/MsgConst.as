@@ -31,6 +31,8 @@ package msgs
 		
 		public static const Add_MDLine:String = "Add_MDLine";
 		public static const Remove_MDLine:String = "Remove_MDLine";
+		
+		public static const RealTimeItem_DoubleClick:String = "RealTimeItem_DoubleClick";
 	}
 
 }

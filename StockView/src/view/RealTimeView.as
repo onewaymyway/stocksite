@@ -3,8 +3,10 @@ package view {
 	import laya.events.Event;
 	import laya.net.LocalStorage;
 	import laya.tools.StockJsonP;
+	import laya.ui.Box;
 	import laya.uicomps.MessageManager;
 	import laya.utils.Browser;
+	import laya.utils.Handler;
 	import msgs.MsgConst;
 	import stock.StockSocket;
 	import stock.views.MDLine;
@@ -20,6 +22,7 @@ package view {
 		public var mdView:MDLine;
 		
 		public function RealTimeView() {
+			list.renderHandler = new Handler(this, stockRenderHandler);
 			mdView = new MDLine();
 			recoverData();
 			fresh();
@@ -50,8 +53,14 @@ package view {
 			MainSocket.I.socket.on("stocks", this, onServerStock);
 			saveBtn.on(Event.MOUSE_DOWN, this, onSaveStocks);
 			loadBtn.on(Event.MOUSE_DOWN, this, onLoadStocks);
+			
+			Notice.listen(MsgConst.RealTimeItem_DoubleClick, this, onRealTimeDoubleClick);
 		}
 		
+		private function onRealTimeDoubleClick(index:int):void
+		{
+			StockListManager.setStockList(list.array, index);
+		}
 		private function onServerStock(dataO:Object):void {
 			trace("onServerStock:", dataO);
 			MessageManager.I.show("get stock success");
@@ -269,6 +278,10 @@ package view {
 			list.array = stockList;
 		}
 	
+		public function stockRenderHandler(box:Box, index:int):void
+		{
+			box.index = index;
+		}
 	}
 
 }

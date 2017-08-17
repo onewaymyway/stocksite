@@ -278,11 +278,13 @@ package view {
 		}
 		
 		private function onPre():void {
-			Notice.notify(MsgConst.Show_Pre_Select);
+			//Notice.notify(MsgConst.Show_Pre_Select);
+			StockListManager.pre();
 		}
 		
 		private function onNext():void {
-			Notice.notify(MsgConst.Show_Next_Select);
+			StockListManager.next();
+			//Notice.notify(MsgConst.Show_Next_Select);
 		}
 	}
 
