@@ -187,11 +187,15 @@ package stock.views
 				for (i = 0; i < len; i++)
 				{
 					tData = dataList[i];
-					if (tData.date == markTime)
+					if (tData.date == markTime||(tData.date<markTime&&dataList[i+1]&&dataList[i+1].date>markTime))
 					{
 						pos = getAdptXV(i * gridWidth);
 						this.graphics.drawLine(pos, getAdptYV(tData["low"]), pos, getAdptYV(tData["low"]) + 30, "#00ff00");
 						this.graphics.fillText("Mark", pos, getAdptYV(tData["low"]) + 30, null, "#00ff00", "center");
+						break;
+					}
+					if (tData.date > markTime)
+					{
 						break;
 					}
 				}
