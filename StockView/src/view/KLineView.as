@@ -182,6 +182,7 @@ package view {
 			}
 			else {
 				if (clickControlEnable) {
+					if (TradeTestManager.isTradeTestOn) return;
 					if (Laya.stage.mouseX > Laya.stage.width * 0.5) {
 						dayScroll.value = dayScroll.value + 1;
 					}else
@@ -217,6 +218,7 @@ package view {
 		public function showStockKline(stock:String):void {
 			isFirstStockComing = true;
 			stockInput.text = stock;
+			tradeTest.tradeInfo.sellAll();
 			onPlayInput();
 		}
 		

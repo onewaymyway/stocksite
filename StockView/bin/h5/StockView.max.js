@@ -38640,6 +38640,7 @@ var Laya=window.Laya=(function(window,document){
 			}
 			else {
 				if (this.clickControlEnable){
+					if (TradeTestManager.isTradeTestOn)return;
 					if (Laya.stage.mouseX > Laya.stage.width *0.5){
 						this.dayScroll.value=this.dayScroll.value+1;
 						}else{
@@ -38671,6 +38672,7 @@ var Laya=window.Laya=(function(window,document){
 		__proto.showStockKline=function(stock){
 			this.isFirstStockComing=true;
 			this.stockInput.text=stock;
+			this.tradeTest.tradeInfo.sellAll();
 			this.onPlayInput();
 		}
 
