@@ -1,6 +1,7 @@
 package laya.stock 
 {
 	import laya.stock.analysers.AnalyserBase;
+	import laya.tools.StockJsonP;
 	/**
 	 * ...
 	 * @author ww
@@ -29,6 +30,16 @@ package laya.stock
 				return "sh"+stock;
 			}
 			return "sz" + stock;
+		}
+		public static function getAdptStockCode(stock:*):String
+		{
+			return StockJsonP.getAdptStockStr(getStockCode(stock));
+		}
+		
+		public static function getStockCode(stock:*):String {
+			if (stock is String)
+				return stock;
+			return stock.code;
 		}
 		
 		public static function getPureStock(stock:String):String

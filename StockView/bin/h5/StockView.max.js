@@ -1549,6 +1549,16 @@ var Laya=window.Laya=(function(window,document){
 			return "sz"+stock;
 		}
 
+		StockTools.getAdptStockCode=function(stock){
+			return StockJsonP.getAdptStockStr(StockTools.getStockCode(stock));
+		}
+
+		StockTools.getStockCode=function(stock){
+			if ((typeof stock=='string'))
+				return stock;
+			return stock.code;
+		}
+
 		StockTools.getPureStock=function(stock){
 			if (stock.length > 6){
 				stock=stock.substr(2,6);
@@ -2631,8 +2641,30 @@ var Laya=window.Laya=(function(window,document){
 			return StockJsonP.getPureStock(tStockStr);
 		}
 
+		StockListManager.setMyStockList=function(arr){
+			StockListManager._myStockList=arr;
+		}
+
+		StockListManager.getStockLastMark=function(stock){
+			if (!StockListManager._myStockList)return null;
+			stock=StockTools.getAdptStockStr(stock);
+			var i=0,len=0;
+			len=StockListManager._myStockList.length;
+			for (i=0;i < len;i++){
+				var tStockData;
+				tStockData=StockListManager._myStockList[i];
+				if (StockTools.getAdptStockCode(tStockData)==stock){
+					if (tStockData.markTime){
+						return DateTools.getTimeStr(tStockData.markTime,"-");
+					}
+				}
+			}
+			return null;
+		}
+
 		StockListManager._tI=0;
 		StockListManager._tStockList=null
+		StockListManager._myStockList=null
 		return StockListManager;
 	})()
 
@@ -23662,6 +23694,8 @@ var Laya=window.Laya=(function(window,document){
 			this.yRate=this.lineHeight / max;
 			var tColor;
 			this.xRate=this.lineWidth / (len *this.gridWidth);
+			var markTime;
+			markTime=StockListManager.getStockLastMark(this.tStock);
 			for (i=0;i < len;i++){
 				tData=dataList[i];
 				var pos=NaN;
@@ -23673,6 +23707,17 @@ var Laya=window.Laya=(function(window,document){
 				}
 				this.graphics.drawLine(pos,this.getAdptYV(tData["high"]),pos,this.getAdptYV(tData["low"]),tColor,1*this.xRate);
 				this.graphics.drawLine(pos,this.getAdptYV(tData["open"]),pos,this.getAdptYV(tData["close"]),tColor,this.gridWidth*this.xRate);
+			}
+			if (markTime){
+				for (i=0;i < len;i++){
+					tData=dataList[i];
+					if (tData.date==markTime){
+						pos=this.getAdptXV(i *this.gridWidth);
+						this.graphics.drawLine(pos,this.getAdptYV(tData["low"]),pos,this.getAdptYV(tData["low"])+30,"#00ff00");
+						this.graphics.fillText("Mark",pos,this.getAdptYV(tData["low"])+30,null,"#00ff00","center");
+						break ;
+					}
+				}
 			}
 		}
 
@@ -39022,6 +39067,7 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		__proto.fresh=function(){
+			StockListManager.setMyStockList(this.stockList);
 			this.list.array=this.stockList;
 		}
 

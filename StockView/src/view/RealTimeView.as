@@ -275,6 +275,7 @@ package view {
 		}
 		
 		public function fresh():void {
+			StockListManager.setMyStockList(stockList);
 			list.array = stockList;
 		}
 	

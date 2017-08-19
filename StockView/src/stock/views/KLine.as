@@ -13,6 +13,7 @@ package stock.views
 	import msgs.MsgConst;
 	import stock.StockBasicInfo;
 	import stock.StockData;
+	import view.StockListManager;
 	/**
 	 * ...
 	 * @author ww
@@ -164,6 +165,8 @@ package stock.views
 			yRate = lineHeight / max;
 			var tColor:String;
 			xRate = lineWidth / (len * gridWidth);
+			var markTime:String;
+			markTime = StockListManager.getStockLastMark(tStock);
 			for (i = 0; i < len; i++)
 			{
 				tData = dataList[i];
@@ -178,7 +181,21 @@ package stock.views
 				}
 				this.graphics.drawLine(pos, getAdptYV(tData["high"]), pos, getAdptYV(tData["low"]), tColor,1*xRate);
 				this.graphics.drawLine(pos, getAdptYV(tData["open"]), pos, getAdptYV(tData["close"]), tColor, gridWidth*xRate);
-			}	
+			}
+			if (markTime)
+			{
+				for (i = 0; i < len; i++)
+				{
+					tData = dataList[i];
+					if (tData.date == markTime)
+					{
+						pos = getAdptXV(i * gridWidth);
+						this.graphics.drawLine(pos, getAdptYV(tData["low"]), pos, getAdptYV(tData["low"]) + 30, "#00ff00");
+						this.graphics.fillText("Mark", pos, getAdptYV(tData["low"]) + 30, null, "#00ff00", "center");
+						break;
+					}
+				}
+			}
 		}
 		public function drawAmounts():void
 		{
