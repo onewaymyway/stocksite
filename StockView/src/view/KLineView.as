@@ -23,6 +23,7 @@ package view {
 	import stock.StockBasicInfo;
 	import stock.views.KLine;
 	import ui.KLineViewUI;
+	import view.plugins.TradeTest;
 	
 	/**
 	 * ...
@@ -75,6 +76,41 @@ package view {
 			addToStockBtn.on(Event.MOUSE_DOWN, this, onAddToStock);
 			this.on(Event.KEY_DOWN, this, onKeyDown);
 		
+			
+			tradeSelect.selected = false;
+			tradeSelect.on(Event.CHANGE, this, updateTradeVisible);
+			updateTradeVisible();
+			
+			kLine.on(KLine.KlineShowed, this, onKlineShowed);
+			
+			tradeTest.on(TradeTest.NEXT_DAY, this, onNextDay);
+			tradeTest.on(TradeTest.ANOTHER, this, onAnotherTradeTest);
+		}
+		
+		private function onNextDay():void
+		{
+			dayScroll.value = dayScroll.value + 1;
+		}
+		
+		private function onAnotherTradeTest():void
+		{
+			Notice.notify(MsgConst.Show_Stock_KLine, StockBasicInfo.I.getRandomStock());
+		}
+		private function onKlineShowed():void
+		{
+			tradeTest.setDataList(kLine.disDataList);
+		}
+		private function updateTradeVisible():void
+		{
+			tradeTest.visible = tradeSelect.selected;
+			TradeTestManager.isTradeTestOn = tradeSelect.selected;
+			if (tradeSelect.selected)
+			{
+				if (!maxDayEnable.selected)
+				{
+					maxDayEnable.selected = true;
+				}
+			}
 		}
 		private function onKeyDown(e:Event):void
 		{
@@ -198,8 +234,16 @@ package view {
 			max = kLine.dataList.length - dayCount;
 			if (max < 0)
 				max = 0;
+			if (TradeTestManager.isTradeTestOn)
+			{
+				var tValue:int;
+				tValue = Math.floor(Math.random() * max);
+				dayScroll.setScroll(0, max, tValue);
+			}else
+			{
+				dayScroll.setScroll(0, max, max);
+			}
 			
-			dayScroll.setScroll(0, max, max);
 			if (maxDayEnable.selected) {
 				kLine.start = Math.floor(dayScroll.value);
 			}

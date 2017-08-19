@@ -33,6 +33,14 @@ package stock
 				stockCodeList.push(tCode);
 			}
 		}
+		
+		public function getRandomStock():String
+		{
+			var i:int;
+			i = Math.floor(Math.random() * stockCodeList.length);
+			return stockCodeList[i];
+		}
+		
 		public function getStockData(code:String):Object
 		{
 			return stockDic[code];

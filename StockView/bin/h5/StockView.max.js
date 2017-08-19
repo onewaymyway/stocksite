@@ -2592,6 +2592,102 @@ var Laya=window.Laya=(function(window,document){
 	*...
 	*@author ww
 	*/
+	//class view.plugins.TradeInfo
+	var TradeInfo=(function(){
+		function TradeInfo(){
+			this.money=NaN;
+			this.stockCount=0;
+			this.stockMoney=NaN;
+			this.tStockPrice=NaN;
+			this.totalWin=NaN;
+			this.reset();
+		}
+
+		__class(TradeInfo,'view.plugins.TradeInfo');
+		var __proto=TradeInfo.prototype;
+		__proto.reset=function(){
+			this.money=100000;
+			this.stockCount=0;
+			this.stockMoney=0;
+			this.tStockPrice=0;
+			this.totalWin=0;
+		}
+
+		__proto.sellAll=function(){
+			this.sellStock(this.tStockPrice,this.stockCount);
+		}
+
+		__proto.buyStock=function(price,count){
+			var dStockMoney=NaN;
+			dStockMoney=price *count;
+			if (this.money < dStockMoney){
+				MessageManager.I.show("资金不足");
+				return;
+			}
+			this.stockCount+=count;
+			this.stockMoney+=dStockMoney;
+			this.money-=dStockMoney;
+		}
+
+		__proto.sellStock=function(price,count){
+			if (this.stockCount < count){
+				MessageManager.I.show("股票不足");
+				return;
+			};
+			var dStockMoney=NaN;
+			dStockMoney=price *count;
+			this.stockCount-=count;
+			this.stockMoney-=dStockMoney;
+			this.money+=dStockMoney;
+			if (this.stockCount==0){
+				this.stockMoney=0;
+			}
+		}
+
+		__getset(0,__proto,'stockWinRate',function(){
+			if (this.stockCount <=0)return 0;
+			return this.tStockPrice / this.stockPrice-1;
+		});
+
+		__getset(0,__proto,'stockWinOfTotal',function(){
+			return this.total-100000;
+		});
+
+		__getset(0,__proto,'stockWinRateOfTotal',function(){
+			return this.stockWinOfTotal / 100000;
+		});
+
+		__getset(0,__proto,'stockWin',function(){
+			if (this.stockCount <=0)return 0;
+			return Math.floor((this.tStockPrice-this.stockPrice)*this.stockCount);
+		});
+
+		__getset(0,__proto,'position',function(){
+			return this.curStockMoney / this.total;
+		});
+
+		__getset(0,__proto,'stockPrice',function(){
+			if (this.stockCount <=0)return 0;
+			return this.stockMoney / this.stockCount;
+		});
+
+		__getset(0,__proto,'curStockMoney',function(){
+			return Math.floor(this.tStockPrice *this.stockCount);
+		});
+
+		__getset(0,__proto,'total',function(){
+			return Math.floor(this.money+this.curStockMoney);
+		});
+
+		TradeInfo.INIT_MONEY=100000;
+		return TradeInfo;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
 	//class view.StockListManager
 	var StockListManager=(function(){
 		function StockListManager(){}
@@ -2666,6 +2762,24 @@ var Laya=window.Laya=(function(window,document){
 		StockListManager._tStockList=null
 		StockListManager._myStockList=null
 		return StockListManager;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class view.TradeTestManager
+	var TradeTestManager=(function(){
+		function TradeTestManager(){}
+		__class(TradeTestManager,'view.TradeTestManager');
+		var __proto=TradeTestManager.prototype;
+		__proto.resetTrade=function(){}
+		TradeTestManager.isTradeTestOn=false;
+		__static(TradeTestManager,
+		['I',function(){return this.I=new TradeTestManager();}
+		]);
+		return TradeTestManager;
 	})()
 
 
@@ -17884,6 +17998,12 @@ var Laya=window.Laya=(function(window,document){
 			}
 		}
 
+		__proto.getRandomStock=function(){
+			var i=0;
+			i=Math.floor(Math.random()*this.stockCodeList.length);
+			return this.stockCodeList[i];
+		}
+
 		__proto.getStockData=function(code){
 			return this.stockDic[code];
 		}
@@ -23641,6 +23761,7 @@ var Laya=window.Laya=(function(window,document){
 				}else{
 				this.showMsg("K-line Showed");
 				this.cacheAsBitmap=true;
+				this.event("KlineShowed");
 			}
 		}
 
@@ -23711,10 +23832,13 @@ var Laya=window.Laya=(function(window,document){
 			if (markTime){
 				for (i=0;i < len;i++){
 					tData=dataList[i];
-					if (tData.date==markTime){
+					if (tData.date==markTime||(tData.date<markTime&&dataList[i+1]&&dataList[i+1].date>markTime)){
 						pos=this.getAdptXV(i *this.gridWidth);
 						this.graphics.drawLine(pos,this.getAdptYV(tData["low"]),pos,this.getAdptYV(tData["low"])+30,"#00ff00");
 						this.graphics.fillText("Mark",pos,this.getAdptYV(tData["low"])+30,null,"#00ff00","center");
+						break ;
+					}
+					if (tData.date > markTime){
 						break ;
 					}
 				}
@@ -23996,6 +24120,7 @@ var Laya=window.Laya=(function(window,document){
 			return DataUtils.mParseFloat(v)*this.xRate;
 		}
 
+		KLine.KlineShowed="KlineShowed";
 		__static(KLine,
 		['SignDrawDes',function(){return this.SignDrawDes={
 				"high":{
@@ -36295,107 +36420,6 @@ var Laya=window.Laya=(function(window,document){
 
 
 	/**
-	*使用 <code>VSlider</code> 控件，用户可以通过在滑块轨道的终点之间移动滑块来选择值。
-	*<p> <code>VSlider</code> 控件采用垂直方向。滑块轨道从下往上扩展，而标签位于轨道的左右两侧。</p>
-	*
-	*@example 以下示例代码，创建了一个 <code>VSlider</code> 实例。
-	*<listing version="3.0">
-	*package
-	*{
-		*import laya.ui.HSlider;
-		*import laya.ui.VSlider;
-		*import laya.utils.Handler;
-		*public class VSlider_Example
-		*{
-			*private var vSlider:VSlider;
-			*public function VSlider_Example()
-			*{
-				*Laya.init(640,800);//设置游戏画布宽高。
-				*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
-				*Laya.loader.load(["resource/ui/vslider.png","resource/ui/vslider$bar.png"],Handler.create(this,onLoadComplete));//加载资源。
-				*}
-			*private function onLoadComplete():void
-			*{
-				*vSlider=new VSlider();//创建一个 VSlider 类的实例对象 vSlider 。
-				*vSlider.skin="resource/ui/vslider.png";//设置 vSlider 的皮肤。
-				*vSlider.min=0;//设置 vSlider 最低位置值。
-				*vSlider.max=10;//设置 vSlider 最高位置值。
-				*vSlider.value=2;//设置 vSlider 当前位置值。
-				*vSlider.tick=1;//设置 vSlider 刻度值。
-				*vSlider.x=100;//设置 vSlider 对象的属性 x 的值，用于控制 vSlider 对象的显示位置。
-				*vSlider.y=100;//设置 vSlider 对象的属性 y 的值，用于控制 vSlider 对象的显示位置。
-				*vSlider.changeHandler=new Handler(this,onChange);//设置 vSlider 位置变化处理器。
-				*Laya.stage.addChild(vSlider);//把 vSlider 添加到显示列表。
-				*}
-			*private function onChange(value:Number):void
-			*{
-				*trace("滑块的位置： value="+value);
-				*}
-			*}
-		*}
-	*</listing>
-	*<listing version="3.0">
-	*Laya.init(640,800);//设置游戏画布宽高
-	*Laya.stage.bgColor="#efefef";//设置画布的背景颜色
-	*var vSlider;
-	*Laya.loader.load(["resource/ui/vslider.png","resource/ui/vslider$bar.png"],laya.utils.Handler.create(this,onLoadComplete));//加载资源。
-	*function onLoadComplete(){
-		*vSlider=new laya.ui.VSlider();//创建一个 VSlider 类的实例对象 vSlider 。
-		*vSlider.skin="resource/ui/vslider.png";//设置 vSlider 的皮肤。
-		*vSlider.min=0;//设置 vSlider 最低位置值。
-		*vSlider.max=10;//设置 vSlider 最高位置值。
-		*vSlider.value=2;//设置 vSlider 当前位置值。
-		*vSlider.tick=1;//设置 vSlider 刻度值。
-		*vSlider.x=100;//设置 vSlider 对象的属性 x 的值，用于控制 vSlider 对象的显示位置。
-		*vSlider.y=100;//设置 vSlider 对象的属性 y 的值，用于控制 vSlider 对象的显示位置。
-		*vSlider.changeHandler=new laya.utils.Handler(this,onChange);//设置 vSlider 位置变化处理器。
-		*Laya.stage.addChild(vSlider);//把 vSlider 添加到显示列表。
-		*}
-	*function onChange(value){
-		*console.log("滑块的位置： value="+value);
-		*}
-	*</listing>
-	*<listing version="3.0">
-	*import HSlider=laya.ui.HSlider;
-	*import VSlider=laya.ui.VSlider;
-	*import Handler=laya.utils.Handler;
-	*class VSlider_Example {
-		*private vSlider:VSlider;
-		*constructor(){
-			*Laya.init(640,800);//设置游戏画布宽高。
-			*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
-			*Laya.loader.load(["resource/ui/vslider.png","resource/ui/vslider$bar.png"],Handler.create(this,this.onLoadComplete));//加载资源。
-			*}
-		*private onLoadComplete():void {
-			*this.vSlider=new VSlider();//创建一个 VSlider 类的实例对象 vSlider 。
-			*this.vSlider.skin="resource/ui/vslider.png";//设置 vSlider 的皮肤。
-			*this.vSlider.min=0;//设置 vSlider 最低位置值。
-			*this.vSlider.max=10;//设置 vSlider 最高位置值。
-			*this.vSlider.value=2;//设置 vSlider 当前位置值。
-			*this.vSlider.tick=1;//设置 vSlider 刻度值。
-			*this.vSlider.x=100;//设置 vSlider 对象的属性 x 的值，用于控制 vSlider 对象的显示位置。
-			*this.vSlider.y=100;//设置 vSlider 对象的属性 y 的值，用于控制 vSlider 对象的显示位置。
-			*this.vSlider.changeHandler=new Handler(this,this.onChange);//设置 vSlider 位置变化处理器。
-			*Laya.stage.addChild(this.vSlider);//把 vSlider 添加到显示列表。
-			*}
-		*private onChange(value:number):void {
-			*console.log("滑块的位置： value="+value);
-			*}
-		*}
-	*</listing>
-	*@see laya.ui.Slider
-	*/
-	//class laya.ui.VSlider extends laya.ui.Slider
-	var VSlider=(function(_super){
-		function VSlider(){VSlider.__super.call(this);;
-		};
-
-		__class(VSlider,'laya.ui.VSlider',_super);
-		return VSlider;
-	})(Slider)
-
-
-	/**
 	*<code>TextInput</code> 类用于创建显示对象以显示和输入文本。
 	*
 	*@example 以下示例代码，创建了一个 <code>TextInput</code> 实例。
@@ -36711,6 +36735,107 @@ var Laya=window.Laya=(function(window,document){
 
 
 	/**
+	*使用 <code>VSlider</code> 控件，用户可以通过在滑块轨道的终点之间移动滑块来选择值。
+	*<p> <code>VSlider</code> 控件采用垂直方向。滑块轨道从下往上扩展，而标签位于轨道的左右两侧。</p>
+	*
+	*@example 以下示例代码，创建了一个 <code>VSlider</code> 实例。
+	*<listing version="3.0">
+	*package
+	*{
+		*import laya.ui.HSlider;
+		*import laya.ui.VSlider;
+		*import laya.utils.Handler;
+		*public class VSlider_Example
+		*{
+			*private var vSlider:VSlider;
+			*public function VSlider_Example()
+			*{
+				*Laya.init(640,800);//设置游戏画布宽高。
+				*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
+				*Laya.loader.load(["resource/ui/vslider.png","resource/ui/vslider$bar.png"],Handler.create(this,onLoadComplete));//加载资源。
+				*}
+			*private function onLoadComplete():void
+			*{
+				*vSlider=new VSlider();//创建一个 VSlider 类的实例对象 vSlider 。
+				*vSlider.skin="resource/ui/vslider.png";//设置 vSlider 的皮肤。
+				*vSlider.min=0;//设置 vSlider 最低位置值。
+				*vSlider.max=10;//设置 vSlider 最高位置值。
+				*vSlider.value=2;//设置 vSlider 当前位置值。
+				*vSlider.tick=1;//设置 vSlider 刻度值。
+				*vSlider.x=100;//设置 vSlider 对象的属性 x 的值，用于控制 vSlider 对象的显示位置。
+				*vSlider.y=100;//设置 vSlider 对象的属性 y 的值，用于控制 vSlider 对象的显示位置。
+				*vSlider.changeHandler=new Handler(this,onChange);//设置 vSlider 位置变化处理器。
+				*Laya.stage.addChild(vSlider);//把 vSlider 添加到显示列表。
+				*}
+			*private function onChange(value:Number):void
+			*{
+				*trace("滑块的位置： value="+value);
+				*}
+			*}
+		*}
+	*</listing>
+	*<listing version="3.0">
+	*Laya.init(640,800);//设置游戏画布宽高
+	*Laya.stage.bgColor="#efefef";//设置画布的背景颜色
+	*var vSlider;
+	*Laya.loader.load(["resource/ui/vslider.png","resource/ui/vslider$bar.png"],laya.utils.Handler.create(this,onLoadComplete));//加载资源。
+	*function onLoadComplete(){
+		*vSlider=new laya.ui.VSlider();//创建一个 VSlider 类的实例对象 vSlider 。
+		*vSlider.skin="resource/ui/vslider.png";//设置 vSlider 的皮肤。
+		*vSlider.min=0;//设置 vSlider 最低位置值。
+		*vSlider.max=10;//设置 vSlider 最高位置值。
+		*vSlider.value=2;//设置 vSlider 当前位置值。
+		*vSlider.tick=1;//设置 vSlider 刻度值。
+		*vSlider.x=100;//设置 vSlider 对象的属性 x 的值，用于控制 vSlider 对象的显示位置。
+		*vSlider.y=100;//设置 vSlider 对象的属性 y 的值，用于控制 vSlider 对象的显示位置。
+		*vSlider.changeHandler=new laya.utils.Handler(this,onChange);//设置 vSlider 位置变化处理器。
+		*Laya.stage.addChild(vSlider);//把 vSlider 添加到显示列表。
+		*}
+	*function onChange(value){
+		*console.log("滑块的位置： value="+value);
+		*}
+	*</listing>
+	*<listing version="3.0">
+	*import HSlider=laya.ui.HSlider;
+	*import VSlider=laya.ui.VSlider;
+	*import Handler=laya.utils.Handler;
+	*class VSlider_Example {
+		*private vSlider:VSlider;
+		*constructor(){
+			*Laya.init(640,800);//设置游戏画布宽高。
+			*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
+			*Laya.loader.load(["resource/ui/vslider.png","resource/ui/vslider$bar.png"],Handler.create(this,this.onLoadComplete));//加载资源。
+			*}
+		*private onLoadComplete():void {
+			*this.vSlider=new VSlider();//创建一个 VSlider 类的实例对象 vSlider 。
+			*this.vSlider.skin="resource/ui/vslider.png";//设置 vSlider 的皮肤。
+			*this.vSlider.min=0;//设置 vSlider 最低位置值。
+			*this.vSlider.max=10;//设置 vSlider 最高位置值。
+			*this.vSlider.value=2;//设置 vSlider 当前位置值。
+			*this.vSlider.tick=1;//设置 vSlider 刻度值。
+			*this.vSlider.x=100;//设置 vSlider 对象的属性 x 的值，用于控制 vSlider 对象的显示位置。
+			*this.vSlider.y=100;//设置 vSlider 对象的属性 y 的值，用于控制 vSlider 对象的显示位置。
+			*this.vSlider.changeHandler=new Handler(this,this.onChange);//设置 vSlider 位置变化处理器。
+			*Laya.stage.addChild(this.vSlider);//把 vSlider 添加到显示列表。
+			*}
+		*private onChange(value:number):void {
+			*console.log("滑块的位置： value="+value);
+			*}
+		*}
+	*</listing>
+	*@see laya.ui.Slider
+	*/
+	//class laya.ui.VSlider extends laya.ui.Slider
+	var VSlider=(function(_super){
+		function VSlider(){VSlider.__super.call(this);;
+		};
+
+		__class(VSlider,'laya.ui.VSlider',_super);
+		return VSlider;
+	})(Slider)
+
+
+	/**
 	*@private
 	*/
 	//class laya.display.GraphicAnimation extends laya.display.FrameAnimation
@@ -36990,6 +37115,8 @@ var Laya=window.Laya=(function(window,document){
 			this.dayCountInput=null;
 			this.clickControlEnable=null;
 			this.addToStockBtn=null;
+			this.tradeTest=null;
+			this.tradeSelect=null;
 			KLineViewUI.__super.call(this);
 		}
 
@@ -36998,11 +37125,12 @@ var Laya=window.Laya=(function(window,document){
 		__proto.createChildren=function(){
 			View.regComponent("view.plugins.AnalyserList",AnalyserList);
 			View.regComponent("stock.prop.PropPanel",PropPanel);
+			View.regComponent("view.plugins.TradeTest",TradeTest);
 			laya.ui.Component.prototype.createChildren.call(this);
 			this.createView(KLineViewUI.uiView);
 		}
 
-		KLineViewUI.uiView={"type":"View","props":{"width":800,"height":400},"child":[{"type":"ComboBox","props":{"y":9,"x":8,"var":"stockSelect","skin":"comp/combobox.png","scrollBarSkin":"comp/vscroll.png","labels":"000233,600322","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":9,"x":114,"var":"playBtn","skin":"comp/button.png","label":"play","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Label","props":{"y":13,"x":225,"width":147,"var":"infoTxt","text":"label","height":20,"color":"#ffffff"}},{"type":"TextInput","props":{"y":43,"x":8,"width":90,"var":"stockInput","text":"002234","skin":"comp/textinput.png","height":22,"color":"#f1dede"}},{"type":"Button","props":{"y":42,"x":114,"var":"playInputBtn","skin":"comp/button.png","label":"play","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"CheckBox","props":{"y":45,"x":226,"var":"enableAnimation","skin":"comp/checkbox.png","selected":true,"label":"开启动画","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":39,"x":301,"var":"detailBtn","skin":"comp/button.png","label":"详情","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":80,"x":11,"var":"preBtn","skin":"comp/button.png","label":"pre","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":80,"x":100,"var":"nextBtn","skin":"comp/button.png","label":"next","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"AnalyserList","props":{"var":"analyserList","top":10,"runtime":"view.plugins.AnalyserList","right":10}},{"type":"PropPanel","props":{"y":0,"var":"propPanel","runtime":"stock.prop.PropPanel","right":180}},{"type":"HScrollBar","props":{"y":101,"x":225,"width":166,"var":"dayScroll","skin":"comp/hscroll.png","height":13}},{"type":"CheckBox","props":{"y":76,"x":226,"var":"maxDayEnable","skin":"comp/checkbox.png","selected":false,"label":"天数限制","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"TextInput","props":{"y":73,"x":300,"width":90,"var":"dayCountInput","text":"300","skin":"comp/textinput.png","height":22,"color":"#f1dede"}},{"type":"CheckBox","props":{"y":77,"x":403,"var":"clickControlEnable","skin":"comp/checkbox.png","selected":true,"label":"单击平移","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":39,"x":383,"var":"addToStockBtn","skin":"comp/button.png","label":"加自选","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}}]};
+		KLineViewUI.uiView={"type":"View","props":{"width":800,"height":400},"child":[{"type":"ComboBox","props":{"y":9,"x":8,"var":"stockSelect","skin":"comp/combobox.png","scrollBarSkin":"comp/vscroll.png","labels":"000233,600322","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":9,"x":114,"var":"playBtn","skin":"comp/button.png","label":"play","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Label","props":{"y":13,"x":225,"width":147,"var":"infoTxt","text":"label","height":20,"color":"#ffffff"}},{"type":"TextInput","props":{"y":43,"x":8,"width":90,"var":"stockInput","text":"002234","skin":"comp/textinput.png","height":22,"color":"#f1dede"}},{"type":"Button","props":{"y":42,"x":114,"var":"playInputBtn","skin":"comp/button.png","label":"play","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"CheckBox","props":{"y":45,"x":226,"var":"enableAnimation","skin":"comp/checkbox.png","selected":true,"label":"开启动画","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":39,"x":301,"var":"detailBtn","skin":"comp/button.png","label":"详情","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":80,"x":8,"var":"preBtn","skin":"comp/button.png","label":"pre","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":80,"x":100,"var":"nextBtn","skin":"comp/button.png","label":"next","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"AnalyserList","props":{"var":"analyserList","top":10,"runtime":"view.plugins.AnalyserList","right":10}},{"type":"PropPanel","props":{"y":0,"var":"propPanel","runtime":"stock.prop.PropPanel","right":180}},{"type":"HScrollBar","props":{"y":101,"x":225,"width":166,"var":"dayScroll","skin":"comp/hscroll.png","height":13}},{"type":"CheckBox","props":{"y":76,"x":226,"var":"maxDayEnable","skin":"comp/checkbox.png","selected":false,"label":"天数限制","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"TextInput","props":{"y":73,"x":300,"width":90,"var":"dayCountInput","text":"300","skin":"comp/textinput.png","height":22,"color":"#f1dede"}},{"type":"CheckBox","props":{"y":77,"x":403,"var":"clickControlEnable","skin":"comp/checkbox.png","selected":true,"label":"单击平移","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":39,"x":383,"var":"addToStockBtn","skin":"comp/button.png","label":"加自选","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"TradeTest","props":{"var":"tradeTest","runtime":"view.plugins.TradeTest","left":5,"bottom":5}},{"type":"CheckBox","props":{"y":109,"x":8,"var":"tradeSelect","skin":"comp/checkbox.png","selected":true,"label":"模拟交易","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}}]};
 		return KLineViewUI;
 	})(View)
 
@@ -37078,6 +37206,32 @@ var Laya=window.Laya=(function(window,document){
 
 		AnalyserListUI.uiView={"type":"View","props":{"width":160,"height":212},"child":[{"type":"List","props":{"y":19,"x":0,"width":160,"var":"list","vScrollBarSkin":"comp/vscroll.png","height":193},"child":[{"type":"Box","props":{"y":0,"x":0,"width":148,"renderType":"render","height":17},"child":[{"type":"Label","props":{"width":80,"text":"limittxt","name":"nameTxt","height":17,"color":"#e0211d"}},{"type":"CheckBox","props":{"x":92,"skin":"comp/checkbox.png","name":"ifShow","label":"启用","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}}]}]},{"type":"CheckBox","props":{"y":0,"x":2,"var":"showSelect","skin":"comp/checkbox.png","selected":true,"label":"显示插件列表","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}}]};
 		return AnalyserListUI;
+	})(View)
+
+
+	//class ui.plugins.TradeTestUI extends laya.ui.View
+	var TradeTestUI=(function(_super){
+		function TradeTestUI(){
+			this.buyBtn=null;
+			this.sellBtn=null;
+			this.tradeInfoTxt=null;
+			this.resetBtn=null;
+			this.anotherBtn=null;
+			this.countTxt=null;
+			this.nextDayBtn=null;
+			this.stockInfoTxt=null;
+			TradeTestUI.__super.call(this);
+		}
+
+		__class(TradeTestUI,'ui.plugins.TradeTestUI',_super);
+		var __proto=TradeTestUI.prototype;
+		__proto.createChildren=function(){
+			laya.ui.Component.prototype.createChildren.call(this);
+			this.createView(TradeTestUI.uiView);
+		}
+
+		TradeTestUI.uiView={"type":"View","props":{"width":271,"height":137},"child":[{"type":"Button","props":{"y":78,"x":113,"var":"buyBtn","skin":"comp/button.png","label":"买入","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":79,"x":195,"var":"sellBtn","skin":"comp/button.png","label":"卖出","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Label","props":{"y":0,"x":0,"width":139,"var":"tradeInfoTxt","text":"总金额:xxxx\\n股票:xxxx\\n总盈亏:xxxx\\n持仓盈亏:xxx","height":74,"color":"#f33713"}},{"type":"Button","props":{"y":111,"x":31,"var":"resetBtn","skin":"comp/button.png","label":"重置","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":112,"x":113,"var":"anotherBtn","skin":"comp/button.png","label":"随机开局","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"TextInput","props":{"y":79,"x":36,"width":66,"var":"countTxt","text":"300","skin":"comp/textinput.png","height":22,"color":"#f1dede"}},{"type":"Button","props":{"y":111,"x":195,"var":"nextDayBtn","skin":"comp/button.png","label":"下一天","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Label","props":{"y":84,"x":2,"text":"数量","color":"#ee1613"}},{"type":"Label","props":{"y":0,"x":165,"width":104,"var":"stockInfoTxt","text":"当前股价:xxx","height":74,"color":"#f33713"}}]};
+		return TradeTestUI;
 	})(View)
 
 
@@ -38388,10 +38542,38 @@ var Laya=window.Laya=(function(window,document){
 			this.enableAnimation.selected=false;
 			this.addToStockBtn.on("mousedown",this,this.onAddToStock);
 			this.on("keydown",this,this.onKeyDown);
+			this.tradeSelect.selected=false;
+			this.tradeSelect.on("change",this,this.updateTradeVisible);
+			this.updateTradeVisible();
+			this.kLine.on("KlineShowed",this,this.onKlineShowed);
+			this.tradeTest.on("NEXT_Day",this,this.onNextDay);
+			this.tradeTest.on("ANOTHER",this,this.onAnotherTradeTest);
 		}
 
 		__class(KLineView,'view.KLineView',_super);
 		var __proto=KLineView.prototype;
+		__proto.onNextDay=function(){
+			this.dayScroll.value=this.dayScroll.value+1;
+		}
+
+		__proto.onAnotherTradeTest=function(){
+			Notice.notify("Show_Stock_KLine",StockBasicInfo.I.getRandomStock());
+		}
+
+		__proto.onKlineShowed=function(){
+			this.tradeTest.setDataList(this.kLine.disDataList);
+		}
+
+		__proto.updateTradeVisible=function(){
+			this.tradeTest.visible=this.tradeSelect.selected;
+			TradeTestManager.isTradeTestOn=this.tradeSelect.selected;
+			if (this.tradeSelect.selected){
+				if (!this.maxDayEnable.selected){
+					this.maxDayEnable.selected=true;
+				}
+			}
+		}
+
 		__proto.onKeyDown=function(e){
 			switch(e.keyCode){
 				case 40:
@@ -38506,7 +38688,13 @@ var Laya=window.Laya=(function(window,document){
 			max=this.kLine.dataList.length-dayCount;
 			if (max < 0)
 				max=0;
-			this.dayScroll.setScroll(0,max,max);
+			if (TradeTestManager.isTradeTestOn){
+				var tValue=0;
+				tValue=Math.floor(Math.random()*max);
+				this.dayScroll.setScroll(0,max,tValue);
+				}else{
+				this.dayScroll.setScroll(0,max,max);
+			}
 			if (this.maxDayEnable.selected){
 				this.kLine.start=Math.floor(this.dayScroll.value);
 			}
@@ -38829,6 +39017,107 @@ var Laya=window.Laya=(function(window,document){
 
 		return AnalyserList;
 	})(AnalyserListUI)
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class view.plugins.TradeTest extends ui.plugins.TradeTestUI
+	var TradeTest=(function(_super){
+		function TradeTest(){
+			this.tradeInfo=null;
+			this._dataList=null;
+			TradeTest.__super.call(this);
+			this.tState="close";
+			this.tradeInfo=new TradeInfo();
+			this.tradeInfo.reset();
+			var btns;
+			btns=[this.buyBtn,this.sellBtn,this.resetBtn,this.anotherBtn,this.nextDayBtn];
+			var i=0,len=0;
+			len=btns.length;
+			for (i=0;i < len;i++){
+				var tBtn;
+				tBtn=btns[i];
+				tBtn.on("click",this,this.onBtnClick,[tBtn]);
+			}
+			this.setDataList(null);
+		}
+
+		__class(TradeTest,'view.plugins.TradeTest',_super);
+		var __proto=TradeTest.prototype;
+		__proto.setDataList=function(dataList){
+			this._dataList=dataList;
+			this.updateUIInfo();
+		}
+
+		__proto.updateUIInfo=function(){
+			this.updateCurInfo();
+			this.updateInfo();
+		}
+
+		__proto.updateCurInfo=function(){
+			if (!this._dataList){
+				this.stockInfoTxt.text="";
+				this.tradeInfo.tStockPrice=0;
+				return;
+			};
+			var len=0;
+			len=this._dataList.length;
+			var tData;
+			var preData;
+			tData=this._dataList[len-1];
+			preData=this._dataList[len-2];
+			this.tradeInfo.tStockPrice=tData.close;
+			if (this.tState=="open"){
+				this.stockInfoTxt.text="当前股价:"+tData.open;
+				}else{
+				this.stockInfoTxt.text="当前股价:"+tData.close+"\n涨幅:"+StockTools.getGoodPercent((tData.close-preData.close)/preData.close);
+			}
+		}
+
+		__proto.updateInfo=function(){
+			this.tradeInfoTxt.text="总金额:"+this.tradeInfo.total
+			+"\n当前仓位:"+StockTools.getGoodPercent(this.tradeInfo.position)+"%"
+			+"\n股票:"+this.tradeInfo.curStockMoney+" 现金:"+this.tradeInfo.money
+			+"\n总盈亏:"+this.tradeInfo.stockWinOfTotal+","+StockTools.getGoodPercent(this.tradeInfo.stockWinRateOfTotal)+"%"
+			+"\n持仓盈亏:"+this.tradeInfo.stockWin+","+StockTools.getGoodPercent(this.tradeInfo.stockWinRate)+"%";
+		}
+
+		__proto.onBtnClick=function(btn){
+			switch (btn){
+				case this.buyBtn:
+					this.tradeInfo.buyStock(this.tradeInfo.tStockPrice,this.curStockCount);
+					this.updateUIInfo();
+					break ;
+				case this.sellBtn:
+					this.tradeInfo.sellStock(this.tradeInfo.tStockPrice,this.curStockCount);
+					this.updateUIInfo();
+					break ;
+				case this.resetBtn:
+					this.tradeInfo.reset();
+					this.updateUIInfo();
+					break ;
+				case this.anotherBtn:
+					this.tradeInfo.sellAll();
+					this.event("ANOTHER");
+					break ;
+				case this.nextDayBtn:
+					this.event("NEXT_Day");
+					break ;
+				}
+		}
+
+		__getset(0,__proto,'curStockCount',function(){
+			return parseInt(this.countTxt.text);
+		});
+
+		TradeTest.OPEN="open";
+		TradeTest.CLOSE="close";
+		TradeTest.NEXT_DAY="NEXT_Day";
+		TradeTest.ANOTHER="ANOTHER";
+		return TradeTest;
+	})(TradeTestUI)
 
 
 	/**
@@ -40122,7 +40411,7 @@ var Laya=window.Laya=(function(window,document){
 	})(ToolBarUI)
 
 
-	Laya.__init([EventDispatcher,LoaderManager,Render,Browser,LocalStorage,View,Timer]);
+	Laya.__init([LoaderManager,EventDispatcher,Render,Browser,LocalStorage,View,Timer]);
 	new StockMain();
 
 })(window,document,Laya);

@@ -82,6 +82,7 @@ package stock.views
 		public var stockData:StockData;
 		public var dataList:Array;
 		public var disDataList:Array;
+		public static const KlineShowed:String = "KlineShowed";
 		public function setStockData(stockData:StockData):void
 		{
 			this.stockData = stockData;
@@ -101,6 +102,7 @@ package stock.views
 			{
 				showMsg("K-line Showed");
 				this.cacheAsBitmap = true;
+				event(KlineShowed);
 			}
 			
 			
