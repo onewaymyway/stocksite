@@ -39081,7 +39081,7 @@ var Laya=window.Laya=(function(window,document){
 		__proto.updateInfo=function(){
 			this.tradeInfoTxt.text="总金额:"+this.tradeInfo.total
 			+"\n当前仓位:"+StockTools.getGoodPercent(this.tradeInfo.position)+"%"
-			+"\n股票:"+this.tradeInfo.curStockMoney+" 现金:"+this.tradeInfo.money
+			+"\n股票:"+this.tradeInfo.curStockMoney+" 现金:"+Math.floor(this.tradeInfo.money)
 			+"\n总盈亏:"+this.tradeInfo.stockWinOfTotal+","+StockTools.getGoodPercent(this.tradeInfo.stockWinRateOfTotal)+"%"
 			+"\n持仓盈亏:"+this.tradeInfo.stockWin+","+StockTools.getGoodPercent(this.tradeInfo.stockWinRate)+"%";
 		}

@@ -75,7 +75,7 @@ package view.plugins {
 		{
 			tradeInfoTxt.text = "总金额:" + tradeInfo.total 
 			+"\n当前仓位:"+StockTools.getGoodPercent(tradeInfo.position)+"%"
-			+"\n股票:" + tradeInfo.curStockMoney+" 现金:"+tradeInfo.money
+			+"\n股票:" + tradeInfo.curStockMoney+" 现金:"+Math.floor(tradeInfo.money)
 			+"\n总盈亏:" + tradeInfo.stockWinOfTotal+","+StockTools.getGoodPercent(tradeInfo.stockWinRateOfTotal)+"%"
 			+"\n持仓盈亏:" + tradeInfo.stockWin+","+StockTools.getGoodPercent(tradeInfo.stockWinRate)+"%";
 			
