@@ -38643,10 +38643,10 @@ var Laya=window.Laya=(function(window,document){
 			}
 			else {
 				if (this.clickControlEnable){
-					if (TradeTestManager.isTradeTestOn)return;
 					if (Laya.stage.mouseX > Laya.stage.width *0.5){
 						this.dayScroll.value=this.dayScroll.value+1;
 						}else{
+						if (TradeTestManager.isTradeTestOn)return;
 						this.dayScroll.value=this.dayScroll.value-1;
 					}
 				}
@@ -39048,10 +39048,16 @@ var Laya=window.Laya=(function(window,document){
 				tBtn.on("click",this,this.onBtnClick,[tBtn]);
 			}
 			this.setDataList(null);
+			this.on("doubleclick",this,this.onDoubleClick);
 		}
 
 		__class(TradeTest,'view.plugins.TradeTest',_super);
 		var __proto=TradeTest.prototype;
+		__proto.onDoubleClick=function(e){
+			if (e.target !=this)return;
+			this.scaleX=this.scaleY=3-this.scaleX;
+		}
+
 		__proto.setDataList=function(dataList,stock){
 			this._dataList=dataList;
 			this._stock=stock;

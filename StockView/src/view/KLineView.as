@@ -182,11 +182,12 @@ package view {
 			}
 			else {
 				if (clickControlEnable) {
-					if (TradeTestManager.isTradeTestOn) return;
+					
 					if (Laya.stage.mouseX > Laya.stage.width * 0.5) {
 						dayScroll.value = dayScroll.value + 1;
 					}else
 					{
+						if (TradeTestManager.isTradeTestOn) return;
 						dayScroll.value = dayScroll.value - 1;
 					}
 				}

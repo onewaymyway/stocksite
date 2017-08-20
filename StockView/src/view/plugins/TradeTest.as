@@ -24,6 +24,13 @@ package view.plugins {
 				tBtn.on(Event.CLICK, this, onBtnClick, [tBtn]);
 			}
 			setDataList(null);
+			this.on(Event.DOUBLE_CLICK, this, onDoubleClick);
+		}
+		
+		private function onDoubleClick(e:Event):void
+		{
+			if (e.target != this) return;
+			this.scaleX = this.scaleY = 3 - this.scaleX;
 		}
 		
 		private var _dataList:Array;
