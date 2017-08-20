@@ -27,9 +27,12 @@ package view.plugins {
 		}
 		
 		private var _dataList:Array;
-		public function setDataList(dataList:Array):void
+		private var _stock:String;
+		public function setDataList(dataList:Array,stock:String):void
 		{
 			_dataList = dataList;
+			_stock = stock;
+			tradeInfo.tStock = stock;
 			updateUIInfo();
 			
 		}
@@ -57,6 +60,8 @@ package view.plugins {
 			tData = _dataList[len - 1];
 			preData = _dataList[len - 2];
 			tradeInfo.tStockPrice = tData.close;
+			tradeInfo.tDate = tData.date;
+			
 			if (tState == OPEN)
 			{
 				stockInfoTxt.text = "当前股价:"+tData.open;

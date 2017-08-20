@@ -1,5 +1,6 @@
 package view 
 {
+	import view.plugins.TradeInfo;
 	/**
 	 * ...
 	 * @author ww
@@ -8,6 +9,7 @@ package view
 	{
 		public static var I:TradeTestManager = new TradeTestManager();
 		public static var isTradeTestOn:Boolean = false;
+		public static var curTradeInfo:TradeInfo;
 		public function TradeTestManager() 
 		{
 			

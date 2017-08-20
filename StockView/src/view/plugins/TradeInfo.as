@@ -1,6 +1,7 @@
 package view.plugins 
 {
 	import laya.uicomps.MessageManager;
+	import view.TradeTestManager;
 	/**
 	 * ...
 	 * @author ww
@@ -10,6 +11,7 @@ package view.plugins
 		
 		public function TradeInfo() 
 		{
+			TradeTestManager.curTradeInfo = this;
 			reset();
 		}
 		public static const INIT_MONEY:Number = 100000;
@@ -18,6 +20,10 @@ package view.plugins
 		public var stockMoney:Number;
 		public var tStockPrice:Number;
 		public var totalWin:Number;
+		public var dayCount:int;
+		public var tStock:String;
+		public var tDate:String;
+		public var actionDic:Object = {};
 		public function reset():void
 		{
 			money = INIT_MONEY;
@@ -25,6 +31,19 @@ package view.plugins
 			stockMoney = 0;
 			tStockPrice = 0;
 			totalWin = 0;
+			dayCount = 0;
+			actionDic = {};
+		}
+		
+		public function getActionDic(stock:String):Object
+		{
+			if (!actionDic[stock]) actionDic[stock] = {};
+			return actionDic[stock];
+		}
+		
+		public function setTDayAction(action:String):void
+		{
+			getActionDic(tStock)[tDate] = action;
 		}
 		
 		public function sellAll():void
@@ -44,6 +63,8 @@ package view.plugins
 			stockCount += count;
 			stockMoney += dStockMoney;
 			money -= dStockMoney;
+			setTDayAction("buy");
+			
 		}
 		
 		public function sellStock(price:Number, count:Number):void
@@ -62,6 +83,7 @@ package view.plugins
 			{
 				stockMoney = 0;
 			}
+			setTDayAction("sell");
 		}
 		
 		public function get stockWinRate():Number

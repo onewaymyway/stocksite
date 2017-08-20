@@ -98,7 +98,7 @@ package view {
 		}
 		private function onKlineShowed():void
 		{
-			tradeTest.setDataList(kLine.disDataList);
+			tradeTest.setDataList(kLine.disDataList,kLine.tStock);
 		}
 		private function updateTradeVisible():void
 		{

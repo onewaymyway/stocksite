@@ -14,6 +14,7 @@ package stock.views
 	import stock.StockBasicInfo;
 	import stock.StockData;
 	import view.StockListManager;
+	import view.TradeTestManager;
 	/**
 	 * ...
 	 * @author ww
@@ -199,6 +200,23 @@ package stock.views
 					if (tData.date > markTime)
 					{
 						break;
+					}
+				}
+			}
+			if (TradeTestManager.isTradeTestOn)
+			{
+				var tradeActionDic:Object;
+				tradeActionDic = TradeTestManager.curTradeInfo.getActionDic(tStock);
+				for (i = 0; i < len; i++)
+				{
+					tData = dataList[i];
+					var tDate:String;
+					tDate = tData.date;
+					if (tradeActionDic[tDate])
+					{
+						pos = getAdptXV(i * gridWidth);
+						this.graphics.drawLine(pos, getAdptYV(tData["low"]), pos, getAdptYV(tData["low"]) + 30, "#00ff00");
+						this.graphics.fillText(tradeActionDic[tDate], pos, getAdptYV(tData["low"]) + 30, null, "#00ff00", "center");
 					}
 				}
 			}
