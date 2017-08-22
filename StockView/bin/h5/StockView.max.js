@@ -20371,10 +20371,11 @@ var Laya=window.Laya=(function(window,document){
 
 		__proto.getUserData=function(sign){
 			MessageManager.I.show("try getUserData:"+sign);
-			/*no*/this.mData={};
-			/*no*/this.mData.type="GetStocks";
-			/*no*/this.mData.sign=sign;
-			this.sendJson(/*no*/this.mData);
+			var mData;
+			mData={};
+			mData.type="GetStocks";
+			mData.sign=sign;
+			this.sendJson(mData);
 		}
 
 		__proto.send=function(msg){
@@ -40483,11 +40484,3 @@ var Laya=window.Laya=(function(window,document){
 	new StockMain();
 
 })(window,document,Laya);
-
-
-/*
-1 file:///D:/stocksite.git/trunk/StockClient/src/stock/StockSocket.as (95):warning:mData This variable is not defined.
-2 file:///D:/stocksite.git/trunk/StockClient/src/stock/StockSocket.as (96):warning:mData.type This variable is not defined.
-3 file:///D:/stocksite.git/trunk/StockClient/src/stock/StockSocket.as (97):warning:mData.sign This variable is not defined.
-4 file:///D:/stocksite.git/trunk/StockClient/src/stock/StockSocket.as (98):warning:mData This variable is not defined.
-*/
