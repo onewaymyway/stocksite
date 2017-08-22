@@ -95,7 +95,8 @@ package stock {
 		}
 		
 		public function getUserData(sign:String):void {
-			MessageManager.I.show("try getUserData:"+sign);
+			MessageManager.I.show("try getUserData:" + sign);
+			var mData:Object;
 			mData = {};
 			mData.type = StockMsg.GetStocks;
 			mData.sign = sign;
