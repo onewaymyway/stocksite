@@ -21,8 +21,9 @@ package view.plugins
 		public var tStockPrice:Number;
 		public var totalWin:Number;
 		public var dayCount:int;
+		public var stockDayCount:int;
 		public var tStock:String;
-		public var tDate:String;
+		private var _tDate:String;
 		public var actionDic:Object = {};
 		public function reset():void
 		{
@@ -32,7 +33,9 @@ package view.plugins
 			tStockPrice = 0;
 			totalWin = 0;
 			dayCount = 0;
-			actionDic = {};
+			_tDate = "";
+			actionDic = { };
+			stockDayCount = 0;
 		}
 		
 		public function getActionDic(stock:String):Object
@@ -60,6 +63,11 @@ package view.plugins
 				MessageManager.I.show("资金不足");
 				return;
 			}
+			if (stockCount == 0)
+			{
+				stockDayCount=1;
+				dayCount++;
+			} 
 			stockCount += count;
 			stockMoney += dStockMoney;
 			money -= dStockMoney;
@@ -82,6 +90,7 @@ package view.plugins
 			if (stockCount == 0)
 			{
 				stockMoney = 0;
+				stockDayCount = 0;
 			}
 			setTDayAction("sell");
 		}
@@ -126,6 +135,25 @@ package view.plugins
 		public function get position():Number
 		{
 			return curStockMoney / total;
+		}
+		
+		public function get tDate():String 
+		{
+			return _tDate;
+		}
+		
+		public function set tDate(value:String):void 
+		{
+			if (_tDate != value)
+			{
+				
+				if (stockCount > 0)
+				{
+					stockDayCount++;
+					dayCount++;
+				}
+			} 
+			_tDate = value;
 		}
 	}
 

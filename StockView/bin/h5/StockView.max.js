@@ -2601,8 +2601,9 @@ var Laya=window.Laya=(function(window,document){
 			this.tStockPrice=NaN;
 			this.totalWin=NaN;
 			this.dayCount=0;
+			this.stockDayCount=0;
 			this.tStock=null;
-			this.tDate=null;
+			this._tDate=null;
 			this.actionDic={};
 			TradeTestManager.curTradeInfo=this;
 			this.reset();
@@ -2617,7 +2618,9 @@ var Laya=window.Laya=(function(window,document){
 			this.tStockPrice=0;
 			this.totalWin=0;
 			this.dayCount=0;
+			this._tDate="";
 			this.actionDic={};
+			this.stockDayCount=0;
 		}
 
 		__proto.getActionDic=function(stock){
@@ -2640,6 +2643,10 @@ var Laya=window.Laya=(function(window,document){
 				MessageManager.I.show("资金不足");
 				return;
 			}
+			if (this.stockCount==0){
+				this.stockDayCount=1;
+				this.dayCount++;
+			}
 			this.stockCount+=count;
 			this.stockMoney+=dStockMoney;
 			this.money-=dStockMoney;
@@ -2658,6 +2665,7 @@ var Laya=window.Laya=(function(window,document){
 			this.money+=dStockMoney;
 			if (this.stockCount==0){
 				this.stockMoney=0;
+				this.stockDayCount=0;
 			}
 			this.setTDayAction("sell");
 		}
@@ -2687,6 +2695,18 @@ var Laya=window.Laya=(function(window,document){
 		__getset(0,__proto,'stockPrice',function(){
 			if (this.stockCount <=0)return 0;
 			return this.stockMoney / this.stockCount;
+		});
+
+		__getset(0,__proto,'tDate',function(){
+			return this._tDate;
+			},function(value){
+			if (this._tDate !=value){
+				if (this.stockCount > 0){
+					this.stockDayCount++;
+					this.dayCount++;
+				}
+			}
+			this._tDate=value;
 		});
 
 		__getset(0,__proto,'curStockMoney',function(){
@@ -16347,6 +16367,36 @@ var Laya=window.Laya=(function(window,document){
 	})()
 
 
+	/**
+	*...
+	*@author dongketao
+	*/
+	//class PathFinding.core.Node
+	var Node$1=(function(){
+		function Node(x,y,walkable){
+			this.x=0;
+			this.y=0;
+			this.g=0;
+			this.f=0;
+			this.h=0;
+			this.by=0;
+			this.parent=null;
+			this.opened=null;
+			this.closed=null;
+			this.tested=null;
+			this.retainCount=null;
+			this.walkable=false;
+			(walkable===void 0)&& (walkable=true);
+			this.x=x;
+			this.y=y;
+			this.walkable=walkable;
+		}
+
+		__class(Node,'PathFinding.core.Node',null,'Node$1');
+		return Node;
+	})()
+
+
 	/**全局配置*/
 	//class UIConfig
 	var UIConfig=(function(){
@@ -28908,462 +28958,6 @@ var Laya=window.Laya=(function(window,document){
 
 
 	/**
-	*<code>ScrollBar</code> 组件是一个滚动条组件。
-	*<p>当数据太多以至于显示区域无法容纳时，最终用户可以使用 <code>ScrollBar</code> 组件控制所显示的数据部分。</p>
-	*<p> 滚动条由四部分组成：两个箭头按钮、一个轨道和一个滑块。 </p> *
-	*
-	*@see laya.ui.VScrollBar
-	*@see laya.ui.HScrollBar
-	*/
-	//class laya.ui.ScrollBar extends laya.ui.Component
-	var ScrollBar=(function(_super){
-		function ScrollBar(skin){
-			this.rollRatio=0.95;
-			this.changeHandler=null;
-			this.scaleBar=true;
-			this.autoHide=false;
-			this.elasticDistance=0;
-			this.elasticBackTime=500;
-			this.upButton=null;
-			this.downButton=null;
-			this.slider=null;
-			this._scrollSize=1;
-			this._skin=null;
-			this._thumbPercent=1;
-			this._target=null;
-			this._lastPoint=null;
-			this._lastOffset=0;
-			this._checkElastic=false;
-			this._isElastic=false;
-			this._value=NaN;
-			this._hide=false;
-			this._clickOnly=true;
-			this._offsets=null;
-			ScrollBar.__super.call(this);
-			this._showButtons=UIConfig.showButtons;
-			this._touchScrollEnable=UIConfig.touchScrollEnable;
-			this._mouseWheelEnable=UIConfig.mouseWheelEnable;
-			this.skin=skin;
-			this.max=1;
-		}
-
-		__class(ScrollBar,'laya.ui.ScrollBar',_super);
-		var __proto=ScrollBar.prototype;
-		/**@inheritDoc */
-		__proto.destroy=function(destroyChild){
-			(destroyChild===void 0)&& (destroyChild=true);
-			_super.prototype.destroy.call(this,destroyChild);
-			this.upButton && this.upButton.destroy(destroyChild);
-			this.downButton && this.downButton.destroy(destroyChild);
-			this.slider && this.slider.destroy(destroyChild);
-			this.upButton=this.downButton=null;
-			this.slider=null;
-			this.changeHandler=null;
-			this._offsets=null;
-		}
-
-		/**@inheritDoc */
-		__proto.createChildren=function(){
-			this.addChild(this.slider=new Slider());
-			this.addChild(this.upButton=new Button());
-			this.addChild(this.downButton=new Button());
-		}
-
-		/**@inheritDoc */
-		__proto.initialize=function(){
-			this.slider.showLabel=false;
-			this.slider.on("change",this,this.onSliderChange);
-			this.slider.setSlider(0,0,0);
-			this.upButton.on("mousedown",this,this.onButtonMouseDown);
-			this.downButton.on("mousedown",this,this.onButtonMouseDown);
-		}
-
-		/**
-		*@private
-		*滑块位置发生改变的处理函数。
-		*/
-		__proto.onSliderChange=function(){
-			this.value=this.slider.value;
-		}
-
-		/**
-		*@private
-		*向上和向下按钮的 <code>Event.MOUSE_DOWN</code> 事件侦听处理函数。
-		*/
-		__proto.onButtonMouseDown=function(e){
-			var isUp=e.currentTarget===this.upButton;
-			this.slide(isUp);
-			Laya.timer.once(Styles.scrollBarDelayTime,this,this.startLoop,[isUp]);
-			Laya.stage.once("mouseup",this,this.onStageMouseUp);
-		}
-
-		/**@private */
-		__proto.startLoop=function(isUp){
-			Laya.timer.frameLoop(1,this,this.slide,[isUp]);
-		}
-
-		/**@private */
-		__proto.slide=function(isUp){
-			if (isUp)this.value-=this._scrollSize;
-			else this.value+=this._scrollSize;
-		}
-
-		/**
-		*@private
-		*舞台的 <code>Event.MOUSE_DOWN</code> 事件侦听处理函数。
-		*/
-		__proto.onStageMouseUp=function(e){
-			Laya.timer.clear(this,this.startLoop);
-			Laya.timer.clear(this,this.slide);
-		}
-
-		/**
-		*@private
-		*更改对象的皮肤及位置。
-		*/
-		__proto.changeScrollBar=function(){
-			this.upButton.visible=this._showButtons;
-			this.downButton.visible=this._showButtons;
-			if (this._showButtons){
-				this.upButton.skin=this._skin.replace(".png","$up.png");
-				this.downButton.skin=this._skin.replace(".png","$down.png");
-			}
-			if (this.slider.isVertical)this.slider.y=this._showButtons ? this.upButton.height :0;
-			else this.slider.x=this._showButtons ? this.upButton.width :0;
-			this.resetPositions();
-		}
-
-		/**@inheritDoc */
-		__proto.changeSize=function(){
-			_super.prototype.changeSize.call(this);
-			this.resetPositions();
-			this.event("change");
-			this.changeHandler && this.changeHandler.runWith(this.value);
-		}
-
-		/**@private */
-		__proto.resetPositions=function(){
-			if (this.slider.isVertical)this.slider.height=this.height-(this._showButtons ? (this.upButton.height+this.downButton.height):0);
-			else this.slider.width=this.width-(this._showButtons ? (this.upButton.width+this.downButton.width):0);
-			this.resetButtonPosition();
-		}
-
-		/**@private */
-		__proto.resetButtonPosition=function(){
-			if (this.slider.isVertical)this.downButton.y=this.slider.y+this.slider.height;
-			else this.downButton.x=this.slider.x+this.slider.width;
-		}
-
-		/**
-		*设置滚动条信息。
-		*@param min 滚动条最小位置值。
-		*@param max 滚动条最大位置值。
-		*@param value 滚动条当前位置值。
-		*/
-		__proto.setScroll=function(min,max,value){
-			this.runCallLater(this.changeSize);
-			this.slider.setSlider(min,max,value);
-			this.slider.bar.visible=max > 0;
-			if (!this._hide && this.autoHide)this.visible=false;
-		}
-
-		/**@private */
-		__proto.onTargetMouseWheel=function(e){
-			this.value-=e.delta *this._scrollSize;
-			this.target=this._target;
-		}
-
-		/**@private */
-		__proto.onTargetMouseDown=function(e){
-			this._clickOnly=true;
-			this._lastOffset=0;
-			this._checkElastic=false;
-			this._lastPoint || (this._lastPoint=new Point());
-			this._lastPoint.setTo(Laya.stage.mouseX,Laya.stage.mouseY);
-			Laya.timer.clear(this,this.tweenMove);
-			Tween.clearTween(this);
-			Laya.stage.once("mouseup",this,this.onStageMouseUp2);
-			Laya.stage.once("mouseout",this,this.onStageMouseUp2);
-			Laya.timer.frameLoop(1,this,this.loop);
-		}
-
-		/**@private */
-		__proto.loop=function(){
-			var mouseY=Laya.stage.mouseY;
-			var mouseX=Laya.stage.mouseX;
-			this._lastOffset=this.isVertical ? (mouseY-this._lastPoint.y):(mouseX-this._lastPoint.x);
-			if (this._clickOnly){
-				if (Math.abs(this._lastOffset *(this.isVertical ? Laya.stage._canvasTransform.getScaleY():Laya.stage._canvasTransform.getScaleX()))> 1){
-					this._clickOnly=false;
-					this._offsets || (this._offsets=[]);
-					this._offsets.length=0;
-					this._target.mouseEnabled=false;
-					if (!this.hide && this.autoHide){
-						this.alpha=1;
-						this.visible=true;
-					}
-					this.event("start");
-				}else return;
-			}
-			this._offsets.push(this._lastOffset);
-			this._lastPoint.x=mouseX;
-			this._lastPoint.y=mouseY;
-			if (this._lastOffset===0)return;
-			if (!this._checkElastic){
-				if (this.elasticDistance > 0){
-					if (!this._checkElastic && this._lastOffset !=0){
-						this._checkElastic=true;
-						if ((this._lastOffset > 0 && this._value <=this.min)|| (this._lastOffset < 0 && this._value >=this.max)){
-							this._isElastic=true;
-							}else {
-							this._isElastic=false;
-						}
-					}
-					}else {
-					this._checkElastic=true;
-				}
-			}
-			if (this._checkElastic){
-				if (this._isElastic){
-					if (this._value <=this.min){
-						this.value-=this._lastOffset *Math.max(0,(1-((this.min-this._value)/ this.elasticDistance)));
-						}else if (this._value >=this.max){
-						this.value-=this._lastOffset *Math.max(0,(1-((this._value-this.max)/ this.elasticDistance)));
-					}
-					}else {
-					this.value-=this._lastOffset;
-				}
-			}
-		}
-
-		/**@private */
-		__proto.onStageMouseUp2=function(e){
-			Laya.stage.off("mouseup",this,this.onStageMouseUp2);
-			Laya.stage.off("mouseout",this,this.onStageMouseUp2);
-			Laya.timer.clear(this,this.loop);
-			if (this._clickOnly)return;
-			this._target.mouseEnabled=true;
-			if (this._isElastic){
-				if (this._value < this.min){
-					Tween.to(this,{value:this.min},this.elasticBackTime,Ease.sineOut,Handler.create(this,this.elasticOver));
-					}else if (this._value > this.max){
-					Tween.to(this,{value:this.max},this.elasticBackTime,Ease.sineOut,Handler.create(this,this.elasticOver));
-				}
-				}else {
-				if (this._offsets.length < 1){
-					this._offsets[0]=this.isVertical ? Laya.stage.mouseY-this._lastPoint.y :Laya.stage.mouseX-this._lastPoint.x;
-				};
-				var offset=0;
-				var n=Math.min(this._offsets.length,3);
-				for (var i=0;i < n;i++){
-					offset+=this._offsets[this._offsets.length-1-i];
-				}
-				this._lastOffset=offset / n;
-				offset=Math.abs(this._lastOffset);
-				if (offset < 2){
-					this.event("end");
-					return;
-				}
-				if (offset > 60)this._lastOffset=this._lastOffset > 0 ? 60 :-60;
-				Laya.timer.frameLoop(1,this,this.tweenMove);
-			}
-		}
-
-		/**@private */
-		__proto.elasticOver=function(){
-			this._isElastic=false;
-			if (!this.hide && this.autoHide){
-				Tween.to(this,{alpha:0},500);
-			}
-			this.event("end");
-		}
-
-		/**@private */
-		__proto.tweenMove=function(){
-			this._lastOffset *=this.rollRatio;
-			this.value-=this._lastOffset;
-			if (Math.abs(this._lastOffset)< 1 || this.value==this.max || this.value==this.min){
-				Laya.timer.clear(this,this.tweenMove);
-				this.event("end");
-				if (!this.hide && this.autoHide){
-					Tween.to(this,{alpha:0},500);
-				}
-			}
-		}
-
-		/**
-		*停止滑动。
-		*/
-		__proto.stopScroll=function(){
-			this.onStageMouseUp2(null);
-			Laya.timer.clear(this,this.tweenMove);
-			Tween.clearTween(this);
-		}
-
-		/**@inheritDoc */
-		__getset(0,__proto,'measureHeight',function(){
-			if (this.slider.isVertical)return 100;
-			return this.slider.height;
-		});
-
-		/**
-		*@copy laya.ui.Image#skin
-		*/
-		__getset(0,__proto,'skin',function(){
-			return this._skin;
-			},function(value){
-			if (this._skin !=value){
-				this._skin=value;
-				this.slider.skin=this._skin;
-				this.callLater(this.changeScrollBar);
-			}
-		});
-
-		/**
-		*获取或设置表示最高滚动位置的数字。
-		*/
-		__getset(0,__proto,'max',function(){
-			return this.slider.max;
-			},function(value){
-			this.slider.max=value;
-		});
-
-		/**一个布尔值，指定是否显示向上、向下按钮，默认值为true。*/
-		__getset(0,__proto,'showButtons',function(){
-			return this._showButtons;
-			},function(value){
-			this._showButtons=value;
-			this.callLater(this.changeScrollBar);
-		});
-
-		/**@inheritDoc */
-		__getset(0,__proto,'measureWidth',function(){
-			if (this.slider.isVertical)return this.slider.width;
-			return 100;
-		});
-
-		/**
-		*获取或设置表示最低滚动位置的数字。
-		*/
-		__getset(0,__proto,'min',function(){
-			return this.slider.min;
-			},function(value){
-			this.slider.min=value;
-		});
-
-		/**
-		*获取或设置表示当前滚动位置的数字。
-		*/
-		__getset(0,__proto,'value',function(){
-			return this._value;
-			},function(v){
-			if (v!==this._value){
-				if (this._isElastic)this._value=v;
-				else {
-					this.slider.value=v;
-					this._value=this.slider.value;
-				}
-				this.event("change");
-				this.changeHandler && this.changeHandler.runWith(this.value);
-			}
-		});
-
-		/**
-		*一个布尔值，指示滚动条是否为垂直滚动。如果值为true，则为垂直滚动，否则为水平滚动。
-		*<p>默认值为：true。</p>
-		*/
-		__getset(0,__proto,'isVertical',function(){
-			return this.slider.isVertical;
-			},function(value){
-			this.slider.isVertical=value;
-		});
-
-		/**
-		*<p>当前实例的 <code>Slider</code> 实例的有效缩放网格数据。</p>
-		*<p>数据格式："上边距,右边距,下边距,左边距,是否重复填充(值为0：不重复填充，1：重复填充)"，以逗号分隔。
-		*<ul><li>例如："4,4,4,4,1"</li></ul></p>
-		*@see laya.ui.AutoBitmap.sizeGrid
-		*/
-		__getset(0,__proto,'sizeGrid',function(){
-			return this.slider.sizeGrid;
-			},function(value){
-			this.slider.sizeGrid=value;
-		});
-
-		/**获取或设置一个值，该值表示按下滚动条轨道时页面滚动的增量。 */
-		__getset(0,__proto,'scrollSize',function(){
-			return this._scrollSize;
-			},function(value){
-			this._scrollSize=value;
-		});
-
-		/**@inheritDoc */
-		__getset(0,__proto,'dataSource',_super.prototype._$get_dataSource,function(value){
-			this._dataSource=value;
-			if ((typeof value=='number')|| (typeof value=='string'))this.value=Number(value);
-			else _super.prototype._$set_dataSource.call(this,value);
-		});
-
-		/**获取或设置一个值，该值表示滑条长度比例，值为：（0-1）。 */
-		__getset(0,__proto,'thumbPercent',function(){
-			return this._thumbPercent;
-			},function(value){
-			this.runCallLater(this.changeScrollBar);
-			this.runCallLater(this.changeSize);
-			value=value >=1 ? 0.99 :value;
-			this._thumbPercent=value;
-			if (this.scaleBar){
-				if (this.slider.isVertical)this.slider.bar.height=Math.max(this.slider.height *value,Styles.scrollBarMinNum);
-				else this.slider.bar.width=Math.max(this.slider.width *value,Styles.scrollBarMinNum);
-			}
-		});
-
-		/**
-		*设置滚动对象。
-		*@see laya.ui.TouchScroll#target
-		*/
-		__getset(0,__proto,'target',function(){
-			return this._target;
-			},function(value){
-			if (this._target){
-				this._target.off("mousewheel",this,this.onTargetMouseWheel);
-				this._target.off("mousedown",this,this.onTargetMouseDown);
-			}
-			this._target=value;
-			if (value){
-				this._mouseWheelEnable && this._target.on("mousewheel",this,this.onTargetMouseWheel);
-				this._touchScrollEnable && this._target.on("mousedown",this,this.onTargetMouseDown);
-			}
-		});
-
-		/**是否隐藏滚动条，不显示滚动条，但是可以正常滚动，默认为false。*/
-		__getset(0,__proto,'hide',function(){
-			return this._hide;
-			},function(value){
-			this._hide=value;
-			this.visible=!value;
-		});
-
-		/**一个布尔值，指定是否开启触摸，默认值为true。*/
-		__getset(0,__proto,'touchScrollEnable',function(){
-			return this._touchScrollEnable;
-			},function(value){
-			this._touchScrollEnable=value;
-			this.target=this._target;
-		});
-
-		/**一个布尔值，指定是否滑轮滚动，默认值为true。*/
-		__getset(0,__proto,'mouseWheelEnable',function(){
-			return this._mouseWheelEnable;
-			},function(value){
-			this._mouseWheelEnable=value;
-		});
-
-		return ScrollBar;
-	})(Component)
-
-
-	/**
 	*<p><code>Input</code> 类用于创建显示对象以显示和输入文本。</p>
 	*/
 	//class laya.display.Input extends laya.display.Text
@@ -29851,6 +29445,462 @@ var Laya=window.Laya=(function(window,document){
 		]);
 		return Input;
 	})(Text)
+
+
+	/**
+	*<code>ScrollBar</code> 组件是一个滚动条组件。
+	*<p>当数据太多以至于显示区域无法容纳时，最终用户可以使用 <code>ScrollBar</code> 组件控制所显示的数据部分。</p>
+	*<p> 滚动条由四部分组成：两个箭头按钮、一个轨道和一个滑块。 </p> *
+	*
+	*@see laya.ui.VScrollBar
+	*@see laya.ui.HScrollBar
+	*/
+	//class laya.ui.ScrollBar extends laya.ui.Component
+	var ScrollBar=(function(_super){
+		function ScrollBar(skin){
+			this.rollRatio=0.95;
+			this.changeHandler=null;
+			this.scaleBar=true;
+			this.autoHide=false;
+			this.elasticDistance=0;
+			this.elasticBackTime=500;
+			this.upButton=null;
+			this.downButton=null;
+			this.slider=null;
+			this._scrollSize=1;
+			this._skin=null;
+			this._thumbPercent=1;
+			this._target=null;
+			this._lastPoint=null;
+			this._lastOffset=0;
+			this._checkElastic=false;
+			this._isElastic=false;
+			this._value=NaN;
+			this._hide=false;
+			this._clickOnly=true;
+			this._offsets=null;
+			ScrollBar.__super.call(this);
+			this._showButtons=UIConfig.showButtons;
+			this._touchScrollEnable=UIConfig.touchScrollEnable;
+			this._mouseWheelEnable=UIConfig.mouseWheelEnable;
+			this.skin=skin;
+			this.max=1;
+		}
+
+		__class(ScrollBar,'laya.ui.ScrollBar',_super);
+		var __proto=ScrollBar.prototype;
+		/**@inheritDoc */
+		__proto.destroy=function(destroyChild){
+			(destroyChild===void 0)&& (destroyChild=true);
+			_super.prototype.destroy.call(this,destroyChild);
+			this.upButton && this.upButton.destroy(destroyChild);
+			this.downButton && this.downButton.destroy(destroyChild);
+			this.slider && this.slider.destroy(destroyChild);
+			this.upButton=this.downButton=null;
+			this.slider=null;
+			this.changeHandler=null;
+			this._offsets=null;
+		}
+
+		/**@inheritDoc */
+		__proto.createChildren=function(){
+			this.addChild(this.slider=new Slider());
+			this.addChild(this.upButton=new Button());
+			this.addChild(this.downButton=new Button());
+		}
+
+		/**@inheritDoc */
+		__proto.initialize=function(){
+			this.slider.showLabel=false;
+			this.slider.on("change",this,this.onSliderChange);
+			this.slider.setSlider(0,0,0);
+			this.upButton.on("mousedown",this,this.onButtonMouseDown);
+			this.downButton.on("mousedown",this,this.onButtonMouseDown);
+		}
+
+		/**
+		*@private
+		*滑块位置发生改变的处理函数。
+		*/
+		__proto.onSliderChange=function(){
+			this.value=this.slider.value;
+		}
+
+		/**
+		*@private
+		*向上和向下按钮的 <code>Event.MOUSE_DOWN</code> 事件侦听处理函数。
+		*/
+		__proto.onButtonMouseDown=function(e){
+			var isUp=e.currentTarget===this.upButton;
+			this.slide(isUp);
+			Laya.timer.once(Styles.scrollBarDelayTime,this,this.startLoop,[isUp]);
+			Laya.stage.once("mouseup",this,this.onStageMouseUp);
+		}
+
+		/**@private */
+		__proto.startLoop=function(isUp){
+			Laya.timer.frameLoop(1,this,this.slide,[isUp]);
+		}
+
+		/**@private */
+		__proto.slide=function(isUp){
+			if (isUp)this.value-=this._scrollSize;
+			else this.value+=this._scrollSize;
+		}
+
+		/**
+		*@private
+		*舞台的 <code>Event.MOUSE_DOWN</code> 事件侦听处理函数。
+		*/
+		__proto.onStageMouseUp=function(e){
+			Laya.timer.clear(this,this.startLoop);
+			Laya.timer.clear(this,this.slide);
+		}
+
+		/**
+		*@private
+		*更改对象的皮肤及位置。
+		*/
+		__proto.changeScrollBar=function(){
+			this.upButton.visible=this._showButtons;
+			this.downButton.visible=this._showButtons;
+			if (this._showButtons){
+				this.upButton.skin=this._skin.replace(".png","$up.png");
+				this.downButton.skin=this._skin.replace(".png","$down.png");
+			}
+			if (this.slider.isVertical)this.slider.y=this._showButtons ? this.upButton.height :0;
+			else this.slider.x=this._showButtons ? this.upButton.width :0;
+			this.resetPositions();
+		}
+
+		/**@inheritDoc */
+		__proto.changeSize=function(){
+			_super.prototype.changeSize.call(this);
+			this.resetPositions();
+			this.event("change");
+			this.changeHandler && this.changeHandler.runWith(this.value);
+		}
+
+		/**@private */
+		__proto.resetPositions=function(){
+			if (this.slider.isVertical)this.slider.height=this.height-(this._showButtons ? (this.upButton.height+this.downButton.height):0);
+			else this.slider.width=this.width-(this._showButtons ? (this.upButton.width+this.downButton.width):0);
+			this.resetButtonPosition();
+		}
+
+		/**@private */
+		__proto.resetButtonPosition=function(){
+			if (this.slider.isVertical)this.downButton.y=this.slider.y+this.slider.height;
+			else this.downButton.x=this.slider.x+this.slider.width;
+		}
+
+		/**
+		*设置滚动条信息。
+		*@param min 滚动条最小位置值。
+		*@param max 滚动条最大位置值。
+		*@param value 滚动条当前位置值。
+		*/
+		__proto.setScroll=function(min,max,value){
+			this.runCallLater(this.changeSize);
+			this.slider.setSlider(min,max,value);
+			this.slider.bar.visible=max > 0;
+			if (!this._hide && this.autoHide)this.visible=false;
+		}
+
+		/**@private */
+		__proto.onTargetMouseWheel=function(e){
+			this.value-=e.delta *this._scrollSize;
+			this.target=this._target;
+		}
+
+		/**@private */
+		__proto.onTargetMouseDown=function(e){
+			this._clickOnly=true;
+			this._lastOffset=0;
+			this._checkElastic=false;
+			this._lastPoint || (this._lastPoint=new Point());
+			this._lastPoint.setTo(Laya.stage.mouseX,Laya.stage.mouseY);
+			Laya.timer.clear(this,this.tweenMove);
+			Tween.clearTween(this);
+			Laya.stage.once("mouseup",this,this.onStageMouseUp2);
+			Laya.stage.once("mouseout",this,this.onStageMouseUp2);
+			Laya.timer.frameLoop(1,this,this.loop);
+		}
+
+		/**@private */
+		__proto.loop=function(){
+			var mouseY=Laya.stage.mouseY;
+			var mouseX=Laya.stage.mouseX;
+			this._lastOffset=this.isVertical ? (mouseY-this._lastPoint.y):(mouseX-this._lastPoint.x);
+			if (this._clickOnly){
+				if (Math.abs(this._lastOffset *(this.isVertical ? Laya.stage._canvasTransform.getScaleY():Laya.stage._canvasTransform.getScaleX()))> 1){
+					this._clickOnly=false;
+					this._offsets || (this._offsets=[]);
+					this._offsets.length=0;
+					this._target.mouseEnabled=false;
+					if (!this.hide && this.autoHide){
+						this.alpha=1;
+						this.visible=true;
+					}
+					this.event("start");
+				}else return;
+			}
+			this._offsets.push(this._lastOffset);
+			this._lastPoint.x=mouseX;
+			this._lastPoint.y=mouseY;
+			if (this._lastOffset===0)return;
+			if (!this._checkElastic){
+				if (this.elasticDistance > 0){
+					if (!this._checkElastic && this._lastOffset !=0){
+						this._checkElastic=true;
+						if ((this._lastOffset > 0 && this._value <=this.min)|| (this._lastOffset < 0 && this._value >=this.max)){
+							this._isElastic=true;
+							}else {
+							this._isElastic=false;
+						}
+					}
+					}else {
+					this._checkElastic=true;
+				}
+			}
+			if (this._checkElastic){
+				if (this._isElastic){
+					if (this._value <=this.min){
+						this.value-=this._lastOffset *Math.max(0,(1-((this.min-this._value)/ this.elasticDistance)));
+						}else if (this._value >=this.max){
+						this.value-=this._lastOffset *Math.max(0,(1-((this._value-this.max)/ this.elasticDistance)));
+					}
+					}else {
+					this.value-=this._lastOffset;
+				}
+			}
+		}
+
+		/**@private */
+		__proto.onStageMouseUp2=function(e){
+			Laya.stage.off("mouseup",this,this.onStageMouseUp2);
+			Laya.stage.off("mouseout",this,this.onStageMouseUp2);
+			Laya.timer.clear(this,this.loop);
+			if (this._clickOnly)return;
+			this._target.mouseEnabled=true;
+			if (this._isElastic){
+				if (this._value < this.min){
+					Tween.to(this,{value:this.min},this.elasticBackTime,Ease.sineOut,Handler.create(this,this.elasticOver));
+					}else if (this._value > this.max){
+					Tween.to(this,{value:this.max},this.elasticBackTime,Ease.sineOut,Handler.create(this,this.elasticOver));
+				}
+				}else {
+				if (this._offsets.length < 1){
+					this._offsets[0]=this.isVertical ? Laya.stage.mouseY-this._lastPoint.y :Laya.stage.mouseX-this._lastPoint.x;
+				};
+				var offset=0;
+				var n=Math.min(this._offsets.length,3);
+				for (var i=0;i < n;i++){
+					offset+=this._offsets[this._offsets.length-1-i];
+				}
+				this._lastOffset=offset / n;
+				offset=Math.abs(this._lastOffset);
+				if (offset < 2){
+					this.event("end");
+					return;
+				}
+				if (offset > 60)this._lastOffset=this._lastOffset > 0 ? 60 :-60;
+				Laya.timer.frameLoop(1,this,this.tweenMove);
+			}
+		}
+
+		/**@private */
+		__proto.elasticOver=function(){
+			this._isElastic=false;
+			if (!this.hide && this.autoHide){
+				Tween.to(this,{alpha:0},500);
+			}
+			this.event("end");
+		}
+
+		/**@private */
+		__proto.tweenMove=function(){
+			this._lastOffset *=this.rollRatio;
+			this.value-=this._lastOffset;
+			if (Math.abs(this._lastOffset)< 1 || this.value==this.max || this.value==this.min){
+				Laya.timer.clear(this,this.tweenMove);
+				this.event("end");
+				if (!this.hide && this.autoHide){
+					Tween.to(this,{alpha:0},500);
+				}
+			}
+		}
+
+		/**
+		*停止滑动。
+		*/
+		__proto.stopScroll=function(){
+			this.onStageMouseUp2(null);
+			Laya.timer.clear(this,this.tweenMove);
+			Tween.clearTween(this);
+		}
+
+		/**@inheritDoc */
+		__getset(0,__proto,'measureHeight',function(){
+			if (this.slider.isVertical)return 100;
+			return this.slider.height;
+		});
+
+		/**
+		*@copy laya.ui.Image#skin
+		*/
+		__getset(0,__proto,'skin',function(){
+			return this._skin;
+			},function(value){
+			if (this._skin !=value){
+				this._skin=value;
+				this.slider.skin=this._skin;
+				this.callLater(this.changeScrollBar);
+			}
+		});
+
+		/**
+		*获取或设置表示最高滚动位置的数字。
+		*/
+		__getset(0,__proto,'max',function(){
+			return this.slider.max;
+			},function(value){
+			this.slider.max=value;
+		});
+
+		/**一个布尔值，指定是否显示向上、向下按钮，默认值为true。*/
+		__getset(0,__proto,'showButtons',function(){
+			return this._showButtons;
+			},function(value){
+			this._showButtons=value;
+			this.callLater(this.changeScrollBar);
+		});
+
+		/**@inheritDoc */
+		__getset(0,__proto,'measureWidth',function(){
+			if (this.slider.isVertical)return this.slider.width;
+			return 100;
+		});
+
+		/**
+		*获取或设置表示最低滚动位置的数字。
+		*/
+		__getset(0,__proto,'min',function(){
+			return this.slider.min;
+			},function(value){
+			this.slider.min=value;
+		});
+
+		/**
+		*获取或设置表示当前滚动位置的数字。
+		*/
+		__getset(0,__proto,'value',function(){
+			return this._value;
+			},function(v){
+			if (v!==this._value){
+				if (this._isElastic)this._value=v;
+				else {
+					this.slider.value=v;
+					this._value=this.slider.value;
+				}
+				this.event("change");
+				this.changeHandler && this.changeHandler.runWith(this.value);
+			}
+		});
+
+		/**
+		*一个布尔值，指示滚动条是否为垂直滚动。如果值为true，则为垂直滚动，否则为水平滚动。
+		*<p>默认值为：true。</p>
+		*/
+		__getset(0,__proto,'isVertical',function(){
+			return this.slider.isVertical;
+			},function(value){
+			this.slider.isVertical=value;
+		});
+
+		/**
+		*<p>当前实例的 <code>Slider</code> 实例的有效缩放网格数据。</p>
+		*<p>数据格式："上边距,右边距,下边距,左边距,是否重复填充(值为0：不重复填充，1：重复填充)"，以逗号分隔。
+		*<ul><li>例如："4,4,4,4,1"</li></ul></p>
+		*@see laya.ui.AutoBitmap.sizeGrid
+		*/
+		__getset(0,__proto,'sizeGrid',function(){
+			return this.slider.sizeGrid;
+			},function(value){
+			this.slider.sizeGrid=value;
+		});
+
+		/**获取或设置一个值，该值表示按下滚动条轨道时页面滚动的增量。 */
+		__getset(0,__proto,'scrollSize',function(){
+			return this._scrollSize;
+			},function(value){
+			this._scrollSize=value;
+		});
+
+		/**@inheritDoc */
+		__getset(0,__proto,'dataSource',_super.prototype._$get_dataSource,function(value){
+			this._dataSource=value;
+			if ((typeof value=='number')|| (typeof value=='string'))this.value=Number(value);
+			else _super.prototype._$set_dataSource.call(this,value);
+		});
+
+		/**获取或设置一个值，该值表示滑条长度比例，值为：（0-1）。 */
+		__getset(0,__proto,'thumbPercent',function(){
+			return this._thumbPercent;
+			},function(value){
+			this.runCallLater(this.changeScrollBar);
+			this.runCallLater(this.changeSize);
+			value=value >=1 ? 0.99 :value;
+			this._thumbPercent=value;
+			if (this.scaleBar){
+				if (this.slider.isVertical)this.slider.bar.height=Math.max(this.slider.height *value,Styles.scrollBarMinNum);
+				else this.slider.bar.width=Math.max(this.slider.width *value,Styles.scrollBarMinNum);
+			}
+		});
+
+		/**
+		*设置滚动对象。
+		*@see laya.ui.TouchScroll#target
+		*/
+		__getset(0,__proto,'target',function(){
+			return this._target;
+			},function(value){
+			if (this._target){
+				this._target.off("mousewheel",this,this.onTargetMouseWheel);
+				this._target.off("mousedown",this,this.onTargetMouseDown);
+			}
+			this._target=value;
+			if (value){
+				this._mouseWheelEnable && this._target.on("mousewheel",this,this.onTargetMouseWheel);
+				this._touchScrollEnable && this._target.on("mousedown",this,this.onTargetMouseDown);
+			}
+		});
+
+		/**是否隐藏滚动条，不显示滚动条，但是可以正常滚动，默认为false。*/
+		__getset(0,__proto,'hide',function(){
+			return this._hide;
+			},function(value){
+			this._hide=value;
+			this.visible=!value;
+		});
+
+		/**一个布尔值，指定是否开启触摸，默认值为true。*/
+		__getset(0,__proto,'touchScrollEnable',function(){
+			return this._touchScrollEnable;
+			},function(value){
+			this._touchScrollEnable=value;
+			this.target=this._target;
+		});
+
+		/**一个布尔值，指定是否滑轮滚动，默认值为true。*/
+		__getset(0,__proto,'mouseWheelEnable',function(){
+			return this._mouseWheelEnable;
+			},function(value){
+			this._mouseWheelEnable=value;
+		});
+
+		return ScrollBar;
+	})(Component)
 
 
 	/**
@@ -36423,107 +36473,6 @@ var Laya=window.Laya=(function(window,document){
 
 
 	/**
-	*使用 <code>VSlider</code> 控件，用户可以通过在滑块轨道的终点之间移动滑块来选择值。
-	*<p> <code>VSlider</code> 控件采用垂直方向。滑块轨道从下往上扩展，而标签位于轨道的左右两侧。</p>
-	*
-	*@example 以下示例代码，创建了一个 <code>VSlider</code> 实例。
-	*<listing version="3.0">
-	*package
-	*{
-		*import laya.ui.HSlider;
-		*import laya.ui.VSlider;
-		*import laya.utils.Handler;
-		*public class VSlider_Example
-		*{
-			*private var vSlider:VSlider;
-			*public function VSlider_Example()
-			*{
-				*Laya.init(640,800);//设置游戏画布宽高。
-				*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
-				*Laya.loader.load(["resource/ui/vslider.png","resource/ui/vslider$bar.png"],Handler.create(this,onLoadComplete));//加载资源。
-				*}
-			*private function onLoadComplete():void
-			*{
-				*vSlider=new VSlider();//创建一个 VSlider 类的实例对象 vSlider 。
-				*vSlider.skin="resource/ui/vslider.png";//设置 vSlider 的皮肤。
-				*vSlider.min=0;//设置 vSlider 最低位置值。
-				*vSlider.max=10;//设置 vSlider 最高位置值。
-				*vSlider.value=2;//设置 vSlider 当前位置值。
-				*vSlider.tick=1;//设置 vSlider 刻度值。
-				*vSlider.x=100;//设置 vSlider 对象的属性 x 的值，用于控制 vSlider 对象的显示位置。
-				*vSlider.y=100;//设置 vSlider 对象的属性 y 的值，用于控制 vSlider 对象的显示位置。
-				*vSlider.changeHandler=new Handler(this,onChange);//设置 vSlider 位置变化处理器。
-				*Laya.stage.addChild(vSlider);//把 vSlider 添加到显示列表。
-				*}
-			*private function onChange(value:Number):void
-			*{
-				*trace("滑块的位置： value="+value);
-				*}
-			*}
-		*}
-	*</listing>
-	*<listing version="3.0">
-	*Laya.init(640,800);//设置游戏画布宽高
-	*Laya.stage.bgColor="#efefef";//设置画布的背景颜色
-	*var vSlider;
-	*Laya.loader.load(["resource/ui/vslider.png","resource/ui/vslider$bar.png"],laya.utils.Handler.create(this,onLoadComplete));//加载资源。
-	*function onLoadComplete(){
-		*vSlider=new laya.ui.VSlider();//创建一个 VSlider 类的实例对象 vSlider 。
-		*vSlider.skin="resource/ui/vslider.png";//设置 vSlider 的皮肤。
-		*vSlider.min=0;//设置 vSlider 最低位置值。
-		*vSlider.max=10;//设置 vSlider 最高位置值。
-		*vSlider.value=2;//设置 vSlider 当前位置值。
-		*vSlider.tick=1;//设置 vSlider 刻度值。
-		*vSlider.x=100;//设置 vSlider 对象的属性 x 的值，用于控制 vSlider 对象的显示位置。
-		*vSlider.y=100;//设置 vSlider 对象的属性 y 的值，用于控制 vSlider 对象的显示位置。
-		*vSlider.changeHandler=new laya.utils.Handler(this,onChange);//设置 vSlider 位置变化处理器。
-		*Laya.stage.addChild(vSlider);//把 vSlider 添加到显示列表。
-		*}
-	*function onChange(value){
-		*console.log("滑块的位置： value="+value);
-		*}
-	*</listing>
-	*<listing version="3.0">
-	*import HSlider=laya.ui.HSlider;
-	*import VSlider=laya.ui.VSlider;
-	*import Handler=laya.utils.Handler;
-	*class VSlider_Example {
-		*private vSlider:VSlider;
-		*constructor(){
-			*Laya.init(640,800);//设置游戏画布宽高。
-			*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
-			*Laya.loader.load(["resource/ui/vslider.png","resource/ui/vslider$bar.png"],Handler.create(this,this.onLoadComplete));//加载资源。
-			*}
-		*private onLoadComplete():void {
-			*this.vSlider=new VSlider();//创建一个 VSlider 类的实例对象 vSlider 。
-			*this.vSlider.skin="resource/ui/vslider.png";//设置 vSlider 的皮肤。
-			*this.vSlider.min=0;//设置 vSlider 最低位置值。
-			*this.vSlider.max=10;//设置 vSlider 最高位置值。
-			*this.vSlider.value=2;//设置 vSlider 当前位置值。
-			*this.vSlider.tick=1;//设置 vSlider 刻度值。
-			*this.vSlider.x=100;//设置 vSlider 对象的属性 x 的值，用于控制 vSlider 对象的显示位置。
-			*this.vSlider.y=100;//设置 vSlider 对象的属性 y 的值，用于控制 vSlider 对象的显示位置。
-			*this.vSlider.changeHandler=new Handler(this,this.onChange);//设置 vSlider 位置变化处理器。
-			*Laya.stage.addChild(this.vSlider);//把 vSlider 添加到显示列表。
-			*}
-		*private onChange(value:number):void {
-			*console.log("滑块的位置： value="+value);
-			*}
-		*}
-	*</listing>
-	*@see laya.ui.Slider
-	*/
-	//class laya.ui.VSlider extends laya.ui.Slider
-	var VSlider=(function(_super){
-		function VSlider(){VSlider.__super.call(this);;
-		};
-
-		__class(VSlider,'laya.ui.VSlider',_super);
-		return VSlider;
-	})(Slider)
-
-
-	/**
 	*<code>TextInput</code> 类用于创建显示对象以显示和输入文本。
 	*
 	*@example 以下示例代码，创建了一个 <code>TextInput</code> 实例。
@@ -36836,6 +36785,107 @@ var Laya=window.Laya=(function(window,document){
 
 		return TextInput;
 	})(Label)
+
+
+	/**
+	*使用 <code>VSlider</code> 控件，用户可以通过在滑块轨道的终点之间移动滑块来选择值。
+	*<p> <code>VSlider</code> 控件采用垂直方向。滑块轨道从下往上扩展，而标签位于轨道的左右两侧。</p>
+	*
+	*@example 以下示例代码，创建了一个 <code>VSlider</code> 实例。
+	*<listing version="3.0">
+	*package
+	*{
+		*import laya.ui.HSlider;
+		*import laya.ui.VSlider;
+		*import laya.utils.Handler;
+		*public class VSlider_Example
+		*{
+			*private var vSlider:VSlider;
+			*public function VSlider_Example()
+			*{
+				*Laya.init(640,800);//设置游戏画布宽高。
+				*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
+				*Laya.loader.load(["resource/ui/vslider.png","resource/ui/vslider$bar.png"],Handler.create(this,onLoadComplete));//加载资源。
+				*}
+			*private function onLoadComplete():void
+			*{
+				*vSlider=new VSlider();//创建一个 VSlider 类的实例对象 vSlider 。
+				*vSlider.skin="resource/ui/vslider.png";//设置 vSlider 的皮肤。
+				*vSlider.min=0;//设置 vSlider 最低位置值。
+				*vSlider.max=10;//设置 vSlider 最高位置值。
+				*vSlider.value=2;//设置 vSlider 当前位置值。
+				*vSlider.tick=1;//设置 vSlider 刻度值。
+				*vSlider.x=100;//设置 vSlider 对象的属性 x 的值，用于控制 vSlider 对象的显示位置。
+				*vSlider.y=100;//设置 vSlider 对象的属性 y 的值，用于控制 vSlider 对象的显示位置。
+				*vSlider.changeHandler=new Handler(this,onChange);//设置 vSlider 位置变化处理器。
+				*Laya.stage.addChild(vSlider);//把 vSlider 添加到显示列表。
+				*}
+			*private function onChange(value:Number):void
+			*{
+				*trace("滑块的位置： value="+value);
+				*}
+			*}
+		*}
+	*</listing>
+	*<listing version="3.0">
+	*Laya.init(640,800);//设置游戏画布宽高
+	*Laya.stage.bgColor="#efefef";//设置画布的背景颜色
+	*var vSlider;
+	*Laya.loader.load(["resource/ui/vslider.png","resource/ui/vslider$bar.png"],laya.utils.Handler.create(this,onLoadComplete));//加载资源。
+	*function onLoadComplete(){
+		*vSlider=new laya.ui.VSlider();//创建一个 VSlider 类的实例对象 vSlider 。
+		*vSlider.skin="resource/ui/vslider.png";//设置 vSlider 的皮肤。
+		*vSlider.min=0;//设置 vSlider 最低位置值。
+		*vSlider.max=10;//设置 vSlider 最高位置值。
+		*vSlider.value=2;//设置 vSlider 当前位置值。
+		*vSlider.tick=1;//设置 vSlider 刻度值。
+		*vSlider.x=100;//设置 vSlider 对象的属性 x 的值，用于控制 vSlider 对象的显示位置。
+		*vSlider.y=100;//设置 vSlider 对象的属性 y 的值，用于控制 vSlider 对象的显示位置。
+		*vSlider.changeHandler=new laya.utils.Handler(this,onChange);//设置 vSlider 位置变化处理器。
+		*Laya.stage.addChild(vSlider);//把 vSlider 添加到显示列表。
+		*}
+	*function onChange(value){
+		*console.log("滑块的位置： value="+value);
+		*}
+	*</listing>
+	*<listing version="3.0">
+	*import HSlider=laya.ui.HSlider;
+	*import VSlider=laya.ui.VSlider;
+	*import Handler=laya.utils.Handler;
+	*class VSlider_Example {
+		*private vSlider:VSlider;
+		*constructor(){
+			*Laya.init(640,800);//设置游戏画布宽高。
+			*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
+			*Laya.loader.load(["resource/ui/vslider.png","resource/ui/vslider$bar.png"],Handler.create(this,this.onLoadComplete));//加载资源。
+			*}
+		*private onLoadComplete():void {
+			*this.vSlider=new VSlider();//创建一个 VSlider 类的实例对象 vSlider 。
+			*this.vSlider.skin="resource/ui/vslider.png";//设置 vSlider 的皮肤。
+			*this.vSlider.min=0;//设置 vSlider 最低位置值。
+			*this.vSlider.max=10;//设置 vSlider 最高位置值。
+			*this.vSlider.value=2;//设置 vSlider 当前位置值。
+			*this.vSlider.tick=1;//设置 vSlider 刻度值。
+			*this.vSlider.x=100;//设置 vSlider 对象的属性 x 的值，用于控制 vSlider 对象的显示位置。
+			*this.vSlider.y=100;//设置 vSlider 对象的属性 y 的值，用于控制 vSlider 对象的显示位置。
+			*this.vSlider.changeHandler=new Handler(this,this.onChange);//设置 vSlider 位置变化处理器。
+			*Laya.stage.addChild(this.vSlider);//把 vSlider 添加到显示列表。
+			*}
+		*private onChange(value:number):void {
+			*console.log("滑块的位置： value="+value);
+			*}
+		*}
+	*</listing>
+	*@see laya.ui.Slider
+	*/
+	//class laya.ui.VSlider extends laya.ui.Slider
+	var VSlider=(function(_super){
+		function VSlider(){VSlider.__super.call(this);;
+		};
+
+		__class(VSlider,'laya.ui.VSlider',_super);
+		return VSlider;
+	})(Slider)
 
 
 	/**
@@ -39087,7 +39137,7 @@ var Laya=window.Laya=(function(window,document){
 			if (this.tState=="open"){
 				this.stockInfoTxt.text="当前股价:"+tData.open;
 				}else{
-				this.stockInfoTxt.text="当前股价:"+tData.close+"\n涨幅:"+StockTools.getGoodPercent((tData.close-preData.close)/preData.close);
+				this.stockInfoTxt.text="当前股价:"+tData.close+"\n涨幅:"+StockTools.getGoodPercent((tData.close-preData.close)/preData.close)+"%";
 			}
 		}
 
@@ -39095,8 +39145,8 @@ var Laya=window.Laya=(function(window,document){
 			this.tradeInfoTxt.text="总金额:"+this.tradeInfo.total
 			+"\n当前仓位:"+StockTools.getGoodPercent(this.tradeInfo.position)+"%"
 			+"\n股票:"+this.tradeInfo.curStockMoney+" 现金:"+Math.floor(this.tradeInfo.money)
-			+"\n总盈亏:"+this.tradeInfo.stockWinOfTotal+","+StockTools.getGoodPercent(this.tradeInfo.stockWinRateOfTotal)+"%"
-			+"\n持仓盈亏:"+this.tradeInfo.stockWin+","+StockTools.getGoodPercent(this.tradeInfo.stockWinRate)+"%";
+			+"\n总盈亏:"+this.tradeInfo.stockWinOfTotal+","+StockTools.getGoodPercent(this.tradeInfo.stockWinRateOfTotal)+"%"+"("+this.tradeInfo.dayCount+" days)"
+			+"\n持仓盈亏:"+this.tradeInfo.stockWin+","+StockTools.getGoodPercent(this.tradeInfo.stockWinRate)+"%"+"("+this.tradeInfo.stockDayCount+" days)";
 		}
 
 		__proto.onBtnClick=function(btn){
@@ -39133,83 +39183,6 @@ var Laya=window.Laya=(function(window,document){
 		TradeTest.ANOTHER="ANOTHER";
 		return TradeTest;
 	})(TradeTestUI)
-
-
-	/**
-	*...
-	*@author ww
-	*/
-	//class view.realtime.RealTimeItem extends ui.realtime.StockRealTimeItemUI
-	var RealTimeItem=(function(_super){
-		function RealTimeItem(){
-			this.index=0;
-			this.stock=null;
-			this.isSettingV=false;
-			RealTimeItem.__super.call(this);
-			this.delBtn.on("mousedown",this,this.onDeleteBtn);
-			this.markBtn.on("mousedown",this,this.onMarkBtn);
-			this.on("doubleclick",this,this.onDoubleClick);
-		}
-
-		__class(RealTimeItem,'view.realtime.RealTimeItem',_super);
-		var __proto=RealTimeItem.prototype;
-		__proto.onMarkBtn=function(){
-			Notice.notify("Mark_MyStock",this.stock);
-		}
-
-		__proto.initByStock=function(stockData){
-			if (!stockData)return;
-			var stock;
-			stock=RealTimeView.getStockCode(stockData);
-			this.stock=stock;
-			this.txt.text=stock;
-			var dataO;
-			dataO=StockJsonP.getStockData(stock);
-			if (dataO){
-				this.txt.text=dataO.code+","+dataO.name+","+dataO.price+","+StockTools.getGoodPercent((dataO.price-dataO.close)/ dataO.close)+"%";
-				this.txt.color=dataO.price-dataO.close > 0?"#ff0000":"#00ff00";
-				this.isSettingV=true;
-				this.showLine.selected=RealTimeItem.showStockDic[stock];
-				this.showLine.on("change",this,this.onShowLineChange);
-				this.isSettingV=false;
-			}
-			if ((typeof stockData=='object')){
-				if (stockData.markTime){
-					this.txt.text+=" M:"+DateTools.getTimeStr(stockData.markTime);
-				}
-				if (stockData.markPrice&&dataO&&dataO.price){
-					this.txt.text+=","+StockTools.getGoodPercent((dataO.price-stockData.markPrice)/ stockData.markPrice)+"%"
-				}
-			}
-		}
-
-		__proto.onShowLineChange=function(){
-			if (this.isSettingV)return;
-			RealTimeItem.showStockDic[this.stock]=this.showLine.selected;
-			if (this.showLine.selected){
-				Notice.notify("Add_MDLine",[this.stock]);
-				}else{
-				Notice.notify("Remove_MDLine",[this.stock]);
-			}
-		}
-
-		__proto.onDoubleClick=function(){
-			Notice.notify("RealTimeItem_DoubleClick",this.index);
-			Notice.notify("Show_Stock_KLine",StockJsonP.getPureStock(this.stock));
-		}
-
-		__proto.onDeleteBtn=function(){
-			Notice.notify("Remove_MyStock",this.stock);
-		}
-
-		__getset(0,__proto,'dataSource',_super.prototype._$get_dataSource,function(value){
-			_super.prototype._$set_dataSource.call(this,value);
-			this.initByStock(value);
-		});
-
-		RealTimeItem.showStockDic={};
-		return RealTimeItem;
-	})(StockRealTimeItemUI)
 
 
 	/**
@@ -39469,6 +39442,83 @@ var Laya=window.Laya=(function(window,document){
 		RealTimeView.DataSign="Mystocks";
 		return RealTimeView;
 	})(RealTimeUI)
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class view.realtime.RealTimeItem extends ui.realtime.StockRealTimeItemUI
+	var RealTimeItem=(function(_super){
+		function RealTimeItem(){
+			this.index=0;
+			this.stock=null;
+			this.isSettingV=false;
+			RealTimeItem.__super.call(this);
+			this.delBtn.on("mousedown",this,this.onDeleteBtn);
+			this.markBtn.on("mousedown",this,this.onMarkBtn);
+			this.on("doubleclick",this,this.onDoubleClick);
+		}
+
+		__class(RealTimeItem,'view.realtime.RealTimeItem',_super);
+		var __proto=RealTimeItem.prototype;
+		__proto.onMarkBtn=function(){
+			Notice.notify("Mark_MyStock",this.stock);
+		}
+
+		__proto.initByStock=function(stockData){
+			if (!stockData)return;
+			var stock;
+			stock=RealTimeView.getStockCode(stockData);
+			this.stock=stock;
+			this.txt.text=stock;
+			var dataO;
+			dataO=StockJsonP.getStockData(stock);
+			if (dataO){
+				this.txt.text=dataO.code+","+dataO.name+","+dataO.price+","+StockTools.getGoodPercent((dataO.price-dataO.close)/ dataO.close)+"%";
+				this.txt.color=dataO.price-dataO.close > 0?"#ff0000":"#00ff00";
+				this.isSettingV=true;
+				this.showLine.selected=RealTimeItem.showStockDic[stock];
+				this.showLine.on("change",this,this.onShowLineChange);
+				this.isSettingV=false;
+			}
+			if ((typeof stockData=='object')){
+				if (stockData.markTime){
+					this.txt.text+=" M:"+DateTools.getTimeStr(stockData.markTime);
+				}
+				if (stockData.markPrice&&dataO&&dataO.price){
+					this.txt.text+=","+StockTools.getGoodPercent((dataO.price-stockData.markPrice)/ stockData.markPrice)+"%"
+				}
+			}
+		}
+
+		__proto.onShowLineChange=function(){
+			if (this.isSettingV)return;
+			RealTimeItem.showStockDic[this.stock]=this.showLine.selected;
+			if (this.showLine.selected){
+				Notice.notify("Add_MDLine",[this.stock]);
+				}else{
+				Notice.notify("Remove_MDLine",[this.stock]);
+			}
+		}
+
+		__proto.onDoubleClick=function(){
+			Notice.notify("RealTimeItem_DoubleClick",this.index);
+			Notice.notify("Show_Stock_KLine",StockJsonP.getPureStock(this.stock));
+		}
+
+		__proto.onDeleteBtn=function(){
+			Notice.notify("Remove_MyStock",this.stock);
+		}
+
+		__getset(0,__proto,'dataSource',_super.prototype._$get_dataSource,function(value){
+			_super.prototype._$set_dataSource.call(this,value);
+			this.initByStock(value);
+		});
+
+		RealTimeItem.showStockDic={};
+		return RealTimeItem;
+	})(StockRealTimeItemUI)
 
 
 	/**
@@ -39868,25 +39918,6 @@ var Laya=window.Laya=(function(window,document){
 	*...
 	*@author ww
 	*/
-	//class laya.debug.view.nodeInfo.nodetree.FindNodeSmall extends laya.debug.ui.debugui.FindNodeSmallUI
-	var FindNodeSmall=(function(_super){
-		function FindNodeSmall(){
-			FindNodeSmall.__super.call(this);
-			Base64AtlasManager.replaceRes(FindNodeSmallUI.uiView);
-			this.createView(FindNodeSmallUI.uiView);
-		}
-
-		__class(FindNodeSmall,'laya.debug.view.nodeInfo.nodetree.FindNodeSmall',_super);
-		var __proto=FindNodeSmall.prototype;
-		__proto.createChildren=function(){}
-		return FindNodeSmall;
-	})(FindNodeSmallUI)
-
-
-	/**
-	*...
-	*@author ww
-	*/
 	//class laya.debug.view.nodeInfo.nodetree.FindNode extends laya.debug.ui.debugui.FindNodeUI
 	var FindNode=(function(_super){
 		function FindNode(){
@@ -39903,6 +39934,25 @@ var Laya=window.Laya=(function(window,document){
 
 		return FindNode;
 	})(FindNodeUI)
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class laya.debug.view.nodeInfo.nodetree.FindNodeSmall extends laya.debug.ui.debugui.FindNodeSmallUI
+	var FindNodeSmall=(function(_super){
+		function FindNodeSmall(){
+			FindNodeSmall.__super.call(this);
+			Base64AtlasManager.replaceRes(FindNodeSmallUI.uiView);
+			this.createView(FindNodeSmallUI.uiView);
+		}
+
+		__class(FindNodeSmall,'laya.debug.view.nodeInfo.nodetree.FindNodeSmall',_super);
+		var __proto=FindNodeSmall.prototype;
+		__proto.createChildren=function(){}
+		return FindNodeSmall;
+	})(FindNodeSmallUI)
 
 
 	/**
@@ -40433,8 +40483,8 @@ var Laya=window.Laya=(function(window,document){
 
 
 /*
-1 file:///D:/lovekxy/codes/python/stocksite.git/trunk/StockClient/src/stock/StockSocket.as (95):warning:mData This variable is not defined.
-2 file:///D:/lovekxy/codes/python/stocksite.git/trunk/StockClient/src/stock/StockSocket.as (96):warning:mData.type This variable is not defined.
-3 file:///D:/lovekxy/codes/python/stocksite.git/trunk/StockClient/src/stock/StockSocket.as (97):warning:mData.sign This variable is not defined.
-4 file:///D:/lovekxy/codes/python/stocksite.git/trunk/StockClient/src/stock/StockSocket.as (98):warning:mData This variable is not defined.
+1 file:///D:/stocksite.git/trunk/StockClient/src/stock/StockSocket.as (95):warning:mData This variable is not defined.
+2 file:///D:/stocksite.git/trunk/StockClient/src/stock/StockSocket.as (96):warning:mData.type This variable is not defined.
+3 file:///D:/stocksite.git/trunk/StockClient/src/stock/StockSocket.as (97):warning:mData.sign This variable is not defined.
+4 file:///D:/stocksite.git/trunk/StockClient/src/stock/StockSocket.as (98):warning:mData This variable is not defined.
 */

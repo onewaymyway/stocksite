@@ -74,7 +74,7 @@ package view.plugins {
 				stockInfoTxt.text = "当前股价:"+tData.open;
 			}else
 			{
-				stockInfoTxt.text = "当前股价:"+tData.close+"\n涨幅:"+StockTools.getGoodPercent((tData.close-preData.close)/preData.close);
+				stockInfoTxt.text = "当前股价:"+tData.close+"\n涨幅:"+StockTools.getGoodPercent((tData.close-preData.close)/preData.close)+"%";
 			}
 			
 		}
@@ -88,8 +88,8 @@ package view.plugins {
 			tradeInfoTxt.text = "总金额:" + tradeInfo.total 
 			+"\n当前仓位:"+StockTools.getGoodPercent(tradeInfo.position)+"%"
 			+"\n股票:" + tradeInfo.curStockMoney+" 现金:"+Math.floor(tradeInfo.money)
-			+"\n总盈亏:" + tradeInfo.stockWinOfTotal+","+StockTools.getGoodPercent(tradeInfo.stockWinRateOfTotal)+"%"
-			+"\n持仓盈亏:" + tradeInfo.stockWin+","+StockTools.getGoodPercent(tradeInfo.stockWinRate)+"%";
+			+"\n总盈亏:" + tradeInfo.stockWinOfTotal + "," + StockTools.getGoodPercent(tradeInfo.stockWinRateOfTotal) + "%" + "(" + tradeInfo.dayCount + " days)"
+			+"\n持仓盈亏:" + tradeInfo.stockWin+","+StockTools.getGoodPercent(tradeInfo.stockWinRate)+"%"+"("+tradeInfo.stockDayCount+" days)";
 			
 		}
 		
