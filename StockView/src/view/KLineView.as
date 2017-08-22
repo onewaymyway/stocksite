@@ -320,6 +320,10 @@ package view {
 			else {
 				kLine.maxShowCount = -1;
 				kLine.start = 0;
+				if (TradeTestManager.isTradeTestOn)
+				{
+					kLine.maxShowCount=Math.floor(dayScroll.value)+ValueTools.mParseFloat(dayCountInput.text);
+				}
 			}
 			kLine.setStock(stock);
 		}

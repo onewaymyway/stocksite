@@ -38816,6 +38816,9 @@ var Laya=window.Laya=(function(window,document){
 			else {
 				this.kLine.maxShowCount=-1;
 				this.kLine.start=0;
+				if (TradeTestManager.isTradeTestOn){
+					this.kLine.maxShowCount=Math.floor(this.dayScroll.value)+ValueTools.mParseFloat(this.dayCountInput.text);
+				}
 			}
 			this.kLine.setStock(stock);
 		}
