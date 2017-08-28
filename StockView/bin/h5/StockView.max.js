@@ -2779,6 +2779,21 @@ var Laya=window.Laya=(function(window,document){
 			StockListManager._myStockList=arr;
 		}
 
+		StockListManager.hasStock=function(stock){
+			if(!StockListManager._myStockList)return false;
+			stock=StockTools.getAdptStockStr(stock);
+			var i=0,len=0;
+			len=StockListManager._myStockList.length;
+			for (i=0;i < len;i++){
+				var tStockData;
+				tStockData=StockListManager._myStockList[i];
+				if (StockTools.getAdptStockCode(tStockData)==stock){
+					return true;
+				}
+			}
+			return false;
+		}
+
 		StockListManager.getStockLastMark=function(stock){
 			if (!StockListManager._myStockList)return null;
 			stock=StockTools.getAdptStockStr(stock);
@@ -23153,7 +23168,6 @@ var Laya=window.Laya=(function(window,document){
 
 
 	/**消息管理器
-	*@author yung
 	*/
 	//class laya.uicomps.MessageManager extends laya.display.Sprite
 	var MessageManager=(function(_super){
@@ -23169,14 +23183,14 @@ var Laya=window.Laya=(function(window,document){
 		__class(MessageManager,'laya.uicomps.MessageManager',_super);
 		var __proto=MessageManager.prototype;
 		__proto.show=function(msg,color,time){
-			(color===void 0)&& (color="ff0000");
+			(color===void 0)&& (color="#ff0000");
 			(time===void 0)&& (time=1000);
 			var label=new Label();
-			label.color="#"+color;
 			label.fontSize=14;
 			label.text=msg;
 			label.y=100;
 			label.height=30;
+			label.color=color;
 			var delayTime=0;
 			var nowTime=0;
 			var startTime=0;
@@ -38646,8 +38660,15 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		__proto.onAddToStock=function(){
-			Notice.notify("AddMyStock",this.kLine.tStock);
-			MessageManager.I.show("add stock:"+this.kLine.tStock);
+			if (this.addToStockBtn.label=="加自选"){
+				Notice.notify("AddMyStock",this.kLine.tStock);
+				MessageManager.I.show("add stock:"+this.kLine.tStock);
+				this.addToStockBtn.label="删自选";
+				}else{
+				Notice.notify("Remove_MyStock",this.kLine.tStock);
+				MessageManager.I.show("remove stock:"+this.kLine.tStock);
+				this.addToStockBtn.label="加自选";
+			}
 		}
 
 		__proto.onMMouseDown=function(e){
@@ -38728,6 +38749,11 @@ var Laya=window.Laya=(function(window,document){
 			this.stockInput.text=stock;
 			this.tradeTest.tradeInfo.sellAll();
 			this.onPlayInput();
+			if (StockListManager.hasStock(stock)){
+				this.addToStockBtn.label="删自选";
+				}else{
+				this.addToStockBtn.label="加自选";
+			}
 		}
 
 		__proto.getDayCount=function(){
