@@ -70,6 +70,23 @@ package view {
 			_myStockList = arr;
 		}
 		
+		public static function hasStock(stock:String):Boolean
+		{
+			if(!_myStockList) return false;
+			stock = StockTools.getAdptStockStr(stock);
+			var i:int, len:int;
+			len = _myStockList.length;
+			for (i = 0; i < len; i++)
+			{
+				var tStockData:Object;
+				tStockData = _myStockList[i];
+				if (StockTools.getAdptStockCode(tStockData) == stock)
+				{
+					return true;
+				}
+			}
+			return false;
+		}
 		public static function getStockLastMark(stock:String):String
 		{
 			if (!_myStockList) return null;

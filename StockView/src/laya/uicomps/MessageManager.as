@@ -33,6 +33,7 @@ package laya.uicomps {
 			label.text = msg;
 			label.y = 100;
 			label.height = 30;
+			label.color = color;
 			
 			var delayTime:int;
 			var nowTime:int;

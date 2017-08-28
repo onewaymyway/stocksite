@@ -132,8 +132,18 @@ package view {
 		}
 		private function onAddToStock():void
 		{
-			Notice.notify(MsgConst.Add_MyStock, kLine.tStock );
-			MessageManager.I.show("add stock:"+kLine.tStock);
+			if (addToStockBtn.label == "加自选")
+			{
+				Notice.notify(MsgConst.Add_MyStock, kLine.tStock );
+				MessageManager.I.show("add stock:" + kLine.tStock);
+				addToStockBtn.label = "删自选";
+			}else
+			{
+				Notice.notify(MsgConst.Remove_MyStock, kLine.tStock );
+				MessageManager.I.show("remove stock:" + kLine.tStock);
+				addToStockBtn.label = "加自选";
+			}
+			
 		}
 		private var preMouseX:Number;
 		private var isLongPress:Boolean = false;
@@ -221,6 +231,13 @@ package view {
 			stockInput.text = stock;
 			tradeTest.tradeInfo.sellAll();
 			onPlayInput();
+			if (StockListManager.hasStock(stock))
+			{
+				addToStockBtn.label = "删自选";
+			}else
+			{
+				addToStockBtn.label = "加自选";
+			}
 		}
 		
 		public function getDayCount():int {
