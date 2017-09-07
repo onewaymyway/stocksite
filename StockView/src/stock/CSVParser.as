@@ -32,6 +32,7 @@ package stock
 			for (i = 0; i < len; i++)
 			{
 				tKey = numKeys[i];
+				if(data[tKey])
 				data[tKey] = DataUtils.mParseFloat(data[tKey]);
 			}
 		}

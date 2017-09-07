@@ -2396,7 +2396,8 @@ var Laya=window.Laya=(function(window,document){
 			var tKey;
 			for (i=0;i < len;i++){
 				tKey=this.numKeys[i];
-				data[tKey]=DataUtils.mParseFloat(data[tKey]);
+				if(data[tKey])
+					data[tKey]=DataUtils.mParseFloat(data[tKey]);
 			}
 		}
 
