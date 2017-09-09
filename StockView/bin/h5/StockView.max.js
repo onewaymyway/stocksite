@@ -16748,40 +16748,79 @@ var Laya=window.Laya=(function(window,document){
 			this.barHeight=100;
 			this.offY=0;
 			this.color="#ffff00";
+			this.buyDownCount=3;
+			this.showSign=0;
+			this.sign="volume";
 			VolumeBar.__super.call(this);
 		}
 
 		__class(VolumeBar,'laya.stock.analysers.bars.VolumeBar',_super);
 		var __proto=VolumeBar.prototype;
 		__proto.initParamKeys=function(){
-			this.paramkeys=["barHeight","offY","color"];
+			this.paramkeys=["barHeight","offY","color","buyDownCount"];
 		}
 
 		__proto.analyseWork=function(){
-			var sign;
-			sign="amount";
-			sign="volume";
+			this.sign="amount";
+			this.sign="volume";
 			var i=0,len=0;
 			var dataList;
 			dataList=this.disDataList;
 			len=dataList.length;
 			var tData;
 			var max=NaN;
-			max=DataUtils.getKeyMax(dataList,sign);
+			max=DataUtils.getKeyMax(dataList,this.sign);
 			var MRate=NaN;
 			MRate=this.barHeight / max;
 			var barsData;
 			barsData=[];
 			for (i=0;i < len;i++){
-				barsData.push([i,-dataList[i][sign]*MRate]);
+				barsData.push([i,-dataList[i][this.sign] *MRate]);
 			}
 			this.resultData["bars"]=barsData;
+			this.doBuyPoints(false,"down");
+			this.doBuyPoints(true,"up");
+		}
+
+		__proto.doBuyPoints=function(isBigger,markSign){
+			(isBigger===void 0)&& (isBigger=false);
+			(markSign===void 0)&& (markSign="down");
+			var i=0,len=0;
+			var tDownCount=0;
+			var preValue=0;
+			var dataList;
+			dataList=this.disDataList;
+			len=dataList.length;
+			var tData;
+			var tValue=NaN;
+			tDownCount=0;
+			var buyList;
+			buyList=[];
+			for (i=0;i < len;i++){
+				tData=dataList[i];
+				tValue=tData[this.sign];
+				if (tValue==preValue || (isBigger==(tValue > preValue))){
+					tDownCount++;
+				}
+				else {
+					if (tDownCount >=this.buyDownCount){
+						buyList.push([markSign+":"+tDownCount,i]);
+					}
+					tDownCount=0;
+				}
+				preValue=tValue;
+			}
+			this.resultData[markSign]=buyList;
 		}
 
 		__proto.getDrawCmds=function(){
 			var rst;
 			rst=[];
 			rst.push(["drawBars",[this.resultData["bars"],this.offY,this.color]]);
+			if (this.showSign){
+				rst.push(["drawTexts",[this.resultData["up"],"low",30,"#00ff00",true,"#00ff00"]]);
+				rst.push(["drawTexts",[this.resultData["down"],"low",50,"#ffff00",true,"#00ff00"]]);
+			}
 			return rst;
 		}
 
