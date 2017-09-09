@@ -74,6 +74,7 @@ package view {
 			enableAnimation.selected = false;
 			
 			addToStockBtn.on(Event.MOUSE_DOWN, this, onAddToStock);
+			markBtn.on(Event.MOUSE_DOWN, this, onMarkBtn);
 			this.on(Event.KEY_DOWN, this, onKeyDown);
 		
 			
@@ -130,6 +131,17 @@ package view {
 					break;
 			}
 		}
+		private function onMarkBtn():void
+		{
+			Notice.notify(MsgConst.Add_MyStock, kLine.tStock );
+			addToStockBtn.label = "删自选";
+			Laya.timer.once(1000, this, markLater, [kLine.tStock]);
+		}
+		private function markLater(stock:String):void
+		{
+			Notice.notify(MsgConst.Mark_MyStock, stock);
+		}
+		
 		private function onAddToStock():void
 		{
 			if (addToStockBtn.label == "加自选")

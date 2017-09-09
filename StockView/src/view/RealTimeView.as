@@ -191,6 +191,7 @@ package view {
 					dataO = StockJsonP.getStockData(stock);
 					if (dataO) {
 						tData.markPrice = dataO.price;
+						MessageManager.I.show("Mark stock success:"+stock);
 					}
 					stockList[i] = tData;
 					break;
