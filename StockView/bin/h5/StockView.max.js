@@ -16757,7 +16757,7 @@ var Laya=window.Laya=(function(window,document){
 		__class(VolumeBar,'laya.stock.analysers.bars.VolumeBar',_super);
 		var __proto=VolumeBar.prototype;
 		__proto.initParamKeys=function(){
-			this.paramkeys=["barHeight","offY","color","buyDownCount"];
+			this.paramkeys=["barHeight","offY","color","buyDownCount","showSign"];
 		}
 
 		__proto.analyseWork=function(){
@@ -21243,6 +21243,7 @@ var Laya=window.Laya=(function(window,document){
 	//class laya.stock.analysers.AverageLineAnalyser extends laya.stock.analysers.lines.AverageLine
 	var AverageLineAnalyser=(function(_super){
 		function AverageLineAnalyser(){
+			this.showBuy=0;
 			AverageLineAnalyser.__super.call(this);
 			this.days="5,12,26";
 			this.colors="#ff0000,#00ffff,#ffff00";
@@ -21250,6 +21251,10 @@ var Laya=window.Laya=(function(window,document){
 
 		__class(AverageLineAnalyser,'laya.stock.analysers.AverageLineAnalyser',_super);
 		var __proto=AverageLineAnalyser.prototype;
+		__proto.initParamKeys=function(){
+			this.paramkeys=["days","colors","priceType","showBuy"];
+		}
+
 		__proto.addToConfigTypes=function(types){
 			var mTpl;
 			mTpl="{#code#}:{#rate#}%:{#day#}:{#mRate#}\n{#lastBuy#}:{#changePercent#}%\n{#high7#}%,{#high15#}%,{#high30#}%,{#high45#}%";
@@ -21299,13 +21304,45 @@ var Laya=window.Laya=(function(window,document){
 			types.push(tData);
 		}
 
+		__proto.doAverages=function(){
+			_super.prototype.doAverages.call(this);
+			var buyPoints;
+			buyPoints=[];
+			var avgs;
+			avgs=this.resultData["averages"];
+			var i=0,len=0;
+			len=this.disDataList.length;
+			var upCount=0;
+			var tI=0;
+			var preIsUp=false;
+			preIsUp=false;
+			tI=this.disDataList.length-1;
+			var curIsUp=false;
+			for (i=1;i < len;i++){
+				curIsUp=this.isUpTrend(avgs,i);
+				if ((!preIsUp)&& curIsUp){
+					buyPoints.push(["buy:"+this.disDataList[i]["date"],i]);
+				}
+				preIsUp=curIsUp;
+			}
+			this.resultData["buys"]=buyPoints;
+		}
+
+		__proto.getDrawCmds=function(){
+			var rst;
+			rst=_super.prototype.getDrawCmds.call(this);
+			if(this.showBuy>0)
+				rst.push(["drawTexts",[this.resultData["buys"],"low",30,"#00ff00",true,"#00ff00"]]);
+			return rst;
+		}
+
 		__proto.addToShowData=function(showData){
 			var kLineO;
 			kLineO={};
 			kLineO.code=showData.code;
 			kLineO.day=0;
 			kLineO.rate=0;
-			kLineO.last;
+			kLineO.last="";
 			var avgs;
 			avgs=this.resultData["averages"];
 			var i=0,len=0;

@@ -20,7 +20,7 @@ package laya.stock.analysers.bars {
 		public var sign:String = "volume";
 		
 		override public function initParamKeys():void {
-			paramkeys = ["barHeight", "offY", "color", "buyDownCount"];
+			paramkeys = ["barHeight", "offY", "color", "buyDownCount","showSign"];
 		}
 		
 		override public function analyseWork():void {
