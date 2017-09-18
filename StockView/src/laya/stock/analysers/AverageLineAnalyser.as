@@ -9,14 +9,17 @@ package laya.stock.analysers
 	 */
 	public class AverageLineAnalyser extends AverageLine 
 	{
-		
+		public var showBuy:int = 0;
 		public function AverageLineAnalyser() 
 		{
 			super();
 			days = "5,12,26";
 			colors = "#ff0000,#00ffff,#ffff00";
 		}
-		
+		override public function initParamKeys():void 
+		{
+			paramkeys = ["days","colors","priceType","showBuy"];
+		}
 		override public function addToConfigTypes(types:Array):void 
 		{
 			var mTpl:String;
@@ -75,7 +78,41 @@ package laya.stock.analysers
 			
 		}
 		
+		override public function doAverages():void 
+		{
+			super.doAverages();
+			var buyPoints:Array;
+			buyPoints = [];
+			var avgs:Array;
+			avgs = resultData["averages"];
+			var i:int, len:int;
+			len = disDataList.length;
+			var upCount:int = 0;
+			var tI:int;
+			var preIsUp:Boolean;
+			preIsUp = false;
+			tI = disDataList.length - 1;
+			var curIsUp:Boolean;
+			for (i = 1; i < len; i++)
+			{
+				curIsUp = isUpTrend(avgs, i);
+				if ((!preIsUp) && curIsUp)
+				{
+					buyPoints.push(["buy:"+disDataList[i]["date"],i]);
+				}
+				preIsUp = curIsUp;
+			}
+			resultData["buys"] = buyPoints;
+		}
 		
+		override public function getDrawCmds():Array 
+		{
+			var rst:Array;
+			rst = super.getDrawCmds();
+			if(showBuy>0)
+			rst.push(["drawTexts", [resultData["buys"], "low", 30, "#00ff00", true, "#00ff00"]]);
+			return rst;
+		}
 		override public function addToShowData(showData:Object):void {
 			var kLineO:Object;
 			kLineO = {};
@@ -83,7 +120,7 @@ package laya.stock.analysers
 			kLineO.code = showData.code;
 			kLineO.day = 0;
 			kLineO.rate = 0;
-			kLineO.last
+			kLineO.last=""
 			
 			var avgs:Array;
 			avgs = resultData["averages"];
