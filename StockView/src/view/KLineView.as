@@ -10,6 +10,7 @@ package view {
 	import laya.stock.analysers.BottomAnalyser;
 	import laya.stock.analysers.BreakAnalyser;
 	import laya.stock.analysers.ChanAnalyser;
+	import laya.stock.analysers.DistAnalyser;
 	import laya.stock.analysers.KLineAnalyser;
 	import laya.stock.analysers.lines.AverageLine;
 	import laya.stock.analysers.lines.PositionLine;
@@ -51,6 +52,7 @@ package view {
 			analyserClassList.push(ChanAnalyser);
 			analyserClassList.push(StrongLine);
 			analyserClassList.push(AverageLineAnalyser);
+			analyserClassList.push(DistAnalyser);
 			
 			analyserList.initAnalysers(analyserClassList);
 			addChild(kLine);

@@ -399,6 +399,24 @@ package stock.views
 				//this.graphics.drawLine(getAdptXV(tX * gridWidth), yZero+tV, getAdptXV(tX * gridWidth),yZero, "#ff0000",5);
 			}
 		}
+		
+		public function drawBarsH(barList:Array, xZero:Number = 0 , color:String = "#ffff00"):void
+		{
+			var i:int, len:int;
+			len = barList.length;
+			var tData:Array;
+			var tY:Number;
+			var tV:Number;
+			for (i = 0; i < len; i++)
+			{
+				tData = barList[i];
+				tY = getAdptYV(tData[0]);
+				tV = tData[1];
+				this.graphics.drawLine(getAdptXV(tV * gridWidth)+xZero,tY, xZero, tY, color, gridWidth);
+				//this.graphics.drawLine(getAdptXV(tX * gridWidth), yZero+tV, getAdptXV(tX * gridWidth),yZero, "#ff0000",5);
+			}
+		}
+		
 		public function drawLines(pointList:Array,color:String="#ff0000"):void
 		{
 			var i:int, len:int;
