@@ -407,12 +407,21 @@ package stock.views
 			var tData:Array;
 			var tY:Number;
 			var tV:Number;
+			var tTxt:String;
+			var tColor:String;
 			for (i = 0; i < len; i++)
 			{
 				tData = barList[i];
 				tY = getAdptYV(tData[0]);
 				tV = tData[1];
-				this.graphics.drawLine(getAdptXV(tV * gridWidth)+xZero,tY, xZero, tY, color, gridWidth);
+				tTxt = tData[2];
+				tColor = tData[3];
+				if (!tColor) tColor = color;
+				this.graphics.drawLine(getAdptXV(tV * gridWidth) + xZero, tY, xZero, tY, tColor, gridWidth);
+				if (tTxt)
+				{
+					this.graphics.fillText(tTxt, getAdptXV(tV * gridWidth) + xZero+5, tY-6, null, tColor, "left");
+				}
 				//this.graphics.drawLine(getAdptXV(tX * gridWidth), yZero+tV, getAdptXV(tX * gridWidth),yZero, "#ff0000",5);
 			}
 		}

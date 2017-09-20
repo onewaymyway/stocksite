@@ -822,6 +822,7 @@ var Laya=window.Laya=(function(window,document){
 			this.dividCount=30;
 			this.datas=null;
 			this.values=null;
+			this.percents=null;
 		}
 
 		__class(Distribution,'laya.math.maps.Distribution');
@@ -837,6 +838,7 @@ var Laya=window.Laya=(function(window,document){
 			var tCount=NaN;
 			sumCount=0;
 			this.values=[];
+			this.percents=[];
 			for (i=0;i < len;i++){
 				tData=dataList[i];
 				tCount=tData[2];
@@ -888,6 +890,14 @@ var Laya=window.Laya=(function(window,document){
 				}
 			}
 			this.datas=valueArr;
+			len=valueArr.length;
+			this.percents=[];
+			var tPercent=NaN;
+			tPercent=0;
+			for (i=0;i < len;i++){
+				tPercent+=valueArr[i];
+				this.percents[i]=tPercent;
+			}
 		}
 
 		return Distribution;
@@ -17312,13 +17322,14 @@ var Laya=window.Laya=(function(window,document){
 		function DistAnalyser(){
 			this.width=40;
 			this.color="#ffff00";
+			this.showPercent=0;
 			DistAnalyser.__super.call(this);
 		}
 
 		__class(DistAnalyser,'laya.stock.analysers.DistAnalyser',_super);
 		var __proto=DistAnalyser.prototype;
 		__proto.initParamKeys=function(){
-			this.paramkeys=["width","color"];
+			this.paramkeys=["width","color","showPercent"];
 		}
 
 		__proto.analyseWork=function(){
@@ -17348,10 +17359,24 @@ var Laya=window.Laya=(function(window,document){
 			lines=[];
 			var rate=NaN;
 			rate=this.width *dataList.length / 10;
+			var percents;
+			percents=tDis.percents;
+			var tLineParam;
 			for (i=0;i < len;i++){
-				lines.push([values[i],disDatas[i]*rate,0,values[i]]);
+				tLineParam=[values[i],disDatas[i] *rate];
+				if (this.showPercent > 0){
+					tLineParam.push(StockTools.getGoodPercent(disDatas[i])+"%"+"("+StockTools.getGoodPercent(percents[i])+"%)");
+				}
+				tLineParam[3]=this.getRateColor(percents[i]);
+				lines.push(tLineParam);
 			}
 			this.resultData["bars"]=lines;
+		}
+
+		__proto.getRateColor=function(rate){
+			var id=0;
+			id=Math.floor(rate / 0.2);
+			return DistAnalyser.colorList[id];
 		}
 
 		__proto.getDrawCmds=function(){
@@ -17361,6 +17386,9 @@ var Laya=window.Laya=(function(window,document){
 			return rst;
 		}
 
+		__static(DistAnalyser,
+		['colorList',function(){return this.colorList=["#FFFFCC","#FFCCCC","#996699","#FF6666","#FFFF66","#CC3333","#003399"];}
+		]);
 		return DistAnalyser;
 	})(AnalyserBase)
 
@@ -24297,11 +24325,19 @@ var Laya=window.Laya=(function(window,document){
 			var tData;
 			var tY=NaN;
 			var tV=NaN;
+			var tTxt;
+			var tColor;
 			for (i=0;i < len;i++){
 				tData=barList[i];
 				tY=this.getAdptYV(tData[0]);
 				tV=tData[1];
-				this.graphics.drawLine(this.getAdptXV(tV *this.gridWidth)+xZero,tY,xZero,tY,color,this.gridWidth);
+				tTxt=tData[2];
+				tColor=tData[3];
+				if (!tColor)tColor=color;
+				this.graphics.drawLine(this.getAdptXV(tV *this.gridWidth)+xZero,tY,xZero,tY,tColor,this.gridWidth);
+				if (tTxt){
+					this.graphics.fillText(tTxt,this.getAdptXV(tV *this.gridWidth)+xZero+5,tY-6,null,tColor,"left");
+				}
 			}
 		}
 

@@ -9,6 +9,7 @@ package laya.math.maps
 		public var dividCount:int = 30;
 		public var datas:Array;
 		public var values:Array;
+		public var percents:Array;
 		public function Distribution() 
 		{
 			
@@ -25,6 +26,7 @@ package laya.math.maps
 			var tCount:Number;
 			sumCount = 0;
 			values = [];
+			percents = [];
 			for (i = 0; i < len; i++)
 			{
 				tData = dataList[i];
@@ -84,7 +86,18 @@ package laya.math.maps
 					valueArr[j] += tRate;
 				}
 			}
+			
 			datas = valueArr;
+			len = valueArr.length;
+			percents = [];
+			var tPercent:Number;
+			tPercent = 0;
+			for (i = 0; i < len; i++)
+			{
+				tPercent += valueArr[i];
+				percents[i] = tPercent;
+			}
+			
 		}
 		
 	}
