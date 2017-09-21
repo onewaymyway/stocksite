@@ -10,6 +10,12 @@ package laya.math.maps
 		public var datas:Array;
 		public var values:Array;
 		public var percents:Array;
+		private var min:Number;
+		private var d:Number;
+		public function getPriceI(price:Number):int
+		{
+			return  Math.round((price-min) / d);
+		}
 		public function Distribution() 
 		{
 			
@@ -54,6 +60,8 @@ package laya.math.maps
 			}
 			var d:Number;
 			d = (max - min) / dividCount;
+			this.min = min;
+			this.d = d;
 			var valueArr:Array;
 			valueArr = [];
 			valueArr.length = dividCount;

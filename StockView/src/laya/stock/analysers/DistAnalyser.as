@@ -43,7 +43,10 @@ package laya.stock.analysers
 			var tDis:Distribution;
 			tDis = new Distribution();
 			tDis.addDatas(tDistData);
-			
+			var tPriceI:int;
+			var tStockPrice:Number;
+			tStockPrice = dataList[dataList.length - 1]["close"];
+			tPriceI = tDis.getPriceI(tStockPrice);
 			var disDatas:Array;
 			disDatas = tDis.datas;
 			var values:Array;
@@ -61,14 +64,30 @@ package laya.stock.analysers
 				tLineParam = [values[i], disDatas[i] * rate ];
 				if (showPercent > 0)
 				{
-					tLineParam.push(StockTools.getGoodPercent(disDatas[i]) + "%" + "(" + StockTools.getGoodPercent(percents[i]) + "%)");
+					tLineParam[2]=StockTools.getGoodPercent(disDatas[i]) + "%" + "(" + StockTools.getGoodPercent(percents[i]) + "%)";
+				}else
+				{
+					if (percents[i] >= 0.5 && percents[i - 1] <= 0.5)
+					{
+						tLineParam[2]=StockTools.getGoodPercent(disDatas[i]) + "%" + "(" + StockTools.getGoodPercent(percents[i]) + "%)";
+					}
+				}
+				if (i == tPriceI)
+				{
+					if (!tLineParam[2])
+					{
+						tLineParam[2] = "●"+tStockPrice;
+					}else
+					{
+						tLineParam[2] += "●"+tStockPrice;
+					}
 				}
 				tLineParam[3] = getRateColor(percents[i]);
 				lines.push(tLineParam);
 			}
 			resultData["bars"] = lines;
 		}
-		private static const colorList:Array = ["#FFFFCC","#FFCCCC","#996699","#FF6666","#FFFF66","#CC3333","#003399"];
+		private static const colorList:Array = ["#FFFFCC","#0099CC","#996699","#FF6666","#FFFF66","#CC3333","#003399"];
 		private function getRateColor(rate:Number):String
 		{
 			var id:int;

@@ -823,10 +823,16 @@ var Laya=window.Laya=(function(window,document){
 			this.datas=null;
 			this.values=null;
 			this.percents=null;
+			this.min=NaN;
+			this.d=NaN;
 		}
 
 		__class(Distribution,'laya.math.maps.Distribution');
 		var __proto=Distribution.prototype;
+		__proto.getPriceI=function(price){
+			return Math.round((price-this.min)/ this.d);
+		}
+
 		__proto.addDatas=function(dataList){
 			var i=0,len=0;
 			len=dataList.length;
@@ -860,6 +866,8 @@ var Laya=window.Laya=(function(window,document){
 			};
 			var d=NaN;
 			d=(max-min)/ this.dividCount;
+			this.min=min;
+			this.d=d;
 			var valueArr;
 			valueArr=[];
 			valueArr.length=this.dividCount;
@@ -17350,6 +17358,10 @@ var Laya=window.Laya=(function(window,document){
 			var tDis;
 			tDis=new Distribution();
 			tDis.addDatas(tDistData);
+			var tPriceI=0;
+			var tStockPrice=NaN;
+			tStockPrice=dataList[dataList.length-1]["close"];
+			tPriceI=tDis.getPriceI(tStockPrice);
 			var disDatas;
 			disDatas=tDis.datas;
 			var values;
@@ -17365,7 +17377,18 @@ var Laya=window.Laya=(function(window,document){
 			for (i=0;i < len;i++){
 				tLineParam=[values[i],disDatas[i] *rate];
 				if (this.showPercent > 0){
-					tLineParam.push(StockTools.getGoodPercent(disDatas[i])+"%"+"("+StockTools.getGoodPercent(percents[i])+"%)");
+					tLineParam[2]=StockTools.getGoodPercent(disDatas[i])+"%"+"("+StockTools.getGoodPercent(percents[i])+"%)";
+					}else{
+					if (percents[i] >=0.5 && percents[i-1] <=0.5){
+						tLineParam[2]=StockTools.getGoodPercent(disDatas[i])+"%"+"("+StockTools.getGoodPercent(percents[i])+"%)";
+					}
+				}
+				if (i==tPriceI){
+					if (!tLineParam[2]){
+						tLineParam[2]="●"+tStockPrice;
+						}else{
+						tLineParam[2]+="●"+tStockPrice;
+					}
 				}
 				tLineParam[3]=this.getRateColor(percents[i]);
 				lines.push(tLineParam);
@@ -17387,7 +17410,7 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		__static(DistAnalyser,
-		['colorList',function(){return this.colorList=["#FFFFCC","#FFCCCC","#996699","#FF6666","#FFFF66","#CC3333","#003399"];}
+		['colorList',function(){return this.colorList=["#FFFFCC","#0099CC","#996699","#FF6666","#FFFF66","#CC3333","#003399"];}
 		]);
 		return DistAnalyser;
 	})(AnalyserBase)
