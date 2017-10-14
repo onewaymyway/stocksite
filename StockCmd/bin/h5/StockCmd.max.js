@@ -3688,6 +3688,116 @@ var Laya=window.Laya=(function(window,document){
 
 
 	/**
+	*<code>Keyboard</code> 类的属性是一些常数，这些常数表示控制游戏时最常用的键。
+	*/
+	//class laya.events.Keyboard
+	var Keyboard=(function(){
+		function Keyboard(){};
+		__class(Keyboard,'laya.events.Keyboard');
+		Keyboard.NUMBER_0=48;
+		Keyboard.NUMBER_1=49;
+		Keyboard.NUMBER_2=50;
+		Keyboard.NUMBER_3=51;
+		Keyboard.NUMBER_4=52;
+		Keyboard.NUMBER_5=53;
+		Keyboard.NUMBER_6=54;
+		Keyboard.NUMBER_7=55;
+		Keyboard.NUMBER_8=56;
+		Keyboard.NUMBER_9=57;
+		Keyboard.A=65;
+		Keyboard.B=66;
+		Keyboard.C=67;
+		Keyboard.D=68;
+		Keyboard.E=69;
+		Keyboard.F=70;
+		Keyboard.G=71;
+		Keyboard.H=72;
+		Keyboard.I=73;
+		Keyboard.J=74;
+		Keyboard.K=75;
+		Keyboard.L=76;
+		Keyboard.M=77;
+		Keyboard.N=78;
+		Keyboard.O=79;
+		Keyboard.P=80;
+		Keyboard.Q=81;
+		Keyboard.R=82;
+		Keyboard.S=83;
+		Keyboard.T=84;
+		Keyboard.U=85;
+		Keyboard.V=86;
+		Keyboard.W=87;
+		Keyboard.X=88;
+		Keyboard.Y=89;
+		Keyboard.Z=90;
+		Keyboard.F1=112;
+		Keyboard.F2=113;
+		Keyboard.F3=114;
+		Keyboard.F4=115;
+		Keyboard.F5=116;
+		Keyboard.F6=117;
+		Keyboard.F7=118;
+		Keyboard.F8=119;
+		Keyboard.F9=120;
+		Keyboard.F10=121;
+		Keyboard.F11=122;
+		Keyboard.F12=123;
+		Keyboard.F13=124;
+		Keyboard.F14=125;
+		Keyboard.F15=126;
+		Keyboard.NUMPAD=21;
+		Keyboard.NUMPAD_0=96;
+		Keyboard.NUMPAD_1=97;
+		Keyboard.NUMPAD_2=98;
+		Keyboard.NUMPAD_3=99;
+		Keyboard.NUMPAD_4=100;
+		Keyboard.NUMPAD_5=101;
+		Keyboard.NUMPAD_6=102;
+		Keyboard.NUMPAD_7=103;
+		Keyboard.NUMPAD_8=104;
+		Keyboard.NUMPAD_9=105;
+		Keyboard.NUMPAD_ADD=107;
+		Keyboard.NUMPAD_DECIMAL=110;
+		Keyboard.NUMPAD_DIVIDE=111;
+		Keyboard.NUMPAD_ENTER=108;
+		Keyboard.NUMPAD_MULTIPLY=106;
+		Keyboard.NUMPAD_SUBTRACT=109;
+		Keyboard.SEMICOLON=186;
+		Keyboard.EQUAL=187;
+		Keyboard.COMMA=188;
+		Keyboard.MINUS=189;
+		Keyboard.PERIOD=190;
+		Keyboard.SLASH=191;
+		Keyboard.BACKQUOTE=192;
+		Keyboard.LEFTBRACKET=219;
+		Keyboard.BACKSLASH=220;
+		Keyboard.RIGHTBRACKET=221;
+		Keyboard.QUOTE=222;
+		Keyboard.ALTERNATE=18;
+		Keyboard.BACKSPACE=8;
+		Keyboard.CAPS_LOCK=20;
+		Keyboard.COMMAND=15;
+		Keyboard.CONTROL=17;
+		Keyboard.DELETE=46;
+		Keyboard.ENTER=13;
+		Keyboard.ESCAPE=27;
+		Keyboard.PAGE_UP=33;
+		Keyboard.PAGE_DOWN=34;
+		Keyboard.END=35;
+		Keyboard.HOME=36;
+		Keyboard.LEFT=37;
+		Keyboard.UP=38;
+		Keyboard.RIGHT=39;
+		Keyboard.DOWN=40;
+		Keyboard.SHIFT=16;
+		Keyboard.SPACE=32;
+		Keyboard.TAB=9;
+		Keyboard.INSERT=45;
+		return Keyboard;
+	})()
+
+
+	/**
 	*<p><code>KeyBoardManager</code> 是键盘事件管理类。该类从浏览器中接收键盘事件，并派发该事件。</p>
 	*<p>派发事件时若 Stage.focus 为空则只从 Stage 上派发该事件，否则将从 Stage.focus 对象开始一直冒泡派发该事件。所以在 Laya.stage 上监听键盘事件一定能够收到，如果在其他地方监听，则必须处在Stage.focus的冒泡链上才能收到该事件。</p>
 	*<p>用户可以通过代码 Laya.stage.focus=someNode 的方式来设置focus对象。</p>
@@ -5732,7 +5842,7 @@ var Laya=window.Laya=(function(window,document){
 			url=URL.formatURL(url);
 			SoundManager._tMusic=url;
 			if (SoundManager._musicChannel)SoundManager._musicChannel.stop();
-			return SoundManager._musicChannel=SoundManager.playSound(url,loops,complete,AudioSound,startTime);
+			return SoundManager._musicChannel=SoundManager.playSound(url,loops,complete,SoundManager.useAudioMusic?AudioSound:null,startTime);
 		}
 
 		SoundManager.stopSound=function(url){
@@ -5810,6 +5920,7 @@ var Laya=window.Laya=(function(window,document){
 		SoundManager.musicVolume=1;
 		SoundManager.soundVolume=1;
 		SoundManager.playbackRate=1;
+		SoundManager.useAudioMusic=true;
 		SoundManager._muted=false;
 		SoundManager._soundMuted=false;
 		SoundManager._musicMuted=false;
@@ -14173,6 +14284,46 @@ var Laya=window.Laya=(function(window,document){
 			return rst;
 		}
 
+		StringTool.getStringTemplate=function(str,leftSign,rightSign){
+			var rst;
+			rst=[];
+			var preI=0;
+			preI=0;
+			var leftI=0;
+			var rightI=0;
+			var leftLen=0;
+			leftLen=leftSign.length;
+			var rightLen=0;
+			rightLen=rightSign.length;
+			leftI=str.indexOf(leftSign,preI);
+			var tWrapO;
+			while(leftI>=0){
+				rightI=str.indexOf(rightSign,leftI);
+				if(rightI>=0){
+					if(leftI>preI){
+						rst.push(str.substring(preI,leftI));
+					}
+					tWrapO={};
+					tWrapO.str=str.substring(leftI+leftLen,rightI);
+					tWrapO.strWrap=str.substring(leftI,rightI+rightLen);
+					tWrapO.startI=leftI;
+					tWrapO.endI=rightI;
+					rst.push(tWrapO);
+					preI=rightI+1;
+					if(preI>=str.length){
+						break ;
+					}
+					leftI=str.indexOf(leftSign,preI);
+					}else{
+					leftI=-1;
+				}
+			}
+			if(preI<str.length){
+				rst.push(str.substr(preI));
+			}
+			return rst;
+		}
+
 		StringTool.getBetween=function(str,left,right,ifMax){
 			(ifMax===void 0)&& (ifMax=false);
 			if(!str)return "";
@@ -16033,6 +16184,106 @@ var Laya=window.Laya=(function(window,document){
 	*...
 	*@author ww
 	*/
+	//class laya.math.maps.Distribution
+	var Distribution=(function(){
+		function Distribution(){
+			this.dividCount=30;
+			this.datas=null;
+			this.values=null;
+			this.percents=null;
+			this.min=NaN;
+			this.d=NaN;
+		}
+
+		__class(Distribution,'laya.math.maps.Distribution');
+		var __proto=Distribution.prototype;
+		__proto.getPriceI=function(price){
+			return Math.round((price-this.min)/ this.d);
+		}
+
+		__proto.addDatas=function(dataList){
+			var i=0,len=0;
+			len=dataList.length;
+			var min=NaN,max=NaN;
+			min=max=-1;
+			var tData;
+			var tValue=NaN;
+			var sumCount=NaN;
+			var tCount=NaN;
+			sumCount=0;
+			this.values=[];
+			this.percents=[];
+			for (i=0;i < len;i++){
+				tData=dataList[i];
+				tCount=tData[2];
+				tValue=tData[0];
+				if (min==-1 || tValue < min){
+					min=tValue;
+				}
+				if (max==-1 || tValue > max){
+					max=tValue;
+				}
+				tValue=tData[1];
+				if (min==-1 || tValue < min){
+					min=tValue;
+				}
+				if (max==-1 || tValue > max){
+					max=tValue;
+				}
+				sumCount+=tCount;
+			};
+			var d=NaN;
+			d=(max-min)/ this.dividCount;
+			this.min=min;
+			this.d=d;
+			var valueArr;
+			valueArr=[];
+			valueArr.length=this.dividCount;
+			len=this.dividCount;
+			for (i=0;i < len;i++){
+				valueArr[i]=0;
+				this.values[i]=min+d *i;
+			}
+			len=dataList.length;
+			var startNum=NaN;
+			var endNum=NaN;
+			var sumValue=NaN;
+			sumValue=0;
+			for (i=0;i < len;i++){
+				tData=dataList[i];
+				tValue=tData[0];
+				startNum=Math.round((tValue-min)/ d);
+				tValue=tData[1];
+				endNum=Math.round((tValue-min)/ d);
+				tCount=tData[2];
+				var j=0,jlen=0;
+				var tRange=0;
+				tRange=(endNum-startNum+1);
+				var tRate=NaN;
+				tRate=(tCount/sumCount)/tRange;
+				for (j=startNum;j <=endNum;j++){
+					valueArr[j]+=tRate;
+				}
+			}
+			this.datas=valueArr;
+			len=valueArr.length;
+			this.percents=[];
+			var tPercent=NaN;
+			tPercent=0;
+			for (i=0;i < len;i++){
+				tPercent+=valueArr[i];
+				this.percents[i]=tPercent;
+			}
+		}
+
+		return Distribution;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
 	//class laya.math.ValueTools
 	var ValueTools=(function(){
 		function ValueTools(){}
@@ -16766,6 +17017,16 @@ var Laya=window.Laya=(function(window,document){
 			return "sz"+stock;
 		}
 
+		StockTools.getAdptStockCode=function(stock){
+			return StockJsonP.getAdptStockStr(StockTools.getStockCode(stock));
+		}
+
+		StockTools.getStockCode=function(stock){
+			if ((typeof stock=='string'))
+				return stock;
+			return stock.code;
+		}
+
 		StockTools.getPureStock=function(stock){
 			if (stock.length > 6){
 				stock=stock.substr(2,6);
@@ -16873,6 +17134,54 @@ var Laya=window.Laya=(function(window,document){
 	*...
 	*@author ww
 	*/
+	//class laya.tools.DateTools
+	var DateTools=(function(){
+		function DateTools(){}
+		__class(DateTools,'laya.tools.DateTools');
+		DateTools.getDate=function(time){
+			(time===void 0)&& (time=0);
+			var d=new Date();
+			if (time > 0){
+				d.setTime(time);
+			}
+			return d;
+		}
+
+		DateTools.getDateEx=function(addCount){
+			(addCount===void 0)&& (addCount=-1);
+			var d;
+			d=DateTools.getDate();
+			d.setDate(d.getDate()+addCount);
+			return d;
+		}
+
+		DateTools.getDateArr=function(d){
+			return [d.getFullYear(),d.getMonth()+1,d.getDate()];
+		}
+
+		DateTools.getDateStr=function(d,sign){
+			(sign===void 0)&& (sign="");
+			if (!d)d=DateTools.getDate();
+			var arr;
+			arr=DateTools.getDateArr(d);
+			if (arr[1] < 10)arr[1]="0"+arr[1];
+			if (arr[2] < 10)arr[2]="0"+arr[2];
+			return arr.join(sign);
+		}
+
+		DateTools.getTimeStr=function(time,sign){
+			(time===void 0)&& (time=-1);
+			return DateTools.getDateStr(DateTools.getDate(time),sign);
+		}
+
+		return DateTools;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
 	//class laya.tools.JsonP
 	var JsonP=(function(){
 		function JsonP(){}
@@ -16885,7 +17194,8 @@ var Laya=window.Laya=(function(window,document){
 			scp.onload=function (){
 				scp.src="";
 				Browser.removeElement(scp);
-				complete.run();
+				if(complete)
+					complete.run();
 			}
 		}
 
@@ -16963,6 +17273,46 @@ var Laya=window.Laya=(function(window,document){
 
 		SinaMData.stockDataDic={};
 		return SinaMData;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class laya.tools.SohuDData
+	var SohuDData=(function(){
+		//http://q.stock.sohu.com/hisHq?code=cn_601918,cn_300080&start=20170806&end=20170807&stat=1&order=D&period=d&callback=historySearchHa&rt=jsonp
+		function SohuDData(){}
+		__class(SohuDData,'laya.tools.SohuDData');
+		SohuDData.getData=function(stock,handler,start,end){
+			if (!Browser.window.orzHistorySearch){
+				Browser.window.orzHistorySearch=SohuDData.onStockData;
+			}
+			if (!start){
+				start=DateTools.getDateStr(DateTools.getDateEx(-1));
+			}
+			if (!end){
+				end=start;
+			};
+			var pureCode;
+			pureCode=StockTools.getPureStock(stock);
+			var url;
+			url="http://q.stock.sohu.com/hisHq?code=cn_"+pureCode+"&start="+start+"&end="+end+"&stat=1&order=D&period=d&callback=orzHistorySearch&rt=jsonp";
+			JsonP.getData(url,handler);
+		}
+
+		SohuDData.onStockData=function(stockData){
+			console.log("sohuStock:",stockData);
+			var i=0,len=0;
+			len=stockData.length;
+			for (i=0;i < len;i++){
+				SohuDData.dealStockData(stockData[i]);
+			}
+		}
+
+		SohuDData.dealStockData=function(stockData){}
+		return SohuDData;
 	})()
 
 
@@ -17185,8 +17535,10 @@ var Laya=window.Laya=(function(window,document){
 		MsgConst.Stock_Data_Inited="DataInited";
 		MsgConst.Add_MyStock="AddMyStock";
 		MsgConst.Remove_MyStock="Remove_MyStock";
+		MsgConst.Mark_MyStock="Mark_MyStock";
 		MsgConst.Add_MDLine="Add_MDLine";
 		MsgConst.Remove_MDLine="Remove_MDLine";
+		MsgConst.RealTimeItem_DoubleClick="RealTimeItem_DoubleClick";
 		return MsgConst;
 	})()
 
@@ -17218,7 +17570,8 @@ var Laya=window.Laya=(function(window,document){
 			var tKey;
 			for (i=0;i < len;i++){
 				tKey=this.numKeys[i];
-				data[tKey]=DataUtils.mParseFloat(data[tKey]);
+				if(data[tKey])
+					data[tKey]=DataUtils.mParseFloat(data[tKey]);
 			}
 		}
 
@@ -17341,9 +17694,9 @@ var Laya=window.Laya=(function(window,document){
 		__proto.start=function(){
 			StockBasicInfo.I.init(Loader.getRes(PathConfig.stockBasic));
 			this.testMainView();
+			SohuDData.getData("601918",null);
 		}
 
-		//testStockInfo();
 		__proto.begin=function(){
 			var view;
 			view=new StockView();
@@ -17382,6 +17735,280 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		return StockMain;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class view.netcomps.MainSocket
+	var MainSocket=(function(){
+		function MainSocket(){
+			this.socket=null;
+			this.serverStr="ws://127.0.0.1:9909";
+			this.socket=new stock.StockSocket();
+		}
+
+		__class(MainSocket,'view.netcomps.MainSocket');
+		var __proto=MainSocket.prototype;
+		__proto.connect=function(){
+			this.socket.connect(this.serverStr);
+		}
+
+		__static(MainSocket,
+		['I',function(){return this.I=new MainSocket();}
+		]);
+		return MainSocket;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class view.plugins.TradeInfo
+	var TradeInfo=(function(){
+		function TradeInfo(){
+			this.money=NaN;
+			this.stockCount=0;
+			this.stockMoney=NaN;
+			this.tStockPrice=NaN;
+			this.totalWin=NaN;
+			this.dayCount=0;
+			this.stockDayCount=0;
+			this.tStock=null;
+			this._tDate=null;
+			this.actionDic={};
+			TradeTestManager.curTradeInfo=this;
+			this.reset();
+		}
+
+		__class(TradeInfo,'view.plugins.TradeInfo');
+		var __proto=TradeInfo.prototype;
+		__proto.reset=function(){
+			this.money=100000;
+			this.stockCount=0;
+			this.stockMoney=0;
+			this.tStockPrice=0;
+			this.totalWin=0;
+			this.dayCount=0;
+			this._tDate="";
+			this.actionDic={};
+			this.stockDayCount=0;
+		}
+
+		__proto.getActionDic=function(stock){
+			if (!this.actionDic[stock])this.actionDic[stock]={};
+			return this.actionDic[stock];
+		}
+
+		__proto.setTDayAction=function(action){
+			this.getActionDic(this.tStock)[this.tDate]=action;
+		}
+
+		__proto.sellAll=function(){
+			this.sellStock(this.tStockPrice,this.stockCount);
+		}
+
+		__proto.buyStock=function(price,count){
+			var dStockMoney=NaN;
+			dStockMoney=price *count;
+			if (this.money < dStockMoney){
+				MessageManager.I.show("资金不足");
+				return;
+			}
+			if (this.stockCount==0){
+				this.stockDayCount=1;
+				this.dayCount++;
+			}
+			this.stockCount+=count;
+			this.stockMoney+=dStockMoney;
+			this.money-=dStockMoney;
+			this.setTDayAction("buy");
+		}
+
+		__proto.sellStock=function(price,count){
+			if (this.stockCount < count){
+				MessageManager.I.show("股票不足");
+				return;
+			};
+			var dStockMoney=NaN;
+			dStockMoney=price *count;
+			this.stockCount-=count;
+			this.stockMoney-=dStockMoney;
+			this.money+=dStockMoney;
+			if (this.stockCount==0){
+				this.stockMoney=0;
+				this.stockDayCount=0;
+			}
+			this.setTDayAction("sell");
+		}
+
+		__getset(0,__proto,'stockWinRate',function(){
+			if (this.stockCount <=0)return 0;
+			return this.tStockPrice / this.stockPrice-1;
+		});
+
+		__getset(0,__proto,'stockWinOfTotal',function(){
+			return this.total-100000;
+		});
+
+		__getset(0,__proto,'stockWinRateOfTotal',function(){
+			return this.stockWinOfTotal / 100000;
+		});
+
+		__getset(0,__proto,'stockWin',function(){
+			if (this.stockCount <=0)return 0;
+			return Math.floor((this.tStockPrice-this.stockPrice)*this.stockCount);
+		});
+
+		__getset(0,__proto,'position',function(){
+			return this.curStockMoney / this.total;
+		});
+
+		__getset(0,__proto,'stockPrice',function(){
+			if (this.stockCount <=0)return 0;
+			return this.stockMoney / this.stockCount;
+		});
+
+		__getset(0,__proto,'tDate',function(){
+			return this._tDate;
+			},function(value){
+			if (this._tDate !=value){
+				if (this.stockCount > 0){
+					this.stockDayCount++;
+					this.dayCount++;
+				}
+			}
+			this._tDate=value;
+		});
+
+		__getset(0,__proto,'curStockMoney',function(){
+			return Math.floor(this.tStockPrice *this.stockCount);
+		});
+
+		__getset(0,__proto,'total',function(){
+			return Math.floor(this.money+this.curStockMoney);
+		});
+
+		TradeInfo.INIT_MONEY=100000;
+		return TradeInfo;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class view.StockListManager
+	var StockListManager=(function(){
+		function StockListManager(){}
+		__class(StockListManager,'view.StockListManager');
+		StockListManager.setStockList=function(stockList,tI){
+			StockListManager._tI=tI;
+			StockListManager._tStockList=stockList;
+		}
+
+		StockListManager.next=function(){
+			StockListManager._tI++;
+			StockListManager.showI(StockListManager._tI);
+		}
+
+		StockListManager.pre=function(){
+			StockListManager._tI--;
+			StockListManager.showI(StockListManager._tI);
+		}
+
+		StockListManager.showI=function(i){
+			if (!StockListManager._tStockList)
+				return;
+			var index=0;
+			index=i;
+			if (index < 0)
+				index=StockListManager._tStockList.length-1;
+			index=index % StockListManager._tStockList.length;
+			var tData;
+			tData=StockListManager._tStockList[index];
+			StockListManager._tI=index;
+			if (!tData)
+				return;
+			console.log(tData);
+			Notice.notify("Show_Stock_KLine",StockListManager.getStockCode(tData));
+		}
+
+		StockListManager.getStockCode=function(data){
+			if (!data)
+				return "601918";
+			var tStockStr;
+			if ((typeof data=='string')){
+				tStockStr=data;
+			}
+			else {
+				tStockStr=data.code;
+			}
+			return StockJsonP.getPureStock(tStockStr);
+		}
+
+		StockListManager.setMyStockList=function(arr){
+			StockListManager._myStockList=arr;
+		}
+
+		StockListManager.hasStock=function(stock){
+			if(!StockListManager._myStockList)return false;
+			stock=StockTools.getAdptStockStr(stock);
+			var i=0,len=0;
+			len=StockListManager._myStockList.length;
+			for (i=0;i < len;i++){
+				var tStockData;
+				tStockData=StockListManager._myStockList[i];
+				if (StockTools.getAdptStockCode(tStockData)==stock){
+					return true;
+				}
+			}
+			return false;
+		}
+
+		StockListManager.getStockLastMark=function(stock){
+			if (!StockListManager._myStockList)return null;
+			stock=StockTools.getAdptStockStr(stock);
+			var i=0,len=0;
+			len=StockListManager._myStockList.length;
+			for (i=0;i < len;i++){
+				var tStockData;
+				tStockData=StockListManager._myStockList[i];
+				if (StockTools.getAdptStockCode(tStockData)==stock){
+					if (tStockData.markTime){
+						return DateTools.getTimeStr(tStockData.markTime,"-");
+					}
+				}
+			}
+			return null;
+		}
+
+		StockListManager._tI=0;
+		StockListManager._tStockList=null
+		StockListManager._myStockList=null
+		return StockListManager;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class view.TradeTestManager
+	var TradeTestManager=(function(){
+		function TradeTestManager(){}
+		__class(TradeTestManager,'view.TradeTestManager');
+		var __proto=TradeTestManager.prototype;
+		__proto.resetTrade=function(){}
+		TradeTestManager.isTradeTestOn=false;
+		TradeTestManager.curTradeInfo=null
+		__static(TradeTestManager,
+		['I',function(){return this.I=new TradeTestManager();}
+		]);
+		return TradeTestManager;
 	})()
 
 
@@ -20970,40 +21597,79 @@ var Laya=window.Laya=(function(window,document){
 			this.barHeight=100;
 			this.offY=0;
 			this.color="#ffff00";
+			this.buyDownCount=3;
+			this.showSign=0;
+			this.sign="volume";
 			VolumeBar.__super.call(this);
 		}
 
 		__class(VolumeBar,'laya.stock.analysers.bars.VolumeBar',_super);
 		var __proto=VolumeBar.prototype;
 		__proto.initParamKeys=function(){
-			this.paramkeys=["barHeight","offY","color"];
+			this.paramkeys=["barHeight","offY","color","buyDownCount","showSign"];
 		}
 
 		__proto.analyseWork=function(){
-			var sign;
-			sign="amount";
-			sign="volume";
+			this.sign="amount";
+			this.sign="volume";
 			var i=0,len=0;
 			var dataList;
 			dataList=this.disDataList;
 			len=dataList.length;
 			var tData;
 			var max=NaN;
-			max=DataUtils.getKeyMax(dataList,sign);
+			max=DataUtils.getKeyMax(dataList,this.sign);
 			var MRate=NaN;
 			MRate=this.barHeight / max;
 			var barsData;
 			barsData=[];
 			for (i=0;i < len;i++){
-				barsData.push([i,-dataList[i][sign]*MRate]);
+				barsData.push([i,-dataList[i][this.sign] *MRate]);
 			}
 			this.resultData["bars"]=barsData;
+			this.doBuyPoints(false,"down");
+			this.doBuyPoints(true,"up");
+		}
+
+		__proto.doBuyPoints=function(isBigger,markSign){
+			(isBigger===void 0)&& (isBigger=false);
+			(markSign===void 0)&& (markSign="down");
+			var i=0,len=0;
+			var tDownCount=0;
+			var preValue=0;
+			var dataList;
+			dataList=this.disDataList;
+			len=dataList.length;
+			var tData;
+			var tValue=NaN;
+			tDownCount=0;
+			var buyList;
+			buyList=[];
+			for (i=0;i < len;i++){
+				tData=dataList[i];
+				tValue=tData[this.sign];
+				if (tValue==preValue || (isBigger==(tValue > preValue))){
+					tDownCount++;
+				}
+				else {
+					if (tDownCount >=this.buyDownCount){
+						buyList.push([markSign+":"+tDownCount,i]);
+					}
+					tDownCount=0;
+				}
+				preValue=tValue;
+			}
+			this.resultData[markSign]=buyList;
 		}
 
 		__proto.getDrawCmds=function(){
 			var rst;
 			rst=[];
 			rst.push(["drawBars",[this.resultData["bars"],this.offY,this.color]]);
+			if (this.showSign){
+				rst.push(["drawTexts",[this.resultData["up"],"low",30,"#00ff00",true,"#00ff00"]]);
+				rst.push(["drawTexts",[this.resultData["down"],"low",50,"#ffff00",true,"#00ff00"]]);
+			}
 			return rst;
 		}
 
@@ -21401,6 +22067,101 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		return ChanAnalyser;
+	})(AnalyserBase)
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class laya.stock.analysers.DistAnalyser extends laya.stock.analysers.AnalyserBase
+	var DistAnalyser=(function(_super){
+		function DistAnalyser(){
+			this.width=40;
+			this.color="#ffff00";
+			this.showPercent=0;
+			DistAnalyser.__super.call(this);
+		}
+
+		__class(DistAnalyser,'laya.stock.analysers.DistAnalyser',_super);
+		var __proto=DistAnalyser.prototype;
+		__proto.initParamKeys=function(){
+			this.paramkeys=["width","color","showPercent"];
+		}
+
+		__proto.analyseWork=function(){
+			this.doDist();
+		}
+
+		__proto.doDist=function(){
+			var dataList=this.disDataList;
+			var i=0,len=0;
+			len=dataList.length;
+			var tDistData;
+			tDistData=[];
+			for (i=0;i < len;i++){
+				var tData;
+				tData=dataList[i];
+				tDistData.push([tData["low"],tData["high"],tData["volume"]]);
+			};
+			var tDis;
+			tDis=new Distribution();
+			tDis.addDatas(tDistData);
+			var tPriceI=0;
+			var tStockPrice=NaN;
+			tStockPrice=dataList[dataList.length-1]["close"];
+			tPriceI=tDis.getPriceI(tStockPrice);
+			var disDatas;
+			disDatas=tDis.datas;
+			var values;
+			values=tDis.values;
+			len=values.length;
+			var lines;
+			lines=[];
+			var rate=NaN;
+			rate=this.width *dataList.length / 10;
+			var percents;
+			percents=tDis.percents;
+			var tLineParam;
+			for (i=0;i < len;i++){
+				tLineParam=[values[i],disDatas[i] *rate];
+				if (this.showPercent > 0){
+					tLineParam[2]=StockTools.getGoodPercent(disDatas[i])+"%"+"("+StockTools.getGoodPercent(percents[i])+"%)";
+					}else{
+					if (percents[i] >=0.5 && percents[i-1] <=0.5){
+						tLineParam[2]=StockTools.getGoodPercent(disDatas[i])+"%"+"("+StockTools.getGoodPercent(percents[i])+"%)";
+					}
+				}
+				if (i==tPriceI){
+					if (!tLineParam[2]){
+						tLineParam[2]="●"+tStockPrice;
+						}else{
+						tLineParam[2]+="●"+tStockPrice;
+					}
+				}
+				tLineParam[3]=this.getRateColor(percents[i]);
+				lines.push(tLineParam);
+			}
+			this.resultData["bars"]=lines;
+		}
+
+		__proto.getRateColor=function(rate){
+			var id=0;
+			id=Math.floor(rate / 0.2);
+			return DistAnalyser.colorList[id];
+		}
+
+		__proto.getDrawCmds=function(){
+			var rst;
+			rst=[];
+			rst.push(["drawBarsH",[this.resultData["bars"],10,this.color]]);
+			return rst;
+		}
+
+		__static(DistAnalyser,
+		['colorList',function(){return this.colorList=["#FFFFCC","#0099CC","#996699","#FF6666","#FFFF66","#CC3333","#003399"];}
+		]);
+		return DistAnalyser;
 	})(AnalyserBase)
 
 
@@ -21906,6 +22667,12 @@ var Laya=window.Laya=(function(window,document){
 				this.stockDic[tCode]=this.stockList[i];
 				this.stockCodeList.push(tCode);
 			}
+		}
+
+		__proto.getRandomStock=function(){
+			var i=0;
+			i=Math.floor(Math.random()*this.stockCodeList.length);
+			return this.stockCodeList[i];
 		}
 
 		__proto.getStockData=function(code){
@@ -23850,6 +24617,7 @@ var Laya=window.Laya=(function(window,document){
 	//class laya.stock.analysers.AverageLineAnalyser extends laya.stock.analysers.lines.AverageLine
 	var AverageLineAnalyser=(function(_super){
 		function AverageLineAnalyser(){
+			this.showBuy=0;
 			AverageLineAnalyser.__super.call(this);
 			this.days="5,12,26";
 			this.colors="#ff0000,#00ffff,#ffff00";
@@ -23857,6 +24625,10 @@ var Laya=window.Laya=(function(window,document){
 
 		__class(AverageLineAnalyser,'laya.stock.analysers.AverageLineAnalyser',_super);
 		var __proto=AverageLineAnalyser.prototype;
+		__proto.initParamKeys=function(){
+			this.paramkeys=["days","colors","priceType","showBuy"];
+		}
+
 		__proto.addToConfigTypes=function(types){
 			var mTpl;
 			mTpl="{#code#}:{#rate#}%:{#day#}:{#mRate#}\n{#lastBuy#}:{#changePercent#}%\n{#high7#}%,{#high15#}%,{#high30#}%,{#high45#}%";
@@ -23906,13 +24678,45 @@ var Laya=window.Laya=(function(window,document){
 			types.push(tData);
 		}
 
+		__proto.doAverages=function(){
+			_super.prototype.doAverages.call(this);
+			var buyPoints;
+			buyPoints=[];
+			var avgs;
+			avgs=this.resultData["averages"];
+			var i=0,len=0;
+			len=this.disDataList.length;
+			var upCount=0;
+			var tI=0;
+			var preIsUp=false;
+			preIsUp=false;
+			tI=this.disDataList.length-1;
+			var curIsUp=false;
+			for (i=1;i < len;i++){
+				curIsUp=this.isUpTrend(avgs,i);
+				if ((!preIsUp)&& curIsUp){
+					buyPoints.push(["buy:"+this.disDataList[i]["date"],i]);
+				}
+				preIsUp=curIsUp;
+			}
+			this.resultData["buys"]=buyPoints;
+		}
+
+		__proto.getDrawCmds=function(){
+			var rst;
+			rst=_super.prototype.getDrawCmds.call(this);
+			if(this.showBuy>0)
+				rst.push(["drawTexts",[this.resultData["buys"],"low",30,"#00ff00",true,"#00ff00"]]);
+			return rst;
+		}
+
 		__proto.addToShowData=function(showData){
 			var kLineO;
 			kLineO={};
 			kLineO.code=showData.code;
 			kLineO.day=0;
 			kLineO.rate=0;
-			kLineO.last;
+			kLineO.last="";
 			var avgs;
 			avgs=this.resultData["averages"];
 			var i=0,len=0;
@@ -23943,6 +24747,13 @@ var Laya=window.Laya=(function(window,document){
 				kLineO.mRate=StockTools.getGoodPercent((tPrice-prePrice)/ (prePrice *upCount));
 				kLineO.lastBuy=this.disDataList[lastIndex]["date"];
 				StockTools.getBuyStaticInfos(lastIndex,this.disDataList,kLineO);
+				len=avgs.length;
+				var curAvgs;
+				curAvgs=[];
+				for (i=0;i < len;i++){
+					curAvgs.push(avgs[i][tI]);
+				}
+				kLineO.avgs=curAvgs;
 			}
 			showData["averageO"]=kLineO;
 		}
@@ -27283,6 +28094,60 @@ var Laya=window.Laya=(function(window,document){
 	})(Sprite)
 
 
+	/**消息管理器
+	*/
+	//class laya.uicomps.MessageManager extends laya.display.Sprite
+	var MessageManager=(function(_super){
+		function MessageManager(){
+			this.preTime=0;
+			MessageManager.__super.call(this);
+			this._vbox=new Box();
+			this.addChild(this._vbox);
+			this.setBounds(new Rectangle(0,0,150,150));
+			Laya.stage.addChild(this);
+		}
+
+		__class(MessageManager,'laya.uicomps.MessageManager',_super);
+		var __proto=MessageManager.prototype;
+		__proto.show=function(msg,color,time){
+			(color===void 0)&& (color="#ff0000");
+			(time===void 0)&& (time=1000);
+			var label=new Label();
+			label.fontSize=14;
+			label.text=msg;
+			label.y=100;
+			label.height=30;
+			label.color=color;
+			var delayTime=0;
+			var nowTime=0;
+			var startTime=0;
+			nowTime=Browser.now();
+			startTime=Math.max(this.preTime+500,nowTime);
+			delayTime=startTime-nowTime;
+			this.preTime=startTime;
+			Laya.timer.once(delayTime,this,this.showLabel,[label,time],false);
+		}
+
+		__proto.showLabel=function(label,time){
+			this.pos(Laya.stage.width *0.5-100,20);
+			this._vbox.addChild(label);
+			Tween.to(label,{y:-20},time,Ease.cubicOut,null);
+			Laya.timer.once(time,this,this.clear,[label],false);
+		}
+
+		__proto.clear=function(label){
+			label.removeSelf();
+		}
+
+		__getset(1,MessageManager,'I',function(){
+			return MessageManager._instance ? MessageManager._instance :MessageManager._instance=new MessageManager();
+		},laya.display.Sprite._$SET_I);
+
+		MessageManager._instance=null
+		return MessageManager;
+	})(Sprite)
+
+
 	/**
 	*...
 	*@author ww
@@ -27399,6 +28264,7 @@ var Laya=window.Laya=(function(window,document){
 				}else{
 				this.showMsg("K-line Showed");
 				this.cacheAsBitmap=true;
+				this.event("KlineShowed");
 			}
 		}
 
@@ -27452,6 +28318,8 @@ var Laya=window.Laya=(function(window,document){
 			this.yRate=this.lineHeight / max;
 			var tColor;
 			this.xRate=this.lineWidth / (len *this.gridWidth);
+			var markTime;
+			markTime=StockListManager.getStockLastMark(this.tStock);
 			for (i=0;i < len;i++){
 				tData=dataList[i];
 				var pos=NaN;
@@ -27463,6 +28331,34 @@ var Laya=window.Laya=(function(window,document){
 				}
 				this.graphics.drawLine(pos,this.getAdptYV(tData["high"]),pos,this.getAdptYV(tData["low"]),tColor,1*this.xRate);
 				this.graphics.drawLine(pos,this.getAdptYV(tData["open"]),pos,this.getAdptYV(tData["close"]),tColor,this.gridWidth*this.xRate);
+			}
+			if (markTime){
+				for (i=0;i < len;i++){
+					tData=dataList[i];
+					if (tData.date==markTime||(tData.date<markTime&&dataList[i+1]&&dataList[i+1].date>markTime)){
+						pos=this.getAdptXV(i *this.gridWidth);
+						this.graphics.drawLine(pos,this.getAdptYV(tData["low"]),pos,this.getAdptYV(tData["low"])+30,"#00ff00");
+						this.graphics.fillText("Mark",pos,this.getAdptYV(tData["low"])+30,null,"#00ff00","center");
+						break ;
+					}
+					if (tData.date > markTime){
+						break ;
+					}
+				}
+			}
+			if (TradeTestManager.isTradeTestOn){
+				var tradeActionDic;
+				tradeActionDic=TradeTestManager.curTradeInfo.getActionDic(this.tStock);
+				for (i=0;i < len;i++){
+					tData=dataList[i];
+					var tDate;
+					tDate=tData.date;
+					if (tradeActionDic[tDate]){
+						pos=this.getAdptXV(i *this.gridWidth);
+						this.graphics.drawLine(pos,this.getAdptYV(tData["low"]),pos,this.getAdptYV(tData["low"])+30,"#00ff00");
+						this.graphics.fillText(tradeActionDic[tDate],pos,this.getAdptYV(tData["low"])+30,null,"#00ff00","center");
+					}
+				}
 			}
 		}
 
@@ -27621,6 +28517,31 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		//this.graphics.drawLine(getAdptXV(tX *gridWidth),yZero+tV,getAdptXV(tX *gridWidth),yZero,"#ff0000",5);
+		__proto.drawBarsH=function(barList,xZero,color){
+			(xZero===void 0)&& (xZero=0);
+			(color===void 0)&& (color="#ffff00");
+			var i=0,len=0;
+			len=barList.length;
+			var tData;
+			var tY=NaN;
+			var tV=NaN;
+			var tTxt;
+			var tColor;
+			for (i=0;i < len;i++){
+				tData=barList[i];
+				tY=this.getAdptYV(tData[0]);
+				tV=tData[1];
+				tTxt=tData[2];
+				tColor=tData[3];
+				if (!tColor)tColor=color;
+				this.graphics.drawLine(this.getAdptXV(tV *this.gridWidth)+xZero,tY,xZero,tY,tColor,this.gridWidth);
+				if (tTxt){
+					this.graphics.fillText(tTxt,this.getAdptXV(tV *this.gridWidth)+xZero+5,tY-6,null,tColor,"left");
+				}
+			}
+		}
+
+		//this.graphics.drawLine(getAdptXV(tX *gridWidth),yZero+tV,getAdptXV(tX *gridWidth),yZero,"#ff0000",5);
 		__proto.drawLines=function(pointList,color){
 			(color===void 0)&& (color="#ff0000");
 			var i=0,len=0;
@@ -27741,6 +28662,7 @@ var Laya=window.Laya=(function(window,document){
 			return DataUtils.mParseFloat(v)*this.xRate;
 		}
 
+		KLine.KlineShowed="KlineShowed";
 		__static(KLine,
 		['SignDrawDes',function(){return this.SignDrawDes={
 				"high":{
@@ -29436,7 +30358,7 @@ var Laya=window.Laya=(function(window,document){
 		__getset(0,__proto,'stateNum',function(){
 			return this._stateNum;
 			},function(value){
-			value=parseInt(value);
+			value=parseInt(value+"");
 			if (this._stateNum !=value){
 				this._stateNum=value < 1 ? 1 :value > 3 ? 3 :value;
 				this.callLater(this.changeClips);
@@ -36375,53 +37297,6 @@ var Laya=window.Laya=(function(window,document){
 
 
 	/**
-	*...
-	*@author ww
-	*/
-	//class laya.debug.view.nodeInfo.views.FindSmallView extends laya.debug.view.nodeInfo.views.UIViewBase
-	var FindSmallView=(function(_super){
-		function FindSmallView(){
-			this.view=null;
-			FindSmallView.__super.call(this);
-		}
-
-		__class(FindSmallView,'laya.debug.view.nodeInfo.views.FindSmallView',_super);
-		var __proto=FindSmallView.prototype;
-		__proto.createPanel=function(){
-			this.view=new FindNodeSmall();
-			StyleConsts.setViewScale(this.view);
-			DisControlTool.setDragingItem(this.view.bg,this.view);
-			this.view.typeSelect.selectedIndex=1;
-			this.view.closeBtn.on("click",this,this.close);
-			this.view.findBtn.on("click",this,this.onFind);
-			this.dis=this.view;
-		}
-
-		__proto.onFind=function(){
-			var key;
-			key=this.view.findTxt.text;
-			key=StringTool.trimSide(key);
-			var nodeList;
-			if (this.view.typeSelect.selectedIndex==0){
-				nodeList=DebugTool.findNameHas(key,false);
-				}else{
-				nodeList=DebugTool.findClassHas(Laya.stage,key);
-			}
-			ToolPanel.I.showSelectItems(nodeList);
-			this.close();
-		}
-
-		__getset(1,FindSmallView,'I',function(){
-			if (!FindSmallView._I)FindSmallView._I=new FindSmallView();
-			return FindSmallView._I;
-		},laya.debug.view.nodeInfo.views.UIViewBase._$SET_I);
-
-		FindSmallView._I=null
-		return FindSmallView;
-	})(UIViewBase)
-
-
-	/**
 	*<code>ViewStack</code> 类用于视图堆栈类，用于视图的显示等设置处理。
 	*/
 	//class laya.ui.ViewStack extends laya.ui.Box
@@ -36556,6 +37431,53 @@ var Laya=window.Laya=(function(window,document){
 
 		return ViewStack;
 	})(Box)
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class laya.debug.view.nodeInfo.views.FindSmallView extends laya.debug.view.nodeInfo.views.UIViewBase
+	var FindSmallView=(function(_super){
+		function FindSmallView(){
+			this.view=null;
+			FindSmallView.__super.call(this);
+		}
+
+		__class(FindSmallView,'laya.debug.view.nodeInfo.views.FindSmallView',_super);
+		var __proto=FindSmallView.prototype;
+		__proto.createPanel=function(){
+			this.view=new FindNodeSmall();
+			StyleConsts.setViewScale(this.view);
+			DisControlTool.setDragingItem(this.view.bg,this.view);
+			this.view.typeSelect.selectedIndex=1;
+			this.view.closeBtn.on("click",this,this.close);
+			this.view.findBtn.on("click",this,this.onFind);
+			this.dis=this.view;
+		}
+
+		__proto.onFind=function(){
+			var key;
+			key=this.view.findTxt.text;
+			key=StringTool.trimSide(key);
+			var nodeList;
+			if (this.view.typeSelect.selectedIndex==0){
+				nodeList=DebugTool.findNameHas(key,false);
+				}else{
+				nodeList=DebugTool.findClassHas(Laya.stage,key);
+			}
+			ToolPanel.I.showSelectItems(nodeList);
+			this.close();
+		}
+
+		__getset(1,FindSmallView,'I',function(){
+			if (!FindSmallView._I)FindSmallView._I=new FindSmallView();
+			return FindSmallView._I;
+		},laya.debug.view.nodeInfo.views.UIViewBase._$SET_I);
+
+		FindSmallView._I=null
+		return FindSmallView;
+	})(UIViewBase)
 
 
 	/**
@@ -39310,115 +40232,6 @@ var Laya=window.Laya=(function(window,document){
 	})(View)
 
 
-	//class ui.KLineViewUI extends laya.ui.View
-	var KLineViewUI=(function(_super){
-		function KLineViewUI(){
-			this.stockSelect=null;
-			this.playBtn=null;
-			this.infoTxt=null;
-			this.stockInput=null;
-			this.playInputBtn=null;
-			this.enableAnimation=null;
-			this.detailBtn=null;
-			this.preBtn=null;
-			this.nextBtn=null;
-			this.analyserList=null;
-			this.propPanel=null;
-			this.dayScroll=null;
-			this.maxDayEnable=null;
-			this.dayCountInput=null;
-			this.clickControlEnable=null;
-			this.addToStockBtn=null;
-			KLineViewUI.__super.call(this);
-		}
-
-		__class(KLineViewUI,'ui.KLineViewUI',_super);
-		var __proto=KLineViewUI.prototype;
-		__proto.createChildren=function(){
-			View.regComponent("view.plugins.AnalyserList",AnalyserList);
-			View.regComponent("stock.prop.PropPanel",PropPanel);
-			laya.ui.Component.prototype.createChildren.call(this);
-			this.createView(KLineViewUI.uiView);
-		}
-
-		KLineViewUI.uiView={"type":"View","props":{"width":800,"height":400},"child":[{"type":"ComboBox","props":{"y":9,"x":8,"var":"stockSelect","skin":"comp/combobox.png","scrollBarSkin":"comp/vscroll.png","labels":"000233,600322","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":9,"x":114,"var":"playBtn","skin":"comp/button.png","label":"play","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Label","props":{"y":13,"x":225,"width":147,"var":"infoTxt","text":"label","height":20,"color":"#ffffff"}},{"type":"TextInput","props":{"y":43,"x":8,"width":90,"var":"stockInput","text":"002234","skin":"comp/textinput.png","height":22,"color":"#f1dede"}},{"type":"Button","props":{"y":42,"x":114,"var":"playInputBtn","skin":"comp/button.png","label":"play","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"CheckBox","props":{"y":45,"x":226,"var":"enableAnimation","skin":"comp/checkbox.png","selected":true,"label":"开启动画","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":39,"x":301,"var":"detailBtn","skin":"comp/button.png","label":"详情","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":80,"x":11,"var":"preBtn","skin":"comp/button.png","label":"pre","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":80,"x":100,"var":"nextBtn","skin":"comp/button.png","label":"next","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"AnalyserList","props":{"var":"analyserList","top":10,"runtime":"view.plugins.AnalyserList","right":10}},{"type":"PropPanel","props":{"y":0,"var":"propPanel","runtime":"stock.prop.PropPanel","right":180}},{"type":"HScrollBar","props":{"y":101,"x":225,"width":166,"var":"dayScroll","skin":"comp/hscroll.png","height":13}},{"type":"CheckBox","props":{"y":76,"x":226,"var":"maxDayEnable","skin":"comp/checkbox.png","selected":false,"label":"天数限制","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"TextInput","props":{"y":73,"x":300,"width":90,"var":"dayCountInput","text":"180","skin":"comp/textinput.png","height":22,"color":"#f1dede"}},{"type":"CheckBox","props":{"y":77,"x":403,"var":"clickControlEnable","skin":"comp/checkbox.png","selected":true,"label":"单击平移","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":39,"x":383,"var":"addToStockBtn","skin":"comp/button.png","label":"加自选","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}}]};
-		return KLineViewUI;
-	})(View)
-
-
-	//class ui.MainViewUI extends laya.ui.View
-	var MainViewUI=(function(_super){
-		function MainViewUI(){
-			this.typeSelect=null;
-			this.stockListView=null;
-			this.kLineView=null;
-			this.selectView=null;
-			this.realTimeView=null;
-			this.logoView=null;
-			MainViewUI.__super.call(this);
-		}
-
-		__class(MainViewUI,'ui.MainViewUI',_super);
-		var __proto=MainViewUI.prototype;
-		__proto.createChildren=function(){
-			View.regComponent("view.StockView",StockView);
-			View.regComponent("view.KLineView",KLineView);
-			View.regComponent("view.SelectStockView",SelectStockView);
-			View.regComponent("view.RealTimeView",RealTimeView);
-			laya.ui.Component.prototype.createChildren.call(this);
-			this.createView(MainViewUI.uiView);
-		}
-
-		MainViewUI.uiView={"type":"View","props":{"width":445,"height":400},"child":[{"type":"Tab","props":{"y":4,"x":4,"var":"typeSelect","skin":"comp/tab.png","selectedIndex":0,"labels":"股票列表,K线动画,选股,自选,扫码","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"StockView","props":{"var":"stockListView","top":40,"runtime":"view.StockView","right":10,"left":10,"bottom":10}},{"type":"KLineView","props":{"var":"kLineView","top":40,"runtime":"view.KLineView","right":10,"left":10,"bottom":10}},{"type":"SelectStockView","props":{"var":"selectView","top":40,"runtime":"view.SelectStockView","right":10,"left":10,"bottom":10}},{"type":"RealTime","props":{"var":"realTimeView","top":40,"runtime":"view.RealTimeView","right":10,"left":10,"bottom":10}},{"type":"Image","props":{"y":106,"var":"logoView","skin":"comp/logo.png","centerX":0}}]};
-		return MainViewUI;
-	})(View)
-
-
-	//class ui.plugins.AnalyserListUI extends laya.ui.View
-	var AnalyserListUI=(function(_super){
-		function AnalyserListUI(){
-			this.list=null;
-			AnalyserListUI.__super.call(this);
-		}
-
-		__class(AnalyserListUI,'ui.plugins.AnalyserListUI',_super);
-		var __proto=AnalyserListUI.prototype;
-		__proto.createChildren=function(){
-			laya.ui.Component.prototype.createChildren.call(this);
-			this.createView(AnalyserListUI.uiView);
-		}
-
-		AnalyserListUI.uiView={"type":"View","props":{},"child":[{"type":"List","props":{"y":0,"x":2,"width":160,"var":"list","vScrollBarSkin":"comp/vscroll.png","height":193},"child":[{"type":"Box","props":{"y":0,"x":0,"width":148,"renderType":"render","height":17},"child":[{"type":"Label","props":{"width":80,"text":"limittxt","name":"nameTxt","height":17,"color":"#e0211d"}},{"type":"CheckBox","props":{"x":92,"skin":"comp/checkbox.png","name":"ifShow","label":"启用","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}}]}]}]};
-		return AnalyserListUI;
-	})(View)
-
-
-	//class ui.realtime.RealTimeUI extends laya.ui.View
-	var RealTimeUI=(function(_super){
-		function RealTimeUI(){
-			this.list=null;
-			this.autoFresh=null;
-			this.freshBtn=null;
-			this.stockInput=null;
-			this.addBtn=null;
-			this.showMDCheck=null;
-			this.showListCheck=null;
-			RealTimeUI.__super.call(this);
-		}
-
-		__class(RealTimeUI,'ui.realtime.RealTimeUI',_super);
-		var __proto=RealTimeUI.prototype;
-		__proto.createChildren=function(){
-			View.regComponent("view.realtime.RealTimeItem",RealTimeItem);
-			laya.ui.Component.prototype.createChildren.call(this);
-			this.createView(RealTimeUI.uiView);
-		}
-
-		RealTimeUI.uiView={"type":"View","props":{"width":445,"height":400},"child":[{"type":"List","props":{"y":10,"x":10,"var":"list","vScrollBarSkin":"comp/vscroll.png","top":30,"right":10,"repeatX":1,"left":10,"bottom":10},"child":[{"type":"StockRealTimeItem","props":{"y":0,"x":0,"runtime":"view.realtime.RealTimeItem","renderType":"render"}}]},{"type":"CheckBox","props":{"y":7,"x":7,"width":61,"var":"autoFresh","skin":"comp/checkbox.png","label":"自动刷新","height":19,"labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":3,"x":90,"var":"freshBtn","skin":"comp/button.png","label":"刷新","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"TextInput","props":{"y":5,"x":185,"width":90,"var":"stockInput","text":"002234","skin":"comp/textinput.png","height":22,"color":"#f1dede"}},{"type":"Button","props":{"y":4,"x":285,"var":"addBtn","skin":"comp/button.png","label":"添加","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"CheckBox","props":{"y":8,"x":364,"width":61,"var":"showMDCheck","skin":"comp/checkbox.png","label":"分时图","height":19,"labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"CheckBox","props":{"y":8,"x":425,"width":61,"var":"showListCheck","skin":"comp/checkbox.png","label":"列表","height":19,"labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}}]};
-		return RealTimeUI;
-	})(View)
-
-
 	/**
 	*<code>HBox</code> 是一个水平布局容器类。
 	*/
@@ -39478,12 +40291,182 @@ var Laya=window.Laya=(function(window,document){
 	})(LayoutBox)
 
 
+	//class ui.KLineViewUI extends laya.ui.View
+	var KLineViewUI=(function(_super){
+		function KLineViewUI(){
+			this.stockSelect=null;
+			this.playBtn=null;
+			this.infoTxt=null;
+			this.stockInput=null;
+			this.playInputBtn=null;
+			this.enableAnimation=null;
+			this.detailBtn=null;
+			this.preBtn=null;
+			this.nextBtn=null;
+			this.analyserList=null;
+			this.propPanel=null;
+			this.dayScroll=null;
+			this.maxDayEnable=null;
+			this.dayCountInput=null;
+			this.clickControlEnable=null;
+			this.addToStockBtn=null;
+			this.tradeTest=null;
+			this.tradeSelect=null;
+			this.markBtn=null;
+			KLineViewUI.__super.call(this);
+		}
+
+		__class(KLineViewUI,'ui.KLineViewUI',_super);
+		var __proto=KLineViewUI.prototype;
+		__proto.createChildren=function(){
+			View.regComponent("view.plugins.AnalyserList",AnalyserList);
+			View.regComponent("stock.prop.PropPanel",PropPanel);
+			View.regComponent("view.plugins.TradeTest",TradeTest);
+			laya.ui.Component.prototype.createChildren.call(this);
+			this.createView(KLineViewUI.uiView);
+		}
+
+		KLineViewUI.uiView={"type":"View","props":{"width":800,"height":400},"child":[{"type":"ComboBox","props":{"y":9,"x":8,"var":"stockSelect","skin":"comp/combobox.png","scrollBarSkin":"comp/vscroll.png","labels":"000233,600322","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":9,"x":114,"var":"playBtn","skin":"comp/button.png","label":"play","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Label","props":{"y":13,"x":225,"width":147,"var":"infoTxt","text":"label","height":20,"color":"#ffffff"}},{"type":"TextInput","props":{"y":43,"x":8,"width":90,"var":"stockInput","text":"002234","skin":"comp/textinput.png","height":22,"color":"#f1dede"}},{"type":"Button","props":{"y":42,"x":114,"var":"playInputBtn","skin":"comp/button.png","label":"play","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"CheckBox","props":{"y":45,"x":226,"var":"enableAnimation","skin":"comp/checkbox.png","selected":true,"label":"开启动画","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":39,"x":301,"var":"detailBtn","skin":"comp/button.png","label":"详情","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":80,"x":8,"var":"preBtn","skin":"comp/button.png","label":"pre","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":80,"x":100,"var":"nextBtn","skin":"comp/button.png","label":"next","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"AnalyserList","props":{"var":"analyserList","top":10,"runtime":"view.plugins.AnalyserList","right":10}},{"type":"PropPanel","props":{"y":0,"var":"propPanel","runtime":"stock.prop.PropPanel","right":180}},{"type":"HScrollBar","props":{"y":101,"x":225,"width":166,"var":"dayScroll","skin":"comp/hscroll.png","height":13}},{"type":"CheckBox","props":{"y":76,"x":226,"var":"maxDayEnable","skin":"comp/checkbox.png","selected":false,"label":"天数限制","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"TextInput","props":{"y":73,"x":300,"width":90,"var":"dayCountInput","text":"300","skin":"comp/textinput.png","height":22,"color":"#f1dede"}},{"type":"CheckBox","props":{"y":77,"x":403,"var":"clickControlEnable","skin":"comp/checkbox.png","selected":true,"label":"单击平移","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":39,"x":383,"width":51,"var":"addToStockBtn","skin":"comp/button.png","label":"加自选","height":24,"labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"TradeTest","props":{"var":"tradeTest","runtime":"view.plugins.TradeTest","left":5,"bottom":5}},{"type":"CheckBox","props":{"y":109,"x":8,"var":"tradeSelect","skin":"comp/checkbox.png","selected":true,"label":"模拟交易","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":39,"x":440,"width":51,"var":"markBtn","skin":"comp/button.png","label":"Mark","height":24,"labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}}]};
+		return KLineViewUI;
+	})(View)
+
+
+	//class ui.MainViewUI extends laya.ui.View
+	var MainViewUI=(function(_super){
+		function MainViewUI(){
+			this.typeSelect=null;
+			this.stockListView=null;
+			this.kLineView=null;
+			this.selectView=null;
+			this.realTimeView=null;
+			this.logoView=null;
+			MainViewUI.__super.call(this);
+		}
+
+		__class(MainViewUI,'ui.MainViewUI',_super);
+		var __proto=MainViewUI.prototype;
+		__proto.createChildren=function(){
+			View.regComponent("view.StockView",StockView);
+			View.regComponent("view.KLineView",KLineView);
+			View.regComponent("view.SelectStockView",SelectStockView);
+			View.regComponent("view.RealTimeView",RealTimeView);
+			View.regComponent("view.netcomps.LoginView",LoginView);
+			laya.ui.Component.prototype.createChildren.call(this);
+			this.createView(MainViewUI.uiView);
+		}
+
+		MainViewUI.uiView={"type":"View","props":{"width":445,"height":400},"child":[{"type":"Tab","props":{"y":4,"x":4,"var":"typeSelect","skin":"comp/tab.png","selectedIndex":0,"labels":"股票列表,K线动画,选股,自选,扫码","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"StockView","props":{"var":"stockListView","top":40,"runtime":"view.StockView","right":10,"left":10,"bottom":10}},{"type":"KLineView","props":{"var":"kLineView","top":40,"runtime":"view.KLineView","right":10,"left":10,"bottom":10}},{"type":"SelectStockView","props":{"var":"selectView","top":40,"runtime":"view.SelectStockView","right":10,"left":10,"bottom":10}},{"type":"RealTime","props":{"var":"realTimeView","top":40,"runtime":"view.RealTimeView","right":10,"left":10,"bottom":10}},{"type":"Image","props":{"y":106,"var":"logoView","skin":"comp/logo.png","centerX":0}},{"type":"LoginView","props":{"y":4,"runtime":"view.netcomps.LoginView","right":5}}]};
+		return MainViewUI;
+	})(View)
+
+
+	//class ui.netcomps.LoginViewUI extends laya.ui.View
+	var LoginViewUI=(function(_super){
+		function LoginViewUI(){
+			this.loginBox=null;
+			this.userNameInput=null;
+			this.pwdInput=null;
+			this.loginBtn=null;
+			this.loginedBox=null;
+			this.logoutBtn=null;
+			this.usernameTxt=null;
+			LoginViewUI.__super.call(this);
+		}
+
+		__class(LoginViewUI,'ui.netcomps.LoginViewUI',_super);
+		var __proto=LoginViewUI.prototype;
+		__proto.createChildren=function(){
+			laya.ui.Component.prototype.createChildren.call(this);
+			this.createView(LoginViewUI.uiView);
+		}
+
+		LoginViewUI.uiView={"type":"View","props":{"width":288,"height":26},"child":[{"type":"Box","props":{"y":2,"x":6,"var":"loginBox"},"child":[{"type":"TextInput","props":{"width":96,"var":"userNameInput","skin":"comp/input_24.png","prompt":"username","height":22,"color":"#f6e1e1"}},{"type":"TextInput","props":{"x":107,"width":96,"var":"pwdInput","skin":"comp/input_24.png","prompt":"pwd","height":22,"color":"#f6e1e1"}},{"type":"Button","props":{"x":212,"var":"loginBtn","skin":"comp/button.png","label":"login","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}}]},{"type":"Box","props":{"y":2,"x":8,"visible":false,"var":"loginedBox"},"child":[{"type":"Button","props":{"x":210,"var":"logoutBtn","skin":"comp/button.png","label":"logout","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Label","props":{"width":141,"visible":true,"var":"usernameTxt","text":"username","height":20,"color":"#ffffff"}}]}]};
+		return LoginViewUI;
+	})(View)
+
+
+	//class ui.plugins.AnalyserListUI extends laya.ui.View
+	var AnalyserListUI=(function(_super){
+		function AnalyserListUI(){
+			this.list=null;
+			this.showSelect=null;
+			AnalyserListUI.__super.call(this);
+		}
+
+		__class(AnalyserListUI,'ui.plugins.AnalyserListUI',_super);
+		var __proto=AnalyserListUI.prototype;
+		__proto.createChildren=function(){
+			laya.ui.Component.prototype.createChildren.call(this);
+			this.createView(AnalyserListUI.uiView);
+		}
+
+		AnalyserListUI.uiView={"type":"View","props":{"width":160,"height":212},"child":[{"type":"List","props":{"y":19,"x":0,"width":160,"var":"list","vScrollBarSkin":"comp/vscroll.png","height":193},"child":[{"type":"Box","props":{"y":0,"x":0,"width":148,"renderType":"render","height":17},"child":[{"type":"Label","props":{"width":80,"text":"limittxt","name":"nameTxt","height":17,"color":"#e0211d"}},{"type":"CheckBox","props":{"x":92,"skin":"comp/checkbox.png","name":"ifShow","label":"启用","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}}]}]},{"type":"CheckBox","props":{"y":0,"x":2,"var":"showSelect","skin":"comp/checkbox.png","selected":true,"label":"显示插件列表","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}}]};
+		return AnalyserListUI;
+	})(View)
+
+
+	//class ui.plugins.TradeTestUI extends laya.ui.View
+	var TradeTestUI=(function(_super){
+		function TradeTestUI(){
+			this.buyBtn=null;
+			this.sellBtn=null;
+			this.tradeInfoTxt=null;
+			this.resetBtn=null;
+			this.anotherBtn=null;
+			this.countTxt=null;
+			this.nextDayBtn=null;
+			this.stockInfoTxt=null;
+			TradeTestUI.__super.call(this);
+		}
+
+		__class(TradeTestUI,'ui.plugins.TradeTestUI',_super);
+		var __proto=TradeTestUI.prototype;
+		__proto.createChildren=function(){
+			laya.ui.Component.prototype.createChildren.call(this);
+			this.createView(TradeTestUI.uiView);
+		}
+
+		TradeTestUI.uiView={"type":"View","props":{"width":271,"height":137},"child":[{"type":"Button","props":{"y":78,"x":113,"var":"buyBtn","skin":"comp/button.png","label":"买入","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":79,"x":195,"var":"sellBtn","skin":"comp/button.png","label":"卖出","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Label","props":{"y":0,"x":0,"width":139,"var":"tradeInfoTxt","text":"总金额:xxxx\\n股票:xxxx\\n总盈亏:xxxx\\n持仓盈亏:xxx","height":74,"color":"#f33713"}},{"type":"Button","props":{"y":111,"x":31,"var":"resetBtn","skin":"comp/button.png","label":"重置","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":112,"x":113,"var":"anotherBtn","skin":"comp/button.png","label":"随机开局","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"TextInput","props":{"y":79,"x":36,"width":66,"var":"countTxt","text":"300","skin":"comp/textinput.png","height":22,"color":"#f1dede"}},{"type":"Button","props":{"y":111,"x":195,"var":"nextDayBtn","skin":"comp/button.png","label":"下一天","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Label","props":{"y":84,"x":2,"text":"数量","color":"#ee1613"}},{"type":"Label","props":{"y":0,"x":165,"width":104,"var":"stockInfoTxt","text":"当前股价:xxx","height":74,"color":"#f33713"}}]};
+		return TradeTestUI;
+	})(View)
+
+
+	//class ui.realtime.RealTimeUI extends laya.ui.View
+	var RealTimeUI=(function(_super){
+		function RealTimeUI(){
+			this.list=null;
+			this.autoFresh=null;
+			this.freshBtn=null;
+			this.stockInput=null;
+			this.addBtn=null;
+			this.showMDCheck=null;
+			this.showListCheck=null;
+			this.netBox=null;
+			this.saveBtn=null;
+			this.loadBtn=null;
+			RealTimeUI.__super.call(this);
+		}
+
+		__class(RealTimeUI,'ui.realtime.RealTimeUI',_super);
+		var __proto=RealTimeUI.prototype;
+		__proto.createChildren=function(){
+			View.regComponent("view.realtime.RealTimeItem",RealTimeItem);
+			laya.ui.Component.prototype.createChildren.call(this);
+			this.createView(RealTimeUI.uiView);
+		}
+
+		RealTimeUI.uiView={"type":"View","props":{"width":445,"height":400},"child":[{"type":"List","props":{"y":10,"x":10,"var":"list","vScrollBarSkin":"comp/vscroll.png","top":30,"right":10,"repeatX":1,"left":10,"bottom":10},"child":[{"type":"StockRealTimeItem","props":{"y":0,"x":0,"runtime":"view.realtime.RealTimeItem","renderType":"render"}}]},{"type":"CheckBox","props":{"y":7,"x":7,"width":61,"var":"autoFresh","skin":"comp/checkbox.png","label":"自动刷新","height":19,"labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":3,"x":90,"var":"freshBtn","skin":"comp/button.png","label":"刷新","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"TextInput","props":{"y":5,"x":185,"width":90,"var":"stockInput","text":"002234","skin":"comp/textinput.png","height":22,"color":"#f1dede"}},{"type":"Button","props":{"y":4,"x":285,"var":"addBtn","skin":"comp/button.png","label":"添加","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"CheckBox","props":{"y":8,"x":364,"width":61,"var":"showMDCheck","skin":"comp/checkbox.png","label":"分时图","height":19,"labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"CheckBox","props":{"y":8,"x":425,"width":61,"var":"showListCheck","skin":"comp/checkbox.png","label":"列表","height":19,"labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Box","props":{"y":3,"x":477,"var":"netBox"},"child":[{"type":"Button","props":{"var":"saveBtn","skin":"comp/button.png","label":"save","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":1,"x":85,"var":"loadBtn","skin":"comp/button.png","label":"load","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}}]}]};
+		return RealTimeUI;
+	})(View)
+
+
 	//class ui.realtime.StockRealTimeItemUI extends laya.ui.View
 	var StockRealTimeItemUI=(function(_super){
 		function StockRealTimeItemUI(){
 			this.txt=null;
 			this.delBtn=null;
 			this.showLine=null;
+			this.markBtn=null;
 			StockRealTimeItemUI.__super.call(this);
 		}
 
@@ -39494,7 +40477,7 @@ var Laya=window.Laya=(function(window,document){
 			this.createView(StockRealTimeItemUI.uiView);
 		}
 
-		StockRealTimeItemUI.uiView={"type":"View","props":{"width":402,"height":25},"child":[{"type":"Box","props":{"width":402,"height":25},"child":[{"type":"Label","props":{"wordWrap":true,"var":"txt","top":0,"text":"this is a list","skin":"comp/label.png","right":0,"name":"label","left":0,"fontSize":14,"color":"#efe82f","bottom":0,"borderColor":"#fb125d"}}]},{"type":"Button","props":{"y":0,"x":328,"var":"delBtn","skin":"comp/button.png","label":"删除","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"CheckBox","props":{"y":5,"x":281,"var":"showLine","skin":"comp/checkbox.png","label":"分时","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}}]};
+		StockRealTimeItemUI.uiView={"type":"View","props":{"width":546,"height":25},"child":[{"type":"Box","props":{"y":0,"x":0,"width":546,"height":25},"child":[{"type":"Label","props":{"wordWrap":true,"var":"txt","top":0,"text":"this is a list","skin":"comp/label.png","right":0,"name":"label","left":0,"fontSize":14,"color":"#efe82f","bottom":0,"borderColor":"#fb125d"}}]},{"type":"Button","props":{"y":0,"x":457,"width":42,"var":"delBtn","skin":"comp/button.png","label":"删除","height":24,"labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"CheckBox","props":{"y":5,"x":410,"var":"showLine","skin":"comp/checkbox.png","label":"分时","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":0,"x":500,"width":42,"var":"markBtn","skin":"comp/button.png","label":"Mark","height":24,"labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}}]};
 		return StockRealTimeItemUI;
 	})(View)
 
@@ -39516,7 +40499,7 @@ var Laya=window.Laya=(function(window,document){
 			this.createView(SelectStockViewUI.uiView);
 		}
 
-		SelectStockViewUI.uiView={"type":"View","props":{"width":445,"height":400},"child":[{"type":"List","props":{"var":"list","vScrollBarSkin":"comp/vscroll.png","top":30,"right":10,"left":10,"bottom":10},"child":[{"type":"Box","props":{"y":0,"x":0,"width":168,"name":"render","height":61},"child":[{"type":"Label","props":{"wordWrap":true,"top":0,"text":"this is a list","skin":"comp/label.png","right":0,"name":"label","left":0,"fontSize":14,"color":"#efe82f","bottom":0,"borderColor":"#fb125d"}},{"type":"Label","props":{"y":39,"x":72,"wordWrap":true,"width":96,"text":"this is a list","skin":"comp/label.png","name":"info","height":22,"fontSize":14,"color":"#efe82f","align":"right"}}]}]},{"type":"Label","props":{"y":-41,"width":271,"var":"tip","text":"股票代码:当前盈利:最高盈利","right":40,"height":42,"color":"#f33713"}},{"type":"ComboBox","props":{"y":3,"visibleNum":15,"var":"typeSelect","skin":"comp/combobox.png","selectedIndex":0,"scrollBarSkin":"comp/vscroll.png","right":20,"labels":"KLine,Position","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"CheckBox","props":{"y":10,"x":11,"width":75,"var":"autoFresh","skin":"comp/checkbox.png","selected":false,"label":"自动刷新","height":14,"labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}}]};
+		SelectStockViewUI.uiView={"type":"View","props":{"width":445,"height":400},"child":[{"type":"List","props":{"var":"list","vScrollBarSkin":"comp/vscroll.png","top":30,"right":10,"left":10,"bottom":10},"child":[{"type":"Box","props":{"y":0,"x":0,"width":168,"name":"render","height":61},"child":[{"type":"Label","props":{"wordWrap":true,"top":0,"text":"this is a list","skin":"comp/label.png","right":0,"name":"label","left":0,"fontSize":14,"color":"#efe82f","bottom":0,"borderColor":"#fb125d"}},{"type":"Label","props":{"y":39,"x":72,"wordWrap":true,"width":96,"text":"this is a list","skin":"comp/label.png","name":"info","height":22,"fontSize":14,"color":"#efe82f","align":"right"}}]}]},{"type":"Label","props":{"y":-11,"width":271,"var":"tip","text":"股票代码:当前盈利:最高盈利","right":150,"height":38,"color":"#f33713"}},{"type":"ComboBox","props":{"y":3,"visibleNum":15,"var":"typeSelect","skin":"comp/combobox.png","selectedIndex":0,"scrollBarSkin":"comp/vscroll.png","right":20,"labels":"KLine,Position","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"CheckBox","props":{"y":10,"x":11,"width":75,"var":"autoFresh","skin":"comp/checkbox.png","selected":false,"label":"自动刷新","height":14,"labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}}]};
 		return SelectStockViewUI;
 	})(View)
 
@@ -40231,26 +41214,6 @@ var Laya=window.Laya=(function(window,document){
 	*...
 	*@author ww
 	*/
-	//class laya.debug.view.nodeInfo.nodetree.NodeTreeSetting extends laya.debug.ui.debugui.NodeTreeSettingUI
-	var NodeTreeSetting=(function(_super){
-		function NodeTreeSetting(){
-			NodeTreeSetting.__super.call(this);
-			Base64AtlasManager.replaceRes(NodeTreeSettingUI.uiView);
-			this.createView(NodeTreeSettingUI.uiView);
-		}
-
-		__class(NodeTreeSetting,'laya.debug.view.nodeInfo.nodetree.NodeTreeSetting',_super);
-		var __proto=NodeTreeSetting.prototype;
-		//inits();
-		__proto.createChildren=function(){}
-		return NodeTreeSetting;
-	})(NodeTreeSettingUI)
-
-
-	/**
-	*...
-	*@author ww
-	*/
 	//class laya.debug.view.nodeInfo.nodetree.NodeTree extends laya.debug.ui.debugui.NodeTreeUI
 	var NodeTree=(function(_super){
 		function NodeTree(){
@@ -40488,6 +41451,26 @@ var Laya=window.Laya=(function(window,document){
 		]);
 		return NodeTree;
 	})(NodeTreeUI)
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class laya.debug.view.nodeInfo.nodetree.NodeTreeSetting extends laya.debug.ui.debugui.NodeTreeSettingUI
+	var NodeTreeSetting=(function(_super){
+		function NodeTreeSetting(){
+			NodeTreeSetting.__super.call(this);
+			Base64AtlasManager.replaceRes(NodeTreeSettingUI.uiView);
+			this.createView(NodeTreeSettingUI.uiView);
+		}
+
+		__class(NodeTreeSetting,'laya.debug.view.nodeInfo.nodetree.NodeTreeSetting',_super);
+		var __proto=NodeTreeSetting.prototype;
+		//inits();
+		__proto.createChildren=function(){}
+		return NodeTreeSetting;
+	})(NodeTreeSettingUI)
 
 
 	/**
@@ -40770,6 +41753,7 @@ var Laya=window.Laya=(function(window,document){
 			analyserClassList.push(ChanAnalyser);
 			analyserClassList.push(StrongLine);
 			analyserClassList.push(AverageLineAnalyser);
+			analyserClassList.push(DistAnalyser);
 			this.analyserList.initAnalysers(analyserClassList);
 			this.addChild(this.kLine);
 			var stock;
@@ -40787,15 +41771,81 @@ var Laya=window.Laya=(function(window,document){
 			this.on("mouseup",this,this.onMMouseUp);
 			this.enableAnimation.selected=false;
 			this.addToStockBtn.on("mousedown",this,this.onAddToStock);
+			this.markBtn.on("mousedown",this,this.onMarkBtn);
+			this.on("keydown",this,this.onKeyDown);
+			this.tradeSelect.selected=false;
+			this.tradeSelect.on("change",this,this.updateTradeVisible);
+			this.updateTradeVisible();
+			this.kLine.on("KlineShowed",this,this.onKlineShowed);
+			this.tradeTest.on("NEXT_Day",this,this.onNextDay);
+			this.tradeTest.on("ANOTHER",this,this.onAnotherTradeTest);
 		}
 
 		__class(KLineView,'view.KLineView',_super);
 		var __proto=KLineView.prototype;
-		__proto.onAddToStock=function(){
+		__proto.onNextDay=function(){
+			this.dayScroll.value=this.dayScroll.value+1;
+		}
+
+		__proto.onAnotherTradeTest=function(){
+			Notice.notify("Show_Stock_KLine",StockBasicInfo.I.getRandomStock());
+		}
+
+		__proto.onKlineShowed=function(){
+			this.tradeTest.setDataList(this.kLine.disDataList,this.kLine.tStock);
+		}
+
+		__proto.updateTradeVisible=function(){
+			this.tradeTest.visible=this.tradeSelect.selected;
+			TradeTestManager.isTradeTestOn=this.tradeSelect.selected;
+			if (this.tradeSelect.selected){
+				if (!this.maxDayEnable.selected){
+					this.maxDayEnable.selected=true;
+				}
+			}
+		}
+
+		__proto.onKeyDown=function(e){
+			switch(e.keyCode){
+				case 40:
+					this.onNext();
+					break ;
+				case 38:
+					this.onPre();
+					break ;
+				case 37:
+					this.dayScroll.value=this.dayScroll.value-1;
+					break ;
+				case 39:
+					this.dayScroll.value=this.dayScroll.value+1;
+					break ;
+				}
+		}
+
+		__proto.onMarkBtn=function(){
 			Notice.notify("AddMyStock",this.kLine.tStock);
+			this.addToStockBtn.label="删自选";
+			Laya.timer.once(1000,this,this.markLater,[this.kLine.tStock]);
+		}
+
+		__proto.markLater=function(stock){
+			Notice.notify("Mark_MyStock",stock);
+		}
+
+		__proto.onAddToStock=function(){
+			if (this.addToStockBtn.label=="加自选"){
+				Notice.notify("AddMyStock",this.kLine.tStock);
+				MessageManager.I.show("add stock:"+this.kLine.tStock);
+				this.addToStockBtn.label="删自选";
+				}else{
+				Notice.notify("Remove_MyStock",this.kLine.tStock);
+				MessageManager.I.show("remove stock:"+this.kLine.tStock);
+				this.addToStockBtn.label="加自选";
+			}
 		}
 
 		__proto.onMMouseDown=function(e){
+			Laya.stage.focus=this;
 			this.isMyMouseDown=false;
 			if (e.target !=this)return;
 			this.isMyMouseDown=true;
@@ -40841,6 +41891,7 @@ var Laya=window.Laya=(function(window,document){
 					if (Laya.stage.mouseX > Laya.stage.width *0.5){
 						this.dayScroll.value=this.dayScroll.value+1;
 						}else{
+						if (TradeTestManager.isTradeTestOn)return;
 						this.dayScroll.value=this.dayScroll.value-1;
 					}
 				}
@@ -40869,7 +41920,13 @@ var Laya=window.Laya=(function(window,document){
 		__proto.showStockKline=function(stock){
 			this.isFirstStockComing=true;
 			this.stockInput.text=stock;
+			this.tradeTest.tradeInfo.sellAll();
 			this.onPlayInput();
+			if (StockListManager.hasStock(stock)){
+				this.addToStockBtn.label="删自选";
+				}else{
+				this.addToStockBtn.label="加自选";
+			}
 		}
 
 		__proto.getDayCount=function(){
@@ -40886,7 +41943,13 @@ var Laya=window.Laya=(function(window,document){
 			max=this.kLine.dataList.length-dayCount;
 			if (max < 0)
 				max=0;
-			this.dayScroll.setScroll(0,max,max);
+			if (TradeTestManager.isTradeTestOn){
+				var tValue=0;
+				tValue=Math.floor(Math.random()*max);
+				this.dayScroll.setScroll(0,max,tValue);
+				}else{
+				this.dayScroll.setScroll(0,max,max);
+			}
 			if (this.maxDayEnable.selected){
 				this.kLine.start=Math.floor(this.dayScroll.value);
 			}
@@ -40953,16 +42016,19 @@ var Laya=window.Laya=(function(window,document){
 			else {
 				this.kLine.maxShowCount=-1;
 				this.kLine.start=0;
+				if (TradeTestManager.isTradeTestOn){
+					this.kLine.maxShowCount=Math.floor(this.dayScroll.value)+ValueTools.mParseFloat(this.dayCountInput.text);
+				}
 			}
 			this.kLine.setStock(stock);
 		}
 
 		__proto.onPre=function(){
-			Notice.notify("Show_Pre_Select");
+			StockListManager.pre();
 		}
 
 		__proto.onNext=function(){
-			Notice.notify("Show_Next_Select");
+			StockListManager.next();
 		}
 
 		return KLineView;
@@ -41020,6 +42086,88 @@ var Laya=window.Laya=(function(window,document){
 	*...
 	*@author ww
 	*/
+	//class view.netcomps.LoginView extends ui.netcomps.LoginViewUI
+	var LoginView=(function(_super){
+		function LoginView(){
+			this.DataSign="loginInfo";
+			LoginView.__super.call(this);
+			this.pwdInput.asPassword=true;
+			this.visible=false;
+			MainSocket.I.serverStr="ws://orzooo.com:9909";
+			MainSocket.I.connect();
+			MainSocket.I.socket.on(stock.StockSocket.Logined,this,this.onLogin);
+			MainSocket.I.socket.on(stock.StockSocket.Welcome,this,this.onConnected);
+			this.loginBtn.on("mousedown",this,this.onLoginBtn);
+			this.logoutBtn.on("mousedown",this,this.onLogOut);
+		}
+
+		__class(LoginView,'view.netcomps.LoginView',_super);
+		var __proto=LoginView.prototype;
+		__proto.onLogOut=function(){
+			MainSocket.I.socket.isLogined=false;
+			MainSocket.I.socket.md5Pwd="";
+			this.pwdInput.text="";
+			this.saveLoginData();
+			this.updateUIState();
+			MessageManager.I.show("logout success");
+		}
+
+		__proto.onConnected=function(){
+			MessageManager.I.show("Connect to server success");
+			this.visible=true;
+			this.tryLogin();
+		}
+
+		__proto.tryLogin=function(){
+			var data;
+			data=LocalStorage.getJSON(this.DataSign);
+			if (data && data.user && data.pwd){
+				MessageManager.I.show("try login");
+				MainSocket.I.socket.loginRaw(data.user,data.pwd);
+			}
+		}
+
+		__proto.onLoginBtn=function(){
+			MessageManager.I.show("try login");
+			MainSocket.I.socket.login(this.userNameInput.text,this.pwdInput.text);
+		}
+
+		__proto.onLogin=function(){
+			if (MainSocket.I.socket.isLogined){
+				this.saveLoginData();
+			}
+			this.updateUIState();
+		}
+
+		__proto.saveLoginData=function(){
+			var userData;
+			userData={};
+			userData.user=MainSocket.I.socket.userName;
+			userData.pwd=MainSocket.I.socket.md5Pwd;
+			LocalStorage.setJSON(this.DataSign,userData);
+		}
+
+		__proto.updateUIState=function(){
+			if (MainSocket.I.socket.isLogined){
+				MessageManager.I.show("login success");
+				this.loginedBox.visible=true;
+				this.loginBox.visible=false;
+				this.usernameTxt.text=MainSocket.I.socket.userName;
+				}else{
+				MessageManager.I.show("login fail");
+				this.loginedBox.visible=false;
+				this.loginBox.visible=true;
+			}
+		}
+
+		return LoginView;
+	})(LoginViewUI)
+
+
+	/**
+	*...
+	*@author ww
+	*/
 	//class view.plugins.AnalyserList extends ui.plugins.AnalyserListUI
 	var AnalyserList=(function(_super){
 		function AnalyserList(){
@@ -41029,10 +42177,15 @@ var Laya=window.Laya=(function(window,document){
 			this.list.renderHandler=new Handler(this,this.mRender);
 			this.list.array=[];
 			this.list.scrollBar.autoHide=true;
+			this.showSelect.on("change",this,this.updateUIState);
 		}
 
 		__class(AnalyserList,'view.plugins.AnalyserList',_super);
 		var __proto=AnalyserList.prototype;
+		__proto.updateUIState=function(){
+			this.list.visible=this.showSelect.selected;
+		}
+
 		__proto.initAnalysers=function(analyserList){
 			this.dataList=[];
 			var i=0,len=0;
@@ -41128,20 +42281,139 @@ var Laya=window.Laya=(function(window,document){
 	*...
 	*@author ww
 	*/
+	//class view.plugins.TradeTest extends ui.plugins.TradeTestUI
+	var TradeTest=(function(_super){
+		function TradeTest(){
+			this.tradeInfo=null;
+			this._dataList=null;
+			this._stock=null;
+			TradeTest.__super.call(this);
+			this.tState="close";
+			this.tradeInfo=new TradeInfo();
+			this.tradeInfo.reset();
+			var btns;
+			btns=[this.buyBtn,this.sellBtn,this.resetBtn,this.anotherBtn,this.nextDayBtn];
+			var i=0,len=0;
+			len=btns.length;
+			for (i=0;i < len;i++){
+				var tBtn;
+				tBtn=btns[i];
+				tBtn.on("click",this,this.onBtnClick,[tBtn]);
+			}
+			this.setDataList(null);
+			this.on("doubleclick",this,this.onDoubleClick);
+		}
+
+		__class(TradeTest,'view.plugins.TradeTest',_super);
+		var __proto=TradeTest.prototype;
+		__proto.onDoubleClick=function(e){
+			if (e.target !=this)return;
+			this.scaleX=this.scaleY=3-this.scaleX;
+		}
+
+		__proto.setDataList=function(dataList,stock){
+			this._dataList=dataList;
+			this._stock=stock;
+			this.tradeInfo.tStock=stock;
+			this.updateUIInfo();
+		}
+
+		__proto.updateUIInfo=function(){
+			this.updateCurInfo();
+			this.updateInfo();
+		}
+
+		__proto.updateCurInfo=function(){
+			if (!this._dataList){
+				this.stockInfoTxt.text="";
+				this.tradeInfo.tStockPrice=0;
+				return;
+			};
+			var len=0;
+			len=this._dataList.length;
+			var tData;
+			var preData;
+			tData=this._dataList[len-1];
+			preData=this._dataList[len-2];
+			this.tradeInfo.tStockPrice=tData.close;
+			this.tradeInfo.tDate=tData.date;
+			if (this.tState=="open"){
+				this.stockInfoTxt.text="当前股价:"+tData.open;
+				}else{
+				this.stockInfoTxt.text="当前股价:"+tData.close+"\n涨幅:"+StockTools.getGoodPercent((tData.close-preData.close)/preData.close)+"%";
+			}
+		}
+
+		__proto.updateInfo=function(){
+			this.tradeInfoTxt.text="总金额:"+this.tradeInfo.total
+			+"\n当前仓位:"+StockTools.getGoodPercent(this.tradeInfo.position)+"%"
+			+"\n股票:"+this.tradeInfo.curStockMoney+" 现金:"+Math.floor(this.tradeInfo.money)
+			+"\n总盈亏:"+this.tradeInfo.stockWinOfTotal+","+StockTools.getGoodPercent(this.tradeInfo.stockWinRateOfTotal)+"%"+"("+this.tradeInfo.dayCount+" days)"
+			+"\n持仓盈亏:"+this.tradeInfo.stockWin+","+StockTools.getGoodPercent(this.tradeInfo.stockWinRate)+"%"+"("+this.tradeInfo.stockDayCount+" days)";
+		}
+
+		__proto.onBtnClick=function(btn){
+			switch (btn){
+				case this.buyBtn:
+					this.tradeInfo.buyStock(this.tradeInfo.tStockPrice,this.curStockCount);
+					this.updateUIInfo();
+					break ;
+				case this.sellBtn:
+					this.tradeInfo.sellStock(this.tradeInfo.tStockPrice,this.curStockCount);
+					this.updateUIInfo();
+					break ;
+				case this.resetBtn:
+					this.tradeInfo.reset();
+					this.updateUIInfo();
+					break ;
+				case this.anotherBtn:
+					this.tradeInfo.sellAll();
+					this.event("ANOTHER");
+					break ;
+				case this.nextDayBtn:
+					this.event("NEXT_Day");
+					break ;
+				}
+		}
+
+		__getset(0,__proto,'curStockCount',function(){
+			return parseInt(this.countTxt.text);
+		});
+
+		TradeTest.OPEN="open";
+		TradeTest.CLOSE="close";
+		TradeTest.NEXT_DAY="NEXT_Day";
+		TradeTest.ANOTHER="ANOTHER";
+		return TradeTest;
+	})(TradeTestUI)
+
+
+	/**
+	*...
+	*@author ww
+	*/
 	//class view.realtime.RealTimeItem extends ui.realtime.StockRealTimeItemUI
 	var RealTimeItem=(function(_super){
 		function RealTimeItem(){
+			this.index=0;
 			this.stock=null;
 			this.isSettingV=false;
 			RealTimeItem.__super.call(this);
 			this.delBtn.on("mousedown",this,this.onDeleteBtn);
+			this.markBtn.on("mousedown",this,this.onMarkBtn);
 			this.on("doubleclick",this,this.onDoubleClick);
 		}
 
 		__class(RealTimeItem,'view.realtime.RealTimeItem',_super);
 		var __proto=RealTimeItem.prototype;
-		__proto.initByStock=function(stock){
-			if (!stock)return;
+		__proto.onMarkBtn=function(){
+			Notice.notify("Mark_MyStock",this.stock);
+		}
+
+		__proto.initByStock=function(stockData){
+			if (!stockData)return;
+			var stock;
+			stock=RealTimeView.getStockCode(stockData);
 			this.stock=stock;
 			this.txt.text=stock;
 			var dataO;
@@ -41153,6 +42425,14 @@ var Laya=window.Laya=(function(window,document){
 				this.showLine.selected=RealTimeItem.showStockDic[stock];
 				this.showLine.on("change",this,this.onShowLineChange);
 				this.isSettingV=false;
+			}
+			if ((typeof stockData=='object')){
+				if (stockData.markTime){
+					this.txt.text+=" M:"+DateTools.getTimeStr(stockData.markTime);
+				}
+				if (stockData.markPrice&&dataO&&dataO.price){
+					this.txt.text+=","+StockTools.getGoodPercent((dataO.price-stockData.markPrice)/ stockData.markPrice)+"%"
+				}
 			}
 		}
 
@@ -41167,6 +42447,7 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		__proto.onDoubleClick=function(){
+			Notice.notify("RealTimeItem_DoubleClick",this.index);
 			Notice.notify("Show_Stock_KLine",StockJsonP.getPureStock(this.stock));
 		}
 
@@ -41194,6 +42475,7 @@ var Laya=window.Laya=(function(window,document){
 			this.mdView=null;
 			this.stockList=[];
 			RealTimeView.__super.call(this);
+			this.list.renderHandler=new Handler(this,this.stockRenderHandler);
 			this.mdView=new MDLine();
 			this.recoverData();
 			this.fresh();
@@ -41206,15 +42488,58 @@ var Laya=window.Laya=(function(window,document){
 			this.autoFresh.on("change",this,this.checkAuto);
 			Notice.listen("AddMyStock",this,this.addStockAndSave);
 			Notice.listen("Remove_MyStock",this,this.removeStockAndSave);
+			Notice.listen("Mark_MyStock",this,this.markStock);
 			Notice.listen("Add_MDLine",this,this.addMdStock);
 			Notice.listen("Remove_MDLine",this,this.removeMdStock);
 			this.showMDCheck.on("change",this,this.showMDChange);
 			this.showListCheck.selected=true;
 			this.showListCheck.on("change",this,this.showListChange);
+			this.netBox.visible=false;
+			MainSocket.I.socket.on(stock.StockSocket.Logined,this,this.onLogin);
+			MainSocket.I.socket.on("stocks",this,this.onServerStock);
+			this.saveBtn.on("mousedown",this,this.onSaveStocks);
+			this.loadBtn.on("mousedown",this,this.onLoadStocks);
+			Notice.listen("RealTimeItem_DoubleClick",this,this.onRealTimeDoubleClick);
 		}
 
 		__class(RealTimeView,'view.RealTimeView',_super);
 		var __proto=RealTimeView.prototype;
+		__proto.onRealTimeDoubleClick=function(index){
+			StockListManager.setStockList(this.list.array,index);
+		}
+
+		__proto.onServerStock=function(dataO){
+			console.log("onServerStock:",dataO);
+			MessageManager.I.show("get stock success");
+			if (dataO.data){
+				var tArr;
+				tArr=dataO.data;
+				this.switchStockList(tArr);
+				this.fresh();
+			}
+		}
+
+		__proto.onSaveStocks=function(){
+			MainSocket.I.socket.saveUserData("stocks",this.stockList);
+		}
+
+		__proto.onLoadStocks=function(){
+			MainSocket.I.socket.getUserData("stocks");
+		}
+
+		__proto.onLogin=function(){
+			this.updateUIState();
+		}
+
+		__proto.updateUIState=function(){
+			if (MainSocket.I.socket.isLogined){
+				this.netBox.visible=true;
+			}
+			else {
+				this.netBox.visible=false;
+			}
+		}
+
 		__proto.showListChange=function(){
 			this.list.visible=this.showListCheck.selected;
 		}
@@ -41243,7 +42568,8 @@ var Laya=window.Laya=(function(window,document){
 			if (show){
 				this.addChildAt(this.mdView,0);
 				this.mdView.startFresh();
-				}else{
+			}
+			else {
 				this.mdView.removeSelf();
 				this.mdView.stopFresh();
 			}
@@ -41254,7 +42580,8 @@ var Laya=window.Laya=(function(window,document){
 			data=LocalStorage.getJSON("Mystocks");
 			if (data && (data instanceof Array)){
 				this.stockList=data;
-				}else{
+			}
+			else {
 				this.addStock("000912");
 			};
 			var i=0,len=0;
@@ -41262,6 +42589,21 @@ var Laya=window.Laya=(function(window,document){
 			for (i=0;i < len;i++){
 				this.addStock(this.stockList[i]);
 			}
+		}
+
+		__proto.switchStockList=function(newList){
+			var i=0,len=0;
+			len=this.stockList.length;
+			for (i=len-1;i >=0;i--){
+				this.removeStock(this.stockList[i]);
+			}
+			this.stockList.length=0;
+			len=newList.length;
+			for (i=0;i < len;i++){
+				this.addStock(newList[i]);
+			}
+			this.fresh();
+			StockJsonP.I.freshData();
 		}
 
 		__proto.saveData=function(){
@@ -41279,6 +42621,29 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		//debugger;
+		__proto.markStock=function(stock){
+			var i=0,len=0;
+			len=this.stockList.length;
+			for (i=0;i < len;i++){
+				if (RealTimeView.getStockCode(this.stockList[i])==stock){
+					var tData;
+					tData={};
+					tData.code=stock;
+					tData.markTime=Browser.now();
+					var dataO;
+					dataO=StockJsonP.getStockData(stock);
+					if (dataO){
+						tData.markPrice=dataO.price;
+						MessageManager.I.show("Mark stock success:"+stock);
+					}
+					this.stockList[i]=tData;
+					break ;
+				}
+			}
+			this.saveData();
+			this.fresh();
+		}
+
 		__proto.removeStockAndSave=function(stock){
 			this.removeStock(stock);
 			this.saveData();
@@ -41290,35 +42655,69 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		__proto.checkAuto=function(){
-			if (this.autoFresh.selected&&this.displayedInStage){
+			if (this.autoFresh.selected && this.displayedInStage){
 				StockJsonP.I.startFresh();
-				}else{
+			}
+			else {
 				StockJsonP.I.stopFresh();
 			}
 		}
 
 		__proto.addStock=function(stock){
-			if (!stock)return;
+			if (!stock)
+				return;
+			var stockCode;
+			stockCode=RealTimeView.getStockCode(stock);
+			stockCode=StockJsonP.getAdptStockStr(stockCode);
+			StockJsonP.I.addStock(stockCode);
+			if (!this.hasStock(stockCode))
+				this.stockList.push(stock);
+		}
+
+		__proto.hasStock=function(stock){
+			stock=RealTimeView.getStockCode(stock);
 			stock=StockJsonP.getAdptStockStr(stock);
-			StockJsonP.I.addStock(stock);
-			if (this.stockList.indexOf(stock)< 0)this.stockList.push(stock);
+			var i=0,len=0;
+			len=this.stockList.length;
+			for (i=0;i < len;i++){
+				if (RealTimeView.getAdptStockCode(this.stockList[i])==stock){
+					return true;
+				}
+			}
+			return false;
 		}
 
 		__proto.removeStock=function(stock){
+			if (!stock)return;
+			stock=RealTimeView.getStockCode(stock);
 			stock=StockJsonP.getAdptStockStr(stock);
 			StockJsonP.I.removeStock(stock);
 			var i=0,len=0;
 			len=this.stockList.length;
-			for (i=0;i < len;i++){
-				if (this.stockList[i]==stock){
+			for (i=len-1;i >=0;i--){
+				if (RealTimeView.getAdptStockCode(this.stockList[i])==stock){
 					this.stockList.splice(i,1);
-					return;
 				}
 			}
 		}
 
 		__proto.fresh=function(){
+			StockListManager.setMyStockList(this.stockList);
 			this.list.array=this.stockList;
+		}
+
+		__proto.stockRenderHandler=function(box,index){
+			box.index=index;
+		}
+
+		RealTimeView.getAdptStockCode=function(stock){
+			return StockJsonP.getAdptStockStr(RealTimeView.getStockCode(stock));
+		}
+
+		RealTimeView.getStockCode=function(stock){
+			if ((typeof stock=='string'))
+				return stock;
+			return stock.code;
 		}
 
 		RealTimeView.DataSign="Mystocks";
@@ -41369,6 +42768,7 @@ var Laya=window.Laya=(function(window,document){
 
 		__proto.onAutoFreshChange=function(){
 			if (this.autoFresh.selected&&this.displayedInStage){
+				this.stockDataGetter.freshData();
 				this.stockDataGetter.startFresh();
 				}else{
 				this.stockDataGetter.stopFresh();
@@ -41390,6 +42790,7 @@ var Laya=window.Laya=(function(window,document){
 			this.tDatas=this.configO["stocks"];
 			this.initByConfigO();
 			this.refreshData();
+			StockListManager.setStockList(this.list.array,this.tI);
 		}
 
 		__proto.initByConfigO=function(){
@@ -41509,6 +42910,7 @@ var Laya=window.Laya=(function(window,document){
 					this.stockDataGetter.addStock(adptCode);
 				}
 			}
+			if (this.autoFresh.selected)this.stockDataGetter.freshData();
 		}
 
 		__proto.onMouseList=function(e,index){
@@ -41526,6 +42928,7 @@ var Laya=window.Laya=(function(window,document){
 					return;
 				console.log(tData);
 				this.setUpAnalyserData();
+				StockListManager.setStockList(this.list.array,this.tI);
 				Notice.notify("Show_Stock_KLine",tData.code);
 			}
 		}
