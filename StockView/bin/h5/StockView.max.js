@@ -1654,9 +1654,9 @@ var Laya=window.Laya=(function(window,document){
 		StockInfoManager.getStockAvgTrendSign=function(stock){
 			var tStockO;
 			tStockO=StockInfoManager.getStockInfo(stock);
-			if (!tStockO)return "~";
+			if (!tStockO||!tStockO.averageO)return "~";
 			var tAvgs;
-			tAvgs=tStockO.avgs;
+			tAvgs=tStockO.averageO.avgs;
 			if (!tAvgs)return "~";
 			if (StockTools.isSameTrend(tAvgs,true))return "↗";
 			if (StockTools.isSameTrend(tAvgs,false))return "↘";
@@ -21651,6 +21651,35 @@ var Laya=window.Laya=(function(window,document){
 				}
 			}
 			return true;
+		}
+
+		__proto.getTrendType=function(avgs,index){
+			var i=0,len=0;
+			len=avgs.length;
+			var preLine;
+			var tLine;
+			var flg=false;
+			flg=true;
+			for (i=1;i < len;i++){
+				preLine=avgs[i-1][0][index];
+				tLine=avgs[i][0][index];
+				if (tLine[1] > preLine[1]){
+					flg=false;
+					break ;
+				}
+			}
+			if (flg)return 1;
+			flg=true;
+			for (i=1;i < len;i++){
+				preLine=avgs[i-1][0][index];
+				tLine=avgs[i][0][index];
+				if (tLine[1] < preLine[1]){
+					flg=false;
+					break ;
+				}
+			}
+			if (flg)return-1;
+			return 0;
 		}
 
 		return AverageLineAnalyser;
