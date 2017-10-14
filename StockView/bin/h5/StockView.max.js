@@ -1784,8 +1784,8 @@ var Laya=window.Laya=(function(window,document){
 			var i=0,len=0;
 			len=dataList.length;
 			for (i=1;i < len;i++){
-				if (up && dataList[i] < dataList[i-1])return false;
-				if ((!up)&& dataList[i] > dataList[i-1])return false;
+				if (up && dataList[i] > dataList[i-1])return false;
+				if ((!up)&& dataList[i] < dataList[i-1])return false;
 			}
 			return true;
 		}
