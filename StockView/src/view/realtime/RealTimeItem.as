@@ -2,6 +2,7 @@ package view.realtime
 {
 	import laya.debug.tools.Notice;
 	import laya.events.Event;
+	import laya.stock.StockInfoManager;
 	import laya.stock.StockTools;
 	import laya.tools.DateTools;
 	import laya.tools.StockJsonP;
@@ -64,6 +65,7 @@ package view.realtime
 					txt.text +=","+StockTools.getGoodPercent((dataO.price-stockData.markPrice) / stockData.markPrice) + "%"
 				}
 			}
+			txt.text += " "+StockInfoManager.getStockAvgTrendSign(stock);
 		}
 		private function onShowLineChange():void
 		{

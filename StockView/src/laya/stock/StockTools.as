@@ -134,6 +134,17 @@ package laya.stock
 			return priceHigh;
 		}
 		
+		public static function isSameTrend(dataList:Array, up:Boolean = true):Boolean
+		{
+			var i:int, len:int;
+			len = dataList.length;
+			for (i = 1; i < len; i++)
+			{
+				if (up && dataList[i] > dataList[i - 1]) return false;
+				if ((!up) && dataList[i] < dataList[i - 1]) return false;
+			}
+			return true;
+		}
 		
 	}
 

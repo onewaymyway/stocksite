@@ -4,6 +4,7 @@ package view {
 	import laya.math.ValueTools;
 	import laya.maths.MathUtil;
 	import laya.net.Loader;
+	import laya.stock.StockInfoManager;
 	import laya.stock.StockTools;
 	import laya.tools.StockJsonP;
 	import laya.ui.Box;
@@ -75,6 +76,7 @@ package view {
 			var data:Array;
 			configO = Loader.getRes(dataUrl);
 			tDatas = configO["stocks"];
+			StockInfoManager.setStockList(configO["stocks"]);
 			initByConfigO();
 			refreshData();
 			StockListManager.setStockList(list.array, tI);
