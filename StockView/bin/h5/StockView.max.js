@@ -1651,16 +1651,26 @@ var Laya=window.Laya=(function(window,document){
 			return StockInfoManager._stockInfoDic[StockTools.getPureStock(stock)];
 		}
 
-		StockInfoManager.getStockAvgTrendSign=function(stock){
+		StockInfoManager.getStockAvgTrendSign=function(stock,price){
 			var tStockO;
 			tStockO=StockInfoManager.getStockInfo(stock);
 			if (!tStockO||!tStockO.averageO)return "~";
 			var tAvgs;
 			tAvgs=tStockO.averageO.avgs;
 			if (!tAvgs)return "~";
-			if (StockTools.isSameTrend(tAvgs,true))return "↗";
-			if (StockTools.isSameTrend(tAvgs,false))return "↘";
-			return "~";
+			var i=0,len=0;
+			len=tAvgs.length;
+			var curCount=0;
+			curCount=0;
+			for (i=0;i < len;i++){
+				if (price >=tAvgs[i])curCount++;
+			};
+			var rst;
+			rst="~";
+			if (StockTools.isSameTrend(tAvgs,true))rst="↗";
+			if (StockTools.isSameTrend(tAvgs,false))rst="↘";
+			rst+=""+curCount;
+			return rst;
 		}
 
 		StockInfoManager._stockList=null
@@ -39666,7 +39676,9 @@ var Laya=window.Laya=(function(window,document){
 					this.txt.text+=","+StockTools.getGoodPercent((dataO.price-stockData.markPrice)/ stockData.markPrice)+"%"
 				}
 			}
-			this.txt.text+=" "+StockInfoManager.getStockAvgTrendSign(stock);
+			if (dataO){
+				this.txt.text+=" "+StockInfoManager.getStockAvgTrendSign(stock,dataO.price);
+			}
 		}
 
 		__proto.onShowLineChange=function(){
