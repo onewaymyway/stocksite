@@ -18,9 +18,10 @@ package laya.stock.analysers
 		public var width:Number = 40;
 		public var color:String = "#ffff00";
 		public var showPercent:int = 0;
+		public var dayCount:int = -1;
 		override public function initParamKeys():void 
 		{
-			paramkeys = ["width","color","showPercent"];
+			paramkeys = ["width","color","showPercent","dayCount"];
 		}
 		override public function analyseWork():void 
 		{
@@ -30,6 +31,12 @@ package laya.stock.analysers
 		public function doDist():void
 		{
 			var dataList:Array = disDataList;
+			if (dayCount > 0)
+			{
+				var tarCount:int;
+				tarCount = dayCount < disDataList.length?dayCount:disDataList.length;
+				dataList = disDataList.slice(disDataList.length-tarCount);
+			}
 			var i:int, len:int;
 			len = dataList.length;
 			var tDistData:Array;
@@ -55,7 +62,7 @@ package laya.stock.analysers
 			var lines:Array;
 			lines = [];
 			var rate:Number;
-			rate = width * dataList.length / 10;
+			rate = width * disDataList.length / 10;
 			var percents:Array;
 			percents = tDis.percents;
 			var tLineParam:Array;
