@@ -33,7 +33,7 @@ package laya.stock
 			return _stockInfoDic[StockTools.getPureStock(stock)];
 		}
 		
-		public static function getStockAvgTrendSign(stock:String):String
+		public static function getStockAvgTrendSign(stock:String,price:Number):String
 		{
 			var tStockO:Object;
 			tStockO = getStockInfo(stock);
@@ -41,10 +41,23 @@ package laya.stock
 			var tAvgs:Array;
 			tAvgs = tStockO.averageO.avgs;
 			if (!tAvgs) return "~";
-			if (StockTools.isSameTrend(tAvgs, true)) return "↗";
-			if (StockTools.isSameTrend(tAvgs, false)) return "↘";
-			return "~";
+			var i:int, len:int;
+			len = tAvgs.length;
+			var curCount:int;
+			curCount = 0;
+			for (i = 0; i < len; i++)
+			{
+				if (price >= tAvgs[i]) curCount++;
+			}
+			var rst:String;
+			rst = "~";
+			if (StockTools.isSameTrend(tAvgs, true)) rst = "↗";
+			if (StockTools.isSameTrend(tAvgs, false)) rst = "↘";
+			rst += ""+curCount;
+			return rst;
 		}
+		
+		
 	}
 
 }

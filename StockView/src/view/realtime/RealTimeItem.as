@@ -65,7 +65,11 @@ package view.realtime
 					txt.text +=","+StockTools.getGoodPercent((dataO.price-stockData.markPrice) / stockData.markPrice) + "%"
 				}
 			}
-			txt.text += " "+StockInfoManager.getStockAvgTrendSign(stock);
+			if (dataO)
+			{
+				txt.text += " "+StockInfoManager.getStockAvgTrendSign(stock,dataO.price);
+			}
+			
 		}
 		private function onShowLineChange():void
 		{
