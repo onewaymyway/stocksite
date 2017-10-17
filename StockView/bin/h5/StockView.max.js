@@ -17396,13 +17396,14 @@ var Laya=window.Laya=(function(window,document){
 			this.width=40;
 			this.color="#ffff00";
 			this.showPercent=0;
+			this.dayCount=-1;
 			DistAnalyser.__super.call(this);
 		}
 
 		__class(DistAnalyser,'laya.stock.analysers.DistAnalyser',_super);
 		var __proto=DistAnalyser.prototype;
 		__proto.initParamKeys=function(){
-			this.paramkeys=["width","color","showPercent"];
+			this.paramkeys=["width","color","showPercent","dayCount"];
 		}
 
 		__proto.analyseWork=function(){
@@ -17411,6 +17412,11 @@ var Laya=window.Laya=(function(window,document){
 
 		__proto.doDist=function(){
 			var dataList=this.disDataList;
+			if (this.dayCount > 0){
+				var tarCount=0;
+				tarCount=this.dayCount < this.disDataList.length?this.dayCount:this.disDataList.length;
+				dataList=this.disDataList.slice(this.disDataList.length-tarCount);
+			};
 			var i=0,len=0;
 			len=dataList.length;
 			var tDistData;
@@ -17435,7 +17441,7 @@ var Laya=window.Laya=(function(window,document){
 			var lines;
 			lines=[];
 			var rate=NaN;
-			rate=this.width *dataList.length / 10;
+			rate=this.width *this.disDataList.length / 10;
 			var percents;
 			percents=tDis.percents;
 			var tLineParam;
