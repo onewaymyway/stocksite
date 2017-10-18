@@ -83,10 +83,10 @@ package laya.stock.analysers
 				{
 					if (!tLineParam[2])
 					{
-						tLineParam[2] = "●"+tStockPrice;
+						tLineParam[2] = "●"+tStockPrice + "(" + StockTools.getGoodPercent(percents[i]) + "%)";
 					}else
 					{
-						tLineParam[2] += "●"+tStockPrice;
+						tLineParam[2] += "●"+tStockPrice + "(" + StockTools.getGoodPercent(percents[i]) + "%)";
 					}
 				}
 				tLineParam[3] = getRateColor(percents[i]);
