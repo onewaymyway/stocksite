@@ -17456,9 +17456,9 @@ var Laya=window.Laya=(function(window,document){
 				}
 				if (i==tPriceI){
 					if (!tLineParam[2]){
-						tLineParam[2]="●"+tStockPrice;
+						tLineParam[2]="●"+tStockPrice+"("+StockTools.getGoodPercent(percents[i])+"%)";
 						}else{
-						tLineParam[2]+="●"+tStockPrice;
+						tLineParam[2]+="●"+tStockPrice+"("+StockTools.getGoodPercent(percents[i])+"%)";
 					}
 				}
 				tLineParam[3]=this.getRateColor(percents[i]);
