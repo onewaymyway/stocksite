@@ -84,6 +84,8 @@ package stock.views
 			dataO = StockJsonP.getStockData(tStock);
 			if (!dataO) return;
 			dataO = StockJsonP.adptStockO(dataO);
+			if (dataO.price <= 0) return;
+			if (dataO.amount <= 0) return;
 			var lastDataO:Object;
 			lastDataO = dataList[dataList.length - 1];
 			if (dataO.date == lastDataO.date)

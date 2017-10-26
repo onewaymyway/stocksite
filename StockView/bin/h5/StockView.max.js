@@ -24242,6 +24242,8 @@ var Laya=window.Laya=(function(window,document){
 			dataO=StockJsonP.getStockData(this.tStock);
 			if (!dataO)return;
 			dataO=StockJsonP.adptStockO(dataO);
+			if (dataO.price <=0)return;
+			if (dataO.amount <=0)return;
 			var lastDataO;
 			lastDataO=this.dataList[this.dataList.length-1];
 			if (dataO.date==lastDataO.date){
