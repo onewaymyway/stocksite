@@ -170,7 +170,56 @@ package laya.tools
 		"sell5price",
 		"date",
 		"time"];
+		private static const numKeys:Array = [
+		"open",
+		"close",
+		"price",
+		"high",
+		"low",
+		"tbuy",
+		"tsell",
+		"amount",
+		"money",
+		"buy1count",
+		"buy1price",
+		"buy2count",
+		"buy2price",
+		"buy3count",
+		"buy3price",
+		"buy4count",
+		"buy4price",
+		"buy5count",
+		"buy5price",
+		"sell1count",
+		"sell1price",
+		"sell2count",
+		"sell2price",
+		"sell3count",
+		"sell3price",
+		"sell4count",
+		"sell4price",
+		"sell5count",
+		"sell5price"];
 		
+		public static function adptStockO(stockO:Object):void
+		{
+			var dataO:Object = { };
+			var i:int, len:int;
+			len = numKeys.length;
+			var tKey:String;
+			for (tKey in stockO)
+			{
+				dataO[tKey] = stockO[tKey];
+			}
+			for (i = 0; i < len; i++)
+			{
+				tKey = numKeys[i];
+				dataO[tKey] = parseFloat(dataO[tKey]);
+			}
+			dataO.volume = dataO.amount/100;
+			dataO.close = dataO.price;
+			return dataO;
+		}
 		public static var stockDataO:Object = { };
 		public static function parserStockData(stock:String):void
 		{

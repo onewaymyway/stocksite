@@ -20,6 +20,10 @@ package stock
 			dataList.sort(MathUtil.sortByKey("date",false,false));
 		}
 		
+		public function freshData():void
+		{
+			
+		}
 	}
 
 }

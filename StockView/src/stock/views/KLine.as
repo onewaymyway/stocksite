@@ -9,6 +9,7 @@ package stock.views
 	import laya.stock.analysers.AnalyserBase;
 	import laya.stock.analysers.KLineAnalyser;
 	import laya.stock.StockTools;
+	import laya.tools.StockJsonP;
 	import laya.utils.Handler;
 	import msgs.MsgConst;
 	import stock.StockBasicInfo;
@@ -76,6 +77,28 @@ package stock.views
 			setStockData(stockData);
 			
 		}
+		
+		public function freshStockData():void
+		{
+			var dataO:Object;
+			dataO = StockJsonP.getStockData(tStock);
+			if (!dataO) return;
+			dataO = StockJsonP.adptStockO(dataO);
+			var lastDataO:Object;
+			lastDataO = dataList[dataList.length - 1];
+			if (dataO.date == lastDataO.date)
+			{
+				dataList[dataList.length - 1] = dataO;
+			}else
+			{
+				if (dataO.date > lastDataO.date)
+				{
+					dataList.push(dataO);
+				}
+			}
+			debugger;
+		}
+		
 		public function showMsg(msg:String):void
 		{
 			event("msg",StockBasicInfo.I.getStockName(tStock)+":"+msg);
@@ -88,6 +111,7 @@ package stock.views
 		{
 			this.stockData = stockData;
 			dataList = stockData.dataList;
+			freshStockData();
 			//drawdata();
 			this.cacheAsBitmap = false;
 			event(MsgConst.Stock_Data_Inited);
