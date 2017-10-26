@@ -24345,8 +24345,12 @@ var Laya=window.Laya=(function(window,document){
 					}
 					this.graphics.drawLine(pos,this.getAdptYV(tData["open"]),pos,this.getAdptYV(tData["close"])+1,tColor,this.gridWidth*this.xRate);
 					}else{
-					this.graphics.drawLine(pos,this.getAdptYV(tData["high"]),pos,this.getAdptYV(tData["low"]),tColor,1*this.xRate);
-					this.graphics.drawLine(pos,this.getAdptYV(tData["open"]),pos,this.getAdptYV(tData["close"]),tColor,this.gridWidth*this.xRate);
+					this.graphics.drawLine(pos,this.getAdptYV(tData["high"]),pos,this.getAdptYV(tData["low"]),tColor,1 *this.xRate);
+					if (tData["open"]==tData["close"]){
+						this.graphics.drawLine(pos,this.getAdptYV(tData["open"]),pos,this.getAdptYV(tData["close"])+0.5,tColor,this.gridWidth*this.xRate);
+						}else{
+						this.graphics.drawLine(pos,this.getAdptYV(tData["open"]),pos,this.getAdptYV(tData["close"]),tColor,this.gridWidth*this.xRate);
+					}
 				}
 				prePrice=tData["close"];
 			}

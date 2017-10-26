@@ -219,8 +219,15 @@ package stock.views
 					this.graphics.drawLine(pos, getAdptYV(tData["open"]), pos, getAdptYV(tData["close"])+1, tColor, gridWidth*xRate);
 				}else
 				{
-					this.graphics.drawLine(pos, getAdptYV(tData["high"]), pos, getAdptYV(tData["low"]), tColor,1*xRate);
-					this.graphics.drawLine(pos, getAdptYV(tData["open"]), pos, getAdptYV(tData["close"]), tColor, gridWidth*xRate);
+					this.graphics.drawLine(pos, getAdptYV(tData["high"]), pos, getAdptYV(tData["low"]), tColor, 1 * xRate);
+					if (tData["open"] == tData["close"])
+					{
+						this.graphics.drawLine(pos, getAdptYV(tData["open"]), pos, getAdptYV(tData["close"])+0.5, tColor, gridWidth*xRate);
+					}else
+					{
+						this.graphics.drawLine(pos, getAdptYV(tData["open"]), pos, getAdptYV(tData["close"]), tColor, gridWidth*xRate);
+					}
+					
 				}
 				prePrice = tData["close"];
 			}
