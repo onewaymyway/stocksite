@@ -55,7 +55,7 @@ package stock
 			var stockO:Object;
 			stockO = StockJsonP.getStockData(adptCode) || stockDic[adptCode];
 			if (stockO) return stockO.name;
-			return "unknow";
+			return adptCode;
 		}
 	}
 

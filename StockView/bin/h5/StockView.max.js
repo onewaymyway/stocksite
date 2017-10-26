@@ -18428,7 +18428,7 @@ var Laya=window.Laya=(function(window,document){
 			var stockO;
 			stockO=StockJsonP.getStockData(adptCode)|| this.stockDic[adptCode];
 			if (stockO)return stockO.name;
-			return "unknow";
+			return adptCode;
 		}
 
 		__static(StockBasicInfo,
