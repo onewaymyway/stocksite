@@ -1,5 +1,6 @@
 package laya.stock 
 {
+	import laya.tools.StockJsonP;
 	/**
 	 * ...
 	 * @author ww
@@ -33,6 +34,13 @@ package laya.stock
 			return _stockInfoDic[StockTools.getPureStock(stock)];
 		}
 		
+		public static function getStockName(stock:String):String
+		{
+			var stockO:Object;
+			stockO = StockJsonP.getStockData(stock);
+			if (!stockO) return "";
+			return stockO.name;
+		}
 		public static function getStockAvgTrendSign(stock:String,price:Number):String
 		{
 			var tStockO:Object;

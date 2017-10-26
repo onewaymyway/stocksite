@@ -96,7 +96,6 @@ package stock.views
 					dataList.push(dataO);
 				}
 			}
-			debugger;
 		}
 		
 		public function showMsg(msg:String):void

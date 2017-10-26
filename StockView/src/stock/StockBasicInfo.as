@@ -1,6 +1,7 @@
 package stock 
 {
 	import laya.stock.StockTools;
+	import laya.tools.StockJsonP;
 	/**
 	 * ...
 	 * @author ww
@@ -51,7 +52,9 @@ package stock
 			if (!code) return "unknow";
 			var adptCode:String;
 			adptCode = StockTools.getPureStock(code);
-			if (stockDic[adptCode]) return stockDic[adptCode].name;
+			var stockO:Object;
+			stockO = StockJsonP.getStockData(adptCode) || stockDic[adptCode];
+			if (stockO) return stockO.name;
 			return "unknow";
 		}
 	}
