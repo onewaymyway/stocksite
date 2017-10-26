@@ -1651,6 +1651,13 @@ var Laya=window.Laya=(function(window,document){
 			return StockInfoManager._stockInfoDic[StockTools.getPureStock(stock)];
 		}
 
+		StockInfoManager.getStockName=function(stock){
+			var stockO;
+			stockO=StockJsonP.getStockData(stock);
+			if (!stockO)return "";
+			return stockO.name;
+		}
+
 		StockInfoManager.getStockAvgTrendSign=function(stock,price){
 			var tStockO;
 			tStockO=StockInfoManager.getStockInfo(stock);
@@ -18418,7 +18425,9 @@ var Laya=window.Laya=(function(window,document){
 			if (!code)return "unknow";
 			var adptCode;
 			adptCode=StockTools.getPureStock(code);
-			if (this.stockDic[adptCode])return this.stockDic[adptCode].name;
+			var stockO;
+			stockO=StockJsonP.getStockData(adptCode)|| this.stockDic[adptCode];
+			if (stockO)return stockO.name;
 			return "unknow";
 		}
 
@@ -24242,7 +24251,6 @@ var Laya=window.Laya=(function(window,document){
 					this.dataList.push(dataO);
 				}
 			}
-			debugger;
 		}
 
 		__proto.showMsg=function(msg){
