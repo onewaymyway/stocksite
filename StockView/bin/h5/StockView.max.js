@@ -2130,6 +2130,23 @@ var Laya=window.Laya=(function(window,document){
 			return StockJsonP.stockDataO[stock];
 		}
 
+		StockJsonP.adptStockO=function(stockO){
+			var dataO={};
+			var i=0,len=0;
+			len=StockJsonP.numKeys.length;
+			var tKey;
+			for (tKey in stockO){
+				dataO[tKey]=stockO[tKey];
+			}
+			for (i=0;i < len;i++){
+				tKey=StockJsonP.numKeys[i];
+				dataO[tKey]=parseFloat(dataO[tKey]);
+			}
+			dataO.volume=dataO.amount/100;
+			dataO.close=dataO.price;
+			return dataO;
+		}
+
 		StockJsonP.parserStockData=function(stock){
 			var tStr;
 			tStr="hq_str_"+stock;
@@ -2188,7 +2205,36 @@ var Laya=window.Laya=(function(window,document){
 			"sell5count",
 			"sell5price",
 			"date",
-			"time"];}
+			"time"];},'numKeys',function(){return this.numKeys=[
+			"open",
+			"close",
+			"price",
+			"high",
+			"low",
+			"tbuy",
+			"tsell",
+			"amount",
+			"money",
+			"buy1count",
+			"buy1price",
+			"buy2count",
+			"buy2price",
+			"buy3count",
+			"buy3price",
+			"buy4count",
+			"buy4price",
+			"buy5count",
+			"buy5price",
+			"sell1count",
+			"sell1price",
+			"sell2count",
+			"sell2price",
+			"sell3count",
+			"sell3price",
+			"sell4count",
+			"sell4price",
+			"sell5count",
+			"sell5price"];}
 		]);
 		return StockJsonP;
 	})()
@@ -18401,6 +18447,7 @@ var Laya=window.Laya=(function(window,document){
 			this.dataList.sort(MathUtil.sortByKey("date",false,false));
 		}
 
+		__proto.freshData=function(){}
 		return StockData;
 	})(CSVParser)
 
@@ -24181,6 +24228,23 @@ var Laya=window.Laya=(function(window,document){
 			this.setStockData(stockData);
 		}
 
+		__proto.freshStockData=function(){
+			var dataO;
+			dataO=StockJsonP.getStockData(this.tStock);
+			if (!dataO)return;
+			dataO=StockJsonP.adptStockO(dataO);
+			var lastDataO;
+			lastDataO=this.dataList[this.dataList.length-1];
+			if (dataO.date==lastDataO.date){
+				this.dataList[this.dataList.length-1]=dataO;
+				}else{
+				if (dataO.date > lastDataO.date){
+					this.dataList.push(dataO);
+				}
+			}
+			debugger;
+		}
+
 		__proto.showMsg=function(msg){
 			this.event("msg",StockBasicInfo.I.getStockName(this.tStock)+":"+msg);
 		}
@@ -24188,6 +24252,7 @@ var Laya=window.Laya=(function(window,document){
 		__proto.setStockData=function(stockData){
 			this.stockData=stockData;
 			this.dataList=stockData.dataList;
+			this.freshStockData();
 			this.cacheAsBitmap=false;
 			this.event("DataInited");
 			this.drawdata(this.start);
