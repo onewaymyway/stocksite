@@ -24329,17 +24329,26 @@ var Laya=window.Laya=(function(window,document){
 			this.xRate=this.lineWidth / (len *this.gridWidth);
 			var markTime;
 			markTime=StockListManager.getStockLastMark(this.tStock);
+			var prePrice=0;
 			for (i=0;i < len;i++){
 				tData=dataList[i];
 				var pos=NaN;
 				pos=this.getAdptXV(i *this.gridWidth);
-				if (tData["close"] > tData["open"]){
+				if (tData["close"] >=tData["open"]){
 					tColor="#ff0000";
 					}else{
 					tColor="#00ffff";
 				}
-				this.graphics.drawLine(pos,this.getAdptYV(tData["high"]),pos,this.getAdptYV(tData["low"]),tColor,1*this.xRate);
-				this.graphics.drawLine(pos,this.getAdptYV(tData["open"]),pos,this.getAdptYV(tData["close"]),tColor,this.gridWidth*this.xRate);
+				if (tData["high"]==tData["low"]){
+					if (tData["high"] < prePrice){
+						tColor="#00ffff";
+					}
+					this.graphics.drawLine(pos,this.getAdptYV(tData["open"]),pos,this.getAdptYV(tData["close"])+1,tColor,this.gridWidth*this.xRate);
+					}else{
+					this.graphics.drawLine(pos,this.getAdptYV(tData["high"]),pos,this.getAdptYV(tData["low"]),tColor,1*this.xRate);
+					this.graphics.drawLine(pos,this.getAdptYV(tData["open"]),pos,this.getAdptYV(tData["close"]),tColor,this.gridWidth*this.xRate);
+				}
+				prePrice=tData["close"];
 			}
 			if (markTime){
 				for (i=0;i < len;i++){

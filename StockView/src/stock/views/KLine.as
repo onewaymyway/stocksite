@@ -195,20 +195,34 @@ package stock.views
 			xRate = lineWidth / (len * gridWidth);
 			var markTime:String;
 			markTime = StockListManager.getStockLastMark(tStock);
+			var prePrice:Number=0;
 			for (i = 0; i < len; i++)
 			{
 				tData = dataList[i];
 				var pos:Number;
 				pos = getAdptXV(i * gridWidth);
-				if (tData["close"] > tData["open"])
+				
+				if (tData["close"] >= tData["open"])
 				{
 					tColor = "#ff0000";
 				}else
 				{
 					tColor = "#00ffff";
 				}
-				this.graphics.drawLine(pos, getAdptYV(tData["high"]), pos, getAdptYV(tData["low"]), tColor,1*xRate);
-				this.graphics.drawLine(pos, getAdptYV(tData["open"]), pos, getAdptYV(tData["close"]), tColor, gridWidth*xRate);
+				
+				if (tData["high"] == tData["low"])
+				{ 
+					if (tData["high"] < prePrice)
+					{
+						tColor = "#00ffff";
+					}
+					this.graphics.drawLine(pos, getAdptYV(tData["open"]), pos, getAdptYV(tData["close"])+1, tColor, gridWidth*xRate);
+				}else
+				{
+					this.graphics.drawLine(pos, getAdptYV(tData["high"]), pos, getAdptYV(tData["low"]), tColor,1*xRate);
+					this.graphics.drawLine(pos, getAdptYV(tData["open"]), pos, getAdptYV(tData["close"]), tColor, gridWidth*xRate);
+				}
+				prePrice = tData["close"];
 			}
 			if (markTime)
 			{
