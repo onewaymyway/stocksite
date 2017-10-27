@@ -126,7 +126,7 @@ package stock.views
 				Laya.timer.loop(10, this, timeEffect);
 			}else
 			{
-				showMsg("K-line Showed");
+				showMsg("K-line Showed:"+disDataList[disDataList.length-1].date);
 				this.cacheAsBitmap = true;
 				event(KlineShowed);
 			}

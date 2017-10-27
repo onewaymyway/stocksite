@@ -13,6 +13,8 @@ package ui.realtime {
 		override protected function createChildren():void {
 			super.createChildren();
 			createView(uiView);
+
 		}
+
 	}
 }

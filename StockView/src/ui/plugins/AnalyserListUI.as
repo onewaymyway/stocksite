@@ -11,6 +11,8 @@ package ui.plugins {
 		override protected function createChildren():void {
 			super.createChildren();
 			createView(uiView);
+
 		}
+
 	}
 }

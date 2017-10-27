@@ -24271,7 +24271,7 @@ var Laya=window.Laya=(function(window,document){
 				this.showMsg("playing K-line Animation");
 				Laya.timer.loop(10,this,this.timeEffect);
 				}else{
-				this.showMsg("K-line Showed");
+				this.showMsg("K-line Showed:"+this.disDataList[this.disDataList.length-1].date);
 				this.cacheAsBitmap=true;
 				this.event("KlineShowed");
 			}

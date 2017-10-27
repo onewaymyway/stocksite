@@ -25,6 +25,8 @@ package ui {
 			View.regComponent("view.netcomps.LoginView",LoginView);
 			super.createChildren();
 			createView(uiView);
+
 		}
+
 	}
 }

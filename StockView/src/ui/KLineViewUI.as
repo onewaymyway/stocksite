@@ -34,6 +34,8 @@ package ui {
 			View.regComponent("view.plugins.TradeTest",TradeTest);
 			super.createChildren();
 			createView(uiView);
+
 		}
+
 	}
 }

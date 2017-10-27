@@ -18,6 +18,8 @@ package ui.test {
 		override protected function createChildren():void {
 			super.createChildren();
 			createView(uiView);
+
 		}
+
 	}
 }

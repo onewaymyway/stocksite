@@ -21,6 +21,8 @@ package ui.realtime {
 			View.regComponent("view.realtime.RealTimeItem",RealTimeItem);
 			super.createChildren();
 			createView(uiView);
+
 		}
+
 	}
 }
