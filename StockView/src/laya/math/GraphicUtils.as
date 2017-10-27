@@ -17,6 +17,11 @@ package laya.math
 			y = y0 + (px - x0)*(y1 - y0) / (x1 - x0);
 			return y - py;
 		}
+		
+		public static function addGridLineToResult(result:Object, lineStr:String):void
+		{
+			
+		}
 	}
 
 }

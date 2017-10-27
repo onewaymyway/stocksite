@@ -378,6 +378,27 @@ package laya.math
 			}
 			return K_Unknow;
 		}
+		
+		public static function getDistanceRate(arr:Array):Number
+		{
+			var sum:Number;
+			sum = 0;
+			var i:int, len:int;
+			len = arr.length;
+			for (i = 0; i < len; i++)
+			{
+				sum += arr[i];
+			}
+			var avg:Number;
+			avg = sum / len;
+			sum = 0;
+			for (i = 0; i < len; i++)
+			{
+				sum += Math.pow(arr[i]-avg, 2);
+			}
+			sum = Math.sqrt(sum) / avg;
+			return sum;
+		}
 	}
 
 }

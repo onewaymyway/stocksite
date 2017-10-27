@@ -787,6 +787,24 @@ var Laya=window.Laya=(function(window,document){
 			return "unknow";
 		}
 
+		DataUtils.getDistanceRate=function(arr){
+			var sum=NaN;
+			sum=0;
+			var i=0,len=0;
+			len=arr.length;
+			for (i=0;i < len;i++){
+				sum+=arr[i];
+			};
+			var avg=NaN;
+			avg=sum / len;
+			sum=0;
+			for (i=0;i < len;i++){
+				sum+=Math.pow(arr[i]-avg,2);
+			}
+			sum=Math.sqrt(sum)/ avg;
+			return sum;
+		}
+
 		DataUtils.K_Top="top";
 		DataUtils.K_Bottom="bottom";
 		DataUtils.K_Unknow="unknow";
@@ -808,6 +826,7 @@ var Laya=window.Laya=(function(window,document){
 			return y-py;
 		}
 
+		GraphicUtils.addGridLineToResult=function(result,lineStr){}
 		return GraphicUtils;
 	})()
 
@@ -1212,6 +1231,24 @@ var Laya=window.Laya=(function(window,document){
 
 		__proto.addToConfigTypes=function(types){}
 		__proto.addToShowData=function(showData){}
+		__proto.addGridLine=function(barHeight,gridLineValue){
+			var i=0,len=0;
+			var gridLine;
+			gridLine=[];
+			var values;
+			values=gridLineValue.split(",");
+			len=values.length;
+			for (i=0;i < len;i++){
+				values[i]=ValueTools.mParseFloat(values[i])*barHeight;
+			}
+			gridLine.push(0,this.dataList.length-1,values,/*no*/this.color,gridLineValue.split(","));
+			this.resultData["gridLine"]=gridLine;
+		}
+
+		__proto.addGridLineToDraw=function(rst){
+			rst.push(["drawGridLineEx",this.resultData["gridLine"]]);
+		}
+
 		return AnalyserBase;
 	})()
 
@@ -17763,17 +17800,8 @@ var Laya=window.Laya=(function(window,document){
 			this.resultData["positionList"]=positionList;
 			for (i=0;i < len;i++){
 				positionList.push(this.getWinLoseData(ValueTools.mParseFloat(days[i]),dataList));
-			};
-			var gridLine;
-			gridLine=[];
-			var values;
-			values=this.gridLineValue.split(",");
-			len=values.length;
-			for (i=0;i < len;i++){
-				values[i]=ValueTools.mParseFloat(values[i])*this.barHeight;
 			}
-			gridLine.push(0,dataList.length-1,values,this.color,this.gridLineValue.split(","));
-			this.resultData["gridLine"]=gridLine;
+			this.addGridLine(this.barHeight,this.gridLineValue);
 		}
 
 		__proto.getBuyList=function(positionData){
@@ -17848,7 +17876,7 @@ var Laya=window.Laya=(function(window,document){
 				rst.push(["drawLinesEx",[tPositionO["loseList"],this.loseColor]]);
 				rst.push(["drawTexts",[tPositionO["buyList"],"low",30,"#00ff00",true,"#00ff00"]]);
 			}
-			rst.push(["drawGridLineEx",this.resultData["gridLine"]]);
+			this.addGridLineToDraw(rst);
 			return rst;
 		}
 
@@ -21568,6 +21596,8 @@ var Laya=window.Laya=(function(window,document){
 	var AverageLineAnalyser=(function(_super){
 		function AverageLineAnalyser(){
 			this.showBuy=0;
+			this.showStongLine=0;
+			this.barHeight=500;
 			AverageLineAnalyser.__super.call(this);
 			this.days="5,12,26";
 			this.colors="#ff0000,#00ffff,#ffff00";
@@ -21576,7 +21606,7 @@ var Laya=window.Laya=(function(window,document){
 		__class(AverageLineAnalyser,'laya.stock.analysers.AverageLineAnalyser',_super);
 		var __proto=AverageLineAnalyser.prototype;
 		__proto.initParamKeys=function(){
-			this.paramkeys=["days","colors","priceType","showBuy"];
+			this.paramkeys=["days","colors","priceType","showBuy","showStongLine"];
 		}
 
 		__proto.addToConfigTypes=function(types){
@@ -21650,6 +21680,26 @@ var Laya=window.Laya=(function(window,document){
 				preIsUp=curIsUp;
 			}
 			this.resultData["buys"]=buyPoints;
+			if (this.showStongLine > 0){
+				len=this.disDataList.length;
+				var distanceList;
+				distanceList=[];
+				for (i=0;i < len;i++){
+					distanceList.push([i,this.barHeight *this.getAvgDistance(avgs,i)]);
+				}
+				this.resultData["distanceList"]=distanceList;
+				this.addGridLine(this.barHeight,"0,0.025,0.05,0.1,0.15,0.20,0.25");
+			}
+		}
+
+		__proto.getAvgDistance=function(avgs,index){
+			AverageLineAnalyser._tempArr.length=avgs.length;
+			var i=0,len=0;
+			len=AverageLineAnalyser._tempArr.length;
+			for (i=0;i < len;i++){
+				AverageLineAnalyser._tempArr[i]=avgs[i][0][index][1];
+			}
+			return DataUtils.getDistanceRate(AverageLineAnalyser._tempArr);
 		}
 
 		__proto.getDrawCmds=function(){
@@ -21657,6 +21707,10 @@ var Laya=window.Laya=(function(window,document){
 			rst=_super.prototype.getDrawCmds.call(this);
 			if (this.showBuy > 0)
 				rst.push(["drawTexts",[this.resultData["buys"],"low",30,"#00ff00",true,"#00ff00"]]);
+			if (this.showStongLine > 0){
+				rst.push(["drawLinesEx",[this.resultData["distanceList"]]]);
+				this.addGridLineToDraw(rst);
+			}
 			return rst;
 		}
 
@@ -21742,7 +21796,8 @@ var Laya=window.Laya=(function(window,document){
 					break ;
 				}
 			}
-			if (flg)return 1;
+			if (flg)
+				return 1;
 			flg=true;
 			for (i=1;i < len;i++){
 				preLine=avgs[i-1][0][index];
@@ -21752,10 +21807,12 @@ var Laya=window.Laya=(function(window,document){
 					break ;
 				}
 			}
-			if (flg)return-1;
+			if (flg)
+				return-1;
 			return 0;
 		}
 
+		AverageLineAnalyser._tempArr=[];
 		return AverageLineAnalyser;
 	})(AverageLine)
 
@@ -41031,3 +41088,8 @@ var Laya=window.Laya=(function(window,document){
 	new StockMain();
 
 })(window,document,Laya);
+
+
+/*
+1 file:///D:/stocksite.git/trunk/StockView/src/laya/stock/analysers/AnalyserBase.as (160):warning:color This variable is not defined.
+*/

@@ -1,4 +1,5 @@
 package laya.stock.analysers {
+	import laya.math.DataUtils;
 	import laya.stock.analysers.lines.AverageLine;
 	import laya.stock.StockTools;
 	
@@ -8,6 +9,7 @@ package laya.stock.analysers {
 	 */
 	public class AverageLineAnalyser extends AverageLine {
 		public var showBuy:int = 0;
+		public var showStongLine:int = 0;
 		
 		public function AverageLineAnalyser() {
 			super();
@@ -16,7 +18,7 @@ package laya.stock.analysers {
 		}
 		
 		override public function initParamKeys():void {
-			paramkeys = ["days", "colors", "priceType", "showBuy"];
+			paramkeys = ["days", "colors", "priceType", "showBuy", "showStongLine"];
 		}
 		
 		override public function addToConfigTypes(types:Array):void {
@@ -99,6 +101,30 @@ package laya.stock.analysers {
 			}
 			
 			resultData["buys"] = buyPoints;
+			
+			if (showStongLine > 0) {
+				len = disDataList.length;
+				var distanceList:Array;
+				distanceList = [];
+				for (i = 0; i < len; i++) {
+					distanceList.push([i, barHeight * getAvgDistance(avgs, i)]);
+				}
+				resultData["distanceList"] = distanceList;
+				addGridLine(barHeight, "0,0.025,0.05,0.1,0.15,0.20,0.25");
+			}
+		
+		}
+		public var barHeight:Number = 500;
+		private static var _tempArr:Array = [];
+		
+		private function getAvgDistance(avgs:Array, index:int):Number {
+			_tempArr.length = avgs.length;
+			var i:int, len:int;
+			len = _tempArr.length;
+			for (i = 0; i < len; i++) {
+				_tempArr[i] = avgs[i][0][index][1];
+			}
+			return DataUtils.getDistanceRate(_tempArr);
 		}
 		
 		override public function getDrawCmds():Array {
@@ -106,6 +132,12 @@ package laya.stock.analysers {
 			rst = super.getDrawCmds();
 			if (showBuy > 0)
 				rst.push(["drawTexts", [resultData["buys"], "low", 30, "#00ff00", true, "#00ff00"]]);
+			if (showStongLine > 0) {
+				rst.push(["drawLinesEx", [resultData["distanceList"]]]);
+				
+				addGridLineToDraw(rst);
+			}
+			
 			return rst;
 		}
 		
@@ -139,12 +171,11 @@ package laya.stock.analysers {
 			var curAvgs:Array;
 			curAvgs = [];
 			var lastIndex:int;
-			lastIndex=disDataList.length - 1;
+			lastIndex = disDataList.length - 1;
 			for (i = 0; i < len; i++) {
 				curAvgs.push(avgs[i][0][lastIndex][1]);
 			}
 			kLineO.avgs = curAvgs;
-			
 			
 			kLineO.day = upCount;
 			if (tI < 0)
@@ -183,8 +214,7 @@ package laya.stock.analysers {
 			return true;
 		}
 		
-		private function getTrendType(avgs:Array, index:int):int
-		{
+		private function getTrendType(avgs:Array, index:int):int {
 			var i:int, len:int;
 			len = avgs.length;
 			var preLine:Array;
@@ -201,7 +231,8 @@ package laya.stock.analysers {
 					break;
 				}
 			}
-			if (flg) return 1;
+			if (flg)
+				return 1;
 			
 			//是否空头形态
 			flg = true;
@@ -213,7 +244,8 @@ package laya.stock.analysers {
 					break;
 				}
 			}
-			if (flg) return -1;
+			if (flg)
+				return -1;
 			return 0;
 		}
 	}

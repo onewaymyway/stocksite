@@ -3,6 +3,7 @@ package laya.stock.analysers
 	import laya.debug.tools.ClassTool;
 	import laya.math.DataUtils;
 	import laya.math.GraphicUtils;
+	import laya.math.ValueTools;
 	import laya.stock.consts.ParamTypes;
 	import laya.utils.Utils;
 	import stock.StockData;
@@ -145,6 +146,26 @@ package laya.stock.analysers
 		public function addToShowData(showData:Object):void
 		{
 			
+		}
+		
+		public function addGridLine(barHeight:Number,gridLineValue:String):void
+		{
+			var i:int, len:int;
+			var gridLine:Array;
+			gridLine = [];
+			var values:Array;
+			values = gridLineValue.split(",");
+			len = values.length;
+			for (i = 0; i < len; i++) {
+				values[i] = ValueTools.mParseFloat(values[i]) * barHeight;
+			}
+			gridLine.push(0, dataList.length - 1, values, color, gridLineValue.split(","));
+			resultData["gridLine"] = gridLine;
+		}
+		
+		public function addGridLineToDraw(rst:Array):void
+		{
+			rst.push(["drawGridLineEx", resultData["gridLine"]]);
 		}
 	}
 

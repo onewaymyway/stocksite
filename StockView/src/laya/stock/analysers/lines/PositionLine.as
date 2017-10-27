@@ -50,19 +50,10 @@ package laya.stock.analysers.lines {
 			for (i = 0; i < len; i++) {
 				positionList.push(getWinLoseData(ValueTools.mParseFloat(days[i]), dataList));
 			}
-			var gridLine:Array;
-			//var gridValue:Number;
-			//gridValue = barHeight * gridLineValue;
-			gridLine = [];
-			var values:Array;
-			values = gridLineValue.split(",");
-			len = values.length;
-			for (i = 0; i < len; i++) {
-				values[i] = ValueTools.mParseFloat(values[i]) * barHeight;
-			}
-			gridLine.push(0, dataList.length - 1, values, color, gridLineValue.split(","));
-			resultData["gridLine"] = gridLine;
+			addGridLine(barHeight,gridLineValue);
 		}
+		
+		
 		
 		private function getBuyList(positionData:Object):Array
 		{
@@ -140,8 +131,8 @@ package laya.stock.analysers.lines {
 				rst.push(["drawLinesEx", [tPositionO["loseList"], loseColor]]);
 				rst.push(["drawTexts", [tPositionO["buyList"], "low", 30, "#00ff00",true,"#00ff00"]]);
 			}
-			
-			rst.push(["drawGridLineEx", resultData["gridLine"]]);
+			addGridLineToDraw(rst);
+			//rst.push(["drawGridLineEx", resultData["gridLine"]]);
 			return rst;
 		}
 		
