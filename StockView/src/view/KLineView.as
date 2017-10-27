@@ -16,6 +16,7 @@ package view {
 	import laya.stock.analysers.lines.PositionLine;
 	import laya.stock.analysers.lines.StrongLine;
 	import laya.stock.analysers.lines.WinRateLine;
+	import laya.tools.StockJsonP;
 	import laya.tools.WebTools;
 	import laya.uicomps.MessageManager;
 	import laya.utils.Handler;
@@ -224,8 +225,8 @@ package view {
 			propPanel.refresh();
 		}
 		
-		public function refreshKLine():void {
-			showKline(kLine.tStock);
+		public function refreshKLine(freshRealTimeData:Boolean=true):void {
+			showKline(kLine.tStock,freshRealTimeData);
 		}
 		
 		private function showAnalyserProp(desArr:Array, dataO:Object):void {
@@ -342,8 +343,12 @@ package view {
 			showKline(stockInput.text);
 		}
 		
-		public function showKline(stock:String):void {
+		public function showKline(stock:String,freshRealTimeData:Boolean=true):void {
 			kLine.autoPlay = enableAnimation.selected;
+			if (freshRealTimeData)
+			{
+				StockJsonP.getStockData2(stock, Handler.create(this, refreshKLine, [false]));
+			}
 			if (maxDayEnable.selected) {
 				kLine.maxShowCount = ValueTools.mParseFloat(dayCountInput.text);
 				kLine.start = Math.floor(dayScroll.value);

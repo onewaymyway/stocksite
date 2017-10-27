@@ -2100,6 +2100,7 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		StockJsonP.getStockData2=function(stock,complete){
+			stock=StockJsonP.getAdptStockStr(stock);
 			var scp=Browser.createElement("script");
 			Browser.document.body.appendChild(scp);
 			scp.type="text/javascript";
@@ -2107,6 +2108,7 @@ var Laya=window.Laya=(function(window,document){
 			scp.onload=function (){
 				scp.src="";
 				Browser.removeElement(scp);
+				StockJsonP.parserStockData(stock);
 				complete.run();
 			}
 		}
@@ -39239,8 +39241,9 @@ var Laya=window.Laya=(function(window,document){
 			this.propPanel.refresh();
 		}
 
-		__proto.refreshKLine=function(){
-			this.showKline(this.kLine.tStock);
+		__proto.refreshKLine=function(freshRealTimeData){
+			(freshRealTimeData===void 0)&& (freshRealTimeData=true);
+			this.showKline(this.kLine.tStock,freshRealTimeData);
 		}
 
 		__proto.showAnalyserProp=function(desArr,dataO){
@@ -39343,8 +39346,12 @@ var Laya=window.Laya=(function(window,document){
 			this.showKline(this.stockInput.text);
 		}
 
-		__proto.showKline=function(stock){
+		__proto.showKline=function(stock,freshRealTimeData){
+			(freshRealTimeData===void 0)&& (freshRealTimeData=true);
 			this.kLine.autoPlay=this.enableAnimation.selected;
+			if (freshRealTimeData){
+				StockJsonP.getStockData2(stock,Handler.create(this,this.refreshKLine,[false]));
+			}
 			if (this.maxDayEnable.selected){
 				this.kLine.maxShowCount=ValueTools.mParseFloat(this.dayCountInput.text);
 				this.kLine.start=Math.floor(this.dayScroll.value);

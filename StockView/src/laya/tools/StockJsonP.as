@@ -19,6 +19,7 @@ package laya.tools
 		public static var I:StockJsonP = new StockJsonP();
 		public static function getStockData2(stock:String, complete:Handler):void
 		{
+			stock = getAdptStockStr(stock);
 			var scp:*= Browser.createElement("script");
 			Browser.document.body.appendChild(scp);
 			scp.type = "text/javascript";
@@ -27,6 +28,7 @@ package laya.tools
 			{
 				scp.src = "";
 				Browser.removeElement(scp);
+				parserStockData(stock);
 				complete.run();
 			}
 		}
