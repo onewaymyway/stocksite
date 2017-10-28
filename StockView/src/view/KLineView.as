@@ -40,6 +40,7 @@ package view {
 		public var addOnLayer:Sprite;
 		private var dayLine:Sprite;
 		private var dayStockInfoTxt:Text;
+		
 		public function KLineView() {
 			kLine = new KLine();
 			kLine.on(MsgConst.Stock_Data_Inited, this, onStockInited);
@@ -98,7 +99,6 @@ package view {
 			addToStockBtn.on(Event.MOUSE_DOWN, this, onAddToStock);
 			markBtn.on(Event.MOUSE_DOWN, this, onMarkBtn);
 			this.on(Event.KEY_DOWN, this, onKeyDown);
-		
 			
 			tradeSelect.selected = false;
 			tradeSelect.on(Event.CHANGE, this, updateTradeVisible);
@@ -110,130 +110,136 @@ package view {
 			tradeTest.on(TradeTest.ANOTHER, this, onAnotherTradeTest);
 		}
 		
-		private function updateDayLine():void
-		{
-			if (clickControlEnable.selected) return;
+		private function updateDayLine():void {
+			if (clickControlEnable.selected)
+				return;
 			var curI:Number;
 			curI = kLine.getIByX(addOnLayer.mouseX);
 			dayLine.x = kLine.getAdptXV(curI) * kLine.gridWidth;
 			dayLine.visible = true;
 			var tStockData:Object;
 			tStockData = kLine.disDataList[curI];
-			if (tStockData)
-			{
+			var preStockData:Object;
+			preStockData = kLine.disDataList[curI - 1];
+			if (tStockData) {
 				var showStr:String;
-				showStr = tStockData.date 
-				+ "\n" +"Close:"+tStockData.close+":"+ StockTools.getGoodPercent((tStockData.close-tStockData.open) / tStockData.open) + "%"
-				+ "\n" +"High:" + tStockData.high + ":" + StockTools.getGoodPercent((tStockData.high - tStockData.open) / tStockData.open) + "%"
-				+ "\n" +"Low:" + tStockData.low + ":" + StockTools.getGoodPercent((tStockData.low - tStockData.open) / tStockData.open) + "%";
-				if (dayLine.x + dayStockInfoTxt.width > this.width - 20)
-				{
+				if (preStockData) {
+					showStr = tStockData.date + 
+					"\n" + "Close:" + tStockData.close + ":" + StockTools.getGoodPercent((tStockData.close - preStockData.open) / preStockData.close) + "%" + 
+					"\n" + "High:" + tStockData.high + ":" + StockTools.getGoodPercent((tStockData.high - preStockData.open) / preStockData.close) + "%" + 
+					"\n" + "Low:" + tStockData.low + ":" + StockTools.getGoodPercent((tStockData.low - preStockData.open) / preStockData.close) + "%";
+					
+					if (tStockData.close - tStockData.open >= 0) {
+						dayStockInfoTxt.color = "#ff0000";
+					}
+					else {
+						dayStockInfoTxt.color = "#00ff00";
+					}
+				}
+				else {
+					showStr = tStockData.date + 
+					"\n" + "Close:" + tStockData.close + 
+					"\n" + "High:" + tStockData.high  + 
+					"\n" + "Low:" + tStockData.low ;
+					dayStockInfoTxt.color = "#ff0000";
+				}
+				if (dayLine.x + dayStockInfoTxt.width > this.width - 20) {
 					dayStockInfoTxt.align = "right";
 					dayStockInfoTxt.x = -dayStockInfoTxt.width;
-				}else
-				{
+				}
+				else {
 					dayStockInfoTxt.align = "left";
 					dayStockInfoTxt.x = 5;
 				}
-				if (tStockData.close-tStockData.open >= 0)
-				{
-					dayStockInfoTxt.color = "#ff0000";
-				}else
-				{
-					dayStockInfoTxt.color = "#00ff00";
-				}
 				dayStockInfoTxt.text = showStr;
-				//dayStockInfoTxt.graphics.fillText(showStr, 0, 0, null, "#ff0000", "right");
-			}else
-			{
+					//dayStockInfoTxt.graphics.fillText(showStr, 0, 0, null, "#ff0000", "right");
+			}
+			else {
 				dayStockInfoTxt.text = "";
 			}
 		}
-		private function onNextDay():void
-		{
+		
+		private function onNextDay():void {
 			dayScroll.value = dayScroll.value + 1;
 		}
 		
-		private function onAnotherTradeTest():void
-		{
+		private function onAnotherTradeTest():void {
 			Notice.notify(MsgConst.Show_Stock_KLine, StockBasicInfo.I.getRandomStock());
 		}
-		private function onKlineShowed():void
-		{
-			tradeTest.setDataList(kLine.disDataList,kLine.tStock);
+		
+		private function onKlineShowed():void {
+			tradeTest.setDataList(kLine.disDataList, kLine.tStock);
 		}
-		private function updateTradeVisible():void
-		{
+		
+		private function updateTradeVisible():void {
 			tradeTest.visible = tradeSelect.selected;
 			TradeTestManager.isTradeTestOn = tradeSelect.selected;
-			if (tradeSelect.selected)
-			{
-				if (!maxDayEnable.selected)
-				{
+			if (tradeSelect.selected) {
+				if (!maxDayEnable.selected) {
 					maxDayEnable.selected = true;
 				}
 			}
 		}
-		private function onKeyDown(e:Event):void
-		{
-			switch(e.keyCode)
-			{
-				case Keyboard.DOWN:
+		
+		private function onKeyDown(e:Event):void {
+			switch (e.keyCode) {
+				case Keyboard.DOWN: 
 					onNext();
 					break;
-				case Keyboard.UP:
+				case Keyboard.UP: 
 					onPre();
 					break;
-				case Keyboard.LEFT:
+				case Keyboard.LEFT: 
 					dayScroll.value = dayScroll.value - 1;
 					break;
-				case Keyboard.RIGHT:
+				case Keyboard.RIGHT: 
 					dayScroll.value = dayScroll.value + 1;
 					break;
 			}
 		}
-		private function onMarkBtn():void
-		{
-			Notice.notify(MsgConst.Add_MyStock, kLine.tStock );
+		
+		private function onMarkBtn():void {
+			Notice.notify(MsgConst.Add_MyStock, kLine.tStock);
 			addToStockBtn.label = "删自选";
 			Laya.timer.once(1000, this, markLater, [kLine.tStock]);
 		}
-		private function markLater(stock:String):void
-		{
+		
+		private function markLater(stock:String):void {
 			Notice.notify(MsgConst.Mark_MyStock, stock);
 		}
 		
-		private function onAddToStock():void
-		{
-			if (addToStockBtn.label == "加自选")
-			{
-				Notice.notify(MsgConst.Add_MyStock, kLine.tStock );
+		private function onAddToStock():void {
+			if (addToStockBtn.label == "加自选") {
+				Notice.notify(MsgConst.Add_MyStock, kLine.tStock);
 				MessageManager.I.show("add stock:" + kLine.tStock);
 				addToStockBtn.label = "删自选";
-			}else
-			{
-				Notice.notify(MsgConst.Remove_MyStock, kLine.tStock );
+			}
+			else {
+				Notice.notify(MsgConst.Remove_MyStock, kLine.tStock);
 				MessageManager.I.show("remove stock:" + kLine.tStock);
 				addToStockBtn.label = "加自选";
 			}
-			
+		
 		}
 		private var preMouseX:Number;
 		private var isLongPress:Boolean = false;
 		private var isMyMouseDown:Boolean = false;
+		
 		private function onMMouseDown(e:Event):void {
 			Laya.stage.focus = this;
 			isMyMouseDown = false;
-			if (e.target != this) return;
+			if (e.target != this)
+				return;
 			isMyMouseDown = true;
 			preMouseX = Laya.stage.mouseX;
 			isLongPress = false;
 			Laya.timer.once(800, this, longDown);
 			updateDayLine();
 		}
-		private function longDown():void
-		{
-			if (!maxDayEnable.selected) return;
+		
+		private function longDown():void {
+			if (!maxDayEnable.selected)
+				return;
 			isLongPress = true;
 			var dX:Number;
 			dX = Laya.stage.mouseX - preMouseX;
@@ -247,15 +253,18 @@ package view {
 			Laya.timer.frameLoop(2, this, loopChangeDay);
 		}
 		private var tDayD:int = 0;
-		private function loopChangeDay():void
-		{
+		
+		private function loopChangeDay():void {
 			dayScroll.value = dayScroll.value + tDayD;
 		}
+		
 		private function onMMouseUp():void {
-			if (!isMyMouseDown) return;
+			if (!isMyMouseDown)
+				return;
 			Laya.timer.clear(this, longDown);
 			Laya.timer.clear(this, loopChangeDay);
-			if (isLongPress) return;
+			if (isLongPress)
+				return;
 			var dX:Number;
 			dX = Laya.stage.mouseX - preMouseX;
 			if (dX > 100) {
@@ -269,9 +278,10 @@ package view {
 					
 					if (Laya.stage.mouseX > Laya.stage.width * 0.5) {
 						dayScroll.value = dayScroll.value + 1;
-					}else
-					{
-						if (TradeTestManager.isTradeTestOn) return;
+					}
+					else {
+						if (TradeTestManager.isTradeTestOn)
+							return;
 						dayScroll.value = dayScroll.value - 1;
 					}
 				}
@@ -284,8 +294,8 @@ package view {
 			propPanel.refresh();
 		}
 		
-		public function refreshKLine(freshRealTimeData:Boolean=true):void {
-			showKline(kLine.tStock,freshRealTimeData);
+		public function refreshKLine(freshRealTimeData:Boolean = true):void {
+			showKline(kLine.tStock, freshRealTimeData);
 		}
 		
 		private function showAnalyserProp(desArr:Array, dataO:Object):void {
@@ -305,11 +315,10 @@ package view {
 			stockInput.text = stock;
 			tradeTest.tradeInfo.sellAll();
 			onPlayInput();
-			if (StockListManager.hasStock(stock))
-			{
+			if (StockListManager.hasStock(stock)) {
 				addToStockBtn.label = "删自选";
-			}else
-			{
+			}
+			else {
 				addToStockBtn.label = "加自选";
 			}
 		}
@@ -328,13 +337,12 @@ package view {
 			max = kLine.dataList.length - dayCount;
 			if (max < 0)
 				max = 0;
-			if (TradeTestManager.isTradeTestOn)
-			{
+			if (TradeTestManager.isTradeTestOn) {
 				var tValue:int;
 				tValue = Math.floor(Math.random() * max);
 				dayScroll.setScroll(0, max, tValue);
-			}else
-			{
+			}
+			else {
 				dayScroll.setScroll(0, max, max);
 			}
 			
@@ -372,7 +380,7 @@ package view {
 		
 		private function onDayScrollChange():void {
 			if (maxDayEnable) {
-				showKline(stockInput.text,false);
+				showKline(stockInput.text, false);
 			}
 		}
 		
@@ -406,11 +414,10 @@ package view {
 			showKline(stockInput.text);
 		}
 		
-		public function showKline(stock:String,freshRealTimeData:Boolean=true):void {
+		public function showKline(stock:String, freshRealTimeData:Boolean = true):void {
 			kLine.autoPlay = enableAnimation.selected;
 			dayLine.visible = false;
-			if (freshRealTimeData)
-			{
+			if (freshRealTimeData) {
 				StockJsonP.getStockData2(stock, Handler.create(this, refreshKLine, [false]));
 			}
 			if (maxDayEnable.selected) {
@@ -420,9 +427,8 @@ package view {
 			else {
 				kLine.maxShowCount = -1;
 				kLine.start = 0;
-				if (TradeTestManager.isTradeTestOn)
-				{
-					kLine.maxShowCount=Math.floor(dayScroll.value)+ValueTools.mParseFloat(dayCountInput.text);
+				if (TradeTestManager.isTradeTestOn) {
+					kLine.maxShowCount = Math.floor(dayScroll.value) + ValueTools.mParseFloat(dayCountInput.text);
 				}
 			}
 			kLine.setStock(stock);

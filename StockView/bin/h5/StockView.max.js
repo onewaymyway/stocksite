@@ -39202,33 +39202,48 @@ var Laya=window.Laya=(function(window,document){
 		__class(KLineView,'view.KLineView',_super);
 		var __proto=KLineView.prototype;
 		__proto.updateDayLine=function(){
-			if (this.clickControlEnable.selected)return;
+			if (this.clickControlEnable.selected)
+				return;
 			var curI=NaN;
 			curI=this.kLine.getIByX(this.addOnLayer.mouseX);
 			this.dayLine.x=this.kLine.getAdptXV(curI)*this.kLine.gridWidth;
 			this.dayLine.visible=true;
 			var tStockData;
 			tStockData=this.kLine.disDataList[curI];
+			var preStockData;
+			preStockData=this.kLine.disDataList[curI-1];
 			if (tStockData){
 				var showStr;
-				showStr=tStockData.date
-				+"\n"+"Close:"+tStockData.close+":"+StockTools.getGoodPercent((tStockData.close-tStockData.open)/ tStockData.open)+"%"
-				+"\n"+"High:"+tStockData.high+":"+StockTools.getGoodPercent((tStockData.high-tStockData.open)/ tStockData.open)+"%"
-				+"\n"+"Low:"+tStockData.low+":"+StockTools.getGoodPercent((tStockData.low-tStockData.open)/ tStockData.open)+"%";
+				if (preStockData){
+					showStr=tStockData.date+
+					"\n"+"Close:"+tStockData.close+":"+StockTools.getGoodPercent((tStockData.close-preStockData.open)/ preStockData.close)+"%"+
+					"\n"+"High:"+tStockData.high+":"+StockTools.getGoodPercent((tStockData.high-preStockData.open)/ preStockData.close)+"%"+
+					"\n"+"Low:"+tStockData.low+":"+StockTools.getGoodPercent((tStockData.low-preStockData.open)/ preStockData.close)+"%";
+					if (tStockData.close-tStockData.open >=0){
+						this.dayStockInfoTxt.color="#ff0000";
+					}
+					else {
+						this.dayStockInfoTxt.color="#00ff00";
+					}
+				}
+				else {
+					showStr=tStockData.date+
+					"\n"+"Close:"+tStockData.close+
+					"\n"+"High:"+tStockData.high+
+					"\n"+"Low:"+tStockData.low;
+					this.dayStockInfoTxt.color="#ff0000";
+				}
 				if (this.dayLine.x+this.dayStockInfoTxt.width > this.width-20){
 					this.dayStockInfoTxt.align="right";
 					this.dayStockInfoTxt.x=-this.dayStockInfoTxt.width;
-					}else{
+				}
+				else {
 					this.dayStockInfoTxt.align="left";
 					this.dayStockInfoTxt.x=5;
 				}
-				if (tStockData.close-tStockData.open >=0){
-					this.dayStockInfoTxt.color="#ff0000";
-					}else{
-					this.dayStockInfoTxt.color="#00ff00";
-				}
 				this.dayStockInfoTxt.text=showStr;
-				}else{
+			}
+			else {
 				this.dayStockInfoTxt.text="";
 			}
 		}
@@ -39256,7 +39271,7 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		__proto.onKeyDown=function(e){
-			switch(e.keyCode){
+			switch (e.keyCode){
 				case 40:
 					this.onNext();
 					break ;
@@ -39287,7 +39302,8 @@ var Laya=window.Laya=(function(window,document){
 				Notice.notify("AddMyStock",this.kLine.tStock);
 				MessageManager.I.show("add stock:"+this.kLine.tStock);
 				this.addToStockBtn.label="删自选";
-				}else{
+			}
+			else {
 				Notice.notify("Remove_MyStock",this.kLine.tStock);
 				MessageManager.I.show("remove stock:"+this.kLine.tStock);
 				this.addToStockBtn.label="加自选";
@@ -39297,7 +39313,8 @@ var Laya=window.Laya=(function(window,document){
 		__proto.onMMouseDown=function(e){
 			Laya.stage.focus=this;
 			this.isMyMouseDown=false;
-			if (e.target !=this)return;
+			if (e.target !=this)
+				return;
 			this.isMyMouseDown=true;
 			this.preMouseX=Laya.stage.mouseX;
 			this.isLongPress=false;
@@ -39306,7 +39323,8 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		__proto.longDown=function(){
-			if (!this.maxDayEnable.selected)return;
+			if (!this.maxDayEnable.selected)
+				return;
 			this.isLongPress=true;
 			var dX=NaN;
 			dX=Laya.stage.mouseX-this.preMouseX;
@@ -39325,10 +39343,12 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		__proto.onMMouseUp=function(){
-			if (!this.isMyMouseDown)return;
+			if (!this.isMyMouseDown)
+				return;
 			Laya.timer.clear(this,this.longDown);
 			Laya.timer.clear(this,this.loopChangeDay);
-			if (this.isLongPress)return;
+			if (this.isLongPress)
+				return;
 			var dX=NaN;
 			dX=Laya.stage.mouseX-this.preMouseX;
 			if (dX > 100){
@@ -39341,8 +39361,10 @@ var Laya=window.Laya=(function(window,document){
 				if (this.clickControlEnable.selected){
 					if (Laya.stage.mouseX > Laya.stage.width *0.5){
 						this.dayScroll.value=this.dayScroll.value+1;
-						}else{
-						if (TradeTestManager.isTradeTestOn)return;
+					}
+					else {
+						if (TradeTestManager.isTradeTestOn)
+							return;
 						this.dayScroll.value=this.dayScroll.value-1;
 					}
 				}
@@ -39376,7 +39398,8 @@ var Laya=window.Laya=(function(window,document){
 			this.onPlayInput();
 			if (StockListManager.hasStock(stock)){
 				this.addToStockBtn.label="删自选";
-				}else{
+			}
+			else {
 				this.addToStockBtn.label="加自选";
 			}
 		}
@@ -39399,7 +39422,8 @@ var Laya=window.Laya=(function(window,document){
 				var tValue=0;
 				tValue=Math.floor(Math.random()*max);
 				this.dayScroll.setScroll(0,max,tValue);
-				}else{
+			}
+			else {
 				this.dayScroll.setScroll(0,max,max);
 			}
 			if (this.maxDayEnable.selected){
