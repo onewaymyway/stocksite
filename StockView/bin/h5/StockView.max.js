@@ -24748,6 +24748,10 @@ var Laya=window.Laya=(function(window,document){
 			return DataUtils.mParseFloat(v)*this.xRate;
 		}
 
+		__proto.getIByX=function(x){
+			return Math.round(x/(this.xRate*this.gridWidth));
+		}
+
 		KLine.KlineShowed="KlineShowed";
 		__static(KLine,
 		['SignDrawDes',function(){return this.SignDrawDes={
@@ -39129,6 +39133,9 @@ var Laya=window.Laya=(function(window,document){
 		function KLineView(){
 			this.kLine=null;
 			this.tAnalyser=null;
+			this.addOnLayer=null;
+			this.dayLine=null;
+			this.dayStockInfoTxt=null;
 			this.preMouseX=NaN;
 			this.isLongPress=false;
 			this.isMyMouseDown=false;
@@ -39156,11 +39163,22 @@ var Laya=window.Laya=(function(window,document){
 			analyserClassList.push(DistAnalyser);
 			this.analyserList.initAnalysers(analyserClassList);
 			this.addChild(this.kLine);
+			this.kLine.pos(0,this.kLine.lineHeight+90);
+			this.kLine.on("msg",this,this.onKlineMsg);
+			this.addOnLayer=new Sprite();
+			this.addChild(this.addOnLayer);
+			this.addOnLayer.pos(this.kLine.x,this.kLine.y);
+			this.dayLine=new Sprite();
+			this.dayStockInfoTxt=new Text();
+			this.dayStockInfoTxt.color="#ff0000";
+			this.dayStockInfoTxt.x=2;
+			this.dayStockInfoTxt.width=120;
+			this.dayStockInfoTxt.align="left";
+			this.dayLine.addChild(this.dayStockInfoTxt);
+			this.addOnLayer.addChild(this.dayLine);
 			var stock;
 			stock="300383";
 			stock="002064";
-			this.kLine.pos(0,this.kLine.lineHeight+90);
-			this.kLine.on("msg",this,this.onKlineMsg);
 			this.init();
 			this.propPanel.visible=false;
 			Notice.listen("AnalyserListChange",this,this.analysersChanged);
@@ -39183,6 +39201,38 @@ var Laya=window.Laya=(function(window,document){
 
 		__class(KLineView,'view.KLineView',_super);
 		var __proto=KLineView.prototype;
+		__proto.updateDayLine=function(){
+			if (this.clickControlEnable.selected)return;
+			var curI=NaN;
+			curI=this.kLine.getIByX(this.addOnLayer.mouseX);
+			this.dayLine.x=this.kLine.getAdptXV(curI)*this.kLine.gridWidth;
+			this.dayLine.visible=true;
+			var tStockData;
+			tStockData=this.kLine.disDataList[curI];
+			if (tStockData){
+				var showStr;
+				showStr=tStockData.date
+				+"\n"+"Close:"+tStockData.close+":"+StockTools.getGoodPercent((tStockData.close-tStockData.open)/ tStockData.open)+"%"
+				+"\n"+"High:"+tStockData.high+":"+StockTools.getGoodPercent((tStockData.high-tStockData.open)/ tStockData.open)+"%"
+				+"\n"+"Low:"+tStockData.low+":"+StockTools.getGoodPercent((tStockData.low-tStockData.open)/ tStockData.open)+"%";
+				if (this.dayLine.x+this.dayStockInfoTxt.width > this.width-20){
+					this.dayStockInfoTxt.align="right";
+					this.dayStockInfoTxt.x=-this.dayStockInfoTxt.width;
+					}else{
+					this.dayStockInfoTxt.align="left";
+					this.dayStockInfoTxt.x=5;
+				}
+				if (tStockData.close-tStockData.open >=0){
+					this.dayStockInfoTxt.color="#ff0000";
+					}else{
+					this.dayStockInfoTxt.color="#00ff00";
+				}
+				this.dayStockInfoTxt.text=showStr;
+				}else{
+				this.dayStockInfoTxt.text="";
+			}
+		}
+
 		__proto.onNextDay=function(){
 			this.dayScroll.value=this.dayScroll.value+1;
 		}
@@ -39252,6 +39302,7 @@ var Laya=window.Laya=(function(window,document){
 			this.preMouseX=Laya.stage.mouseX;
 			this.isLongPress=false;
 			Laya.timer.once(800,this,this.longDown);
+			this.updateDayLine();
 		}
 
 		__proto.longDown=function(){
@@ -39287,7 +39338,7 @@ var Laya=window.Laya=(function(window,document){
 				this.onPre();
 			}
 			else {
-				if (this.clickControlEnable){
+				if (this.clickControlEnable.selected){
 					if (Laya.stage.mouseX > Laya.stage.width *0.5){
 						this.dayScroll.value=this.dayScroll.value+1;
 						}else{
@@ -39381,7 +39432,7 @@ var Laya=window.Laya=(function(window,document){
 
 		__proto.onDayScrollChange=function(){
 			if (this.maxDayEnable){
-				this.onPlayInput();
+				this.showKline(this.stockInput.text,false);
 			}
 		}
 
@@ -39390,6 +39441,10 @@ var Laya=window.Laya=(function(window,document){
 			this.kLine.lineHeight=this.height-100;
 			this.kLine.lineWidth=this.width-20;
 			this.kLine.pos(0,this.kLine.lineHeight+90);
+			this.dayLine.graphics.clear();
+			this.dayLine.graphics.drawLine(0,0,0,-this.kLine.y,"#ff0000");
+			this.dayLine.visible=false;
+			this.dayStockInfoTxt.y=-100;
 		}
 
 		__proto.onDetail=function(){
@@ -39411,6 +39466,7 @@ var Laya=window.Laya=(function(window,document){
 		__proto.showKline=function(stock,freshRealTimeData){
 			(freshRealTimeData===void 0)&& (freshRealTimeData=true);
 			this.kLine.autoPlay=this.enableAnimation.selected;
+			this.dayLine.visible=false;
 			if (freshRealTimeData){
 				StockJsonP.getStockData2(stock,Handler.create(this,this.refreshKLine,[false]));
 			}

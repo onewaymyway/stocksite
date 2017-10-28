@@ -599,6 +599,10 @@ package stock.views
 		{
 			return DataUtils.mParseFloat(v) * xRate;
 		}
+		public function getIByX(x:Number):int
+		{
+			return Math.round(x/(xRate*gridWidth));
+		}
 	}
 
 }

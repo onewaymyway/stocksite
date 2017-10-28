@@ -1,5 +1,7 @@
 package view {
 	import laya.debug.tools.Notice;
+	import laya.display.Sprite;
+	import laya.display.Text;
 	import laya.events.Event;
 	import laya.events.Keyboard;
 	import laya.math.DataUtils;
@@ -16,6 +18,7 @@ package view {
 	import laya.stock.analysers.lines.PositionLine;
 	import laya.stock.analysers.lines.StrongLine;
 	import laya.stock.analysers.lines.WinRateLine;
+	import laya.stock.StockTools;
 	import laya.tools.StockJsonP;
 	import laya.tools.WebTools;
 	import laya.uicomps.MessageManager;
@@ -34,7 +37,9 @@ package view {
 	public class KLineView extends KLineViewUI {
 		public var kLine:KLine;
 		public var tAnalyser:AnalyserBase;
-		
+		public var addOnLayer:Sprite;
+		private var dayLine:Sprite;
+		private var dayStockInfoTxt:Text;
 		public function KLineView() {
 			kLine = new KLine();
 			kLine.on(MsgConst.Stock_Data_Inited, this, onStockInited);
@@ -57,6 +62,21 @@ package view {
 			
 			analyserList.initAnalysers(analyserClassList);
 			addChild(kLine);
+			kLine.pos(0, kLine.lineHeight + 90);
+			kLine.on("msg", this, onKlineMsg);
+			
+			addOnLayer = new Sprite();
+			addChild(addOnLayer);
+			addOnLayer.pos(kLine.x, kLine.y);
+			
+			dayLine = new Sprite();
+			dayStockInfoTxt = new Text();
+			dayStockInfoTxt.color = "#ff0000";
+			dayStockInfoTxt.x = 2;
+			dayStockInfoTxt.width = 120;
+			dayStockInfoTxt.align = "left";
+			dayLine.addChild(dayStockInfoTxt);
+			addOnLayer.addChild(dayLine);
 			var stock:String;
 			stock = "300383";
 			//stock = "000546";
@@ -64,8 +84,7 @@ package view {
 			stock = "002064";
 			//stock = "600139";
 			//kLine.maxShowCount = 180;
-			kLine.pos(0, kLine.lineHeight + 90);
-			kLine.on("msg", this, onKlineMsg);
+			
 			init();
 			propPanel.visible = false;
 			Notice.listen(MsgConst.AnalyserListChange, this, analysersChanged);
@@ -91,6 +110,45 @@ package view {
 			tradeTest.on(TradeTest.ANOTHER, this, onAnotherTradeTest);
 		}
 		
+		private function updateDayLine():void
+		{
+			if (clickControlEnable.selected) return;
+			var curI:Number;
+			curI = kLine.getIByX(addOnLayer.mouseX);
+			dayLine.x = kLine.getAdptXV(curI) * kLine.gridWidth;
+			dayLine.visible = true;
+			var tStockData:Object;
+			tStockData = kLine.disDataList[curI];
+			if (tStockData)
+			{
+				var showStr:String;
+				showStr = tStockData.date 
+				+ "\n" +"Close:"+tStockData.close+":"+ StockTools.getGoodPercent((tStockData.close-tStockData.open) / tStockData.open) + "%"
+				+ "\n" +"High:" + tStockData.high + ":" + StockTools.getGoodPercent((tStockData.high - tStockData.open) / tStockData.open) + "%"
+				+ "\n" +"Low:" + tStockData.low + ":" + StockTools.getGoodPercent((tStockData.low - tStockData.open) / tStockData.open) + "%";
+				if (dayLine.x + dayStockInfoTxt.width > this.width - 20)
+				{
+					dayStockInfoTxt.align = "right";
+					dayStockInfoTxt.x = -dayStockInfoTxt.width;
+				}else
+				{
+					dayStockInfoTxt.align = "left";
+					dayStockInfoTxt.x = 5;
+				}
+				if (tStockData.close-tStockData.open >= 0)
+				{
+					dayStockInfoTxt.color = "#ff0000";
+				}else
+				{
+					dayStockInfoTxt.color = "#00ff00";
+				}
+				dayStockInfoTxt.text = showStr;
+				//dayStockInfoTxt.graphics.fillText(showStr, 0, 0, null, "#ff0000", "right");
+			}else
+			{
+				dayStockInfoTxt.text = "";
+			}
+		}
 		private function onNextDay():void
 		{
 			dayScroll.value = dayScroll.value + 1;
@@ -171,6 +229,7 @@ package view {
 			preMouseX = Laya.stage.mouseX;
 			isLongPress = false;
 			Laya.timer.once(800, this, longDown);
+			updateDayLine();
 		}
 		private function longDown():void
 		{
@@ -206,7 +265,7 @@ package view {
 				onPre();
 			}
 			else {
-				if (clickControlEnable) {
+				if (clickControlEnable.selected) {
 					
 					if (Laya.stage.mouseX > Laya.stage.width * 0.5) {
 						dayScroll.value = dayScroll.value + 1;
@@ -313,7 +372,7 @@ package view {
 		
 		private function onDayScrollChange():void {
 			if (maxDayEnable) {
-				onPlayInput();
+				showKline(stockInput.text,false);
 			}
 		}
 		
@@ -322,6 +381,10 @@ package view {
 			kLine.lineHeight = this.height - 100;
 			kLine.lineWidth = this.width - 20;
 			kLine.pos(0, kLine.lineHeight + 90);
+			dayLine.graphics.clear();
+			dayLine.graphics.drawLine(0, 0, 0, -kLine.y, "#ff0000");
+			dayLine.visible = false;
+			dayStockInfoTxt.y = -100;
 		}
 		
 		private function onDetail():void {
@@ -345,6 +408,7 @@ package view {
 		
 		public function showKline(stock:String,freshRealTimeData:Boolean=true):void {
 			kLine.autoPlay = enableAnimation.selected;
+			dayLine.visible = false;
 			if (freshRealTimeData)
 			{
 				StockJsonP.getStockData2(stock, Handler.create(this, refreshKLine, [false]));
