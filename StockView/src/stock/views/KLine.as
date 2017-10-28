@@ -486,9 +486,10 @@ package stock.views
 		{
 			var i:int, len:int;
 			len = pointList.length;
-			
+			var color:String;
 			for (i = 1; i < len; i++)
 			{
+				color = pointList[i][2]?pointList[i][2]:color;
 				drawLineEx(pointList[i - 1][0], pointList[i - 1][1]+offY, pointList[i][0], pointList[i][1]+offY, color);
 			}
 		}

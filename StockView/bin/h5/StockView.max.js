@@ -21596,7 +21596,7 @@ var Laya=window.Laya=(function(window,document){
 	var AverageLineAnalyser=(function(_super){
 		function AverageLineAnalyser(){
 			this.showBuy=0;
-			this.showStongLine=0;
+			this.showTrend=1;
 			this.barHeight=500;
 			AverageLineAnalyser.__super.call(this);
 			this.days="5,12,26";
@@ -21606,7 +21606,7 @@ var Laya=window.Laya=(function(window,document){
 		__class(AverageLineAnalyser,'laya.stock.analysers.AverageLineAnalyser',_super);
 		var __proto=AverageLineAnalyser.prototype;
 		__proto.initParamKeys=function(){
-			this.paramkeys=["days","colors","priceType","showBuy","showStongLine"];
+			this.paramkeys=["days","colors","priceType","showBuy","showTrend"];
 		}
 
 		__proto.addToConfigTypes=function(types){
@@ -21680,12 +21680,12 @@ var Laya=window.Laya=(function(window,document){
 				preIsUp=curIsUp;
 			}
 			this.resultData["buys"]=buyPoints;
-			if (this.showStongLine > 0){
+			if (this.showTrend > 0){
 				len=this.disDataList.length;
 				var distanceList;
 				distanceList=[];
 				for (i=0;i < len;i++){
-					distanceList.push([i,this.barHeight *this.getAvgDistance(avgs,i)]);
+					distanceList.push([i,this.barHeight *this.getAvgDistance(avgs,i),AverageLineAnalyser._colorDic[this.getTrendType(avgs,i)]]);
 				}
 				this.resultData["distanceList"]=distanceList;
 				this.addGridLine(this.barHeight,"0,0.025,0.05,0.1,0.15,0.20,0.25");
@@ -21707,7 +21707,7 @@ var Laya=window.Laya=(function(window,document){
 			rst=_super.prototype.getDrawCmds.call(this);
 			if (this.showBuy > 0)
 				rst.push(["drawTexts",[this.resultData["buys"],"low",30,"#00ff00",true,"#00ff00"]]);
-			if (this.showStongLine > 0){
+			if (this.showTrend > 0){
 				rst.push(["drawLinesEx",[this.resultData["distanceList"]]]);
 				this.addGridLineToDraw(rst);
 			}
@@ -21813,6 +21813,9 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		AverageLineAnalyser._tempArr=[];
+		__static(AverageLineAnalyser,
+		['_colorDic',function(){return this._colorDic={"-1":"#00ff00","0":"#ffff00","1":"#ff0000" };}
+		]);
 		return AverageLineAnalyser;
 	})(AverageLine)
 
@@ -24637,7 +24640,9 @@ var Laya=window.Laya=(function(window,document){
 			(offY===void 0)&& (offY=0);
 			var i=0,len=0;
 			len=pointList.length;
+			var color;
 			for (i=1;i < len;i++){
+				color=pointList[i][2]?pointList[i][2]:color;
 				this.drawLineEx(pointList[i-1][0],pointList[i-1][1]+offY,pointList[i][0],pointList[i][1]+offY,color);
 			}
 		}

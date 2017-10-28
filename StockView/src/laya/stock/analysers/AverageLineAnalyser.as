@@ -9,7 +9,7 @@ package laya.stock.analysers {
 	 */
 	public class AverageLineAnalyser extends AverageLine {
 		public var showBuy:int = 0;
-		public var showStongLine:int = 0;
+		public var showTrend:int = 1;
 		
 		public function AverageLineAnalyser() {
 			super();
@@ -18,7 +18,7 @@ package laya.stock.analysers {
 		}
 		
 		override public function initParamKeys():void {
-			paramkeys = ["days", "colors", "priceType", "showBuy", "showStongLine"];
+			paramkeys = ["days", "colors", "priceType", "showBuy", "showTrend"];
 		}
 		
 		override public function addToConfigTypes(types:Array):void {
@@ -102,18 +102,19 @@ package laya.stock.analysers {
 			
 			resultData["buys"] = buyPoints;
 			
-			if (showStongLine > 0) {
+			if (showTrend > 0) {
 				len = disDataList.length;
 				var distanceList:Array;
 				distanceList = [];
 				for (i = 0; i < len; i++) {
-					distanceList.push([i, barHeight * getAvgDistance(avgs, i)]);
+					distanceList.push([i, barHeight * getAvgDistance(avgs, i),_colorDic[getTrendType(avgs,i)]]);
 				}
 				resultData["distanceList"] = distanceList;
 				addGridLine(barHeight, "0,0.025,0.05,0.1,0.15,0.20,0.25");
 			}
 		
 		}
+		private static var _colorDic:Object = {"-1":"#00ff00","0":"#ffff00","1":"#ff0000" };
 		public var barHeight:Number = 500;
 		private static var _tempArr:Array = [];
 		
@@ -132,7 +133,7 @@ package laya.stock.analysers {
 			rst = super.getDrawCmds();
 			if (showBuy > 0)
 				rst.push(["drawTexts", [resultData["buys"], "low", 30, "#00ff00", true, "#00ff00"]]);
-			if (showStongLine > 0) {
+			if (showTrend > 0) {
 				rst.push(["drawLinesEx", [resultData["distanceList"]]]);
 				
 				addGridLineToDraw(rst);
