@@ -169,6 +169,7 @@ package laya.events {
 		}
 		
 		private function onMouseMove(ele:*):void {
+			MultiTouchManager.I.onMouseMove(this._event.touchId);
 			sendMouseMove(ele);
 			_event._stoped = false;
 			sendMouseOver(_target);
@@ -194,6 +195,8 @@ package laya.events {
 			if (Input.isInputting && Laya.stage.focus && Laya.stage.focus["focus"] && !Laya.stage.focus.contains(_target)) {
 				Laya.stage.focus["focus"] = false;
 			}
+			MultiTouchManager.I.onMouseDown(_event.touchId);
+			if (MultiTouchManager.I.isMultiDown()) return;
 			_onMouseDown(ele);
 		}
 		
@@ -210,12 +213,14 @@ package laya.events {
 		
 		private function onMouseUp(ele:*):void {
 			var type:String = _isLeftMouse ? Event.MOUSE_UP : Event.RIGHT_MOUSE_UP;
+			MultiTouchManager.I.onMouseUp(_event.touchId);
 			sendMouseUp(ele, type);
 			_event._stoped = false;
 			sendClick(_target, type);
 		}
 		
 		private function sendMouseUp(ele:*, type:String):void {
+			
 			ele.event(type, _event.setTo(type, ele, _target));
 			!_event._stoped && ele.parent && sendMouseUp(ele.parent, type);
 		}

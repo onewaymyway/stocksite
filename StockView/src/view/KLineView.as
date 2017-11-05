@@ -4,8 +4,10 @@ package view {
 	import laya.display.Text;
 	import laya.events.Event;
 	import laya.events.Keyboard;
+	import laya.events.MultiTouchManager;
 	import laya.math.DataUtils;
 	import laya.math.ValueTools;
+	import laya.maths.Point;
 	import laya.stock.analysers.AnalyserBase;
 	import laya.stock.analysers.AverageLineAnalyser;
 	import laya.stock.analysers.bars.VolumeBar;
@@ -111,7 +113,9 @@ package view {
 			tradeTest.on(TradeTest.NEXT_DAY, this, onNextDay);
 			tradeTest.on(TradeTest.ANOTHER, this, onAnotherTradeTest);
 			if (Browser.onMobile) tradeSelect.scaleX = tradeSelect.scaleY = 2;
+			MultiTouchManager.I.on(MultiTouchManager.MultiStart, this, clearAllMouseDown);
 		}
+		
 		
 		private function updateDayLine():void {
 			if (clickControlEnable.selected)
@@ -233,6 +237,7 @@ package view {
 			isMyMouseDown = false;
 			if (e.target != this)
 				return;
+			if (MultiTouchManager.I.isMultiDown()) return;
 			isMyMouseDown = true;
 			preMouseX = Laya.stage.mouseX;
 			isLongPress = false;
@@ -240,6 +245,12 @@ package view {
 			updateDayLine();
 		}
 		
+		private function clearAllMouseDown():void
+		{
+			Laya.timer.clear(this, longDown);
+			Laya.timer.clear(this, loopChangeDay);
+			isMyMouseDown = false;
+		}
 		private function longDown():void {
 			if (!maxDayEnable.selected)
 				return;

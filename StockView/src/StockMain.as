@@ -1,11 +1,17 @@
 package  
 {
 	import laya.debug.DebugTool;
+	import laya.debug.tools.DebugTxt;
+	import laya.display.Sprite;
 	import laya.display.Stage;
+	import laya.events.Event;
+	import laya.events.MultiTouchManager;
 	import laya.maths.MathUtil;
+	import laya.maths.Point;
 	import laya.net.Loader;
 	import laya.tools.SohuDData;
 	import laya.tools.StockJsonP;
+	import laya.ui.Box;
 	import laya.utils.Handler;
 	import laya.utils.Stat;
 	import stock.PathConfig;
@@ -44,7 +50,7 @@ package
 			//StockBasicInfo.I.stockList.sort(MathUtil.sortByKey("totals", false, true));
 			testMainView();
 			//testStockInfo();
-			SohuDData.getData("601918",null);
+			//SohuDData.getData("601918",null);
 		}
 		private function begin():void
 		{
@@ -78,12 +84,56 @@ package
 			kView = new KLineView();
 			Laya.stage.addChild(kView);
 		}
+		public var stockMainBox:Box;
 		private function testMainView():void
 		{
+			stockMainBox = new Box();
+			onStageResize();
+			Laya.stage.on(Event.RESIZE, this, onStageResize);
 			var mainView:MainView;
 			mainView = new MainView();
 			mainView.left = mainView.right = mainView.top = mainView.bottom = 10;
-			Laya.stage.addChild(mainView);
+			stockMainBox.addChild(mainView);
+			
+			Laya.stage.addChild(stockMainBox);
+			
+			MultiTouchManager.I.on(MultiTouchManager.Scale, this, onScaleEvent);
+			//DebugTxt.init();
+		}
+		//private var curPoint:Sprite;
+		private function onScaleEvent(scale:Number, centerPoint:Point):void
+		{
+			//alert(scale+":" + centerPoint.x + "," + centerPoint.y);
+			//if (!curPoint)
+			//{
+				//curPoint = new Sprite();
+				//curPoint.graphics.drawCircle(0, 0, 20, "#ff0000");
+				//stockMainBox.addChild(curPoint);
+				//curPoint.zOrder = 9999;
+			//}
+			//stockMainBox.globalToLocal(centerPoint);
+			//curPoint.pos(centerPoint.x, centerPoint.y);
+			//return;
+			stockMainBox.globalToLocal(centerPoint);
+			if (scale > 1.5)
+			{
+				
+				stockMainBox.scaleX = stockMainBox.scaleY = 2;
+				
+				stockMainBox.pivot(centerPoint.x, centerPoint.y);
+				stockMainBox.pos(centerPoint.x, centerPoint.y);
+				//curPoint.pos(centerPoint.x, centerPoint.y);
+			}else if (scale < 0.6)
+			{
+				stockMainBox.pivot(0, 0);
+				stockMainBox.pos(0, 0);
+				stockMainBox.scaleX = stockMainBox.scaleY = 1;
+				//curPoint.pos(centerPoint.x, centerPoint.y);
+			}
+		}
+		private function onStageResize():void
+		{
+			stockMainBox.size(Laya.stage.width,Laya.stage.height);
 		}
 		private function testStockInfo():void
 		{
