@@ -159,7 +159,7 @@ package laya.stock.analysers
 			for (i = 0; i < len; i++) {
 				values[i] = ValueTools.mParseFloat(values[i]) * barHeight;
 			}
-			gridLine.push(0, dataList.length - 1, values, color, gridLineValue.split(","));
+			gridLine.push(0, disDataList.length - 1, values, color, gridLineValue.split(","));
 			resultData["gridLine"] = gridLine;
 		}
 		
