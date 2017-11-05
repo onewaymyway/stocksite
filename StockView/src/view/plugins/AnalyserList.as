@@ -24,6 +24,15 @@ package view.plugins
 			list.array = [];
 			list.scrollBar.autoHide = true;
 			showSelect.on(Event.CHANGE, this, updateUIState);
+			this.on(Event.DOUBLE_CLICK, this, onDoubleClick);
+		}
+		
+		private function onDoubleClick(e:Event):void
+		{
+			this.scaleX = this.scaleY = 3 - this.scaleX;
+			
+			Notice.notify(MsgConst.Hide_Analyser_Prop);
+			
 		}
 		
 		private function updateUIState():void

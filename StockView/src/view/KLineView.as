@@ -22,6 +22,7 @@ package view {
 	import laya.tools.StockJsonP;
 	import laya.tools.WebTools;
 	import laya.uicomps.MessageManager;
+	import laya.utils.Browser;
 	import laya.utils.Handler;
 	import msgs.MsgConst;
 	import stock.prop.PropPanel;
@@ -90,6 +91,7 @@ package view {
 			propPanel.visible = false;
 			Notice.listen(MsgConst.AnalyserListChange, this, analysersChanged);
 			Notice.listen(MsgConst.Show_Analyser_Prop, this, showAnalyserProp);
+			Notice.listen(MsgConst.Hide_Analyser_Prop, this, updatePropPanelPos);
 			Notice.listen(MsgConst.Set_Analyser_Prop, this, onSetAnalyserProps);
 			propPanel.on(PropPanel.MakeChange, this, refreshKLine);
 			this.on(Event.MOUSE_DOWN, this, onMMouseDown);
@@ -108,6 +110,7 @@ package view {
 			
 			tradeTest.on(TradeTest.NEXT_DAY, this, onNextDay);
 			tradeTest.on(TradeTest.ANOTHER, this, onAnotherTradeTest);
+			if (Browser.onMobile) tradeSelect.scaleX = tradeSelect.scaleY = 2;
 		}
 		
 		private function updateDayLine():void {
@@ -301,6 +304,12 @@ package view {
 		private function showAnalyserProp(desArr:Array, dataO:Object):void {
 			propPanel.visible = true;
 			propPanel.initByData(desArr, dataO);
+			updatePropPanelPos();
+		}
+		
+		private function updatePropPanelPos():void
+		{
+			propPanel.x = analyserList.x - propPanel.width-1;
 		}
 		
 		private function analysersChanged(analysers:Array):void {
