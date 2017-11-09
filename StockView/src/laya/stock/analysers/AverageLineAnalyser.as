@@ -114,7 +114,7 @@ package laya.stock.analysers {
 			}
 		
 		}
-		private static var _colorDic:Object = {"-1":"#00ff00","0":"#ffff00","1":"#ff0000" };
+		private static var _colorDic:Object = {"-1":"#00ff00","0":"#00ffff","1":"#ff0000" };
 		public var barHeight:Number = 500;
 		private static var _tempArr:Array = [];
 		
