@@ -1,0 +1,1 @@
+{"trader": {"Class": "AverageTrader", "values": [["seller", {"Class": "SimpleSeller", "config": {"winSell": 0.9, "loseSell": -0.2, "backSell": -0.1, "maxDay": 56}}]], "config": {"minBuyExp": 0.3062228007150668, "posDayCount": 96, "maxBuyLose": -0.43696638468411686, "maxDay": 56, "minBuyLose": -0.4029407843896405}}}
