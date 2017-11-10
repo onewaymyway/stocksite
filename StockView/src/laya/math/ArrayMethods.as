@@ -69,6 +69,19 @@ package laya.math
 			}
 			return true;
 		}
+		
+		public static function sumKey(dataList:Array,key:String):Number
+		{
+			var rst:Number;
+			rst = 0;
+			var i:int, len:int;
+			len = dataList.length;
+			for (i = 0; i < len; i++)
+			{
+				rst += dataList[i][key];
+			}
+			return rst;
+		}
 	}
 
 }

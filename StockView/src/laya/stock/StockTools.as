@@ -111,7 +111,7 @@ package laya.stock
 			for (i = 0; i < len; i++)
 			{
 				tDayCount = highDays[i];
-				priceHigh = getHighInDays(buyI + 1, tDayCount, dataList);
+				priceHigh = getHighInDays(buyI + 1, tDayCount, dataList)||priceBuy;
 				rst["high"+tDayCount]=getGoodPercent((priceHigh - priceBuy) / priceBuy);
 			}
 			
@@ -119,9 +119,10 @@ package laya.stock
 		
 		public static function getHighInDays(start:int,days:int, dataList:Array):Number
 		{
+			if (!dataList[start]) return 0;
 			var i:int, len:int;
 			var priceHigh:Number;
-			priceHigh = -1;
+			priceHigh = dataList[start]["low"];
 			len = days + start;
 			if (len > dataList.length) len = dataList.length;
 			for (i = start; i < len; i++)
@@ -132,6 +133,24 @@ package laya.stock
 				}
 			}
 			return priceHigh;
+		}
+		
+		public static function getLowInDays(start:int,days:int, dataList:Array):Number
+		{
+			if (!dataList[start]) return 0;
+			var i:int, len:int;
+			var priceLow:Number;
+			priceLow = dataList[start]["low"];
+			len = days + start;
+			if (len > dataList.length) len = dataList.length;
+			for (i = start; i < len; i++)
+			{
+				if (dataList[i]["low"] < priceLow)
+				{
+					priceLow = dataList[i]["low"];
+				}
+			}
+			return priceLow;
 		}
 		
 		public static function isSameTrend(dataList:Array, up:Boolean = true):Boolean
