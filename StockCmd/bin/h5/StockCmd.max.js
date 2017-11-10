@@ -1321,6 +1321,60 @@ var Laya=window.Laya=(function(window,document){
 	*...
 	*@author ww
 	*/
+	//class stockcmd.RunWorkerBase
+	var RunWorkerBase=(function(){
+		function RunWorkerBase(){}
+		__class(RunWorkerBase,'stockcmd.RunWorkerBase');
+		var __proto=RunWorkerBase.prototype;
+		__proto.work=function(){
+			if (!FileTools.exist(RunConfig.filePath)){
+				console.log("file not found:",RunConfig.filePath);
+				return;
+			}
+			this.workInits();
+			if (FileTools.isDirectory(RunConfig.filePath)){
+				this.workDir(RunConfig.filePath);
+			}
+			else {
+				this.analyserAFile(RunConfig.filePath);
+			}
+			this.workEnd();
+		}
+
+		__proto.workInits=function(){}
+		__proto.workEnd=function(){}
+		__proto.workDir=function(path){
+			/*no*/this.dirInfos=[];
+			var fileList;
+			fileList=FileTools.getFileList(path);
+			var i=0,len=0;
+			len=fileList.length;
+			for (i=0;i < len;i++){
+				this.analyserAFile(fileList[i]);
+			}
+		}
+
+		__proto.analyserAFile=function(path){
+			console.log("work:",path);
+			var data;
+			data=FileManager.readTxtFile(path);
+			var tStockName;
+			tStockName=FileManager.getFileName(path);
+			var stockData;
+			stockData=new StockData();
+			stockData.init(data);
+			this.doAnalyse(stockData);
+		}
+
+		__proto.doAnalyse=function(stockData){}
+		return RunWorkerBase;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
 	//class stockcmd.GreatKLineWorker
 	var GreatKLineWorker=(function(){
 		function GreatKLineWorker(){
@@ -1539,6 +1593,7 @@ var Laya=window.Laya=(function(window,document){
 		RunConfig.minUnderDay=3;
 		RunConfig.outFile="lastBuys.json";
 		RunConfig.type="RankWorker";
+		RunConfig.paramFile="param.json";
 		return RunConfig;
 	})()
 
@@ -1563,6 +1618,7 @@ var Laya=window.Laya=(function(window,document){
 		__proto.regWorkers=function(){
 			RankWorker;
 			GreatKLineWorker;
+			BackTestWorker;
 		}
 
 		__proto.init=function(){
@@ -11528,6 +11584,71 @@ var Laya=window.Laya=(function(window,document){
 
 
 	/**
+	*...
+	*@author ww
+	*/
+	//class laya.debug.tools.DebugTxt
+	var DebugTxt=(function(){
+		function DebugTxt(){}
+		__class(DebugTxt,'laya.debug.tools.DebugTxt');
+		DebugTxt.init=function(){
+			if (DebugTxt._txt)return;
+			DebugTxt._txt=new Text();
+			DebugTxt._txt.pos(100,100);
+			DebugTxt._txt.color="#ff00ff";
+			DebugTxt._txt.zOrder=999;
+			DebugTxt._txt.fontSize=24;
+			DebugTxt._txt.text="debugTxt inited";
+			Laya.stage.addChild(DebugTxt._txt);
+		}
+
+		DebugTxt.getArgArr=function(arg){
+			var rst;
+			rst=[];
+			var i=0,len=arg.length;
+			for(i=0;i<len;i++){
+				rst.push(arg[i]);
+			}
+			return rst;
+		}
+
+		DebugTxt.dTrace=function(__arg){
+			var arg=arguments;
+			arg=DebugTxt.getArgArr(arg);
+			var str;
+			str=arg.join(" ");
+			if (DebugTxt._txt){
+				DebugTxt._txt.text=str+"\n"+DebugTxt._txt.text;
+			}
+		}
+
+		DebugTxt.getTimeStr=function(){
+			var dateO=new Date();
+			return dateO.toTimeString();
+		}
+
+		DebugTxt.traceTime=function(msg){
+			DebugTxt.dTrace(DebugTxt.getTimeStr());
+			DebugTxt.dTrace(msg);
+		}
+
+		DebugTxt.show=function(__arg){
+			var arg=arguments;
+			arg=DebugTxt.getArgArr(arg);
+			var str;
+			str=arg.join(" ");
+			if (DebugTxt._txt){
+				DebugTxt._txt.text=str;
+			}
+		}
+
+		DebugTxt._txt=null
+		DebugTxt.I=null
+		return DebugTxt;
+	})()
+
+
+	/**
 	*本类用于显示对象值变化过程
 	*@author ww
 	*@version 1.0
@@ -12763,6 +12884,156 @@ var Laya=window.Laya=(function(window,document){
 		['_ID',function(){return this._ID=new IDTools();},'_idDic',function(){return this._idDic={"default":new IDTools()};}
 		]);
 		return IDTools;
+	})()
+
+
+	/**
+	*
+	*@author ww
+	*@version 1.0
+	*
+	*@created 2015-11-27 上午9:58:59
+	*/
+	//class laya.debug.tools.JsonTool
+	var JsonTool=(function(){
+		function JsonTool(){}
+		__class(JsonTool,'laya.debug.tools.JsonTool');
+		JsonTool.getJsonString=function(obj,singleLine,split,depth,Width){
+			(singleLine===void 0)&& (singleLine=true);
+			(split===void 0)&& (split="\n");
+			(depth===void 0)&& (depth=0);
+			(Width===void 0)&& (Width=4);
+			var preStr="";
+			preStr=JsonTool.getEmptyStr(depth*Width);
+			var rst;
+			var keyValues;
+			keyValues={};
+			var tKey;
+			var tValue;
+			var type;
+			var keys;
+			keys=[];
+			for(tKey in obj){
+				keys.push(tKey);
+				tValue=obj[tKey];
+				if(JsonTool.singleLineKey[tKey]){
+					keyValues[tKey]=JsonTool.getValueStr(tValue,true,split,depth+1,Width);
+					}else{
+					keyValues[tKey]=JsonTool.getValueStr(tValue,singleLine,split,depth+1,Width);
+				}
+			};
+			var i=0,len=0;
+			len=keys.length;
+			keys.sort();
+			keys=keys.reverse();
+			var keyPreStr;
+			keyPreStr=JsonTool.getEmptyStr((depth+1)*Width);
+			if(singleLine){
+				split="";
+				preStr="";
+				keyPreStr="";
+			};
+			var keyValueStrArr;
+			keyValueStrArr=[];
+			for(i=0;i<len;i++){
+				tKey=keys[i];
+				keyValueStrArr.push(keyPreStr+JsonTool.wrapValue(tKey)+":"+keyValues[tKey]);
+			}
+			rst="{"+split+keyValueStrArr.join(","+split)+split+preStr+"}";
+			return rst;
+		}
+
+		JsonTool.wrapValue=function(value,wraper){
+			(wraper===void 0)&& (wraper="\"");
+			return wraper+value+wraper;
+		}
+
+		JsonTool.getArrStr=function(arr,singleLine,split,depth,Width){
+			(singleLine===void 0)&& (singleLine=true);
+			(split===void 0)&& (split="\n");
+			(depth===void 0)&& (depth=0);
+			(Width===void 0)&& (Width=4);
+			var rst;
+			var i=0,len=0;
+			len=arr.length;
+			var valueStrArr;
+			valueStrArr=[];
+			for(i=0;i<len;i++){
+				valueStrArr.push(JsonTool.getValueStr(arr[i],singleLine,split,depth+1,Width));
+			};
+			var preStr="";
+			preStr=JsonTool.getEmptyStr((depth+1)*Width);
+			if(singleLine){
+				split="";
+				preStr="";
+			}
+			rst="["+split+preStr+valueStrArr.join(","+split+preStr)+"]";
+			return rst;
+		}
+
+		JsonTool.quote=function(string){
+			JsonTool.escapable.lastIndex=0;
+			return JsonTool.escapable.test(string)? '"'+string.replace(JsonTool.escapable,function(a){
+				var c=JsonTool.meta[a];
+				return typeof c==='string' ? c :
+				'\\u'+('0000'+a.charCodeAt(0).toString(16)).slice(-4);
+			})+'"' :'"'+string+'"';
+		}
+
+		JsonTool.getValueStr=function(tValue,singleLine,split,depth,Width){
+			(singleLine===void 0)&& (singleLine=true);
+			(split===void 0)&& (split="\n");
+			(depth===void 0)&& (depth=0);
+			(Width===void 0)&& (Width=0);
+			var rst;
+			if((typeof tValue=='string')){
+				rst=JsonTool.quote(tValue);
+				}else if(tValue==null){
+				rst="null";
+				}else if((typeof tValue=='number')|| ((typeof tValue=='number')&& Math.floor(tValue)==tValue)|| (typeof tValue=='boolean')){
+				rst=tValue;
+				}else if((tValue instanceof Array)){
+				rst=JsonTool.getArrStr(tValue,singleLine,split,depth,Width);
+				}else if((typeof tValue=='object')){
+				rst=JsonTool.getJsonString(tValue,singleLine,split,depth,Width);
+				}else{
+				rst=tValue;
+			}
+			return rst;
+		}
+
+		JsonTool.getEmptyStr=function(width){
+			if(!JsonTool.emptyDic.hasOwnProperty(width)){
+				var i=0;
+				var len=0;
+				len=width;
+				var rst;
+				rst="";
+				for(i=0;i<len;i++){
+					rst+=" ";
+				}
+				JsonTool.emptyDic[width]=rst;
+			}
+			return JsonTool.emptyDic[width];
+		}
+
+		JsonTool.emptyDic={};
+		__static(JsonTool,
+		['singleLineKey',function(){return this.singleLineKey={
+				"props":true
+			};},'escapable',function(){return this.escapable=/[\\\"\x00-\x1f\x7f-\x9f\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g;},'meta',function(){return this.meta = {   
+			'\b':'\\b',
+			'\t':'\\t',
+			'\n':'\\n',
+			'\f':'\\f',
+			'\r':'\\r',
+			'"' :'\\"',
+			'\\':'\\\\'
+	};}
+
+
+	]);
+	return JsonTool;
 	})()
 
 
@@ -15815,6 +16086,17 @@ var Laya=window.Laya=(function(window,document){
 			return true;
 		}
 
+		ArrayMethods.sumKey=function(dataList,key){
+			var rst=NaN;
+			rst=0;
+			var i=0,len=0;
+			len=dataList.length;
+			for (i=0;i < len;i++){
+				rst+=dataList[i][key];
+			}
+			return rst;
+		}
+
 		return ArrayMethods;
 	})()
 
@@ -16155,6 +16437,24 @@ var Laya=window.Laya=(function(window,document){
 			return "unknow";
 		}
 
+		DataUtils.getDistanceRate=function(arr){
+			var sum=NaN;
+			sum=0;
+			var i=0,len=0;
+			len=arr.length;
+			for (i=0;i < len;i++){
+				sum+=arr[i];
+			};
+			var avg=NaN;
+			avg=sum / len;
+			sum=0;
+			for (i=0;i < len;i++){
+				sum+=Math.pow(arr[i]-avg,2);
+			}
+			sum=Math.sqrt(sum)/ avg;
+			return sum;
+		}
+
 		DataUtils.K_Top="top";
 		DataUtils.K_Bottom="bottom";
 		DataUtils.K_Unknow="unknow";
@@ -16176,6 +16476,7 @@ var Laya=window.Laya=(function(window,document){
 			return y-py;
 		}
 
+		GraphicUtils.addGridLineToResult=function(result,lineStr){}
 		return GraphicUtils;
 	})()
 
@@ -16303,6 +16604,35 @@ var Laya=window.Laya=(function(window,document){
 				arr[i]=ValueTools.mParseFloat(arr[i]);
 			}
 			return arr;
+		}
+
+		ValueTools.insertConfig=function(tar,configO){
+			if (!configO)return;
+			var key;
+			for (key in configO){
+				tar[key]=configO[key];
+			}
+		}
+
+		ValueTools.createObjectByConfig=function(config){
+			var Clz;
+			Clz=config["Class"];
+			var tRstO;
+			tRstO=ClassTool.createObjByName(Clz);
+			if (!tRstO)return tRstO;
+			ValueTools.insertConfig(tRstO,config["config"]);
+			var values;
+			values=config["values"];
+			if (values){
+				var i=0,len=0;
+				var tValue;
+				len=values.length;
+				for (i=0;i < len;i++){
+					tValue=values[i];
+					tRstO[tValue[0]]=ValueTools.createObjectByConfig(tValue[1]);
+				}
+			}
+			return tRstO;
 		}
 
 		ValueTools.splitStpl=function(tplStr){
@@ -16580,6 +16910,24 @@ var Laya=window.Laya=(function(window,document){
 
 		__proto.addToConfigTypes=function(types){}
 		__proto.addToShowData=function(showData){}
+		__proto.addGridLine=function(barHeight,gridLineValue){
+			var i=0,len=0;
+			var gridLine;
+			gridLine=[];
+			var values;
+			values=gridLineValue.split(",");
+			len=values.length;
+			for (i=0;i < len;i++){
+				values[i]=ValueTools.mParseFloat(values[i])*barHeight;
+			}
+			gridLine.push(0,this.disDataList.length-1,values,/*no*/this.color,gridLineValue.split(","));
+			this.resultData["gridLine"]=gridLine;
+		}
+
+		__proto.addGridLineToDraw=function(rst){
+			rst.push(["drawGridLineEx",this.resultData["gridLine"]]);
+		}
+
 		return AnalyserBase;
 	})()
 
@@ -16862,6 +17210,216 @@ var Laya=window.Laya=(function(window,document){
 	*...
 	*@author ww
 	*/
+	//class laya.stock.backtest.BackTestInfo
+	var BackTestInfo=(function(){
+		function BackTestInfo(){
+			this.buy=NaN;
+			this.high=NaN;
+			this.low=NaN;
+			this.sell=NaN;
+			this.sellDay=0;
+		}
+
+		__class(BackTestInfo,'laya.stock.backtest.BackTestInfo');
+		var __proto=BackTestInfo.prototype;
+		__proto.ifWin=function(key){
+			return this[key] > 0?1:0;
+		}
+
+		__proto.rateX=function(key){
+			return (this[key]-this.buy)/ this.buy;
+		}
+
+		__proto.winX=function(key,value){
+			return this[key] > value?1:0;
+		}
+
+		__getset(0,__proto,'sellRate',function(){
+			return (this.sell-this.buy)/ this.buy;
+		});
+
+		__getset(0,__proto,'ifWin',function(){
+			return this.exp > 0?1:0;
+		});
+
+		__getset(0,__proto,'exp',function(){
+			return this.winRate+2 *this.loseRate;
+		});
+
+		__getset(0,__proto,'ifSellWin',function(){
+			return this.sellRate > 0?1:0;
+		});
+
+		__getset(0,__proto,'loseRate',function(){
+			return (this.low-this.buy)/ this.buy;
+		});
+
+		__getset(0,__proto,'winRate',function(){
+			return (this.high-this.buy)/ this.buy;
+		});
+
+		BackTestInfo.sum=function(dataList,key,value,funName){
+			(funName===void 0)&& (funName="winX");
+			var rst=NaN;
+			rst=0;
+			var i=0,len=0;
+			len=dataList.length;
+			var tInfo;
+			for (i=0;i < len;i++){
+				tInfo=dataList[i];
+				rst+=tInfo[funName](key,value);
+			}
+			return rst;
+		}
+
+		BackTestInfo.getStaticInfo=function(dataList,buyI,maxDay,seller){
+			(maxDay===void 0)&& (maxDay=15);
+			var priceBuy=NaN;
+			priceBuy=dataList[buyI]["high"];
+			var priceHigh=NaN;
+			priceHigh=StockTools.getHighInDays(buyI+1,maxDay,dataList)||priceBuy;
+			var priceLow=NaN;
+			priceLow=StockTools.getLowInDays(buyI+1,maxDay,dataList)||priceBuy;
+			var rst;
+			rst=new BackTestInfo();
+			rst.buy=priceBuy;
+			rst.high=priceHigh;
+			rst.low=priceLow;
+			if (seller){
+				rst.sell=seller.sell(dataList,buyI+1,priceBuy);
+				rst.sellDay=seller.sellDay;
+			}
+			return rst;
+		}
+
+		BackTestInfo.getStaticInfoOfBuyList=function(buyList){
+			var buyCount=0;
+			buyCount=buyList.length;
+			var rst;
+			rst={};
+			rst.buyTime=buyCount;
+			rst.exp=ArrayMethods.sumKey(buyList,"exp")/ buyCount;
+			rst.win=ArrayMethods.sumKey(buyList,"winRate")/ buyCount;
+			rst.lose=ArrayMethods.sumKey(buyList,"loseRate")/ buyCount;
+			rst.winTime=ArrayMethods.sumKey(buyList,"ifWin");
+			rst.winRate=ArrayMethods.sumKey(buyList,"ifWin")/ buyCount;
+			var keyList;
+			keyList=[5,10,15,20,25,30,35,40,45,50,55];
+			var i=0;
+			var len=0;
+			len=keyList.length;
+			var tNum=0;
+			for (i=0;i < len;i++){
+				tNum=keyList[i];
+				rst["win"+tNum+"Time"]=BackTestInfo.sum(buyList,"winRate",tNum *0.01);
+				rst["win"+tNum+"Rate"]=rst["win"+tNum+"Time"] / buyCount;
+			}
+			for (i=0;i < len;i++){
+				tNum=keyList[i];
+				rst["swin"+tNum+"Time"]=BackTestInfo.sum(buyList,"sellRate",tNum *0.01);
+				rst["swin"+tNum+"Rate"]=rst["swin"+tNum+"Time"] / buyCount;
+			}
+			rst.swin=ArrayMethods.sumKey(buyList,"sellRate")/ buyCount;
+			rst.swinTime=ArrayMethods.sumKey(buyList,"ifSellWin");
+			rst.swinRate=ArrayMethods.sumKey(buyList,"ifSellWin")/ buyCount;
+			rst.sSellDay=ArrayMethods.sumKey(buyList,"sellDay")/ buyCount;
+			rst.yearRate=(rst.swin / rst.sSellDay)*240;
+			return rst;
+		}
+
+		return BackTestInfo;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class laya.stock.backtest.sellers.SellerBase
+	var SellerBase=(function(){
+		function SellerBase(){
+			this.dataList=null;
+			this.startIndex=0;
+			this.buyPrice=NaN;
+			this.sellDay=0;
+		}
+
+		__class(SellerBase,'laya.stock.backtest.sellers.SellerBase');
+		var __proto=SellerBase.prototype;
+		__proto.sell=function(dataList,startIndex,buyPrice){
+			this.dataList=dataList;
+			this.startIndex=startIndex;
+			this.buyPrice=buyPrice;
+			this.sellDay=0;
+			return this.doSell();
+		}
+
+		__proto.doSell=function(){
+			return this.buyPrice;
+		}
+
+		return SellerBase;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class laya.stock.backtest.sellers.SellTools
+	var SellTools=(function(){
+		function SellTools(){}
+		__class(SellTools,'laya.stock.backtest.sellers.SellTools');
+		return SellTools;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class laya.stock.backtest.Trader
+	var Trader=(function(){
+		function Trader(){
+			this.stockData=null;
+			this.seller=null;
+			this.staticInfoList=null;
+		}
+
+		__class(Trader,'laya.stock.backtest.Trader');
+		var __proto=Trader.prototype;
+		__proto.reset=function(){
+			this.staticInfoList=[];
+		}
+
+		__proto.getStaticInfo=function(){
+			return BackTestInfo.getStaticInfoOfBuyList(this.staticInfoList);
+		}
+
+		__proto.setStockData=function(stockData){
+			this.stockData=stockData;
+		}
+
+		__proto.runTest=function(){}
+		__proto.buyAt=function(index){}
+		__proto.buyStaticAt=function(index,maxDay,seller){
+			(maxDay===void 0)&& (maxDay=20);
+			var dataList;
+			dataList=this.stockData.dataList;
+			var curInfo;
+			curInfo=dataList[index];
+			if (!curInfo)return;
+			this.staticInfoList.push(BackTestInfo.getStaticInfo(dataList,index,maxDay,seller));
+		}
+
+		return Trader;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
 	//class laya.stock.consts.ParamTypes
 	var ParamTypes=(function(){
 		function ParamTypes(){}
@@ -17019,10 +17577,33 @@ var Laya=window.Laya=(function(window,document){
 			return StockInfoManager._stockInfoDic[StockTools.getPureStock(stock)];
 		}
 
-		StockInfoManager.getStockAvgTrendSign=function(stock){
+		StockInfoManager.getStockName=function(stock){
+			var stockO;
+			stockO=StockJsonP.getStockData(stock);
+			if (!stockO)return "";
+			return stockO.name;
+		}
+
+		StockInfoManager.getStockAvgTrendSign=function(stock,price){
 			var tStockO;
 			tStockO=StockInfoManager.getStockInfo(stock);
-			if (!tStockO)return "~";
+			if (!tStockO||!tStockO.averageO)return "~";
+			var tAvgs;
+			tAvgs=tStockO.averageO.avgs;
+			if (!tAvgs)return "~";
+			var i=0,len=0;
+			len=tAvgs.length;
+			var curCount=0;
+			curCount=0;
+			for (i=0;i < len;i++){
+				if (price >=tAvgs[i])curCount++;
+			};
+			var rst;
+			rst="~";
+			if (StockTools.isSameTrend(tAvgs,true))rst="↗";
+			if (StockTools.isSameTrend(tAvgs,false))rst="↘";
+			rst+=""+curCount;
+			return rst;
 		}
 
 		StockInfoManager._stockList=null
@@ -17122,15 +17703,16 @@ var Laya=window.Laya=(function(window,document){
 			var tDayCount=0;
 			for (i=0;i < len;i++){
 				tDayCount=StockTools.highDays[i];
-				priceHigh=StockTools.getHighInDays(buyI+1,tDayCount,dataList);
+				priceHigh=StockTools.getHighInDays(buyI+1,tDayCount,dataList)||priceBuy;
 				rst["high"+tDayCount]=StockTools.getGoodPercent((priceHigh-priceBuy)/ priceBuy);
 			}
 		}
 
 		StockTools.getHighInDays=function(start,days,dataList){
+			if (!dataList[start])return 0;
 			var i=0,len=0;
 			var priceHigh=NaN;
-			priceHigh=-1;
+			priceHigh=dataList[start]["low"];
 			len=days+start;
 			if (len > dataList.length)len=dataList.length;
 			for (i=start;i < len;i++){
@@ -17139,6 +17721,32 @@ var Laya=window.Laya=(function(window,document){
 				}
 			}
 			return priceHigh;
+		}
+
+		StockTools.getLowInDays=function(start,days,dataList){
+			if (!dataList[start])return 0;
+			var i=0,len=0;
+			var priceLow=NaN;
+			priceLow=dataList[start]["low"];
+			len=days+start;
+			if (len > dataList.length)len=dataList.length;
+			for (i=start;i < len;i++){
+				if (dataList[i]["low"] < priceLow){
+					priceLow=dataList[i]["low"];
+				}
+			}
+			return priceLow;
+		}
+
+		StockTools.isSameTrend=function(dataList,up){
+			(up===void 0)&& (up=true);
+			var i=0,len=0;
+			len=dataList.length;
+			for (i=1;i < len;i++){
+				if (up && dataList[i] > dataList[i-1])return false;
+				if ((!up)&& dataList[i] < dataList[i-1])return false;
+			}
+			return true;
 		}
 
 		__static(StockTools,
@@ -17434,6 +18042,7 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		StockJsonP.getStockData2=function(stock,complete){
+			stock=StockJsonP.getAdptStockStr(stock);
 			var scp=Browser.createElement("script");
 			Browser.document.body.appendChild(scp);
 			scp.type="text/javascript";
@@ -17441,6 +18050,7 @@ var Laya=window.Laya=(function(window,document){
 			scp.onload=function (){
 				scp.src="";
 				Browser.removeElement(scp);
+				StockJsonP.parserStockData(stock);
 				complete.run();
 			}
 		}
@@ -17469,6 +18079,23 @@ var Laya=window.Laya=(function(window,document){
 		StockJsonP.getStockData=function(stock){
 			stock=StockJsonP.getAdptStockStr(stock);
 			return StockJsonP.stockDataO[stock];
+		}
+
+		StockJsonP.adptStockO=function(stockO){
+			var dataO={};
+			var i=0,len=0;
+			len=StockJsonP.numKeys.length;
+			var tKey;
+			for (tKey in stockO){
+				dataO[tKey]=stockO[tKey];
+			}
+			for (i=0;i < len;i++){
+				tKey=StockJsonP.numKeys[i];
+				dataO[tKey]=parseFloat(dataO[tKey]);
+			}
+			dataO.volume=dataO.amount/100;
+			dataO.close=dataO.price;
+			return dataO;
 		}
 
 		StockJsonP.parserStockData=function(stock){
@@ -17529,7 +18156,36 @@ var Laya=window.Laya=(function(window,document){
 			"sell5count",
 			"sell5price",
 			"date",
-			"time"];}
+			"time"];},'numKeys',function(){return this.numKeys=[
+			"open",
+			"close",
+			"price",
+			"high",
+			"low",
+			"tbuy",
+			"tsell",
+			"amount",
+			"money",
+			"buy1count",
+			"buy1price",
+			"buy2count",
+			"buy2price",
+			"buy3count",
+			"buy3price",
+			"buy4count",
+			"buy4price",
+			"buy5count",
+			"buy5price",
+			"sell1count",
+			"sell1price",
+			"sell2count",
+			"sell2price",
+			"sell3count",
+			"sell3price",
+			"sell4count",
+			"sell4price",
+			"sell5count",
+			"sell5price"];}
 		]);
 		return StockJsonP;
 	})()
@@ -17568,6 +18224,7 @@ var Laya=window.Laya=(function(window,document){
 		MsgConst.Show_Pre_Select="Show_Pre_Select";
 		MsgConst.AnalyserListChange="AnalyserListChange";
 		MsgConst.Show_Analyser_Prop="Show_Analyser_Prop";
+		MsgConst.Hide_Analyser_Prop="Hide_Analyser_Prop";
 		MsgConst.Set_Analyser_Prop="Set_Analyser_Prop";
 		MsgConst.Fresh_Analyser_Prop="Fresh_Analyser_Prop";
 		MsgConst.Stock_Data_Inited="DataInited";
@@ -17716,6 +18373,7 @@ var Laya=window.Laya=(function(window,document){
 	//class StockMain
 	var StockMain=(function(){
 		function StockMain(){
+			this.stockMainBox=null;
 			Laya.init(1000,900);
 			Laya.stage.scaleMode="full";
 			Laya.stage.screenMode="horizontal";
@@ -17732,9 +18390,9 @@ var Laya=window.Laya=(function(window,document){
 		__proto.start=function(){
 			StockBasicInfo.I.init(Loader.getRes(PathConfig.stockBasic));
 			this.testMainView();
-			SohuDData.getData("601918",null);
 		}
 
+		//SohuDData.getData("601918",null);
 		__proto.begin=function(){
 			var view;
 			view=new StockView();
@@ -17761,10 +18419,34 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		__proto.testMainView=function(){
+			this.stockMainBox=new Box();
+			this.onStageResize();
+			Laya.stage.on("resize",this,this.onStageResize);
 			var mainView;
 			mainView=new MainView();
 			mainView.left=mainView.right=mainView.top=mainView.bottom=10;
-			Laya.stage.addChild(mainView);
+			this.stockMainBox.addChild(mainView);
+			Laya.stage.addChild(this.stockMainBox);
+			laya.events.MultiTouchManager.I.on(laya.events.MultiTouchManager.Scale,this,this.onScaleEvent);
+		}
+
+		//private var curPoint:Sprite;
+		__proto.onScaleEvent=function(scale,centerPoint){
+			this.stockMainBox.globalToLocal(centerPoint);
+			if (scale > 1.5){
+				this.stockMainBox.scaleX=this.stockMainBox.scaleY=2;
+				this.stockMainBox.pivot(centerPoint.x,centerPoint.y);
+				this.stockMainBox.pos(centerPoint.x,centerPoint.y);
+				}else if (scale < 0.6){
+				this.stockMainBox.pivot(0,0);
+				this.stockMainBox.pos(0,0);
+				this.stockMainBox.scaleX=this.stockMainBox.scaleY=1;
+			}
+		}
+
+		//curPoint.pos(centerPoint.x,centerPoint.y);
+		__proto.onStageResize=function(){
+			this.stockMainBox.size(Laya.stage.width,Laya.stage.height);
 		}
 
 		__proto.testStockInfo=function(){
@@ -18048,6 +18730,57 @@ var Laya=window.Laya=(function(window,document){
 		]);
 		return TradeTestManager;
 	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class stockcmd.BackTestWorker extends stockcmd.RunWorkerBase
+	var BackTestWorker=(function(_super){
+		function BackTestWorker(){
+			this.tTrader=null;
+			BackTestWorker.__super.call(this);
+		}
+
+		__class(BackTestWorker,'stockcmd.BackTestWorker',_super);
+		var __proto=BackTestWorker.prototype;
+		__proto.workInits=function(){
+			if (FileManager.exists(RunConfig.paramFile)){
+				try {
+					var configO;
+					configO=FileManager.readJSONFile(RunConfig.paramFile);
+					if (configO && configO.trader){
+						var traderO;
+						traderO=configO.trader;
+						this.tTrader=ValueTools.createObjectByConfig(traderO);
+					}
+					console.log("createByConfig success");
+				}
+				catch (e){
+					console.log("createByConfig Fail");
+					console.log(e.message,e.stack);
+				}
+			}
+			if (!this.tTrader){
+				this.tTrader=new AverageTrader();
+			}
+			this.tTrader.reset();
+		}
+
+		__proto.doAnalyse=function(stockData){
+			this.tTrader.setStockData(stockData);
+			this.tTrader.runTest();
+		}
+
+		__proto.workEnd=function(){
+			var rstO;
+			rstO=this.tTrader.getStaticInfo();
+			FileManager.createTxtFile(RunConfig.outFile,JsonTool.getJsonString(rstO,false,"\n"));
+		}
+
+		return BackTestWorker;
+	})(RunWorkerBase)
 
 
 	/**
@@ -20285,6 +21018,59 @@ var Laya=window.Laya=(function(window,document){
 
 
 	/**
+	*<p><code>ColorFilter</code> 是颜色滤镜。使用 ColorFilter 类可以将 4 x 5 矩阵转换应用于输入图像上的每个像素的 RGBA 颜色和 Alpha 值，以生成具有一组新的 RGBA 颜色和 Alpha 值的结果。该类允许饱和度更改、色相旋转、亮度转 Alpha 以及各种其他效果。您可以将滤镜应用于任何显示对象（即，从 Sprite 类继承的对象）。</p>
+	*<p>注意：对于 RGBA 值，最高有效字节代表红色通道值，其后的有效字节分别代表绿色、蓝色和 Alpha 通道值。</p>
+	*/
+	//class laya.filters.ColorFilter extends laya.filters.Filter
+	var ColorFilter=(function(_super){
+		function ColorFilter(mat){
+			//this._mat=null;
+			//this._alpha=null;
+			ColorFilter.__super.call(this);
+			if (!mat){
+				mat=[0.3,0.59,0.11,0,0,0.3,0.59,0.11,0,0,0.3,0.59,0.11,0,0,0,0,0,1,0];
+			}
+			this._mat=new Float32Array(16);
+			this._alpha=new Float32Array(4);
+			var j=0;
+			var z=0;
+			for (var i=0;i < 20;i++){
+				if (i % 5 !=4){
+					this._mat[j++]=mat[i];
+					}else {
+					this._alpha[z++]=mat[i];
+				}
+			}
+			this._action=RunDriver.createFilterAction(0x20);
+			this._action.data=this;
+		}
+
+		__class(ColorFilter,'laya.filters.ColorFilter',_super);
+		var __proto=ColorFilter.prototype;
+		Laya.imps(__proto,{"laya.filters.IFilter":true})
+		/**
+		*@private 通知微端
+		*/
+		__proto.callNative=function(sp){
+			var t=sp._$P.cf=this;
+			sp.conchModel && sp.conchModel.setFilterMatrix && sp.conchModel.setFilterMatrix(this._mat,this._alpha);
+		}
+
+		/**@private */
+		__getset(0,__proto,'type',function(){
+			return 0x20;
+		});
+
+		/**@private */
+		__getset(0,__proto,'action',function(){
+			return this._action;
+		});
+
+		return ColorFilter;
+	})(Filter)
+
+
+	/**
 	*<p> <code>LoaderManager</code> 类用于用于批量加载资源。此类是单例，不要手动实例化此类，请通过Laya.loader访问。</p>
 	*<p>全部队列加载完成，会派发 Event.COMPLETE 事件；如果队列中任意一个加载失败，会派发 Event.ERROR 事件，事件回调参数值为加载出错的资源地址。</p>
 	*<p> <code>LoaderManager</code> 类提供了以下几种功能：<br/>
@@ -20673,59 +21459,6 @@ var Laya=window.Laya=(function(window,document){
 
 		return LoaderManager;
 	})(EventDispatcher)
-
-
-	/**
-	*<p><code>ColorFilter</code> 是颜色滤镜。使用 ColorFilter 类可以将 4 x 5 矩阵转换应用于输入图像上的每个像素的 RGBA 颜色和 Alpha 值，以生成具有一组新的 RGBA 颜色和 Alpha 值的结果。该类允许饱和度更改、色相旋转、亮度转 Alpha 以及各种其他效果。您可以将滤镜应用于任何显示对象（即，从 Sprite 类继承的对象）。</p>
-	*<p>注意：对于 RGBA 值，最高有效字节代表红色通道值，其后的有效字节分别代表绿色、蓝色和 Alpha 通道值。</p>
-	*/
-	//class laya.filters.ColorFilter extends laya.filters.Filter
-	var ColorFilter=(function(_super){
-		function ColorFilter(mat){
-			//this._mat=null;
-			//this._alpha=null;
-			ColorFilter.__super.call(this);
-			if (!mat){
-				mat=[0.3,0.59,0.11,0,0,0.3,0.59,0.11,0,0,0.3,0.59,0.11,0,0,0,0,0,1,0];
-			}
-			this._mat=new Float32Array(16);
-			this._alpha=new Float32Array(4);
-			var j=0;
-			var z=0;
-			for (var i=0;i < 20;i++){
-				if (i % 5 !=4){
-					this._mat[j++]=mat[i];
-					}else {
-					this._alpha[z++]=mat[i];
-				}
-			}
-			this._action=RunDriver.createFilterAction(0x20);
-			this._action.data=this;
-		}
-
-		__class(ColorFilter,'laya.filters.ColorFilter',_super);
-		var __proto=ColorFilter.prototype;
-		Laya.imps(__proto,{"laya.filters.IFilter":true})
-		/**
-		*@private 通知微端
-		*/
-		__proto.callNative=function(sp){
-			var t=sp._$P.cf=this;
-			sp.conchModel && sp.conchModel.setFilterMatrix && sp.conchModel.setFilterMatrix(this._mat,this._alpha);
-		}
-
-		/**@private */
-		__getset(0,__proto,'type',function(){
-			return 0x20;
-		});
-
-		/**@private */
-		__getset(0,__proto,'action',function(){
-			return this._action;
-		});
-
-		return ColorFilter;
-	})(Filter)
 
 
 	/**
@@ -22118,13 +22851,14 @@ var Laya=window.Laya=(function(window,document){
 			this.width=40;
 			this.color="#ffff00";
 			this.showPercent=0;
+			this.dayCount=-1;
 			DistAnalyser.__super.call(this);
 		}
 
 		__class(DistAnalyser,'laya.stock.analysers.DistAnalyser',_super);
 		var __proto=DistAnalyser.prototype;
 		__proto.initParamKeys=function(){
-			this.paramkeys=["width","color","showPercent"];
+			this.paramkeys=["width","color","showPercent","dayCount"];
 		}
 
 		__proto.analyseWork=function(){
@@ -22133,6 +22867,11 @@ var Laya=window.Laya=(function(window,document){
 
 		__proto.doDist=function(){
 			var dataList=this.disDataList;
+			if (this.dayCount > 0){
+				var tarCount=0;
+				tarCount=this.dayCount < this.disDataList.length?this.dayCount:this.disDataList.length;
+				dataList=this.disDataList.slice(this.disDataList.length-tarCount);
+			};
 			var i=0,len=0;
 			len=dataList.length;
 			var tDistData;
@@ -22157,7 +22896,7 @@ var Laya=window.Laya=(function(window,document){
 			var lines;
 			lines=[];
 			var rate=NaN;
-			rate=this.width *dataList.length / 10;
+			rate=this.width *this.disDataList.length / 10;
 			var percents;
 			percents=tDis.percents;
 			var tLineParam;
@@ -22172,9 +22911,9 @@ var Laya=window.Laya=(function(window,document){
 				}
 				if (i==tPriceI){
 					if (!tLineParam[2]){
-						tLineParam[2]="●"+tStockPrice;
+						tLineParam[2]="●"+tStockPrice+"("+StockTools.getGoodPercent(percents[i])+"%)";
 						}else{
-						tLineParam[2]+="●"+tStockPrice;
+						tLineParam[2]+="●"+tStockPrice+"("+StockTools.getGoodPercent(percents[i])+"%)";
 					}
 				}
 				tLineParam[3]=this.getRateColor(percents[i]);
@@ -22424,17 +23163,8 @@ var Laya=window.Laya=(function(window,document){
 			this.resultData["positionList"]=positionList;
 			for (i=0;i < len;i++){
 				positionList.push(this.getWinLoseData(ValueTools.mParseFloat(days[i]),dataList));
-			};
-			var gridLine;
-			gridLine=[];
-			var values;
-			values=this.gridLineValue.split(",");
-			len=values.length;
-			for (i=0;i < len;i++){
-				values[i]=ValueTools.mParseFloat(values[i])*this.barHeight;
 			}
-			gridLine.push(0,dataList.length-1,values,this.color,this.gridLineValue.split(","));
-			this.resultData["gridLine"]=gridLine;
+			this.addGridLine(this.barHeight,this.gridLineValue);
 		}
 
 		__proto.getBuyList=function(positionData){
@@ -22509,7 +23239,7 @@ var Laya=window.Laya=(function(window,document){
 				rst.push(["drawLinesEx",[tPositionO["loseList"],this.loseColor]]);
 				rst.push(["drawTexts",[tPositionO["buyList"],"low",30,"#00ff00",true,"#00ff00"]]);
 			}
-			rst.push(["drawGridLineEx",this.resultData["gridLine"]]);
+			this.addGridLineToDraw(rst);
 			return rst;
 		}
 
@@ -22641,6 +23371,120 @@ var Laya=window.Laya=(function(window,document){
 	*...
 	*@author ww
 	*/
+	//class laya.stock.backtest.sellers.SimpleSeller extends laya.stock.backtest.sellers.SellerBase
+	var SimpleSeller=(function(_super){
+		function SimpleSeller(){
+			this.loseSell=-0.05;
+			this.winSell=0.2;
+			this.backSell=-0.1;
+			this.maxDay=20;
+			this.tPrice=NaN;
+			this.tHigh=NaN;
+			SimpleSeller.__super.call(this);
+		}
+
+		__class(SimpleSeller,'laya.stock.backtest.sellers.SimpleSeller',_super);
+		var __proto=SimpleSeller.prototype;
+		__proto.doSell=function(){
+			if (!this.dataList[this.startIndex])return this.buyPrice;
+			var i=0,len=0;
+			len=this.dataList.length;
+			var tStockInfo;
+			this.tHigh=this.buyPrice;
+			var tRst=NaN;
+			this.sellDay=0;
+			for (i=this.startIndex;i < len;i++){
+				tStockInfo=this.dataList[i];
+				this.sellDay++;
+				this.tPrice=tStockInfo["open"];
+				if (this.sellDay >=this.maxDay)return this.tPrice;
+				tRst=this.doJudge();
+				if (tRst > 0)return tRst;
+				this.tPrice=tStockInfo["close"];
+				tRst=this.doJudge();
+				if (tRst > 0)return tRst;
+			}
+			return this.tPrice;
+		}
+
+		__proto.doJudge=function(){
+			if (this.tPrice > this.tHigh)this.tHigh=this.tPrice;
+			var tRate=NaN;
+			tRate=this.tPrice / this.buyPrice-1;
+			if (tRate > this.winSell){
+				return this.tPrice;
+			}
+			if (tRate < this.loseSell){
+				return this.tPrice;
+			}
+			return 0;
+		}
+
+		return SimpleSeller;
+	})(SellerBase)
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class laya.stock.backtest.traders.AverageTrader extends laya.stock.backtest.Trader
+	var AverageTrader=(function(_super){
+		function AverageTrader(){
+			this.averageAnalyser=null;
+			this.minBuyLose=-0.20;
+			this.maxBuyLose=-0.5;
+			this.minBuyExp=0.4;
+			this.posDayCount=90;
+			this.maxDay=30;
+			AverageTrader.__super.call(this);
+			this.averageAnalyser=new AverageLineAnalyser();
+			var seller;
+			seller=new SimpleSeller();
+			seller.loseSell=-0.2;
+			seller.winSell=0.9;
+			seller.backSell=-0.1;
+			seller.maxDay=this.maxDay;
+		}
+
+		__class(AverageTrader,'laya.stock.backtest.traders.AverageTrader',_super);
+		var __proto=AverageTrader.prototype;
+		__proto.reset=function(){
+			_super.prototype.reset.call(this);
+		}
+
+		__proto.runTest=function(){
+			this.averageAnalyser.analyser(this.stockData,0,-1,false);
+			var rstData;
+			rstData=this.averageAnalyser.resultData;
+			var buyPoints;
+			buyPoints=rstData["buys"];
+			if (!buyPoints)return;
+			var i=0,len=0;
+			len=buyPoints.length;
+			var buyI=0;
+			var posInfo;
+			for (i=0;i < len;i++){
+				var tBuyArr;
+				tBuyArr=buyPoints[i];
+				buyI=tBuyArr[1];
+				if (buyI){
+					posInfo=DataUtils.getWinLoseInfo(this.stockData.dataList,this.posDayCount,buyI);
+					if (posInfo[2] > this.minBuyExp&&posInfo[0]<this.minBuyLose&&posInfo[0]>this.maxBuyLose){
+						this.buyStaticAt(tBuyArr[1],this.maxDay,this.seller);
+					}
+				}
+			}
+		}
+
+		return AverageTrader;
+	})(Trader)
+
+
+	/**
+	*...
+	*@author ww
+	*/
 	//class laya.stock.models.DownList extends laya.stock.models.OrdedList
 	var DownList=(function(_super){
 		function DownList(){
@@ -22721,8 +23565,10 @@ var Laya=window.Laya=(function(window,document){
 			if (!code)return "unknow";
 			var adptCode;
 			adptCode=StockTools.getPureStock(code);
-			if (this.stockDic[adptCode])return this.stockDic[adptCode].name;
-			return "unknow";
+			var stockO;
+			stockO=StockJsonP.getStockData(adptCode)|| this.stockDic[adptCode];
+			if (stockO)return stockO.name;
+			return adptCode;
 		}
 
 		__static(StockBasicInfo,
@@ -22750,6 +23596,7 @@ var Laya=window.Laya=(function(window,document){
 			this.dataList.sort(MathUtil.sortByKey("date",false,false));
 		}
 
+		__proto.freshData=function(){}
 		return StockData;
 	})(CSVParser)
 
@@ -24656,6 +25503,8 @@ var Laya=window.Laya=(function(window,document){
 	var AverageLineAnalyser=(function(_super){
 		function AverageLineAnalyser(){
 			this.showBuy=0;
+			this.showTrend=1;
+			this.barHeight=500;
 			AverageLineAnalyser.__super.call(this);
 			this.days="5,12,26";
 			this.colors="#ff0000,#00ffff,#ffff00";
@@ -24664,7 +25513,7 @@ var Laya=window.Laya=(function(window,document){
 		__class(AverageLineAnalyser,'laya.stock.analysers.AverageLineAnalyser',_super);
 		var __proto=AverageLineAnalyser.prototype;
 		__proto.initParamKeys=function(){
-			this.paramkeys=["days","colors","priceType","showBuy"];
+			this.paramkeys=["days","colors","priceType","showBuy","showTrend"];
 		}
 
 		__proto.addToConfigTypes=function(types){
@@ -24738,6 +25587,26 @@ var Laya=window.Laya=(function(window,document){
 				preIsUp=curIsUp;
 			}
 			this.resultData["buys"]=buyPoints;
+			if (this.showTrend > 0){
+				len=this.disDataList.length;
+				var distanceList;
+				distanceList=[];
+				for (i=0;i < len;i++){
+					distanceList.push([i,this.barHeight *this.getAvgDistance(avgs,i),AverageLineAnalyser._colorDic[this.getTrendType(avgs,i)]]);
+				}
+				this.resultData["distanceList"]=distanceList;
+				this.addGridLine(this.barHeight,"0,0.025,0.05,0.1,0.15,0.20,0.25");
+			}
+		}
+
+		__proto.getAvgDistance=function(avgs,index){
+			AverageLineAnalyser._tempArr.length=avgs.length;
+			var i=0,len=0;
+			len=AverageLineAnalyser._tempArr.length;
+			for (i=0;i < len;i++){
+				AverageLineAnalyser._tempArr[i]=avgs[i][0][index][1];
+			}
+			return DataUtils.getDistanceRate(AverageLineAnalyser._tempArr);
 		}
 
 		__proto.getDrawCmds=function(){
@@ -24745,6 +25614,10 @@ var Laya=window.Laya=(function(window,document){
 			rst=_super.prototype.getDrawCmds.call(this);
 			if (this.showBuy > 0)
 				rst.push(["drawTexts",[this.resultData["buys"],"low",30,"#00ff00",true,"#00ff00"]]);
+			if (this.showTrend > 0){
+				rst.push(["drawLinesEx",[this.resultData["distanceList"]]]);
+				this.addGridLineToDraw(rst);
+			}
 			return rst;
 		}
 
@@ -24815,6 +25688,41 @@ var Laya=window.Laya=(function(window,document){
 			return true;
 		}
 
+		__proto.getTrendType=function(avgs,index){
+			var i=0,len=0;
+			len=avgs.length;
+			var preLine;
+			var tLine;
+			var flg=false;
+			flg=true;
+			for (i=1;i < len;i++){
+				preLine=avgs[i-1][0][index];
+				tLine=avgs[i][0][index];
+				if (tLine[1] > preLine[1]){
+					flg=false;
+					break ;
+				}
+			}
+			if (flg)
+				return 1;
+			flg=true;
+			for (i=1;i < len;i++){
+				preLine=avgs[i-1][0][index];
+				tLine=avgs[i][0][index];
+				if (tLine[1] < preLine[1]){
+					flg=false;
+					break ;
+				}
+			}
+			if (flg)
+				return-1;
+			return 0;
+		}
+
+		AverageLineAnalyser._tempArr=[];
+		__static(AverageLineAnalyser,
+		['_colorDic',function(){return this._colorDic={"-1":"#00ff00","0":"#00ffff","1":"#ff0000" };}
+		]);
 		return AverageLineAnalyser;
 	})(AverageLine)
 
@@ -28289,6 +29197,24 @@ var Laya=window.Laya=(function(window,document){
 			this.setStockData(stockData);
 		}
 
+		__proto.freshStockData=function(){
+			var dataO;
+			dataO=StockJsonP.getStockData(this.tStock);
+			if (!dataO)return;
+			dataO=StockJsonP.adptStockO(dataO);
+			if (dataO.price <=0)return;
+			if (dataO.amount <=0)return;
+			var lastDataO;
+			lastDataO=this.dataList[this.dataList.length-1];
+			if (dataO.date==lastDataO.date){
+				this.dataList[this.dataList.length-1]=dataO;
+				}else{
+				if (dataO.date > lastDataO.date){
+					this.dataList.push(dataO);
+				}
+			}
+		}
+
 		__proto.showMsg=function(msg){
 			this.event("msg",StockBasicInfo.I.getStockName(this.tStock)+":"+msg);
 		}
@@ -28296,6 +29222,7 @@ var Laya=window.Laya=(function(window,document){
 		__proto.setStockData=function(stockData){
 			this.stockData=stockData;
 			this.dataList=stockData.dataList;
+			this.freshStockData();
 			this.cacheAsBitmap=false;
 			this.event("DataInited");
 			this.drawdata(this.start);
@@ -28304,7 +29231,7 @@ var Laya=window.Laya=(function(window,document){
 				this.showMsg("playing K-line Animation");
 				Laya.timer.loop(10,this,this.timeEffect);
 				}else{
-				this.showMsg("K-line Showed");
+				this.showMsg("K-line Showed:"+this.disDataList[this.disDataList.length-1].date);
 				this.cacheAsBitmap=true;
 				this.event("KlineShowed");
 			}
@@ -28362,17 +29289,30 @@ var Laya=window.Laya=(function(window,document){
 			this.xRate=this.lineWidth / (len *this.gridWidth);
 			var markTime;
 			markTime=StockListManager.getStockLastMark(this.tStock);
+			var prePrice=0;
 			for (i=0;i < len;i++){
 				tData=dataList[i];
 				var pos=NaN;
 				pos=this.getAdptXV(i *this.gridWidth);
-				if (tData["close"] > tData["open"]){
+				if (tData["close"] >=tData["open"]){
 					tColor="#ff0000";
 					}else{
 					tColor="#00ffff";
 				}
-				this.graphics.drawLine(pos,this.getAdptYV(tData["high"]),pos,this.getAdptYV(tData["low"]),tColor,1*this.xRate);
-				this.graphics.drawLine(pos,this.getAdptYV(tData["open"]),pos,this.getAdptYV(tData["close"]),tColor,this.gridWidth*this.xRate);
+				if (tData["high"]==tData["low"]){
+					if (tData["high"] < prePrice){
+						tColor="#00ffff";
+					}
+					this.graphics.drawLine(pos,this.getAdptYV(tData["open"]),pos,this.getAdptYV(tData["close"])+1,tColor,this.gridWidth*this.xRate);
+					}else{
+					this.graphics.drawLine(pos,this.getAdptYV(tData["high"]),pos,this.getAdptYV(tData["low"]),tColor,1 *this.xRate);
+					if (tData["open"]==tData["close"]){
+						this.graphics.drawLine(pos,this.getAdptYV(tData["open"]),pos,this.getAdptYV(tData["close"])+0.5,tColor,this.gridWidth*this.xRate);
+						}else{
+						this.graphics.drawLine(pos,this.getAdptYV(tData["open"]),pos,this.getAdptYV(tData["close"]),tColor,this.gridWidth*this.xRate);
+					}
+				}
+				prePrice=tData["close"];
 			}
 			if (markTime){
 				for (i=0;i < len;i++){
@@ -28598,7 +29538,9 @@ var Laya=window.Laya=(function(window,document){
 			(offY===void 0)&& (offY=0);
 			var i=0,len=0;
 			len=pointList.length;
+			var color;
 			for (i=1;i < len;i++){
+				color=pointList[i][2]?pointList[i][2]:color;
 				this.drawLineEx(pointList[i-1][0],pointList[i-1][1]+offY,pointList[i][0],pointList[i][1]+offY,color);
 			}
 		}
@@ -28702,6 +29644,10 @@ var Laya=window.Laya=(function(window,document){
 
 		__proto.getAdptXV=function(v){
 			return DataUtils.mParseFloat(v)*this.xRate;
+		}
+
+		__proto.getIByX=function(x){
+			return Math.round(x/(this.xRate*this.gridWidth));
 		}
 
 		KLine.KlineShowed="KlineShowed";
@@ -36225,122 +37171,6 @@ var Laya=window.Laya=(function(window,document){
 
 
 	/**
-	*<code>CheckBox</code> 组件显示一个小方框，该方框内可以有选中标记。
-	*<code>CheckBox</code> 组件还可以显示可选的文本标签，默认该标签位于 CheckBox 右侧。
-	*<p><code>CheckBox</code> 使用 <code>dataSource</code>赋值时的的默认属性是：<code>selected</code>。</p>
-	*
-	*@example <caption>以下示例代码，创建了一个 <code>CheckBox</code> 实例。</caption>
-	*package
-	*{
-		*import laya.ui.CheckBox;
-		*import laya.utils.Handler;
-		*public class CheckBox_Example
-		*{
-			*public function CheckBox_Example()
-			*{
-				*Laya.init(640,800);//设置游戏画布宽高。
-				*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
-				*Laya.loader.load("resource/ui/check.png",Handler.create(this,onLoadComplete));//加载资源。
-				*}
-			*private function onLoadComplete():void
-			*{
-				*trace("资源加载完成！");
-				*var checkBox:CheckBox=new CheckBox("resource/ui/check.png","这个是一个CheckBox组件。");//创建一个 CheckBox 类的实例对象 checkBox ,传入它的皮肤skin和标签label。
-				*checkBox.x=100;//设置 checkBox 对象的属性 x 的值，用于控制 checkBox 对象的显示位置。
-				*checkBox.y=100;//设置 checkBox 对象的属性 y 的值，用于控制 checkBox 对象的显示位置。
-				*checkBox.clickHandler=new Handler(this,onClick,[checkBox]);//设置 checkBox 的点击事件处理器。
-				*Laya.stage.addChild(checkBox);//将此 checkBox 对象添加到显示列表。
-				*}
-			*private function onClick(checkBox:CheckBox):void
-			*{
-				*trace("输出选中状态: checkBox.selected = "+checkBox.selected);
-				*}
-			*}
-		*}
-	*@example
-	*Laya.init(640,800);//设置游戏画布宽高
-	*Laya.stage.bgColor="#efefef";//设置画布的背景颜色
-	*Laya.loader.load("resource/ui/check.png",laya.utils.Handler.create(this,loadComplete));//加载资源
-	*function loadComplete()
-	*{
-		*console.log("资源加载完成！");
-		*var checkBox:laya.ui.CheckBox=new laya.ui.CheckBox("resource/ui/check.png","这个是一个CheckBox组件。");//创建一个 CheckBox 类的类的实例对象 checkBox ,传入它的皮肤skin和标签label。
-		*checkBox.x=100;//设置 checkBox 对象的属性 x 的值，用于控制 checkBox 对象的显示位置。
-		*checkBox.y=100;//设置 checkBox 对象的属性 y 的值，用于控制 checkBox 对象的显示位置。
-		*checkBox.clickHandler=new laya.utils.Handler(this,this.onClick,[checkBox],false);//设置 checkBox 的点击事件处理器。
-		*Laya.stage.addChild(checkBox);//将此 checkBox 对象添加到显示列表。
-		*}
-	*function onClick(checkBox)
-	*{
-		*console.log("checkBox.selected = ",checkBox.selected);
-		*}
-	*@example
-	*import CheckBox=laya.ui.CheckBox;
-	*import Handler=laya.utils.Handler;
-	*class CheckBox_Example{
-		*constructor()
-		*{
-			*Laya.init(640,800);
-			*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
-			*Laya.loader.load("resource/ui/check.png",Handler.create(this,this.onLoadComplete));//加载资源。
-			*}
-		*private onLoadComplete()
-		*{
-			*var checkBox:CheckBox=new CheckBox("resource/ui/check.png","这个是一个CheckBox组件。");//创建一个 CheckBox 类的实例对象 checkBox ,传入它的皮肤skin和标签label。
-			*checkBox.x=100;//设置 checkBox 对象的属性 x 的值，用于控制 checkBox 对象的显示位置。
-			*checkBox.y=100;//设置 checkBox 对象的属性 y 的值，用于控制 checkBox 对象的显示位置。
-			*checkBox.clickHandler=new Handler(this,this.onClick,[checkBox]);//设置 checkBox 的点击事件处理器。
-			*Laya.stage.addChild(checkBox);//将此 checkBox 对象添加到显示列表。
-			*}
-		*private onClick(checkBox:CheckBox):void
-		*{
-			*console.log("输出选中状态: checkBox.selected = "+checkBox.selected);
-			*}
-		*}
-	*/
-	//class laya.ui.CheckBox extends laya.ui.Button
-	var CheckBox=(function(_super){
-		/**
-		*创建一个新的 <code>CheckBox</code> 组件实例。
-		*@param skin 皮肤资源地址。
-		*@param label 文本标签的内容。
-		*/
-		function CheckBox(skin,label){
-			(label===void 0)&& (label="");
-			CheckBox.__super.call(this,skin,label);
-		}
-
-		__class(CheckBox,'laya.ui.CheckBox',_super);
-		var __proto=CheckBox.prototype;
-		/**@inheritDoc */
-		__proto.preinitialize=function(){
-			laya.ui.Component.prototype.preinitialize.call(this);
-			this.toggle=true;
-			this._autoSize=false;
-		}
-
-		/**@inheritDoc */
-		__proto.initialize=function(){
-			_super.prototype.initialize.call(this);
-			this.createText();
-			this._text.align="left";
-			this._text.valign="top";
-			this._text.width=0;
-		}
-
-		/**@inheritDoc */
-		__getset(0,__proto,'dataSource',_super.prototype._$get_dataSource,function(value){
-			this._dataSource=value;
-			if ((typeof value=='boolean'))this.selected=value;
-			else if ((typeof value=='string'))this.selected=value==="true";
-			else _super.prototype._$set_dataSource.call(this,value);
-		});
-
-		return CheckBox;
-	})(Button)
-
-
-	/**
 	*<code>Panel</code> 是一个面板容器类。
 	*/
 	//class laya.ui.Panel extends laya.ui.Box
@@ -36655,6 +37485,122 @@ var Laya=window.Laya=(function(window,document){
 
 		return Panel;
 	})(Box)
+
+
+	/**
+	*<code>CheckBox</code> 组件显示一个小方框，该方框内可以有选中标记。
+	*<code>CheckBox</code> 组件还可以显示可选的文本标签，默认该标签位于 CheckBox 右侧。
+	*<p><code>CheckBox</code> 使用 <code>dataSource</code>赋值时的的默认属性是：<code>selected</code>。</p>
+	*
+	*@example <caption>以下示例代码，创建了一个 <code>CheckBox</code> 实例。</caption>
+	*package
+	*{
+		*import laya.ui.CheckBox;
+		*import laya.utils.Handler;
+		*public class CheckBox_Example
+		*{
+			*public function CheckBox_Example()
+			*{
+				*Laya.init(640,800);//设置游戏画布宽高。
+				*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
+				*Laya.loader.load("resource/ui/check.png",Handler.create(this,onLoadComplete));//加载资源。
+				*}
+			*private function onLoadComplete():void
+			*{
+				*trace("资源加载完成！");
+				*var checkBox:CheckBox=new CheckBox("resource/ui/check.png","这个是一个CheckBox组件。");//创建一个 CheckBox 类的实例对象 checkBox ,传入它的皮肤skin和标签label。
+				*checkBox.x=100;//设置 checkBox 对象的属性 x 的值，用于控制 checkBox 对象的显示位置。
+				*checkBox.y=100;//设置 checkBox 对象的属性 y 的值，用于控制 checkBox 对象的显示位置。
+				*checkBox.clickHandler=new Handler(this,onClick,[checkBox]);//设置 checkBox 的点击事件处理器。
+				*Laya.stage.addChild(checkBox);//将此 checkBox 对象添加到显示列表。
+				*}
+			*private function onClick(checkBox:CheckBox):void
+			*{
+				*trace("输出选中状态: checkBox.selected = "+checkBox.selected);
+				*}
+			*}
+		*}
+	*@example
+	*Laya.init(640,800);//设置游戏画布宽高
+	*Laya.stage.bgColor="#efefef";//设置画布的背景颜色
+	*Laya.loader.load("resource/ui/check.png",laya.utils.Handler.create(this,loadComplete));//加载资源
+	*function loadComplete()
+	*{
+		*console.log("资源加载完成！");
+		*var checkBox:laya.ui.CheckBox=new laya.ui.CheckBox("resource/ui/check.png","这个是一个CheckBox组件。");//创建一个 CheckBox 类的类的实例对象 checkBox ,传入它的皮肤skin和标签label。
+		*checkBox.x=100;//设置 checkBox 对象的属性 x 的值，用于控制 checkBox 对象的显示位置。
+		*checkBox.y=100;//设置 checkBox 对象的属性 y 的值，用于控制 checkBox 对象的显示位置。
+		*checkBox.clickHandler=new laya.utils.Handler(this,this.onClick,[checkBox],false);//设置 checkBox 的点击事件处理器。
+		*Laya.stage.addChild(checkBox);//将此 checkBox 对象添加到显示列表。
+		*}
+	*function onClick(checkBox)
+	*{
+		*console.log("checkBox.selected = ",checkBox.selected);
+		*}
+	*@example
+	*import CheckBox=laya.ui.CheckBox;
+	*import Handler=laya.utils.Handler;
+	*class CheckBox_Example{
+		*constructor()
+		*{
+			*Laya.init(640,800);
+			*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
+			*Laya.loader.load("resource/ui/check.png",Handler.create(this,this.onLoadComplete));//加载资源。
+			*}
+		*private onLoadComplete()
+		*{
+			*var checkBox:CheckBox=new CheckBox("resource/ui/check.png","这个是一个CheckBox组件。");//创建一个 CheckBox 类的实例对象 checkBox ,传入它的皮肤skin和标签label。
+			*checkBox.x=100;//设置 checkBox 对象的属性 x 的值，用于控制 checkBox 对象的显示位置。
+			*checkBox.y=100;//设置 checkBox 对象的属性 y 的值，用于控制 checkBox 对象的显示位置。
+			*checkBox.clickHandler=new Handler(this,this.onClick,[checkBox]);//设置 checkBox 的点击事件处理器。
+			*Laya.stage.addChild(checkBox);//将此 checkBox 对象添加到显示列表。
+			*}
+		*private onClick(checkBox:CheckBox):void
+		*{
+			*console.log("输出选中状态: checkBox.selected = "+checkBox.selected);
+			*}
+		*}
+	*/
+	//class laya.ui.CheckBox extends laya.ui.Button
+	var CheckBox=(function(_super){
+		/**
+		*创建一个新的 <code>CheckBox</code> 组件实例。
+		*@param skin 皮肤资源地址。
+		*@param label 文本标签的内容。
+		*/
+		function CheckBox(skin,label){
+			(label===void 0)&& (label="");
+			CheckBox.__super.call(this,skin,label);
+		}
+
+		__class(CheckBox,'laya.ui.CheckBox',_super);
+		var __proto=CheckBox.prototype;
+		/**@inheritDoc */
+		__proto.preinitialize=function(){
+			laya.ui.Component.prototype.preinitialize.call(this);
+			this.toggle=true;
+			this._autoSize=false;
+		}
+
+		/**@inheritDoc */
+		__proto.initialize=function(){
+			_super.prototype.initialize.call(this);
+			this.createText();
+			this._text.align="left";
+			this._text.valign="top";
+			this._text.width=0;
+		}
+
+		/**@inheritDoc */
+		__getset(0,__proto,'dataSource',_super.prototype._$get_dataSource,function(value){
+			this._dataSource=value;
+			if ((typeof value=='boolean'))this.selected=value;
+			else if ((typeof value=='string'))this.selected=value==="true";
+			else _super.prototype._$set_dataSource.call(this,value);
+		});
+
+		return CheckBox;
+	})(Button)
 
 
 	/**
@@ -38748,70 +39694,6 @@ var Laya=window.Laya=(function(window,document){
 
 
 	/**
-	*...
-	*@author ww
-	*/
-	//class stock.prop.PropItem extends laya.ui.Box
-	var PropItem=(function(_super){
-		function PropItem(){
-			this.box=null;
-			this.label=null;
-			this.tInput=null;
-			this.tType=null;
-			this.key=null;
-			PropItem.__super.call(this);
-		}
-
-		__class(PropItem,'stock.prop.PropItem',_super);
-		var __proto=PropItem.prototype;
-		__proto.initByType=function(type){
-			(type===void 0)&& (type="");
-			this.tType=type;
-			this.createPropItem(type);
-		}
-
-		__proto.createPropItem=function(type){
-			this.removeChildren();
-			this.label=new Label();
-			this.label.color="#ff0000";
-			this.label.pos(0,0);
-			this.tInput=new TextInput();
-			this.tInput.skin="comp/textinput.png";
-			this.tInput.pos(70,0);
-			this.tInput.width=100;
-			this.tInput.color="#ffffff";
-			this.addChild(this.label);
-			this.addChild(this.tInput);
-		}
-
-		__proto.setLabel=function(txt){
-			this.label.text=txt;
-		}
-
-		__proto.setValue=function(v){
-			this.tInput.text=v;
-		}
-
-		__proto.getValue=function(){
-			if (this.tType=="NUMBER"){
-				return ValueTools.mParseFloat(this.tInput.text);
-			}
-			return this.tInput.text;
-		}
-
-		PropItem.createByType=function(type){
-			(type===void 0)&& (type="");
-			var rst;
-			rst=new PropItem();
-			rst.initByType(type);
-			return rst;
-		}
-
-		return PropItem;
-	})(Box)
-
-
-	/**
 	*字体切片，简化版的位图字体，只需设置一个切片图片和文字内容即可使用，效果同位图字体
 	*使用方式：设置位图字体皮肤skin，设置皮肤对应的字体内容sheet（如果多行，可以使用空格换行），示例：
 	*fontClip.skin="font1.png";//设置皮肤
@@ -38996,6 +39878,70 @@ var Laya=window.Laya=(function(window,document){
 
 		return FontClip;
 	})(Clip)
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class stock.prop.PropItem extends laya.ui.Box
+	var PropItem=(function(_super){
+		function PropItem(){
+			this.box=null;
+			this.label=null;
+			this.tInput=null;
+			this.tType=null;
+			this.key=null;
+			PropItem.__super.call(this);
+		}
+
+		__class(PropItem,'stock.prop.PropItem',_super);
+		var __proto=PropItem.prototype;
+		__proto.initByType=function(type){
+			(type===void 0)&& (type="");
+			this.tType=type;
+			this.createPropItem(type);
+		}
+
+		__proto.createPropItem=function(type){
+			this.removeChildren();
+			this.label=new Label();
+			this.label.color="#ff0000";
+			this.label.pos(0,0);
+			this.tInput=new TextInput();
+			this.tInput.skin="comp/textinput.png";
+			this.tInput.pos(70,0);
+			this.tInput.width=100;
+			this.tInput.color="#ffffff";
+			this.addChild(this.label);
+			this.addChild(this.tInput);
+		}
+
+		__proto.setLabel=function(txt){
+			this.label.text=txt;
+		}
+
+		__proto.setValue=function(v){
+			this.tInput.text=v;
+		}
+
+		__proto.getValue=function(){
+			if (this.tType=="NUMBER"){
+				return ValueTools.mParseFloat(this.tInput.text);
+			}
+			return this.tInput.text;
+		}
+
+		PropItem.createByType=function(type){
+			(type===void 0)&& (type="");
+			var rst;
+			rst=new PropItem();
+			rst.initByType(type);
+			return rst;
+		}
+
+		return PropItem;
+	})(Box)
 
 
 	/**
@@ -41256,6 +42202,26 @@ var Laya=window.Laya=(function(window,document){
 	*...
 	*@author ww
 	*/
+	//class laya.debug.view.nodeInfo.nodetree.NodeTreeSetting extends laya.debug.ui.debugui.NodeTreeSettingUI
+	var NodeTreeSetting=(function(_super){
+		function NodeTreeSetting(){
+			NodeTreeSetting.__super.call(this);
+			Base64AtlasManager.replaceRes(NodeTreeSettingUI.uiView);
+			this.createView(NodeTreeSettingUI.uiView);
+		}
+
+		__class(NodeTreeSetting,'laya.debug.view.nodeInfo.nodetree.NodeTreeSetting',_super);
+		var __proto=NodeTreeSetting.prototype;
+		//inits();
+		__proto.createChildren=function(){}
+		return NodeTreeSetting;
+	})(NodeTreeSettingUI)
+
+
+	/**
+	*...
+	*@author ww
+	*/
 	//class laya.debug.view.nodeInfo.nodetree.NodeTree extends laya.debug.ui.debugui.NodeTreeUI
 	var NodeTree=(function(_super){
 		function NodeTree(){
@@ -41493,26 +42459,6 @@ var Laya=window.Laya=(function(window,document){
 		]);
 		return NodeTree;
 	})(NodeTreeUI)
-
-
-	/**
-	*...
-	*@author ww
-	*/
-	//class laya.debug.view.nodeInfo.nodetree.NodeTreeSetting extends laya.debug.ui.debugui.NodeTreeSettingUI
-	var NodeTreeSetting=(function(_super){
-		function NodeTreeSetting(){
-			NodeTreeSetting.__super.call(this);
-			Base64AtlasManager.replaceRes(NodeTreeSettingUI.uiView);
-			this.createView(NodeTreeSettingUI.uiView);
-		}
-
-		__class(NodeTreeSetting,'laya.debug.view.nodeInfo.nodetree.NodeTreeSetting',_super);
-		var __proto=NodeTreeSetting.prototype;
-		//inits();
-		__proto.createChildren=function(){}
-		return NodeTreeSetting;
-	})(NodeTreeSettingUI)
 
 
 	/**
@@ -41771,6 +42717,9 @@ var Laya=window.Laya=(function(window,document){
 		function KLineView(){
 			this.kLine=null;
 			this.tAnalyser=null;
+			this.addOnLayer=null;
+			this.dayLine=null;
+			this.dayStockInfoTxt=null;
 			this.preMouseX=NaN;
 			this.isLongPress=false;
 			this.isMyMouseDown=false;
@@ -41798,15 +42747,27 @@ var Laya=window.Laya=(function(window,document){
 			analyserClassList.push(DistAnalyser);
 			this.analyserList.initAnalysers(analyserClassList);
 			this.addChild(this.kLine);
+			this.kLine.pos(0,this.kLine.lineHeight+90);
+			this.kLine.on("msg",this,this.onKlineMsg);
+			this.addOnLayer=new Sprite();
+			this.addChild(this.addOnLayer);
+			this.addOnLayer.pos(this.kLine.x,this.kLine.y);
+			this.dayLine=new Sprite();
+			this.dayStockInfoTxt=new Text();
+			this.dayStockInfoTxt.color="#ff0000";
+			this.dayStockInfoTxt.x=2;
+			this.dayStockInfoTxt.width=120;
+			this.dayStockInfoTxt.align="left";
+			this.dayLine.addChild(this.dayStockInfoTxt);
+			this.addOnLayer.addChild(this.dayLine);
 			var stock;
 			stock="300383";
 			stock="002064";
-			this.kLine.pos(0,this.kLine.lineHeight+90);
-			this.kLine.on("msg",this,this.onKlineMsg);
 			this.init();
 			this.propPanel.visible=false;
 			Notice.listen("AnalyserListChange",this,this.analysersChanged);
 			Notice.listen("Show_Analyser_Prop",this,this.showAnalyserProp);
+			Notice.listen("Hide_Analyser_Prop",this,this.updatePropPanelPos);
 			Notice.listen("Set_Analyser_Prop",this,this.onSetAnalyserProps);
 			this.propPanel.on("MakeChange",this,this.refreshKLine);
 			this.on("mousedown",this,this.onMMouseDown);
@@ -41821,10 +42782,59 @@ var Laya=window.Laya=(function(window,document){
 			this.kLine.on("KlineShowed",this,this.onKlineShowed);
 			this.tradeTest.on("NEXT_Day",this,this.onNextDay);
 			this.tradeTest.on("ANOTHER",this,this.onAnotherTradeTest);
+			if (Browser.onMobile)this.tradeSelect.scaleX=this.tradeSelect.scaleY=2;
+			laya.events.MultiTouchManager.I.on(laya.events.MultiTouchManager.MultiStart,this,this.clearAllMouseDown);
 		}
 
 		__class(KLineView,'view.KLineView',_super);
 		var __proto=KLineView.prototype;
+		__proto.updateDayLine=function(){
+			if (this.clickControlEnable.selected)
+				return;
+			var curI=NaN;
+			curI=this.kLine.getIByX(this.addOnLayer.mouseX);
+			this.dayLine.x=this.kLine.getAdptXV(curI)*this.kLine.gridWidth;
+			this.dayLine.visible=true;
+			var tStockData;
+			tStockData=this.kLine.disDataList[curI];
+			var preStockData;
+			preStockData=this.kLine.disDataList[curI-1];
+			if (tStockData){
+				var showStr;
+				if (preStockData){
+					showStr=tStockData.date+
+					"\n"+"Close:"+tStockData.close+":"+StockTools.getGoodPercent((tStockData.close-preStockData.open)/ preStockData.close)+"%"+
+					"\n"+"High:"+tStockData.high+":"+StockTools.getGoodPercent((tStockData.high-preStockData.open)/ preStockData.close)+"%"+
+					"\n"+"Low:"+tStockData.low+":"+StockTools.getGoodPercent((tStockData.low-preStockData.open)/ preStockData.close)+"%";
+					if (tStockData.close-tStockData.open >=0){
+						this.dayStockInfoTxt.color="#ff0000";
+					}
+					else {
+						this.dayStockInfoTxt.color="#00ff00";
+					}
+				}
+				else {
+					showStr=tStockData.date+
+					"\n"+"Close:"+tStockData.close+
+					"\n"+"High:"+tStockData.high+
+					"\n"+"Low:"+tStockData.low;
+					this.dayStockInfoTxt.color="#ff0000";
+				}
+				if (this.dayLine.x+this.dayStockInfoTxt.width > this.width-20){
+					this.dayStockInfoTxt.align="right";
+					this.dayStockInfoTxt.x=-this.dayStockInfoTxt.width;
+				}
+				else {
+					this.dayStockInfoTxt.align="left";
+					this.dayStockInfoTxt.x=5;
+				}
+				this.dayStockInfoTxt.text=showStr;
+			}
+			else {
+				this.dayStockInfoTxt.text="";
+			}
+		}
+
 		__proto.onNextDay=function(){
 			this.dayScroll.value=this.dayScroll.value+1;
 		}
@@ -41848,7 +42858,7 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		__proto.onKeyDown=function(e){
-			switch(e.keyCode){
+			switch (e.keyCode){
 				case 40:
 					this.onNext();
 					break ;
@@ -41879,7 +42889,8 @@ var Laya=window.Laya=(function(window,document){
 				Notice.notify("AddMyStock",this.kLine.tStock);
 				MessageManager.I.show("add stock:"+this.kLine.tStock);
 				this.addToStockBtn.label="删自选";
-				}else{
+			}
+			else {
 				Notice.notify("Remove_MyStock",this.kLine.tStock);
 				MessageManager.I.show("remove stock:"+this.kLine.tStock);
 				this.addToStockBtn.label="加自选";
@@ -41889,15 +42900,25 @@ var Laya=window.Laya=(function(window,document){
 		__proto.onMMouseDown=function(e){
 			Laya.stage.focus=this;
 			this.isMyMouseDown=false;
-			if (e.target !=this)return;
+			if (e.target !=this)
+				return;
+			if (laya.events.MultiTouchManager.I.isMultiDown())return;
 			this.isMyMouseDown=true;
 			this.preMouseX=Laya.stage.mouseX;
 			this.isLongPress=false;
 			Laya.timer.once(800,this,this.longDown);
+			this.updateDayLine();
+		}
+
+		__proto.clearAllMouseDown=function(){
+			Laya.timer.clear(this,this.longDown);
+			Laya.timer.clear(this,this.loopChangeDay);
+			this.isMyMouseDown=false;
 		}
 
 		__proto.longDown=function(){
-			if (!this.maxDayEnable.selected)return;
+			if (!this.maxDayEnable.selected)
+				return;
 			this.isLongPress=true;
 			var dX=NaN;
 			dX=Laya.stage.mouseX-this.preMouseX;
@@ -41916,10 +42937,12 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		__proto.onMMouseUp=function(){
-			if (!this.isMyMouseDown)return;
+			if (!this.isMyMouseDown)
+				return;
 			Laya.timer.clear(this,this.longDown);
 			Laya.timer.clear(this,this.loopChangeDay);
-			if (this.isLongPress)return;
+			if (this.isLongPress)
+				return;
 			var dX=NaN;
 			dX=Laya.stage.mouseX-this.preMouseX;
 			if (dX > 100){
@@ -41929,11 +42952,13 @@ var Laya=window.Laya=(function(window,document){
 				this.onPre();
 			}
 			else {
-				if (this.clickControlEnable){
+				if (this.clickControlEnable.selected){
 					if (Laya.stage.mouseX > Laya.stage.width *0.5){
 						this.dayScroll.value=this.dayScroll.value+1;
-						}else{
-						if (TradeTestManager.isTradeTestOn)return;
+					}
+					else {
+						if (TradeTestManager.isTradeTestOn)
+							return;
 						this.dayScroll.value=this.dayScroll.value-1;
 					}
 				}
@@ -41945,13 +42970,19 @@ var Laya=window.Laya=(function(window,document){
 			this.propPanel.refresh();
 		}
 
-		__proto.refreshKLine=function(){
-			this.showKline(this.kLine.tStock);
+		__proto.refreshKLine=function(freshRealTimeData){
+			(freshRealTimeData===void 0)&& (freshRealTimeData=true);
+			this.showKline(this.kLine.tStock,freshRealTimeData);
 		}
 
 		__proto.showAnalyserProp=function(desArr,dataO){
 			this.propPanel.visible=true;
 			this.propPanel.initByData(desArr,dataO);
+			this.updatePropPanelPos();
+		}
+
+		__proto.updatePropPanelPos=function(){
+			this.propPanel.x=this.analyserList.x-this.propPanel.width-1;
 		}
 
 		__proto.analysersChanged=function(analysers){
@@ -41966,7 +42997,8 @@ var Laya=window.Laya=(function(window,document){
 			this.onPlayInput();
 			if (StockListManager.hasStock(stock)){
 				this.addToStockBtn.label="删自选";
-				}else{
+			}
+			else {
 				this.addToStockBtn.label="加自选";
 			}
 		}
@@ -41989,7 +43021,8 @@ var Laya=window.Laya=(function(window,document){
 				var tValue=0;
 				tValue=Math.floor(Math.random()*max);
 				this.dayScroll.setScroll(0,max,tValue);
-				}else{
+			}
+			else {
 				this.dayScroll.setScroll(0,max,max);
 			}
 			if (this.maxDayEnable.selected){
@@ -42022,7 +43055,7 @@ var Laya=window.Laya=(function(window,document){
 
 		__proto.onDayScrollChange=function(){
 			if (this.maxDayEnable){
-				this.onPlayInput();
+				this.showKline(this.stockInput.text,false);
 			}
 		}
 
@@ -42031,6 +43064,10 @@ var Laya=window.Laya=(function(window,document){
 			this.kLine.lineHeight=this.height-100;
 			this.kLine.lineWidth=this.width-20;
 			this.kLine.pos(0,this.kLine.lineHeight+90);
+			this.dayLine.graphics.clear();
+			this.dayLine.graphics.drawLine(0,0,0,-this.kLine.y,"#ff0000");
+			this.dayLine.visible=false;
+			this.dayStockInfoTxt.y=-100;
 		}
 
 		__proto.onDetail=function(){
@@ -42049,8 +43086,13 @@ var Laya=window.Laya=(function(window,document){
 			this.showKline(this.stockInput.text);
 		}
 
-		__proto.showKline=function(stock){
+		__proto.showKline=function(stock,freshRealTimeData){
+			(freshRealTimeData===void 0)&& (freshRealTimeData=true);
 			this.kLine.autoPlay=this.enableAnimation.selected;
+			this.dayLine.visible=false;
+			if (freshRealTimeData){
+				StockJsonP.getStockData2(stock,Handler.create(this,this.refreshKLine,[false]));
+			}
 			if (this.maxDayEnable.selected){
 				this.kLine.maxShowCount=ValueTools.mParseFloat(this.dayCountInput.text);
 				this.kLine.start=Math.floor(this.dayScroll.value);
@@ -42220,10 +43262,16 @@ var Laya=window.Laya=(function(window,document){
 			this.list.array=[];
 			this.list.scrollBar.autoHide=true;
 			this.showSelect.on("change",this,this.updateUIState);
+			this.on("doubleclick",this,this.onDoubleClick);
 		}
 
 		__class(AnalyserList,'view.plugins.AnalyserList',_super);
 		var __proto=AnalyserList.prototype;
+		__proto.onDoubleClick=function(e){
+			this.scaleX=this.scaleY=3-this.scaleX;
+			Notice.notify("Hide_Analyser_Prop");
+		}
+
 		__proto.updateUIState=function(){
 			this.list.visible=this.showSelect.selected;
 		}
@@ -42428,6 +43476,86 @@ var Laya=window.Laya=(function(window,document){
 		TradeTest.ANOTHER="ANOTHER";
 		return TradeTest;
 	})(TradeTestUI)
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class view.realtime.RealTimeItem extends ui.realtime.StockRealTimeItemUI
+	var RealTimeItem=(function(_super){
+		function RealTimeItem(){
+			this.index=0;
+			this.stock=null;
+			this.isSettingV=false;
+			RealTimeItem.__super.call(this);
+			this.delBtn.on("mousedown",this,this.onDeleteBtn);
+			this.markBtn.on("mousedown",this,this.onMarkBtn);
+			this.on("doubleclick",this,this.onDoubleClick);
+		}
+
+		__class(RealTimeItem,'view.realtime.RealTimeItem',_super);
+		var __proto=RealTimeItem.prototype;
+		__proto.onMarkBtn=function(){
+			Notice.notify("Mark_MyStock",this.stock);
+		}
+
+		__proto.initByStock=function(stockData){
+			if (!stockData)return;
+			var stock;
+			stock=RealTimeView.getStockCode(stockData);
+			this.stock=stock;
+			this.txt.text=stock;
+			var dataO;
+			dataO=StockJsonP.getStockData(stock);
+			if (dataO){
+				this.txt.text=dataO.code+","+dataO.name+","+dataO.price+","+StockTools.getGoodPercent((dataO.price-dataO.close)/ dataO.close)+"%";
+				this.txt.color=dataO.price-dataO.close > 0?"#ff0000":"#00ff00";
+				this.isSettingV=true;
+				this.showLine.selected=RealTimeItem.showStockDic[stock];
+				this.showLine.on("change",this,this.onShowLineChange);
+				this.isSettingV=false;
+			}
+			if ((typeof stockData=='object')){
+				if (stockData.markTime){
+					this.txt.text+=" M:"+DateTools.getTimeStr(stockData.markTime);
+				}
+				if (stockData.markPrice&&dataO&&dataO.price){
+					this.txt.text+=","+StockTools.getGoodPercent((dataO.price-stockData.markPrice)/ stockData.markPrice)+"%"
+				}
+			}
+			if (dataO){
+				this.txt.text+=" "+StockInfoManager.getStockAvgTrendSign(stock,dataO.price);
+			}
+		}
+
+		__proto.onShowLineChange=function(){
+			if (this.isSettingV)return;
+			RealTimeItem.showStockDic[this.stock]=this.showLine.selected;
+			if (this.showLine.selected){
+				Notice.notify("Add_MDLine",[this.stock]);
+				}else{
+				Notice.notify("Remove_MDLine",[this.stock]);
+			}
+		}
+
+		__proto.onDoubleClick=function(){
+			Notice.notify("RealTimeItem_DoubleClick",this.index);
+			Notice.notify("Show_Stock_KLine",StockJsonP.getPureStock(this.stock));
+		}
+
+		__proto.onDeleteBtn=function(){
+			Notice.notify("Remove_MyStock",this.stock);
+		}
+
+		__getset(0,__proto,'dataSource',_super.prototype._$get_dataSource,function(value){
+			_super.prototype._$set_dataSource.call(this,value);
+			this.initByStock(value);
+		});
+
+		RealTimeItem.showStockDic={};
+		return RealTimeItem;
+	})(StockRealTimeItemUI)
 
 
 	/**
@@ -42688,83 +43816,6 @@ var Laya=window.Laya=(function(window,document){
 		RealTimeView.DataSign="Mystocks";
 		return RealTimeView;
 	})(RealTimeUI)
-
-
-	/**
-	*...
-	*@author ww
-	*/
-	//class view.realtime.RealTimeItem extends ui.realtime.StockRealTimeItemUI
-	var RealTimeItem=(function(_super){
-		function RealTimeItem(){
-			this.index=0;
-			this.stock=null;
-			this.isSettingV=false;
-			RealTimeItem.__super.call(this);
-			this.delBtn.on("mousedown",this,this.onDeleteBtn);
-			this.markBtn.on("mousedown",this,this.onMarkBtn);
-			this.on("doubleclick",this,this.onDoubleClick);
-		}
-
-		__class(RealTimeItem,'view.realtime.RealTimeItem',_super);
-		var __proto=RealTimeItem.prototype;
-		__proto.onMarkBtn=function(){
-			Notice.notify("Mark_MyStock",this.stock);
-		}
-
-		__proto.initByStock=function(stockData){
-			if (!stockData)return;
-			var stock;
-			stock=RealTimeView.getStockCode(stockData);
-			this.stock=stock;
-			this.txt.text=stock;
-			var dataO;
-			dataO=StockJsonP.getStockData(stock);
-			if (dataO){
-				this.txt.text=dataO.code+","+dataO.name+","+dataO.price+","+StockTools.getGoodPercent((dataO.price-dataO.close)/ dataO.close)+"%";
-				this.txt.color=dataO.price-dataO.close > 0?"#ff0000":"#00ff00";
-				this.isSettingV=true;
-				this.showLine.selected=RealTimeItem.showStockDic[stock];
-				this.showLine.on("change",this,this.onShowLineChange);
-				this.isSettingV=false;
-			}
-			if ((typeof stockData=='object')){
-				if (stockData.markTime){
-					this.txt.text+=" M:"+DateTools.getTimeStr(stockData.markTime);
-				}
-				if (stockData.markPrice&&dataO&&dataO.price){
-					this.txt.text+=","+StockTools.getGoodPercent((dataO.price-stockData.markPrice)/ stockData.markPrice)+"%"
-				}
-			}
-		}
-
-		__proto.onShowLineChange=function(){
-			if (this.isSettingV)return;
-			RealTimeItem.showStockDic[this.stock]=this.showLine.selected;
-			if (this.showLine.selected){
-				Notice.notify("Add_MDLine",[this.stock]);
-				}else{
-				Notice.notify("Remove_MDLine",[this.stock]);
-			}
-		}
-
-		__proto.onDoubleClick=function(){
-			Notice.notify("RealTimeItem_DoubleClick",this.index);
-			Notice.notify("Show_Stock_KLine",StockJsonP.getPureStock(this.stock));
-		}
-
-		__proto.onDeleteBtn=function(){
-			Notice.notify("Remove_MyStock",this.stock);
-		}
-
-		__getset(0,__proto,'dataSource',_super.prototype._$get_dataSource,function(value){
-			_super.prototype._$set_dataSource.call(this,value);
-			this.initByStock(value);
-		});
-
-		RealTimeItem.showStockDic={};
-		return RealTimeItem;
-	})(StockRealTimeItemUI)
 
 
 	/**
@@ -43088,4 +44139,6 @@ var Laya=window.Laya=(function(window,document){
 3 file:///D:/stocksite.git/trunk/StockCmd/src/nodetools/devices/FileTools.as (82):warning:Browser.window.location.href This variable is not defined.
 4 file:///D:/stocksite.git/trunk/StockCmd/src/nodetools/devices/FileTools.as (82):warning:Browser.window.location.href This variable is not defined.
 5 file:///D:/stocksite.git/trunk/StockCmd/src/nodetools/devices/FileTools.as (642):warning:Alert.show This variable is not defined.
+6 file:///D:/stocksite.git/trunk/StockCmd/src/stockcmd/RunWorkerBase.as (40):warning:dirInfos This variable is not defined.
+7 file:///D:/stocksite.git/trunk/StockView/src/laya/stock/analysers/AnalyserBase.as (160):warning:color This variable is not defined.
 */

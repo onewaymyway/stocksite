@@ -17,6 +17,7 @@ package {
 	import nodetools.devices.OSInfo;
 	import nodetools.devices.SystemSetting;
 	import stock.StockData;
+	import stockcmd.BackTestWorker;
 	import stockcmd.GreatKLineWorker;
 	import stockcmd.RankWorker;
 	import stockcmd.RunConfig;
@@ -40,6 +41,7 @@ package {
 		{
 			RankWorker;
 			GreatKLineWorker;
+			BackTestWorker;
 		}
 		private function init():void {
 			
