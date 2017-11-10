@@ -52,7 +52,7 @@ def doWork(paramTpl,outFile):
     if curBestO==None:
         curBestO=curRst;
     else:
-        if curRst["yearRate"]>curBestO:
+        if curRst["yearRate"]>curBestO["yearRate"]:
             curBestO=curRst
 
     if curBestO==curRst:
