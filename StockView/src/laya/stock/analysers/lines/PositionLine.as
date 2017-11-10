@@ -103,6 +103,7 @@ package laya.stock.analysers.lines {
 			for (i = 0; i < len; i++) {
 				//expList.push([i, DataUtils.getExpDatas(dataList, dayCount, i) * barHeight]);
 				tDatas = DataUtils.getWinLoseInfo(dataList, dayCount, i);
+				//[loseRate,winRate,exp]
 				if (tDatas) {
 					loseList.push([i, tDatas[0] * barHeight]);
 					winList.push([i, tDatas[1] * barHeight]);

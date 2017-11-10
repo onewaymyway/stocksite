@@ -1,4 +1,5 @@
 package laya.math {
+	import laya.debug.tools.ClassTool;
 	import laya.debug.tools.ObjectTools;
 	import laya.utils.Utils;
 	
@@ -27,6 +28,40 @@ package laya.math {
 				arr[i] = mParseFloat(arr[i]);
 			}
 			return arr;
+		}
+		
+		public static function insertConfig(tar:Object, configO:Object):void
+		{
+			if (!configO) return;
+			var key:String;
+			for (key in configO)
+			{
+				tar[key] = configO[key];
+			}
+		}
+		
+		public static function createObjectByConfig(config:Object):*
+		{
+			var Clz:String;
+			Clz = config["Class"];
+			var tRstO:Object;
+			tRstO = ClassTool.createObjByName(Clz);
+			if (!tRstO) return tRstO;
+			insertConfig(tRstO, config["config"]);
+			var values:Array;
+			values = config["values"];
+			if (values)
+			{
+				var i:int, len:int;
+				var tValue:Array;
+				len = values.length;
+				for (i = 0; i < len; i++)
+				{
+					tValue = values[i];
+					tRstO[tValue[0]] = createObjectByConfig(tValue[1]);
+				}
+			}
+			return tRstO;
 		}
 		
 		public static var tplArrDic:Object = { };

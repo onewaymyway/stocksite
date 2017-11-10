@@ -1,6 +1,8 @@
 package laya.stock.backtest.traders 
 {
+	import laya.math.DataUtils;
 	import laya.stock.analysers.AverageLineAnalyser;
+	import laya.stock.backtest.sellers.SimpleSeller;
 	import laya.stock.backtest.Trader;
 	
 	/**
@@ -14,11 +16,22 @@ package laya.stock.backtest.traders
 		{
 			super();
 			averageAnalyser = new AverageLineAnalyser();
+			var seller:SimpleSeller;
+			seller = new SimpleSeller();
+			seller.loseSell = -0.2;
+			seller.winSell = 0.9;
+			seller.backSell = -0.1;
+			seller.maxDay = maxDay;
 		}
 		override public function reset():void 
 		{
 			super.reset();
 		}
+		public var minBuyLose:Number = -0.20;
+		public var maxBuyLose:Number = -0.5;
+		public var minBuyExp:Number = 0.4;
+		public var posDayCount:int = 90;
+		public var maxDay:int = 30;
 		override public function runTest():void 
 		{
 			averageAnalyser.analyser(stockData, 0, -1, false);
@@ -29,13 +42,25 @@ package laya.stock.backtest.traders
 			if (!buyPoints) return;
 			var i:int, len:int;
 			len = buyPoints.length;
+			var buyI:int;
+			var posInfo:Array;
+			
+			
 			for (i = 0; i < len; i++)
 			{
 				var tBuyArr:Array;
 				tBuyArr = buyPoints[i];
-				if (tBuyArr[1])
+				buyI = tBuyArr[1];
+				if (buyI)
 				{
-					buyStaticAt(tBuyArr[1]);
+					//[loseRate,winRate,exp]
+					
+					posInfo = DataUtils.getWinLoseInfo(stockData.dataList, posDayCount, buyI);
+					if (posInfo[2] > minBuyExp&&posInfo[0]<minBuyLose&&posInfo[0]>maxBuyLose)
+					{
+						buyStaticAt(tBuyArr[1],maxDay,seller);
+					}
+					
 				}
 			}
 		}

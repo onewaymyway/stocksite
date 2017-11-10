@@ -1,5 +1,6 @@
 package laya.stock.backtest 
 {
+	import laya.stock.backtest.sellers.SellerBase;
 	import stock.StockData;
 	/**
 	 * ...
@@ -35,16 +36,16 @@ package laya.stock.backtest
 		{
 			
 		}
-		
+		public var seller:SellerBase;
 		private var staticInfoList:Array;
-		public function buyStaticAt(index:int):void
+		public function buyStaticAt(index:int,maxDay:int=20,seller:SellerBase):void
 		{
 			var dataList:Array;
 			dataList = stockData.dataList;
 			var curInfo:Object;
 			curInfo = dataList[index];
 			if (!curInfo) return;
-			staticInfoList.push(BackTestInfo.getStaticInfo(dataList,index,15));
+			staticInfoList.push(BackTestInfo.getStaticInfo(dataList,index,maxDay,seller));
 		}
 	}
 
