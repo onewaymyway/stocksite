@@ -1,12 +1,13 @@
 {
+    "nextCMD": "D:/ProgramData/Anaconda3/python.exe findBetterParam.py nodeParam.json nodeRst.json",
     "trader": {
         "Class": "AverageTrader",
         "config": {
-            "maxBuyLose": -0.6769971800355998,
-            "maxDay": 23,
-            "minBuyExp": 0.527384989872038,
-            "minBuyLose": -0.42892121729876387,
-            "posDayCount": 70
+            "maxBuyLose": -0.6276892026364305,
+            "maxDay": 88,
+            "minBuyExp": 0.5555990411720062,
+            "minBuyLose": -0.31824680620701645,
+            "posDayCount": 122
         },
         "values": [
             [
@@ -16,7 +17,7 @@
                     "config": {
                         "backSell": -0.1,
                         "loseSell": -0.2,
-                        "maxDay": 23,
+                        "maxDay": 88,
                         "winSell": 0.9
                     }
                 }

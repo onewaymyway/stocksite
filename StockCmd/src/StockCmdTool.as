@@ -10,6 +10,7 @@ package {
 	import laya.stock.StockTools;
 	import laya.structs.RankInfo;
 	import laya.utils.Browser;
+	import nodetools.devices.CMDShell;
 	import nodetools.devices.Device;
 	import nodetools.devices.FileManager;
 	import nodetools.devices.FileTools;
@@ -46,6 +47,7 @@ package {
 		private function init():void {
 			
 			Device.init();
+			CMDShell.childProcess = Device.requireRemote("child_process");
 			SystemSetting.isCMDVer = true;
 			OSInfo.init();
 			//CMDShell.init();

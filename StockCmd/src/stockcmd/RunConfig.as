@@ -16,6 +16,7 @@ package stockcmd
 		public static var outFile:String = "lastBuys.json";
 		public static var type:String = "RankWorker";
 		public static var paramFile:String = "param.json";
+		public static var tempCache:String = "";
 		
 	}
 

@@ -27,6 +27,14 @@ package stockcmd {
 						var traderO:Object;
 						traderO = configO.trader;
 						tTrader = ValueTools.createObjectByConfig(traderO);
+						
+						if (configO.nextCMD)
+						{
+							
+							nextCMD = configO.nextCMD;
+							trace("nextCMD:", nextCMD)
+							
+						} 
 					}
 					trace("createByConfig success");
 				}

@@ -5,7 +5,9 @@ import json
 import random
 
 bestFilePath="bestParam.json"
-curBestO=None   
+stockDataPath="D:/lovekxy/codes/python/stockdata.git/trunk/stockdatas"
+curBestO=None
+isFromNode=False 
 def runCMD(cmd):
     os.system(cmd)
 
@@ -24,7 +26,7 @@ def loadJson(file):
     return json.loads(readFile(file))
 
 def saveJson(file,obj):
-    saveFile(file,json.dumps(obj))
+    saveFile(file,json.dumps(obj,indent=4, sort_keys=True, ensure_ascii=False))
 
 def initBestO():
     global curBestO
@@ -34,7 +36,7 @@ def initBestO():
 def doWork(paramTpl,outFile):
     global curBestO
     saveJson("myParam.json",paramTpl);
-    cmdStr="node StockCmd.max.js D:/stockdata.git/trunk/stockdatas/ paramFile=myParam.json outFile="+outFile+" type=BackTestWorker";
+    cmdStr="node StockCmd.max.js "+stockDataPath+" paramFile=myParam.json outFile="+outFile+" type=BackTestWorker";
     runCMD(cmdStr)
     curRst=loadJson(outFile)
     print("rst:",curRst)
@@ -52,14 +54,62 @@ def doWork(paramTpl,outFile):
     if curBestO==None:
         curBestO=curRst;
     else:
-        if curRst["yearRate"]>curBestO["yearRate"]:
+        if curRst["yearRate"]>curBestO["yearRate"] and buyTime>1000:
+            curBestO=curRst
+
+    if curBestO==curRst:
+        print("saveBetter")
+        saveJson(bestFilePath,curBestO)
+        
+def updateBest(paramPath,rstPath):
+    print("updateBest",paramPath,rstPath)
+    global curBestO
+    initBestO()
+    curRst=loadJson(rstPath)
+    print("rst:",curRst)
+    winRate=curRst["winRate"]
+    sellWin=curRst["swin"]
+    yearRate=curRst["yearRate"]
+    sellWinrate=curRst["swinRate"]
+    buyTime=curRst["buyTime"]
+    print("------------")
+    print("winRate",winRate)
+    print("yearRate",yearRate)
+    print("sellWin",sellWin)
+    print("buyTime",buyTime)
+    
+    paramTpl=loadJson(paramPath)
+    curRst["param"]=paramTpl
+    if curBestO==None:
+        curBestO=curRst;
+    else:
+        if curRst["yearRate"]>curBestO["yearRate"] and buyTime>1000:
             curBestO=curRst
 
     if curBestO==curRst:
         print("saveBetter")
         saveJson(bestFilePath,curBestO)
 
-
+def makeNewParam(tarPath,paramTplPath="paramTpl.json"):
+    paramTpl=loadJson(paramTplPath)
+    print(paramTpl)
+    traderO=paramTpl["trader"];
+    traderParam=traderO["config"]
+    sellerParam=traderO["values"][0][1]["config"]
+    print("makeNewParam")
+    posDayCount=random.randint(20,150)
+    maxDay=random.randint(5,posDayCount)
+    minBuyLose=random.uniform(-0.5,-0.1)
+    maxBuyLose=random.uniform(-1,minBuyLose)
+    minBuyExp=random.uniform(0.2,0.7)
+    traderParam["posDayCount"]=posDayCount
+    traderParam["maxDay"]=maxDay
+    traderParam["minBuyLose"]=minBuyLose
+    traderParam["maxBuyLose"]=maxBuyLose
+    traderParam["minBuyExp"]=minBuyExp
+    sellerParam["maxDay"]=maxDay
+    saveJson(tarPath,paramTpl)
+               
 def tryNewParam():
     
     initBestO();
@@ -82,7 +132,33 @@ def tryNewParam():
         traderParam["minBuyExp"]=minBuyExp
         sellerParam["maxDay"]=maxDay
         doWork(paramTpl,"myRst.json")
+
+   
+def dealNodeWork(paramPath,rstPath):
+    print("dealNodeWork",paramPath,rstPath)
+    updateBest(paramPath,rstPath)
+    makeNewParam(paramPath,"paramTplNew.json")
+    print("workNext")
     
+def startNode(paramPath,rstPath):
+    print("startNode",paramPath,rstPath);
+    cmdStr="node StockCmd.max.js "+stockDataPath+" tempCache=stk.cache paramFile="+paramPath+" outFile="+rstPath+" type=BackTestWorker";
+    paramO=loadJson("paramTplNew.json")
+    #paramO["nextCMD"]="D:/ProgramData/Anaconda3/python.exe findBetterParam.py "+paramPath+" "+rstPath
+    saveJson(paramPath,paramO)
+    saveJson("paramTplNew.json",paramO)
+    runCMD(cmdStr)
 
-tryNewParam()
-
+def scriptStart():
+    paramLen=len(sys.argv)
+    print("param:",sys.argv)
+    if paramLen==1:
+        startNode('nodeParam.json',"nodeRst.json")
+        return
+    if paramLen==3:
+        paramPath=sys.argv[1]
+        rstPath=sys.argv[2]
+        dealNodeWork(paramPath,rstPath)
+if __name__ == "__main__":
+    scriptStart()
+    

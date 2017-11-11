@@ -117,7 +117,7 @@ package nodetools.devices {
 			try {
 				FileTools.createFile(path, JSON.stringify(value));
 			} catch (e:Error) {
-				Sys.alert("Create file failed:" + path);
+				Sys.alert("Create file failed:" + path+e.message);
 			}
 		}
 		

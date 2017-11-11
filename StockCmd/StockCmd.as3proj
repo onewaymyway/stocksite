@@ -16,11 +16,8 @@
   <!-- Other classes to be compiled into your SWF -->
   <classpaths>
     <class path="src" />
-    <class path="E:\wangwei\codes\laya\libs\LayaAir\core\src" />
-    <class path="E:\wangwei\codes\laya\libs\LayaAir\core\jsc" />
-    <class path="E:\wangwei\codes\laya\libs\LayaAir\plugins\debugtool\src" />
-    <class path="E:\wangwei\codes\laya\libs\LayaAir\ui\src" />
     <class path="..\StockView\src" />
+    <class path="..\StockView\libs\laya\src" />
   </classpaths>
   <!-- Build options -->
   <build>
