@@ -1,0 +1,84 @@
+{
+    "buyTime": 1002,
+    "exp": 0.2621228851328207,
+    "lose": -0.1273840807477282,
+    "param": {
+        "nextCMD": "D:/ProgramData/Anaconda3/python.exe findBetterParam.py nodeParam.json nodeRst.json",
+        "trader": {
+            "Class": "AverageTrader",
+            "config": {
+                "maxBuyLose": -0.6186382106849084,
+                "maxDay": 52,
+                "minBuyExp": 0.5701283095012855,
+                "minBuyLose": -0.15337403393908122,
+                "posDayCount": 71
+            },
+            "values": [
+                [
+                    "seller",
+                    {
+                        "Class": "SimpleSeller",
+                        "config": {
+                            "backSell": -0.1,
+                            "loseSell": -0.2,
+                            "maxDay": 52,
+                            "winSell": 0.9
+                        }
+                    }
+                ]
+            ]
+        }
+    },
+    "sSellDay": 43.749500998003995,
+    "swin": 0.2965550189481996,
+    "swin10Rate": 0.7245508982035929,
+    "swin10Time": 726,
+    "swin15Rate": 0.6856287425149701,
+    "swin15Time": 687,
+    "swin20Rate": 0.6307385229540918,
+    "swin20Time": 632,
+    "swin25Rate": 0.5808383233532934,
+    "swin25Time": 582,
+    "swin30Rate": 0.5139720558882236,
+    "swin30Time": 515,
+    "swin35Rate": 0.43812375249500995,
+    "swin35Time": 439,
+    "swin40Rate": 0.3842315369261477,
+    "swin40Time": 385,
+    "swin45Rate": 0.3183632734530938,
+    "swin45Time": 319,
+    "swin50Rate": 0.26746506986027946,
+    "swin50Time": 268,
+    "swin55Rate": 0.22055888223552894,
+    "swin55Time": 221,
+    "swin5Rate": 0.7475049900199601,
+    "swin5Time": 749,
+    "swinRate": 0.7704590818363274,
+    "swinTime": 772,
+    "win": 0.5168910466282772,
+    "win10Rate": 0.8942115768463074,
+    "win10Time": 896,
+    "win15Rate": 0.8642714570858283,
+    "win15Time": 866,
+    "win20Rate": 0.8273453093812375,
+    "win20Time": 829,
+    "win25Rate": 0.7904191616766467,
+    "win25Time": 792,
+    "win30Rate": 0.7365269461077845,
+    "win30Time": 738,
+    "win35Rate": 0.6806387225548902,
+    "win35Time": 682,
+    "win40Rate": 0.6067864271457086,
+    "win40Time": 608,
+    "win45Rate": 0.5399201596806387,
+    "win45Time": 541,
+    "win50Rate": 0.4810379241516966,
+    "win50Time": 482,
+    "win55Rate": 0.4121756487025948,
+    "win55Time": 413,
+    "win5Rate": 0.9241516966067864,
+    "win5Time": 926,
+    "winRate": 0.7594810379241517,
+    "winTime": 761,
+    "yearRate": 1.6268346592299434
+}

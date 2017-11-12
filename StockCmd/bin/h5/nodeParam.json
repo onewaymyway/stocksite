@@ -3,11 +3,11 @@
     "trader": {
         "Class": "AverageTrader",
         "config": {
-            "maxBuyLose": -0.5334257630304455,
-            "maxDay": 21,
-            "minBuyExp": 0.31153116855070523,
-            "minBuyLose": -0.46088502032362827,
-            "posDayCount": 27
+            "maxBuyLose": -0.16306522672178925,
+            "maxDay": 20,
+            "minBuyExp": 0.2576420626933703,
+            "minBuyLose": -0.1068022078395327,
+            "posDayCount": 62
         },
         "values": [
             [
@@ -17,7 +17,7 @@
                     "config": {
                         "backSell": -0.1,
                         "loseSell": -0.2,
-                        "maxDay": 21,
+                        "maxDay": 20,
                         "winSell": 0.9
                     }
                 }
