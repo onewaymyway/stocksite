@@ -80,16 +80,38 @@ def updateBest(paramPath,rstPath):
     
     paramTpl=loadJson(paramPath)
     curRst["param"]=paramTpl
-    if curBestO==None:
+    if buyTime<1000:
+        return
+    updateBestsByRst(curRst)
+    return;
+    if curBestO==None :
         curBestO=curRst;
     else:
-        if curRst["yearRate"]>curBestO["yearRate"] and buyTime>1000:
+        if curRst["yearRate"]>curBestO["yearRate"]:
             curBestO=curRst
 
     if curBestO==curRst:
         print("saveBetter")
         saveJson(bestFilePath,curBestO)
 
+def updateBestsByRst(rstO):
+    typeList=["yearRate","winRate","swinRate"]
+    sellData=rstO["sSellDay"]
+    dayKey=str(round(sellData/3))
+    for tkey in typeList:
+        curPath="best"+"day"+dayKey+tkey+".json"
+        curData=None
+        if os.path.exists(curPath):
+            curData=loadJson(curPath)
+            print(tkey,curData[tkey],rstO[tkey])
+            if curData[tkey]<rstO[tkey]:
+                curData=rstO
+        else:
+            curData=rstO
+        if curData==rstO:
+            saveJson(curPath,curData)
+    
+    pass
 def makeNewParam(tarPath,paramTplPath="paramTpl.json"):
     paramTpl=loadJson(paramTplPath)
     print(paramTpl)
