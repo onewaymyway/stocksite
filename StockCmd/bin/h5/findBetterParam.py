@@ -4,10 +4,22 @@ import sys
 import json
 import random
 
+def adptPath(path):
+    return path.replace("\\","/")
+
+def getMAbsPath(path):
+    nPath=os.path.abspath(path)
+
+    return adptPath(nPath)
 bestFilePath="bestParam.json"
-stockDataPath="D:/lovekxy/codes/python/stockdata.git/trunk/stockdatas"
+#stockDataPath="D:/lovekxy/codes/python/stockdata.git/trunk/stockdatas"
+stockDataPath="D:/stockdata.git/trunk/stockdatas"
+stockRPath="../../../../../stockdata.git/trunk/stockdatas"
+stockDataPath=getMAbsPath(stockRPath)
+print("stockDataPath",stockDataPath)
 curBestO=None
-isFromNode=False 
+isFromNode=False
+pythonEPath=sys.executable.replace("\\","/")
 def runCMD(cmd):
     os.system(cmd)
 
@@ -168,9 +180,10 @@ def dealNodeWork(paramPath,rstPath):
     
 def startNode(paramPath,rstPath):
     print("startNode",paramPath,rstPath);
+    #return
     cmdStr="node StockCmd.max.js "+stockDataPath+" tempCache=stk.cache paramFile="+paramPath+" outFile="+rstPath+" type=BackTestWorker";
     paramO=loadJson("paramTplNew.json")
-    #paramO["nextCMD"]="D:/ProgramData/Anaconda3/python.exe findBetterParam.py "+paramPath+" "+rstPath
+    paramO["nextCMD"]=pythonEPath+" findBetterParam.py "+paramPath+" "+rstPath
     saveJson(paramPath,paramO)
     saveJson("paramTplNew.json",paramO)
     runCMD(cmdStr)
