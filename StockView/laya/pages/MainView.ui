@@ -2,7 +2,7 @@
     "x":0,
     "type":"View",
     "selectedBox":1,
-    "selecteID":8,
+    "selecteID":9,
     "props":{"width":445,"sceneColor":"#000000","height":400},
     "nodeParent":-1,
     "label":"View",
@@ -15,7 +15,7 @@
         {
             "x":15,
             "type":"Tab",
-            "props":{"y":4,"x":4,"var":"typeSelect","skin":"comp/tab.png","selectedIndex":0,"labels":"股票列表,K线动画,选股,自选,扫码"},
+            "props":{"y":4,"x":4,"var":"typeSelect","skin":"comp/tab.png","selectedIndex":0,"labels":"股票列表,K线动画,选股,自选,回测,扫码"},
             "nodeParent":1,
             "label":"Tab(typeSelect)",
             "isDirectory":false,
@@ -105,6 +105,20 @@
             "isAniNode":true,
             "hasChild":false,
             "compId":8,
+            "child":[
+                ]
+        },
+        {
+            "x":15,
+            "type":"UIView",
+            "source":"BackTestView.ui",
+            "props":{"var":"bactTestView","top":40,"runtime":"view.BackTestView","right":10,"left":10,"bottom":10},
+            "nodeParent":1,
+            "label":"UIView(bactTestView)",
+            "isDirectory":false,
+            "isAniNode":true,
+            "hasChild":false,
+            "compId":9,
             "child":[
                 ]
         }],
