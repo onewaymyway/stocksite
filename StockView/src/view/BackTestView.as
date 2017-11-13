@@ -24,6 +24,7 @@ package view
 			list.array = [];
 			list.mouseHandler = new Handler(this, onMouseList);
 			list.scrollBar.touchScrollEnable = true;
+			tip.text = "回测文件显示";
 		}
 		
 		public var tI:int = 0;
