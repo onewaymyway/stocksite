@@ -7,6 +7,7 @@ package laya.debug.tools
 	import laya.maths.Point;
 	import laya.resource.Texture;
 	import laya.utils.Browser;
+	import laya.utils.Handler;
 	
 	/**
 	 * 本类用于操作html对象
@@ -147,6 +148,17 @@ package laya.debug.tools
 				sprite.graphics.drawTexture(txt, 0, 0,width,height);
 			}
 			return sprite;
+		}
+		
+		public static function getTxtFromFile(file:Object,handler:Handler):void
+		{
+			var reader:Object;
+			__JS__("reader= new FileReader();");
+			reader.readAsText(file);
+			reader.onload= function(e:*):void
+			{
+				handler.runWith(reader.result);
+			}
 		}
 		
 		private static var _pixelRatio:Number=-1;
