@@ -19,6 +19,19 @@ package laya.math
 			return rst;
 		}
 		
+		public static function getKeyIndex(datas:Array, key:String, value:*):int
+		{
+			var i:int, len:int;
+			len = datas.length;
+			for (i = 0; i < len; i++)
+			{
+				if (datas[i][key]==value)
+				{
+					return i;
+				}
+			}
+			return -1;
+		}
 		public static function getKeyMax(datas:Array, key:String):Number
 		{
 			var i:int, len:int;

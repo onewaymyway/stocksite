@@ -8,7 +8,7 @@ package stock
 	 */
 	public class StockData extends CSVParser 
 	{
-		
+		public var stockName:String;
 		public function StockData() 
 		{
 			super();

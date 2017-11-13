@@ -19,6 +19,8 @@ package laya.stock.backtest
 		public var low:Number;
 		public var sell:Number;
 		public var sellDay:int;
+		public var date:String;
+		public var stock:String;
 		
 		public function get sellRate():Number
 		{
@@ -76,7 +78,7 @@ package laya.stock.backtest
 			}
 			return rst;
 		}
-		public static function getStaticInfo(dataList:Array, buyI:int,maxDay:int=15,seller:SellerBase):Object
+		public static function getStaticInfo(dataList:Array, buyI:int,maxDay:int=15,seller:SellerBase,stock:String):Object
 		{
 			var priceBuy:Number;
 			priceBuy = dataList[buyI]["high"];
@@ -89,6 +91,8 @@ package laya.stock.backtest
 			rst.buy = priceBuy;
 			rst.high = priceHigh;
 			rst.low = priceLow;
+			rst.date = dataList[buyI]["date"];
+			rst.stock = stock;
 			if (seller)
 			{
 				rst.sell = seller.sell(dataList, buyI + 1, priceBuy);

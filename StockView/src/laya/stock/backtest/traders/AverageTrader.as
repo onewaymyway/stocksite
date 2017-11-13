@@ -64,6 +64,49 @@ package laya.stock.backtest.traders
 				}
 			}
 		}
+		
+		public function getBuyInfos(onlyLast:Boolean=false):void 
+		{
+			averageAnalyser.analyser(stockData, 0, -1, false);
+			var rstData:Object;
+			rstData = averageAnalyser.resultData;
+			var buyPoints:Array;
+			buyPoints = rstData["buys"];
+			if (!buyPoints) return;
+			var i:int, len:int;
+			len = buyPoints.length;
+			var buyI:int;
+			var posInfo:Array;
+			
+			
+			for (i = len-1; i >=0; i--)
+			{
+				var tBuyArr:Array;
+				tBuyArr = buyPoints[i];
+				buyI = tBuyArr[1];
+				if (buyI)
+				{
+					//[loseRate,winRate,exp]
+					
+					posInfo = DataUtils.getWinLoseInfo(stockData.dataList, posDayCount, buyI);
+					if (posInfo[2] > minBuyExp&&posInfo[0]<minBuyLose&&posInfo[0]>maxBuyLose)
+					{
+						buyStaticAt(tBuyArr[1], maxDay, seller);
+						if (onlyLast) return;
+					}
+					
+				}
+			}
+		}
+		
+		override public function runAllBuy():void 
+		{
+			getBuyInfos(false);
+		}
+		override public function runLastBuy():void 
+		{
+			getBuyInfos(true);
+		}
 	}
 
 }

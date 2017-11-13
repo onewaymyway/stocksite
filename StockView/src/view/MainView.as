@@ -20,17 +20,17 @@ package view
 		public var views:Array;
 		public function init():void
 		{
-			views = [stockListView,kLineView,selectView,realTimeView,logoView];
+			views = [stockListView,kLineView,selectView,realTimeView,bactTestView,logoView];
 			typeSelect.selectHandler = new Handler(this,updateSelect);
 			updateSelect();
 			stockListView.init();
 			Notice.listen(MsgConst.Show_Stock_KLine, this, onShowStockKline);
 		}
 		
-		private function onShowStockKline(stock:String):void
+		private function onShowStockKline(stock:String,des:Object):void
 		{
 			typeSelect.selectedIndex = 1;
-			kLineView.showStockKline(stock);
+			kLineView.showStockKline(stock,des);
 		}
 		private function updateSelect():void
 		{

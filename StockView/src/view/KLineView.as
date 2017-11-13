@@ -329,10 +329,12 @@ package view {
 		}
 		private var isFirstStockComing:Boolean = true;
 		private var _preStock:String;
-		
-		public function showStockKline(stock:String):void {
+		private var _des:Object;
+		public function showStockKline(stock:String,des:Object=null):void {
 			isFirstStockComing = true;
 			stockInput.text = stock;
+			this._des = des;
+			kLine.markO = des;
 			tradeTest.tradeInfo.sellAll();
 			onPlayInput();
 			if (StockListManager.hasStock(stock)) {
@@ -363,10 +365,34 @@ package view {
 				dayScroll.setScroll(0, max, tValue);
 			}
 			else {
-				dayScroll.setScroll(0, max, max);
+				if (_des && _des.date)
+				{
+					var curI:int;
+					curI = DataUtils.getKeyIndex(kLine.dataList, "date", _des.date);
+					if (curI > 0)
+					{
+						if (curI < max)
+						{
+							if (curI > 10) curI -= 10;
+							
+						}else
+						{
+							curI = max;
+						}
+					}else
+					{
+						curI = max;
+					}
+					dayScroll.setScroll(0, max, curI);
+				}else
+				{
+					dayScroll.setScroll(0, max, max);
+				}
+				
 			}
 			
 			if (maxDayEnable.selected) {
+				if (dayScroll.value > kLine.dataList.length) debugger;
 				kLine.start = Math.floor(dayScroll.value);
 			}
 			else {
@@ -442,6 +468,7 @@ package view {
 			}
 			if (maxDayEnable.selected) {
 				kLine.maxShowCount = ValueTools.mParseFloat(dayCountInput.text);
+				if (dayScroll.value > kLine.dataList.length) debugger;
 				kLine.start = Math.floor(dayScroll.value);
 			}
 			else {

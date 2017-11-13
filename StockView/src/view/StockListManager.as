@@ -47,7 +47,7 @@ package view {
 				return;
 			
 			trace(tData);
-			Notice.notify(MsgConst.Show_Stock_KLine, getStockCode(tData));
+			Notice.notify(MsgConst.Show_Stock_KLine, [getStockCode(tData),tData]);
 		}
 		
 		public static function getStockCode(data:*):void {

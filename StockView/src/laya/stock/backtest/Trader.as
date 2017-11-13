@@ -31,13 +31,20 @@ package laya.stock.backtest
 		public function runTest():void
 		{
 		}
-		
+		public function runLastBuy():void
+		{
+			
+		}
+		public function runAllBuy():void
+		{
+			
+		}
 		public function buyAt(index:int):void
 		{
 			
 		}
 		public var seller:SellerBase;
-		private var staticInfoList:Array;
+		public var staticInfoList:Array;
 		public function buyStaticAt(index:int,maxDay:int=20,seller:SellerBase):void
 		{
 			var dataList:Array;
@@ -45,7 +52,7 @@ package laya.stock.backtest
 			var curInfo:Object;
 			curInfo = dataList[index];
 			if (!curInfo) return;
-			staticInfoList.push(BackTestInfo.getStaticInfo(dataList,index,maxDay,seller));
+			staticInfoList.push(BackTestInfo.getStaticInfo(dataList,index,maxDay,seller,stockData.stockName));
 		}
 	}
 
