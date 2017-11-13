@@ -375,11 +375,28 @@ package view {
 						{
 							var cHalf:int;
 							cHalf = Math.floor(dayCount/2);
-							if (curI > cHalf) curI -= cHalf;
+							if (curI > cHalf)
+							{
+								curI -= cHalf;
+							}else
+							{
+								curI = 0;
+							} 
 							
 						}else
 						{
-							curI = max;
+							cHalf = Math.floor(dayCount/2);
+							if (curI > cHalf)
+							{
+								curI -= cHalf;
+							}else
+							{
+								curI = 0;
+							} 
+							if (curI > max)
+							{
+								curI = max;
+							}
 						}
 					}else
 					{
