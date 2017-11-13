@@ -373,7 +373,9 @@ package view {
 					{
 						if (curI < max)
 						{
-							if (curI > 10) curI -= 10;
+							var cHalf:int;
+							cHalf = Math.floor(dayCount/2);
+							if (curI > cHalf) curI -= cHalf;
 							
 						}else
 						{
