@@ -447,6 +447,17 @@ var Laya=window.Laya=(function(window,document){
 			return true;
 		}
 
+		ArrayMethods.sumKey=function(dataList,key){
+			var rst=NaN;
+			rst=0;
+			var i=0,len=0;
+			len=dataList.length;
+			for (i=0;i < len;i++){
+				rst+=dataList[i][key];
+			}
+			return rst;
+		}
+
 		return ArrayMethods;
 	})()
 
@@ -464,6 +475,17 @@ var Laya=window.Laya=(function(window,document){
 			rst=parseFloat(v);
 			if (isNaN(rst))return 0;
 			return rst;
+		}
+
+		DataUtils.getKeyIndex=function(datas,key,value){
+			var i=0,len=0;
+			len=datas.length;
+			for (i=0;i < len;i++){
+				if (datas[i][key]==value){
+					return i;
+				}
+			}
+			return-1;
 		}
 
 		DataUtils.getKeyMax=function(datas,key){
@@ -954,6 +976,35 @@ var Laya=window.Laya=(function(window,document){
 				arr[i]=ValueTools.mParseFloat(arr[i]);
 			}
 			return arr;
+		}
+
+		ValueTools.insertConfig=function(tar,configO){
+			if (!configO)return;
+			var key;
+			for (key in configO){
+				tar[key]=configO[key];
+			}
+		}
+
+		ValueTools.createObjectByConfig=function(config){
+			var Clz;
+			Clz=config["Class"];
+			var tRstO;
+			tRstO=ClassTool.createObjByName(Clz);
+			if (!tRstO)return tRstO;
+			ValueTools.insertConfig(tRstO,config["config"]);
+			var values;
+			values=config["values"];
+			if (values){
+				var i=0,len=0;
+				var tValue;
+				len=values.length;
+				for (i=0;i < len;i++){
+					tValue=values[i];
+					tRstO[tValue[0]]=ValueTools.createObjectByConfig(tValue[1]);
+				}
+			}
+			return tRstO;
 		}
 
 		ValueTools.splitStpl=function(tplStr){
@@ -1814,15 +1865,16 @@ var Laya=window.Laya=(function(window,document){
 			var tDayCount=0;
 			for (i=0;i < len;i++){
 				tDayCount=StockTools.highDays[i];
-				priceHigh=StockTools.getHighInDays(buyI+1,tDayCount,dataList);
+				priceHigh=StockTools.getHighInDays(buyI+1,tDayCount,dataList)||priceBuy;
 				rst["high"+tDayCount]=StockTools.getGoodPercent((priceHigh-priceBuy)/ priceBuy);
 			}
 		}
 
 		StockTools.getHighInDays=function(start,days,dataList){
+			if (!dataList[start])return 0;
 			var i=0,len=0;
 			var priceHigh=NaN;
-			priceHigh=-1;
+			priceHigh=dataList[start]["low"];
 			len=days+start;
 			if (len > dataList.length)len=dataList.length;
 			for (i=start;i < len;i++){
@@ -1831,6 +1883,21 @@ var Laya=window.Laya=(function(window,document){
 				}
 			}
 			return priceHigh;
+		}
+
+		StockTools.getLowInDays=function(start,days,dataList){
+			if (!dataList[start])return 0;
+			var i=0,len=0;
+			var priceLow=NaN;
+			priceLow=dataList[start]["low"];
+			len=days+start;
+			if (len > dataList.length)len=dataList.length;
+			for (i=start;i < len;i++){
+				if (dataList[i]["low"] < priceLow){
+					priceLow=dataList[i]["low"];
+				}
+			}
+			return priceLow;
 		}
 
 		StockTools.isSameTrend=function(dataList,up){
@@ -3043,7 +3110,7 @@ var Laya=window.Laya=(function(window,document){
 			if (!tData)
 				return;
 			console.log(tData);
-			Notice.notify("Show_Stock_KLine",StockListManager.getStockCode(tData));
+			Notice.notify("Show_Stock_KLine",[StockListManager.getStockCode(tData),tData]);
 		}
 
 		StockListManager.getStockCode=function(data){
@@ -3118,6 +3185,68 @@ var Laya=window.Laya=(function(window,document){
 		['I',function(){return this.I=new TradeTestManager();}
 		]);
 		return TradeTestManager;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class wrap.FileSelect
+	var FileSelect=(function(){
+		function FileSelect(target,accept,changeHandler){
+			this._target=null;
+			this._input=null;
+			this._myChangeH=null;
+			this._changeHandler=null;
+			this._clickH=null;
+			var _$this=this;
+			this._changeHandler=changeHandler;
+			this._target=target;
+			this._input=Browser.createElement("input");
+			this._input.type="file";
+			this._input.accept=accept;
+			this._myChangeH=Utils.bind(this.onChange,this);
+			this._input.addEventListener("change",this._myChangeH);
+			var canvas=Render.canvas;
+			this._clickH=function (e){
+				if (!_$this._target.displayedInStage)return;
+				var bounds;
+				bounds=_$this._target.getSelfBounds();
+				if (bounds.contains(_$this._target.mouseX,_$this._target.mouseY)){
+					_$this._input.click();
+				}
+			}
+			canvas.addEventListener('click',this._clickH);
+		}
+
+		__class(FileSelect,'wrap.FileSelect');
+		var __proto=FileSelect.prototype;
+		__proto.onChange=function(e){
+			console.log("change from fileSelect:",e);
+			if (this._changeHandler){
+				this._changeHandler.runWith(e);
+			}
+		}
+
+		__proto.dispose=function(){
+			if (this._target){
+				this._target=null;
+			}
+			if (this._input){
+				this._input.removeEventListener("change",this._myChangeH);
+				this._myChangeH=null;
+				this._input=null;
+			}
+			if (this._clickH){
+				var canvas=Render.canvas.source;
+				canvas.removeEventListener('click',this._clickH);
+				this._clickH=null;
+			}
+			this._changeHandler=null;
+		}
+
+		return FileSelect;
 	})()
 
 
@@ -6650,6 +6779,147 @@ var Laya=window.Laya=(function(window,document){
 		['_ID',function(){return this._ID=new IDTools();},'_idDic',function(){return this._idDic={"default":new IDTools()};}
 		]);
 		return IDTools;
+	})()
+
+
+	/**
+	*本类用于操作html对象
+	*@author ww
+	*/
+	//class laya.debug.tools.JSTools
+	var JSTools=(function(){
+		function JSTools(){}
+		__class(JSTools,'laya.debug.tools.JSTools');
+		JSTools.showToBody=function(el,x,y){
+			(x===void 0)&& (x=0);
+			(y===void 0)&& (y=0);
+			Browser.document.body.appendChild(el);
+			var style;
+			style=el.style;
+			style.position="absolute";
+			style.top=y+"px";
+			style.left=x+"px";
+		}
+
+		JSTools.showToParent=function(el,x,y,parent){
+			(x===void 0)&& (x=0);
+			(y===void 0)&& (y=0);
+			parent.appendChild(el);
+			var style;
+			style=el.style;
+			style.position="absolute";
+			style.top=y+"px";
+			style.left=x+"px";
+		}
+
+		JSTools.addToBody=function(el){
+			Browser.document.body.appendChild(el);
+		}
+
+		JSTools.setPos=function(el,x,y){
+			var style;
+			style=el.style;
+			style.top=y+"px";
+			style.left=x+"px";
+		}
+
+		JSTools.setSize=function(el,width,height){
+			var style;
+			style=el.style;
+			style.width=width+"px";
+			style.height=height+"px";
+		}
+
+		JSTools.setTransform=function(el,mat){
+			var style;
+			style=el.style;
+			style.transformOrigin=style.webkitTransformOrigin=style.msTransformOrigin=style.mozTransformOrigin=style.oTransformOrigin="0px 0px 0px";
+			style.transform=style.webkitTransform=style.msTransform=style.mozTransform=style.oTransform="matrix("+mat.toString()+")";
+		}
+
+		JSTools.noMouseEvent=function(el){
+			var style;
+			style=el.style;
+			style["pointer-events"]="none";
+		}
+
+		JSTools.setMouseEnable=function(el,enable){
+			var style;
+			style=el.style;
+			style["pointer-events"]=enable?"auto":"none";
+		}
+
+		JSTools.setZIndex=function(el,zIndex){
+			var style;
+			style=el.style;
+			style["z-index"]=zIndex;
+		}
+
+		JSTools.showAboveSprite=function(el,sprite,dx,dy){
+			(dx===void 0)&& (dx=0);
+			(dy===void 0)&& (dy=0);
+			var pos;
+			pos=new Point();
+			pos=sprite.localToGlobal(pos);
+			pos.x+=dx;
+			pos.y+=dy;
+			pos.x+=Laya.stage.offset.x;
+			pos.y+=Laya.stage.offset.y;
+			JSTools.showToBody(el,pos.x,pos.y);
+		}
+
+		JSTools.removeElement=function(el){
+			Browser.removeElement(el);
+		}
+
+		JSTools.isElementInDom=function(el){
+			return el && el.parentNode;
+		}
+
+		JSTools.getImageSpriteByFile=function(file,width,height){
+			(width===void 0)&& (width=0);
+			(height===void 0)&& (height=0);
+			var reader;
+			reader=new FileReader();;
+			reader.readAsDataURL(file);
+			var sprite;
+			sprite=new Sprite();
+			reader.onload=function (e){
+				var txt;
+				txt=new Texture();
+				txt.load(reader.result);
+				sprite.graphics.drawTexture(txt,0,0,width,height);
+			}
+			return sprite;
+		}
+
+		JSTools.getTxtFromFile=function(file,handler){
+			var reader;
+			reader=new FileReader();;
+			reader.readAsText(file);
+			reader.onload=function (e){
+				handler.runWith(reader.result);
+			}
+		}
+
+		JSTools.getPixelRatio=function(){
+			if (JSTools._pixelRatio > 0)return JSTools._pixelRatio;
+			var canvas=Browser.createElement("canvas");
+			var context=canvas.getContext('2d');
+			var devicePixelRatio=Browser.window.devicePixelRatio || 1;
+			var backingStoreRatio=context.webkitBackingStorePixelRatio ||
+			context.mozBackingStorePixelRatio ||
+			context.msBackingStorePixelRatio ||
+			context.oBackingStorePixelRatio ||
+			context.backingStorePixelRatio || 1;
+			var ratio=devicePixelRatio / backingStoreRatio;
+			console.log("pixelRatioc:",ratio);
+			JSTools._pixelRatio=ratio;
+			return ratio;
+		}
+
+		JSTools._pixelRatio=-1;
+		return JSTools;
 	})()
 
 
@@ -18570,6 +18840,7 @@ var Laya=window.Laya=(function(window,document){
 	//class stock.StockData extends stock.CSVParser
 	var StockData=(function(_super){
 		function StockData(){
+			this.stockName=null;
 			StockData.__super.call(this);
 			this.numKeys=["open","high","close","low","volume","amount"];
 		}
@@ -24463,6 +24734,7 @@ var Laya=window.Laya=(function(window,document){
 			this.maxShowCount=-1;
 			this.lineHeight=400;
 			this.lineWidth=800;
+			this.markO=null;
 			this.yRate=NaN;
 			this.xRate=NaN;
 			KLine.__super.call(this);
@@ -24510,15 +24782,19 @@ var Laya=window.Laya=(function(window,document){
 		__proto.freshStockData=function(){
 			var dataO;
 			dataO=StockJsonP.getStockData(this.tStock);
-			if (!dataO)return;
+			if (!dataO)
+				return;
 			dataO=StockJsonP.adptStockO(dataO);
-			if (dataO.price <=0)return;
-			if (dataO.amount <=0)return;
+			if (dataO.price <=0)
+				return;
+			if (dataO.amount <=0)
+				return;
 			var lastDataO;
 			lastDataO=this.dataList[this.dataList.length-1];
 			if (dataO.date==lastDataO.date){
 				this.dataList[this.dataList.length-1]=dataO;
-				}else{
+			}
+			else {
 				if (dataO.date > lastDataO.date){
 					this.dataList.push(dataO);
 				}
@@ -24540,7 +24816,8 @@ var Laya=window.Laya=(function(window,document){
 			if (this.autoPlay){
 				this.showMsg("playing K-line Animation");
 				Laya.timer.loop(10,this,this.timeEffect);
-				}else{
+			}
+			else {
 				this.showMsg("K-line Showed:"+this.disDataList[this.disDataList.length-1].date);
 				this.cacheAsBitmap=true;
 				this.event("KlineShowed");
@@ -24575,11 +24852,14 @@ var Laya=window.Laya=(function(window,document){
 			(end===void 0)&& (end=-1);
 			if (this.maxShowCount > 0){
 				end=start+this.maxShowCount;
-				if (end > this.dataList.length)end=this.dataList.length;
+				if (end > this.dataList.length)
+					end=this.dataList.length;
+				if (start > this.dataList.length)debugger;
 			}
 			this.analysersDoAnalyse(start,end);
 			this.graphics.clear();
-			if (end < start)end=this.dataList.length;
+			if (end < start)
+				end=this.dataList.length;
 			this.disDataList=this.dataList.slice(start,end);
 			this.drawStockKLine();
 			this.drawGrid();
@@ -24600,26 +24880,30 @@ var Laya=window.Laya=(function(window,document){
 			var markTime;
 			markTime=StockListManager.getStockLastMark(this.tStock);
 			var prePrice=0;
+			var curPrice=0;
 			for (i=0;i < len;i++){
 				tData=dataList[i];
-				var pos=NaN;
-				pos=this.getAdptXV(i *this.gridWidth);
+				var tPos=NaN;
+				tPos=this.getAdptXV(i *this.gridWidth);
 				if (tData["close"] >=tData["open"]){
 					tColor="#ff0000";
-					}else{
+				}
+				else {
 					tColor="#00ffff";
 				}
 				if (tData["high"]==tData["low"]){
 					if (tData["high"] < prePrice){
 						tColor="#00ffff";
 					}
-					this.graphics.drawLine(pos,this.getAdptYV(tData["open"]),pos,this.getAdptYV(tData["close"])+1,tColor,this.gridWidth*this.xRate);
-					}else{
-					this.graphics.drawLine(pos,this.getAdptYV(tData["high"]),pos,this.getAdptYV(tData["low"]),tColor,1 *this.xRate);
+					this.graphics.drawLine(tPos,this.getAdptYV(tData["open"]),tPos,this.getAdptYV(tData["close"])+1,tColor,this.gridWidth *this.xRate);
+				}
+				else {
+					this.graphics.drawLine(tPos,this.getAdptYV(tData["high"]),tPos,this.getAdptYV(tData["low"]),tColor,1 *this.xRate);
 					if (tData["open"]==tData["close"]){
-						this.graphics.drawLine(pos,this.getAdptYV(tData["open"]),pos,this.getAdptYV(tData["close"])+0.5,tColor,this.gridWidth*this.xRate);
-						}else{
-						this.graphics.drawLine(pos,this.getAdptYV(tData["open"]),pos,this.getAdptYV(tData["close"]),tColor,this.gridWidth*this.xRate);
+						this.graphics.drawLine(tPos,this.getAdptYV(tData["open"]),tPos,this.getAdptYV(tData["close"])+0.5,tColor,this.gridWidth *this.xRate);
+					}
+					else {
+						this.graphics.drawLine(tPos,this.getAdptYV(tData["open"]),tPos,this.getAdptYV(tData["close"]),tColor,this.gridWidth *this.xRate);
 					}
 				}
 				prePrice=tData["close"];
@@ -24627,14 +24911,30 @@ var Laya=window.Laya=(function(window,document){
 			if (markTime){
 				for (i=0;i < len;i++){
 					tData=dataList[i];
-					if (tData.date==markTime||(tData.date<markTime&&dataList[i+1]&&dataList[i+1].date>markTime)){
-						pos=this.getAdptXV(i *this.gridWidth);
-						this.graphics.drawLine(pos,this.getAdptYV(tData["low"]),pos,this.getAdptYV(tData["low"])+30,"#00ff00");
-						this.graphics.fillText("Mark",pos,this.getAdptYV(tData["low"])+30,null,"#00ff00","center");
+					if (tData.date==markTime || (tData.date < markTime && dataList[i+1] && dataList[i+1].date > markTime)){
+						tPos=this.getAdptXV(i *this.gridWidth);
+						this.graphics.drawLine(tPos,this.getAdptYV(tData["low"]),tPos,this.getAdptYV(tData["low"])+30,"#00ff00");
+						this.graphics.fillText("Mark",tPos,this.getAdptYV(tData["low"])+30,null,"#00ff00","center");
 						break ;
 					}
 					if (tData.date > markTime){
 						break ;
+					}
+				}
+			}
+			if (this.markO && this.markO.date){
+				var buyI=0;
+				buyI=this.drawMark(this.markO.date,"Buy",dataList);
+				if (buyI >=0&&this.markO.sell){
+					var sellI=0;
+					i=buyI+this.markO.sell;
+					if (dataList[i]){
+						prePrice=dataList[buyI]["high"]
+						tData=dataList[i];
+						curPrice=tData["close"]
+						tPos=this.getAdptXV(i *this.gridWidth);
+						this.graphics.drawLine(tPos,this.getAdptYV(tData["low"]),tPos,this.getAdptYV(tData["low"])+30,"#00ff00");
+						this.graphics.fillText("Sell:"+StockTools.getGoodPercent((curPrice-prePrice)/prePrice)+"%"+tData["date"],tPos,this.getAdptYV(tData["low"])+30,null,"#00ff00","center");
 					}
 				}
 			}
@@ -24646,12 +24946,32 @@ var Laya=window.Laya=(function(window,document){
 					var tDate;
 					tDate=tData.date;
 					if (tradeActionDic[tDate]){
-						pos=this.getAdptXV(i *this.gridWidth);
-						this.graphics.drawLine(pos,this.getAdptYV(tData["low"]),pos,this.getAdptYV(tData["low"])+30,"#00ff00");
-						this.graphics.fillText(tradeActionDic[tDate],pos,this.getAdptYV(tData["low"])+30,null,"#00ff00","center");
+						tPos=this.getAdptXV(i *this.gridWidth);
+						this.graphics.drawLine(tPos,this.getAdptYV(tData["low"]),tPos,this.getAdptYV(tData["low"])+30,"#00ff00");
+						this.graphics.fillText(tradeActionDic[tDate],tPos,this.getAdptYV(tData["low"])+30,null,"#00ff00","center");
 					}
 				}
 			}
+		}
+
+		__proto.drawMark=function(markTime,markSign,dataList){
+			var i=0,len=0;
+			len=dataList.length;
+			var tPos=NaN;
+			var tData;
+			for (i=0;i < len;i++){
+				tData=dataList[i];
+				if (tData.date==markTime || (tData.date < markTime && dataList[i+1] && dataList[i+1].date > markTime)){
+					tPos=this.getAdptXV(i *this.gridWidth);
+					this.graphics.drawLine(tPos,this.getAdptYV(tData["low"]),tPos,this.getAdptYV(tData["low"])+30,"#00ff00");
+					this.graphics.fillText(markSign+":"+tData["high"]+":"+tData.date,tPos,this.getAdptYV(tData["low"])+30,null,"#00ff00","center");
+					return i;
+				}
+				if (tData.date > markTime){
+					break ;
+				}
+			}
+			return-1;
 		}
 
 		__proto.drawAmounts=function(){
@@ -24670,7 +24990,7 @@ var Laya=window.Laya=(function(window,document){
 			var barsData;
 			barsData=[];
 			for (i=0;i < len;i++){
-				barsData.push([i,-dataList[i][sign]*MRate]);
+				barsData.push([i,-dataList[i][sign] *MRate]);
 			}
 			this.drawBars(barsData,0);
 		}
@@ -24701,7 +25021,8 @@ var Laya=window.Laya=(function(window,document){
 		__proto.drawAnalyser=function(analyser){
 			var cmds;
 			cmds=analyser.getDrawCmds();
-			if (!cmds)return;
+			if (!cmds)
+				return;
 			var i=0,len=0;
 			len=cmds.length;
 			var tCmdArr;
@@ -24734,7 +25055,8 @@ var Laya=window.Laya=(function(window,document){
 			(withLine===void 0)&& (withLine=false);
 			this.graphics.fillText(text,this.getAdptXV(i *this.gridWidth),this.getAdptYV(this.disDataList[i][sign])+dY,null,color,"center");
 			if (withLine){
-				if (!lineColor)lineColor=color;
+				if (!lineColor)
+					lineColor=color;
 				this.graphics.drawLine(this.getAdptXV(i *this.gridWidth),this.getAdptYV(this.disDataList[i][sign])+dY,this.getAdptXV(i *this.gridWidth),this.getAdptYV(this.disDataList[i][sign]),lineColor);
 			}
 		}
@@ -24781,7 +25103,8 @@ var Laya=window.Laya=(function(window,document){
 				exTxt=tArr[2];
 				if (exTxt){
 					this.drawPoint(tI,tData[tSign],exTxt,KLine.SignDrawDes[tSign]["dy"],KLine.SignDrawDes[tSign]["color"],3);
-					}else{
+				}
+				else {
 					this.drawPoint(tI,tData[tSign],tData[tSign],KLine.SignDrawDes[tSign]["dy"],KLine.SignDrawDes[tSign]["color"],3);
 				}
 			}
@@ -24825,7 +25148,8 @@ var Laya=window.Laya=(function(window,document){
 				tV=tData[1];
 				tTxt=tData[2];
 				tColor=tData[3];
-				if (!tColor)tColor=color;
+				if (!tColor)
+					tColor=color;
 				this.graphics.drawLine(this.getAdptXV(tV *this.gridWidth)+xZero,tY,xZero,tY,tColor,this.gridWidth);
 				if (tTxt){
 					this.graphics.fillText(tTxt,this.getAdptXV(tV *this.gridWidth)+xZero+5,tY-6,null,tColor,"left");
@@ -24850,7 +25174,7 @@ var Laya=window.Laya=(function(window,document){
 			len=pointList.length;
 			var color;
 			for (i=1;i < len;i++){
-				color=pointList[i][2]?pointList[i][2]:color;
+				color=pointList[i][2] ? pointList[i][2] :color;
 				this.drawLineEx(pointList[i-1][0],pointList[i-1][1]+offY,pointList[i][0],pointList[i][1]+offY,color);
 			}
 		}
@@ -24916,8 +25240,8 @@ var Laya=window.Laya=(function(window,document){
 				for (i=0;i < len;i++){
 					tTxt=texts[i];
 					tValue=values[i];
-					this.graphics.fillText(tTxt,this.getAdptXV(startI*this.gridWidth),this.getAdptYV(tValue),null,color,"left");
-					this.graphics.fillText(tTxt,this.getAdptXV(endI*this.gridWidth),this.getAdptYV(tValue),null,color,"right");
+					this.graphics.fillText(tTxt,this.getAdptXV(startI *this.gridWidth),this.getAdptYV(tValue),null,color,"left");
+					this.graphics.fillText(tTxt,this.getAdptXV(endI *this.gridWidth),this.getAdptYV(tValue),null,color,"right");
 				}
 			}
 		}
@@ -24942,8 +25266,8 @@ var Laya=window.Laya=(function(window,document){
 				for (i=0;i < len;i++){
 					tTxt=texts[i];
 					tValue=values[i];
-					this.graphics.fillText(tTxt,this.getAdptXV(startI*this.gridWidth),-tValue,null,color,"left");
-					this.graphics.fillText(tTxt,this.getAdptXV(endI*this.gridWidth),-tValue,null,color,"right");
+					this.graphics.fillText(tTxt,this.getAdptXV(startI *this.gridWidth),-tValue,null,color,"left");
+					this.graphics.fillText(tTxt,this.getAdptXV(endI *this.gridWidth),-tValue,null,color,"right");
 				}
 			}
 		}
@@ -24957,22 +25281,12 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		__proto.getIByX=function(x){
-			return Math.round(x/(this.xRate*this.gridWidth));
+			return Math.round(x / (this.xRate *this.gridWidth));
 		}
 
 		KLine.KlineShowed="KlineShowed";
 		__static(KLine,
-		['SignDrawDes',function(){return this.SignDrawDes={
-				"high":{
-					color:"#ffff00",
-					dy:-20
-				},
-				"low":{
-					color:"#00ff00",
-					dy:20
-				}
-		};}
-
+		['SignDrawDes',function(){return this.SignDrawDes={"high":{color:"#ffff00",dy:-20},"low":{color:"#00ff00",dy:20}};}
 		]);
 		return KLine;
 	})(Sprite)
@@ -29745,496 +30059,6 @@ var Laya=window.Laya=(function(window,document){
 
 
 	/**
-	*<p><code>Input</code> 类用于创建显示对象以显示和输入文本。</p>
-	*/
-	//class laya.display.Input extends laya.display.Text
-	var Input=(function(_super){
-		function Input(){
-			this._focus=false;
-			this._multiline=false;
-			this._editable=true;
-			this._restrictPattern=null;
-			this._type="text";
-			this._prompt='';
-			this._promptColor="#A9A9A9";
-			this._originColor="#000000";
-			this._content='';
-			Input.__super.call(this);
-			this._maxChars=1E5;
-			this._width=100;
-			this._height=20;
-			this.multiline=false;
-			this.overflow=Text.SCROLL;
-			this.on("mousedown",this,this._onMouseDown);
-			this.on("undisplay",this,this._onUnDisplay);
-		}
-
-		__class(Input,'laya.display.Input',_super);
-		var __proto=Input.prototype;
-		/**
-		*设置光标位置和选取字符。
-		*@param startIndex 光标起始位置。
-		*@param endIndex 光标结束位置。
-		*/
-		__proto.setSelection=function(startIndex,endIndex){
-			laya.display.Input.inputElement.selectionStart=startIndex;
-			laya.display.Input.inputElement.selectionEnd=endIndex;
-		}
-
-		/**@private */
-		__proto._onUnDisplay=function(e){
-			this.focus=false;
-		}
-
-		/**@private */
-		__proto._onMouseDown=function(e){
-			this.focus=true;
-			Laya.stage.on("mousedown",this,this._checkBlur);
-		}
-
-		/**@private */
-		__proto._checkBlur=function(e){
-			if (e.nativeEvent.target !=laya.display.Input.input && e.nativeEvent.target !=laya.display.Input.area && e.target !=this)
-				this.focus=false;
-		}
-
-		/**@inheritDoc*/
-		__proto.render=function(context,x,y){
-			laya.display.Sprite.prototype.render.call(this,context,x,y);
-		}
-
-		/**
-		*在输入期间，如果 Input 实例的位置改变，调用该方法同步输入框的位置。
-		*/
-		__proto._syncInputTransform=function(){
-			var style=this.nativeInput.style;
-			var stage=Laya.stage;
-			var rec;
-			rec=Utils.getGlobalPosAndScale(this);
-			var m=stage._canvasTransform.clone();
-			var tm=m.clone();
-			tm.rotate(-Math.PI / 180 *Laya.stage.canvasDegree);
-			tm.scale(Laya.stage.clientScaleX,Laya.stage.clientScaleY);
-			var perpendicular=(Laya.stage.canvasDegree % 180 !=0);
-			var sx=perpendicular ? tm.d :tm.a;
-			var sy=perpendicular ? tm.a :tm.d;
-			tm.destroy();
-			var tx=this.padding[3];
-			var ty=this.padding[0];
-			if (Laya.stage.canvasDegree==0){
-				tx+=rec.x;
-				ty+=rec.y;
-				tx *=sx;
-				ty *=sy;
-				tx+=m.tx;
-				ty+=m.ty;
-				}else if (Laya.stage.canvasDegree==90){
-				tx+=rec.y;
-				ty+=rec.x;
-				tx *=sx;
-				ty *=sy;
-				tx=m.tx-tx;
-				ty+=m.ty;
-				}else{
-				tx+=rec.y;
-				ty+=rec.x;
-				tx *=sx;
-				ty *=sy;
-				tx+=m.tx;
-				ty=m.ty-ty;
-			};
-			var quarter=0.785;
-			var r=Math.atan2(rec.height,rec.width)-quarter;
-			var sin=Math.sin(r),cos=Math.cos(r);
-			var tsx=cos *rec.width+sin *rec.height;
-			var tsy=cos *rec.height-sin *rec.width;
-			sx *=(perpendicular ? tsy :tsx);
-			sy *=(perpendicular ? tsx :tsy);
-			m.tx=0;
-			m.ty=0;
-			r *=180 / 3.1415;
-			Input.inputContainer.style.transform="scale("+sx+","+sy+") rotate("+(Laya.stage.canvasDegree+r)+"deg)";
-			Input.inputContainer.style.webkitTransform="scale("+sx+","+sy+") rotate("+(Laya.stage.canvasDegree+r)+"deg)";
-			Input.inputContainer.setPos(tx,ty);
-			m.destroy();
-			var inputWid=this._width-this.padding[1]-this.padding[3];
-			var inputHei=this._height-this.padding[0]-this.padding[2];
-			this.nativeInput.setSize(inputWid,inputHei);
-			if (Render.isConchApp){
-				this.nativeInput.setPos(tx,ty);
-				this.nativeInput.setScale(sx,sy);
-			}
-		}
-
-		/**选中所有文本。*/
-		__proto.select=function(){
-			this.nativeInput.select();
-		}
-
-		/**@private 设置输入法（textarea或input）*/
-		__proto._setInputMethod=function(){
-			Input.input.parentElement && (Input.inputContainer.removeChild(Input.input));
-			Input.area.parentElement && (Input.inputContainer.removeChild(Input.area));
-			Input.inputElement=(this._multiline ? Input.area :Input.input);
-			Input.inputContainer.appendChild(Input.inputElement);
-		}
-
-		/**@private */
-		__proto._focusIn=function(){
-			laya.display.Input.isInputting=true;
-			var input=this.nativeInput;
-			this._focus=true;
-			var cssStyle=input.style;
-			cssStyle.whiteSpace=(this.wordWrap ? "pre-wrap" :"nowrap");
-			this._setPromptColor();
-			input.readOnly=!this._editable;
-			input.maxLength=this._maxChars;
-			var padding=this.padding;
-			input.type=this._type;
-			input.value=this._content;
-			input.placeholder=this._prompt;
-			Laya.stage.off("keydown",this,this._onKeyDown);
-			Laya.stage.on("keydown",this,this._onKeyDown);
-			Laya.stage.focus=this;
-			this.event("focus");
-			if (Browser.onPC)input.focus();
-			var temp=this._text;
-			this._text=null;
-			this.typeset();
-			input.setColor(this._originColor);
-			input.setFontSize(this.fontSize);
-			input.setFontFace(this.font);
-			if (Render.isConchApp){
-				input.setMultiAble && input.setMultiAble(this._multiline);
-			}
-			cssStyle.lineHeight=(this.leading+this.fontSize)+"px";
-			cssStyle.fontStyle=(this.italic ? "italic" :"normal");
-			cssStyle.fontWeight=(this.bold ? "bold" :"normal");
-			cssStyle.textAlign=this.align;
-			cssStyle.padding="0 0";
-			this._syncInputTransform();
-			if (!Render.isConchApp && Browser.onPC)
-				Laya.timer.frameLoop(1,this,this._syncInputTransform);
-		}
-
-		// 设置DOM输入框提示符颜色。
-		__proto._setPromptColor=function(){
-			Input.promptStyleDOM=Browser.getElementById("promptStyle");
-			if (!Input.promptStyleDOM){
-				Input.promptStyleDOM=Browser.createElement("style");
-				Browser.document.head.appendChild(Input.promptStyleDOM);
-			}
-			Input.promptStyleDOM.innerText="input::-webkit-input-placeholder, textarea::-webkit-input-placeholder {"+"color:"+this._promptColor+"}"+"input:-moz-placeholder, textarea:-moz-placeholder {"+"color:"+this._promptColor+"}"+"input::-moz-placeholder, textarea::-moz-placeholder {"+"color:"+this._promptColor+"}"+"input:-ms-input-placeholder, textarea:-ms-input-placeholder {"+"color:"+this._promptColor+"}";
-		}
-
-		/**@private */
-		__proto._focusOut=function(){
-			laya.display.Input.isInputting=false;
-			this._focus=false;
-			this._text=null;
-			this._content=this.nativeInput.value;
-			if (!this._content){
-				_super.prototype._$set_text.call(this,this._prompt);
-				_super.prototype._$set_color.call(this,this._promptColor);
-				}else {
-				_super.prototype._$set_text.call(this,this._content);
-				_super.prototype._$set_color.call(this,this._originColor);
-			}
-			Laya.stage.off("keydown",this,this._onKeyDown);
-			Laya.stage.focus=null;
-			this.event("blur");
-			if (Render.isConchApp)this.nativeInput.blur();
-			Browser.onPC && Laya.timer.clear(this,this._syncInputTransform);
-			Laya.stage.off("mousedown",this,this._checkBlur);
-		}
-
-		/**@private */
-		__proto._onKeyDown=function(e){
-			if (e.keyCode===13){
-				if (Browser.onMobile && !this._multiline)
-					this.focus=false;
-				this.event("enter");
-			}
-		}
-
-		__proto.changeText=function(text){
-			this._content=text;
-			if (this._focus){
-				this.nativeInput.value=text || '';
-				this.event("change");
-			}else
-			_super.prototype.changeText.call(this,text);
-		}
-
-		/**@inheritDoc */
-		__getset(0,__proto,'color',_super.prototype._$get_color,function(value){
-			if (this._focus)
-				this.nativeInput.setColor(value);
-			_super.prototype._$set_color.call(this,this._content?value:this._promptColor);
-			this._originColor=value;
-		});
-
-		//[Deprecated]
-		__getset(0,__proto,'inputElementYAdjuster',function(){
-			console.warn("deprecated: 由于即使设置了该值，在各平台和浏览器之间也不一定一致，inputElementYAdjuster已弃用。");
-			return 0;
-			},function(value){
-			console.warn("deprecated: 由于即使设置了该值，在各平台和浏览器之间也不一定一致，inputElementYAdjuster已弃用。");
-		});
-
-		/**表示是否是多行输入框。*/
-		__getset(0,__proto,'multiline',function(){
-			return this._multiline;
-			},function(value){
-			this._multiline=value;
-			this.valign=value ? "top" :"middle";
-		});
-
-		/**
-		*字符数量限制，默认为10000。
-		*设置字符数量限制时，小于等于0的值将会限制字符数量为10000。
-		*/
-		__getset(0,__proto,'maxChars',function(){
-			return this._maxChars;
-			},function(value){
-			if (value <=0)
-				value=1E5;
-			this._maxChars=value;
-		});
-
-		/**@inheritDoc */
-		__getset(0,__proto,'text',function(){
-			if (this._focus)
-				return this.nativeInput.value;
-			else
-			return this._content || "";
-			},function(value){
-			_super.prototype._$set_color.call(this,this._originColor);
-			value+='';
-			if (this._focus){
-				this.nativeInput.value=value || '';
-				this.event("change");
-				}else {
-				if (!this._multiline)
-					value=value.replace(/\r?\n/g,'');
-				this._content=value;
-				if (value)
-					_super.prototype._$set_text.call(this,value);
-				else {
-					_super.prototype._$set_text.call(this,this._prompt);
-					_super.prototype._$set_color.call(this,this.promptColor);
-				}
-			}
-		});
-
-		/**
-		*获取对输入框的引用实例。
-		*/
-		__getset(0,__proto,'nativeInput',function(){
-			return this._multiline ? Input.area :Input.input;
-		});
-
-		/**
-		*设置输入提示符。
-		*/
-		__getset(0,__proto,'prompt',function(){
-			return this._prompt;
-			},function(value){
-			if (!this._text && value)
-				_super.prototype._$set_color.call(this,this._promptColor);
-			this.promptColor=this._promptColor;
-			if (this._text)
-				_super.prototype._$set_text.call(this,(this._text==this._prompt)?value:this._text);
-			else
-			_super.prototype._$set_text.call(this,value);
-			this._prompt=value;
-		});
-
-		// 因此 调用focus接口是无法都在移动平台立刻弹出键盘的
-		/**
-		*表示焦点是否在显示对象上。
-		*/
-		__getset(0,__proto,'focus',function(){
-			return this._focus;
-			},function(value){
-			var input=this.nativeInput;
-			if (this._focus!==value){
-				if (value){
-					input.target && (input.target.focus=false);
-					input.target=this;
-					this._setInputMethod();
-					this._focusIn();
-					}else {
-					input.target=null;
-					this._focusOut();
-					input.blur();
-					if (Render.isConchApp){
-						input.setPos(-10000,-10000);
-					}else if (Input.inputContainer.contains(input))
-					Input.inputContainer.removeChild(input);
-				}
-			}
-		});
-
-		/**限制输入的字符。*/
-		__getset(0,__proto,'restrict',function(){
-			if (this._restrictPattern){
-				return this._restrictPattern.source;
-			}
-			return "";
-			},function(pattern){
-			if (pattern){
-				pattern="[^"+pattern+"]";
-				if (pattern.indexOf("^^")>-1)
-					pattern=pattern.replace("^^","");
-				this._restrictPattern=new RegExp(pattern,"g");
-			}else
-			this._restrictPattern=null;
-		});
-
-		/**
-		*是否可编辑。
-		*/
-		__getset(0,__proto,'editable',function(){
-			return this._editable;
-			},function(value){
-			this._editable=value;
-		});
-
-		/**
-		*设置输入提示符颜色。
-		*/
-		__getset(0,__proto,'promptColor',function(){
-			return this._promptColor;
-			},function(value){
-			this._promptColor=value;
-			if (!this._content)_super.prototype._$set_color.call(this,value);
-		});
-
-		/**
-		*输入框类型为Input静态常量之一。
-		*平台兼容性参见http://www.w3school.com.cn/html5/html_5_form_input_types.asp。
-		*/
-		__getset(0,__proto,'type',function(){
-			return this._type;
-			},function(value){
-			if (value=="password")
-				this._getCSSStyle().password=true;
-			else
-			this._getCSSStyle().password=false;
-			this._type=value;
-		});
-
-		//[Deprecated]
-		__getset(0,__proto,'inputElementXAdjuster',function(){
-			console.warn("deprecated: 由于即使设置了该值，在各平台和浏览器之间也不一定一致，inputElementXAdjuster已弃用。");
-			return 0;
-			},function(value){
-			console.warn("deprecated: 由于即使设置了该值，在各平台和浏览器之间也不一定一致，inputElementXAdjuster已弃用。");
-		});
-
-		//[Deprecated(replacement="Input.type")]
-		__getset(0,__proto,'asPassword',function(){
-			return this._getCSSStyle().password;
-			},function(value){
-			this._getCSSStyle().password=value;
-			this._type="password";
-			console.warn("deprecated: 使用type=\"password\"替代设置asPassword, asPassword将在下次重大更新时删去");
-			this.isChanged=true;
-		});
-
-		Input.__init__=function(){
-			Input._createInputElement();
-			if (Browser.onMobile)
-				Render.canvas.addEventListener(Input.IOS_IFRAME ? "click" :"touchend",Input._popupInputMethod);
-		}
-
-		Input._popupInputMethod=function(e){
-			if (!laya.display.Input.isInputting)return;
-			var input=laya.display.Input.inputElement;
-			input.focus();
-		}
-
-		Input._createInputElement=function(){
-			Input._initInput(Input.area=Browser.createElement("textarea"));
-			Input._initInput(Input.input=Browser.createElement("input"));
-			Input.inputContainer=Browser.createElement("div");
-			Input.inputContainer.style.position="absolute";
-			Input.inputContainer.style.zIndex=1E5;
-			Browser.container.appendChild(Input.inputContainer);
-			Input.inputContainer.setPos=function (x,y){Input.inputContainer.style.left=x+'px';Input.inputContainer.style.top=y+'px';};
-		}
-
-		Input._initInput=function(input){
-			var style=input.style;
-			style.cssText="position:absolute;overflow:hidden;resize:none;transform-origin:0 0;-webkit-transform-origin:0 0;-moz-transform-origin:0 0;-o-transform-origin:0 0;";
-			style.resize='none';
-			style.backgroundColor='transparent';
-			style.border='none';
-			style.outline='none';
-			style.zIndex=1;
-			input.addEventListener('input',Input._processInputting);
-			input.addEventListener('mousemove',Input._stopEvent);
-			input.addEventListener('mousedown',Input._stopEvent);
-			input.addEventListener('touchmove',Input._stopEvent);
-			if(!Render.isConchApp){
-				input.setColor=function (color){input.style.color=color;};
-				input.setFontSize=function (fontSize){input.style.fontSize=fontSize+'px';};
-				input.setSize=function (w,h){input.style.width=w+'px';input.style.height=h+'px';};
-			}
-			input.setFontFace=function (fontFace){input.style.fontFamily=fontFace;};
-		}
-
-		Input._processInputting=function(e){
-			var input=laya.display.Input.inputElement.target;
-			if (!input)return;
-			var value=laya.display.Input.inputElement.value;
-			if (input._restrictPattern){
-				value=value.replace(/\u2006|\x27/g,"");
-				if (input._restrictPattern.test(value)){
-					value=value.replace(input._restrictPattern,"");
-					laya.display.Input.inputElement.value=value;
-				}
-			}
-			input._text=value;
-			input.event("input");
-		}
-
-		Input._stopEvent=function(e){
-			if (e.type=='touchmove')
-				e.preventDefault();
-			e.stopPropagation && e.stopPropagation();
-		}
-
-		Input.TYPE_TEXT="text";
-		Input.TYPE_PASSWORD="password";
-		Input.TYPE_EMAIL="email";
-		Input.TYPE_URL="url";
-		Input.TYPE_NUMBER="number";
-		Input.TYPE_RANGE="range";
-		Input.TYPE_DATE="date";
-		Input.TYPE_MONTH="month";
-		Input.TYPE_WEEK="week";
-		Input.TYPE_TIME="time";
-		Input.TYPE_DATE_TIME="datetime";
-		Input.TYPE_DATE_TIME_LOCAL="datetime-local";
-		Input.TYPE_SEARCH="search";
-		Input.input=null
-		Input.area=null
-		Input.inputElement=null
-		Input.inputContainer=null
-		Input.confirmButton=null
-		Input.promptStyleDOM=null
-		Input.inputHeight=45;
-		Input.isInputting=false;
-		__static(Input,
-		['IOS_IFRAME',function(){return this.IOS_IFRAME=(Browser.onIOS && Browser.window.top !=Browser.window.self);}
-		]);
-		return Input;
-	})(Text)
-
-
-	/**
 	*<code>ScrollBar</code> 组件是一个滚动条组件。
 	*<p>当数据太多以至于显示区域无法容纳时，最终用户可以使用 <code>ScrollBar</code> 组件控制所显示的数据部分。</p>
 	*<p> 滚动条由四部分组成：两个箭头按钮、一个轨道和一个滑块。 </p> *
@@ -31017,6 +30841,496 @@ var Laya=window.Laya=(function(window,document){
 		]);
 		return Slider;
 	})(Component)
+
+
+	/**
+	*<p><code>Input</code> 类用于创建显示对象以显示和输入文本。</p>
+	*/
+	//class laya.display.Input extends laya.display.Text
+	var Input=(function(_super){
+		function Input(){
+			this._focus=false;
+			this._multiline=false;
+			this._editable=true;
+			this._restrictPattern=null;
+			this._type="text";
+			this._prompt='';
+			this._promptColor="#A9A9A9";
+			this._originColor="#000000";
+			this._content='';
+			Input.__super.call(this);
+			this._maxChars=1E5;
+			this._width=100;
+			this._height=20;
+			this.multiline=false;
+			this.overflow=Text.SCROLL;
+			this.on("mousedown",this,this._onMouseDown);
+			this.on("undisplay",this,this._onUnDisplay);
+		}
+
+		__class(Input,'laya.display.Input',_super);
+		var __proto=Input.prototype;
+		/**
+		*设置光标位置和选取字符。
+		*@param startIndex 光标起始位置。
+		*@param endIndex 光标结束位置。
+		*/
+		__proto.setSelection=function(startIndex,endIndex){
+			laya.display.Input.inputElement.selectionStart=startIndex;
+			laya.display.Input.inputElement.selectionEnd=endIndex;
+		}
+
+		/**@private */
+		__proto._onUnDisplay=function(e){
+			this.focus=false;
+		}
+
+		/**@private */
+		__proto._onMouseDown=function(e){
+			this.focus=true;
+			Laya.stage.on("mousedown",this,this._checkBlur);
+		}
+
+		/**@private */
+		__proto._checkBlur=function(e){
+			if (e.nativeEvent.target !=laya.display.Input.input && e.nativeEvent.target !=laya.display.Input.area && e.target !=this)
+				this.focus=false;
+		}
+
+		/**@inheritDoc*/
+		__proto.render=function(context,x,y){
+			laya.display.Sprite.prototype.render.call(this,context,x,y);
+		}
+
+		/**
+		*在输入期间，如果 Input 实例的位置改变，调用该方法同步输入框的位置。
+		*/
+		__proto._syncInputTransform=function(){
+			var style=this.nativeInput.style;
+			var stage=Laya.stage;
+			var rec;
+			rec=Utils.getGlobalPosAndScale(this);
+			var m=stage._canvasTransform.clone();
+			var tm=m.clone();
+			tm.rotate(-Math.PI / 180 *Laya.stage.canvasDegree);
+			tm.scale(Laya.stage.clientScaleX,Laya.stage.clientScaleY);
+			var perpendicular=(Laya.stage.canvasDegree % 180 !=0);
+			var sx=perpendicular ? tm.d :tm.a;
+			var sy=perpendicular ? tm.a :tm.d;
+			tm.destroy();
+			var tx=this.padding[3];
+			var ty=this.padding[0];
+			if (Laya.stage.canvasDegree==0){
+				tx+=rec.x;
+				ty+=rec.y;
+				tx *=sx;
+				ty *=sy;
+				tx+=m.tx;
+				ty+=m.ty;
+				}else if (Laya.stage.canvasDegree==90){
+				tx+=rec.y;
+				ty+=rec.x;
+				tx *=sx;
+				ty *=sy;
+				tx=m.tx-tx;
+				ty+=m.ty;
+				}else{
+				tx+=rec.y;
+				ty+=rec.x;
+				tx *=sx;
+				ty *=sy;
+				tx+=m.tx;
+				ty=m.ty-ty;
+			};
+			var quarter=0.785;
+			var r=Math.atan2(rec.height,rec.width)-quarter;
+			var sin=Math.sin(r),cos=Math.cos(r);
+			var tsx=cos *rec.width+sin *rec.height;
+			var tsy=cos *rec.height-sin *rec.width;
+			sx *=(perpendicular ? tsy :tsx);
+			sy *=(perpendicular ? tsx :tsy);
+			m.tx=0;
+			m.ty=0;
+			r *=180 / 3.1415;
+			Input.inputContainer.style.transform="scale("+sx+","+sy+") rotate("+(Laya.stage.canvasDegree+r)+"deg)";
+			Input.inputContainer.style.webkitTransform="scale("+sx+","+sy+") rotate("+(Laya.stage.canvasDegree+r)+"deg)";
+			Input.inputContainer.setPos(tx,ty);
+			m.destroy();
+			var inputWid=this._width-this.padding[1]-this.padding[3];
+			var inputHei=this._height-this.padding[0]-this.padding[2];
+			this.nativeInput.setSize(inputWid,inputHei);
+			if (Render.isConchApp){
+				this.nativeInput.setPos(tx,ty);
+				this.nativeInput.setScale(sx,sy);
+			}
+		}
+
+		/**选中所有文本。*/
+		__proto.select=function(){
+			this.nativeInput.select();
+		}
+
+		/**@private 设置输入法（textarea或input）*/
+		__proto._setInputMethod=function(){
+			Input.input.parentElement && (Input.inputContainer.removeChild(Input.input));
+			Input.area.parentElement && (Input.inputContainer.removeChild(Input.area));
+			Input.inputElement=(this._multiline ? Input.area :Input.input);
+			Input.inputContainer.appendChild(Input.inputElement);
+		}
+
+		/**@private */
+		__proto._focusIn=function(){
+			laya.display.Input.isInputting=true;
+			var input=this.nativeInput;
+			this._focus=true;
+			var cssStyle=input.style;
+			cssStyle.whiteSpace=(this.wordWrap ? "pre-wrap" :"nowrap");
+			this._setPromptColor();
+			input.readOnly=!this._editable;
+			input.maxLength=this._maxChars;
+			var padding=this.padding;
+			input.type=this._type;
+			input.value=this._content;
+			input.placeholder=this._prompt;
+			Laya.stage.off("keydown",this,this._onKeyDown);
+			Laya.stage.on("keydown",this,this._onKeyDown);
+			Laya.stage.focus=this;
+			this.event("focus");
+			if (Browser.onPC)input.focus();
+			var temp=this._text;
+			this._text=null;
+			this.typeset();
+			input.setColor(this._originColor);
+			input.setFontSize(this.fontSize);
+			input.setFontFace(this.font);
+			if (Render.isConchApp){
+				input.setMultiAble && input.setMultiAble(this._multiline);
+			}
+			cssStyle.lineHeight=(this.leading+this.fontSize)+"px";
+			cssStyle.fontStyle=(this.italic ? "italic" :"normal");
+			cssStyle.fontWeight=(this.bold ? "bold" :"normal");
+			cssStyle.textAlign=this.align;
+			cssStyle.padding="0 0";
+			this._syncInputTransform();
+			if (!Render.isConchApp && Browser.onPC)
+				Laya.timer.frameLoop(1,this,this._syncInputTransform);
+		}
+
+		// 设置DOM输入框提示符颜色。
+		__proto._setPromptColor=function(){
+			Input.promptStyleDOM=Browser.getElementById("promptStyle");
+			if (!Input.promptStyleDOM){
+				Input.promptStyleDOM=Browser.createElement("style");
+				Browser.document.head.appendChild(Input.promptStyleDOM);
+			}
+			Input.promptStyleDOM.innerText="input::-webkit-input-placeholder, textarea::-webkit-input-placeholder {"+"color:"+this._promptColor+"}"+"input:-moz-placeholder, textarea:-moz-placeholder {"+"color:"+this._promptColor+"}"+"input::-moz-placeholder, textarea::-moz-placeholder {"+"color:"+this._promptColor+"}"+"input:-ms-input-placeholder, textarea:-ms-input-placeholder {"+"color:"+this._promptColor+"}";
+		}
+
+		/**@private */
+		__proto._focusOut=function(){
+			laya.display.Input.isInputting=false;
+			this._focus=false;
+			this._text=null;
+			this._content=this.nativeInput.value;
+			if (!this._content){
+				_super.prototype._$set_text.call(this,this._prompt);
+				_super.prototype._$set_color.call(this,this._promptColor);
+				}else {
+				_super.prototype._$set_text.call(this,this._content);
+				_super.prototype._$set_color.call(this,this._originColor);
+			}
+			Laya.stage.off("keydown",this,this._onKeyDown);
+			Laya.stage.focus=null;
+			this.event("blur");
+			if (Render.isConchApp)this.nativeInput.blur();
+			Browser.onPC && Laya.timer.clear(this,this._syncInputTransform);
+			Laya.stage.off("mousedown",this,this._checkBlur);
+		}
+
+		/**@private */
+		__proto._onKeyDown=function(e){
+			if (e.keyCode===13){
+				if (Browser.onMobile && !this._multiline)
+					this.focus=false;
+				this.event("enter");
+			}
+		}
+
+		__proto.changeText=function(text){
+			this._content=text;
+			if (this._focus){
+				this.nativeInput.value=text || '';
+				this.event("change");
+			}else
+			_super.prototype.changeText.call(this,text);
+		}
+
+		/**@inheritDoc */
+		__getset(0,__proto,'color',_super.prototype._$get_color,function(value){
+			if (this._focus)
+				this.nativeInput.setColor(value);
+			_super.prototype._$set_color.call(this,this._content?value:this._promptColor);
+			this._originColor=value;
+		});
+
+		//[Deprecated]
+		__getset(0,__proto,'inputElementYAdjuster',function(){
+			console.warn("deprecated: 由于即使设置了该值，在各平台和浏览器之间也不一定一致，inputElementYAdjuster已弃用。");
+			return 0;
+			},function(value){
+			console.warn("deprecated: 由于即使设置了该值，在各平台和浏览器之间也不一定一致，inputElementYAdjuster已弃用。");
+		});
+
+		/**表示是否是多行输入框。*/
+		__getset(0,__proto,'multiline',function(){
+			return this._multiline;
+			},function(value){
+			this._multiline=value;
+			this.valign=value ? "top" :"middle";
+		});
+
+		/**
+		*字符数量限制，默认为10000。
+		*设置字符数量限制时，小于等于0的值将会限制字符数量为10000。
+		*/
+		__getset(0,__proto,'maxChars',function(){
+			return this._maxChars;
+			},function(value){
+			if (value <=0)
+				value=1E5;
+			this._maxChars=value;
+		});
+
+		/**@inheritDoc */
+		__getset(0,__proto,'text',function(){
+			if (this._focus)
+				return this.nativeInput.value;
+			else
+			return this._content || "";
+			},function(value){
+			_super.prototype._$set_color.call(this,this._originColor);
+			value+='';
+			if (this._focus){
+				this.nativeInput.value=value || '';
+				this.event("change");
+				}else {
+				if (!this._multiline)
+					value=value.replace(/\r?\n/g,'');
+				this._content=value;
+				if (value)
+					_super.prototype._$set_text.call(this,value);
+				else {
+					_super.prototype._$set_text.call(this,this._prompt);
+					_super.prototype._$set_color.call(this,this.promptColor);
+				}
+			}
+		});
+
+		/**
+		*获取对输入框的引用实例。
+		*/
+		__getset(0,__proto,'nativeInput',function(){
+			return this._multiline ? Input.area :Input.input;
+		});
+
+		/**
+		*设置输入提示符。
+		*/
+		__getset(0,__proto,'prompt',function(){
+			return this._prompt;
+			},function(value){
+			if (!this._text && value)
+				_super.prototype._$set_color.call(this,this._promptColor);
+			this.promptColor=this._promptColor;
+			if (this._text)
+				_super.prototype._$set_text.call(this,(this._text==this._prompt)?value:this._text);
+			else
+			_super.prototype._$set_text.call(this,value);
+			this._prompt=value;
+		});
+
+		// 因此 调用focus接口是无法都在移动平台立刻弹出键盘的
+		/**
+		*表示焦点是否在显示对象上。
+		*/
+		__getset(0,__proto,'focus',function(){
+			return this._focus;
+			},function(value){
+			var input=this.nativeInput;
+			if (this._focus!==value){
+				if (value){
+					input.target && (input.target.focus=false);
+					input.target=this;
+					this._setInputMethod();
+					this._focusIn();
+					}else {
+					input.target=null;
+					this._focusOut();
+					input.blur();
+					if (Render.isConchApp){
+						input.setPos(-10000,-10000);
+					}else if (Input.inputContainer.contains(input))
+					Input.inputContainer.removeChild(input);
+				}
+			}
+		});
+
+		/**限制输入的字符。*/
+		__getset(0,__proto,'restrict',function(){
+			if (this._restrictPattern){
+				return this._restrictPattern.source;
+			}
+			return "";
+			},function(pattern){
+			if (pattern){
+				pattern="[^"+pattern+"]";
+				if (pattern.indexOf("^^")>-1)
+					pattern=pattern.replace("^^","");
+				this._restrictPattern=new RegExp(pattern,"g");
+			}else
+			this._restrictPattern=null;
+		});
+
+		/**
+		*是否可编辑。
+		*/
+		__getset(0,__proto,'editable',function(){
+			return this._editable;
+			},function(value){
+			this._editable=value;
+		});
+
+		/**
+		*设置输入提示符颜色。
+		*/
+		__getset(0,__proto,'promptColor',function(){
+			return this._promptColor;
+			},function(value){
+			this._promptColor=value;
+			if (!this._content)_super.prototype._$set_color.call(this,value);
+		});
+
+		/**
+		*输入框类型为Input静态常量之一。
+		*平台兼容性参见http://www.w3school.com.cn/html5/html_5_form_input_types.asp。
+		*/
+		__getset(0,__proto,'type',function(){
+			return this._type;
+			},function(value){
+			if (value=="password")
+				this._getCSSStyle().password=true;
+			else
+			this._getCSSStyle().password=false;
+			this._type=value;
+		});
+
+		//[Deprecated]
+		__getset(0,__proto,'inputElementXAdjuster',function(){
+			console.warn("deprecated: 由于即使设置了该值，在各平台和浏览器之间也不一定一致，inputElementXAdjuster已弃用。");
+			return 0;
+			},function(value){
+			console.warn("deprecated: 由于即使设置了该值，在各平台和浏览器之间也不一定一致，inputElementXAdjuster已弃用。");
+		});
+
+		//[Deprecated(replacement="Input.type")]
+		__getset(0,__proto,'asPassword',function(){
+			return this._getCSSStyle().password;
+			},function(value){
+			this._getCSSStyle().password=value;
+			this._type="password";
+			console.warn("deprecated: 使用type=\"password\"替代设置asPassword, asPassword将在下次重大更新时删去");
+			this.isChanged=true;
+		});
+
+		Input.__init__=function(){
+			Input._createInputElement();
+			if (Browser.onMobile)
+				Render.canvas.addEventListener(Input.IOS_IFRAME ? "click" :"touchend",Input._popupInputMethod);
+		}
+
+		Input._popupInputMethod=function(e){
+			if (!laya.display.Input.isInputting)return;
+			var input=laya.display.Input.inputElement;
+			input.focus();
+		}
+
+		Input._createInputElement=function(){
+			Input._initInput(Input.area=Browser.createElement("textarea"));
+			Input._initInput(Input.input=Browser.createElement("input"));
+			Input.inputContainer=Browser.createElement("div");
+			Input.inputContainer.style.position="absolute";
+			Input.inputContainer.style.zIndex=1E5;
+			Browser.container.appendChild(Input.inputContainer);
+			Input.inputContainer.setPos=function (x,y){Input.inputContainer.style.left=x+'px';Input.inputContainer.style.top=y+'px';};
+		}
+
+		Input._initInput=function(input){
+			var style=input.style;
+			style.cssText="position:absolute;overflow:hidden;resize:none;transform-origin:0 0;-webkit-transform-origin:0 0;-moz-transform-origin:0 0;-o-transform-origin:0 0;";
+			style.resize='none';
+			style.backgroundColor='transparent';
+			style.border='none';
+			style.outline='none';
+			style.zIndex=1;
+			input.addEventListener('input',Input._processInputting);
+			input.addEventListener('mousemove',Input._stopEvent);
+			input.addEventListener('mousedown',Input._stopEvent);
+			input.addEventListener('touchmove',Input._stopEvent);
+			if(!Render.isConchApp){
+				input.setColor=function (color){input.style.color=color;};
+				input.setFontSize=function (fontSize){input.style.fontSize=fontSize+'px';};
+				input.setSize=function (w,h){input.style.width=w+'px';input.style.height=h+'px';};
+			}
+			input.setFontFace=function (fontFace){input.style.fontFamily=fontFace;};
+		}
+
+		Input._processInputting=function(e){
+			var input=laya.display.Input.inputElement.target;
+			if (!input)return;
+			var value=laya.display.Input.inputElement.value;
+			if (input._restrictPattern){
+				value=value.replace(/\u2006|\x27/g,"");
+				if (input._restrictPattern.test(value)){
+					value=value.replace(input._restrictPattern,"");
+					laya.display.Input.inputElement.value=value;
+				}
+			}
+			input._text=value;
+			input.event("input");
+		}
+
+		Input._stopEvent=function(e){
+			if (e.type=='touchmove')
+				e.preventDefault();
+			e.stopPropagation && e.stopPropagation();
+		}
+
+		Input.TYPE_TEXT="text";
+		Input.TYPE_PASSWORD="password";
+		Input.TYPE_EMAIL="email";
+		Input.TYPE_URL="url";
+		Input.TYPE_NUMBER="number";
+		Input.TYPE_RANGE="range";
+		Input.TYPE_DATE="date";
+		Input.TYPE_MONTH="month";
+		Input.TYPE_WEEK="week";
+		Input.TYPE_TIME="time";
+		Input.TYPE_DATE_TIME="datetime";
+		Input.TYPE_DATE_TIME_LOCAL="datetime-local";
+		Input.TYPE_SEARCH="search";
+		Input.input=null
+		Input.area=null
+		Input.inputElement=null
+		Input.inputContainer=null
+		Input.confirmButton=null
+		Input.promptStyleDOM=null
+		Input.inputHeight=45;
+		Input.isInputting=false;
+		__static(Input,
+		['IOS_IFRAME',function(){return this.IOS_IFRAME=(Browser.onIOS && Browser.window.top !=Browser.window.self);}
+		]);
+		return Input;
+	})(Text)
 
 
 	/**
@@ -37936,6 +38250,27 @@ var Laya=window.Laya=(function(window,document){
 	})(View)
 
 
+	//class ui.BackTestViewUI extends laya.ui.View
+	var BackTestViewUI=(function(_super){
+		function BackTestViewUI(){
+			this.list=null;
+			this.tip=null;
+			this.selectFileBtn=null;
+			BackTestViewUI.__super.call(this);
+		}
+
+		__class(BackTestViewUI,'ui.BackTestViewUI',_super);
+		var __proto=BackTestViewUI.prototype;
+		__proto.createChildren=function(){
+			laya.ui.Component.prototype.createChildren.call(this);
+			this.createView(BackTestViewUI.uiView);
+		}
+
+		BackTestViewUI.uiView={"type":"View","props":{"width":445,"height":400},"child":[{"type":"List","props":{"var":"list","vScrollBarSkin":"comp/vscroll.png","top":30,"right":10,"left":10,"bottom":10},"child":[{"type":"Box","props":{"y":0,"x":0,"width":168,"name":"render","height":61},"child":[{"type":"Label","props":{"wordWrap":true,"top":0,"text":"this is a list","skin":"comp/label.png","right":0,"name":"label","left":0,"fontSize":14,"color":"#efe82f","bottom":0,"borderColor":"#fb125d"}},{"type":"Label","props":{"y":39,"x":72,"wordWrap":true,"width":96,"text":"this is a list","skin":"comp/label.png","name":"info","height":22,"fontSize":14,"color":"#efe82f","align":"right"}}]}]},{"type":"Label","props":{"y":-11,"width":271,"var":"tip","text":"股票代码:当前盈利:最高盈利","right":150,"height":38,"color":"#f33713"}},{"type":"Button","props":{"y":4,"x":8,"width":94,"var":"selectFileBtn","skin":"comp/button.png","label":"选择回测文件","height":24,"labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}}]};
+		return BackTestViewUI;
+	})(View)
+
+
 	//class ui.KLineViewUI extends laya.ui.View
 	var KLineViewUI=(function(_super){
 		function KLineViewUI(){
@@ -37985,6 +38320,7 @@ var Laya=window.Laya=(function(window,document){
 			this.selectView=null;
 			this.realTimeView=null;
 			this.logoView=null;
+			this.bactTestView=null;
 			MainViewUI.__super.call(this);
 		}
 
@@ -37996,11 +38332,12 @@ var Laya=window.Laya=(function(window,document){
 			View.regComponent("view.SelectStockView",SelectStockView);
 			View.regComponent("view.RealTimeView",RealTimeView);
 			View.regComponent("view.netcomps.LoginView",LoginView);
+			View.regComponent("view.BackTestView",BackTestView);
 			laya.ui.Component.prototype.createChildren.call(this);
 			this.createView(MainViewUI.uiView);
 		}
 
-		MainViewUI.uiView={"type":"View","props":{"width":445,"height":400},"child":[{"type":"Tab","props":{"y":4,"x":4,"var":"typeSelect","skin":"comp/tab.png","selectedIndex":0,"labels":"股票列表,K线动画,选股,自选,扫码","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"StockView","props":{"var":"stockListView","top":40,"runtime":"view.StockView","right":10,"left":10,"bottom":10}},{"type":"KLineView","props":{"var":"kLineView","top":40,"runtime":"view.KLineView","right":10,"left":10,"bottom":10}},{"type":"SelectStockView","props":{"var":"selectView","top":40,"runtime":"view.SelectStockView","right":10,"left":10,"bottom":10}},{"type":"RealTime","props":{"var":"realTimeView","top":40,"runtime":"view.RealTimeView","right":10,"left":10,"bottom":10}},{"type":"Image","props":{"y":106,"var":"logoView","skin":"comp/logo.png","centerX":0}},{"type":"LoginView","props":{"y":4,"runtime":"view.netcomps.LoginView","right":5}}]};
+		MainViewUI.uiView={"type":"View","props":{"width":445,"height":400},"child":[{"type":"Tab","props":{"y":4,"x":4,"var":"typeSelect","skin":"comp/tab.png","selectedIndex":0,"labels":"股票列表,K线动画,选股,自选,回测,扫码","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"StockView","props":{"var":"stockListView","top":40,"runtime":"view.StockView","right":10,"left":10,"bottom":10}},{"type":"KLineView","props":{"var":"kLineView","top":40,"runtime":"view.KLineView","right":10,"left":10,"bottom":10}},{"type":"SelectStockView","props":{"var":"selectView","top":40,"runtime":"view.SelectStockView","right":10,"left":10,"bottom":10}},{"type":"RealTime","props":{"var":"realTimeView","top":40,"runtime":"view.RealTimeView","right":10,"left":10,"bottom":10}},{"type":"Image","props":{"y":106,"var":"logoView","skin":"comp/logo.png","centerX":0}},{"type":"LoginView","props":{"y":4,"runtime":"view.netcomps.LoginView","right":5}},{"type":"BackTestView","props":{"var":"bactTestView","top":40,"runtime":"view.BackTestView","right":10,"left":10,"bottom":10}}]};
 		return MainViewUI;
 	})(View)
 
@@ -39336,6 +39673,87 @@ var Laya=window.Laya=(function(window,document){
 	*...
 	*@author ww
 	*/
+	//class view.BackTestView extends ui.BackTestViewUI
+	var BackTestView=(function(_super){
+		function BackTestView(){
+			this.fileSelect=null;
+			this.tI=0;
+			this.preTime=0;
+			BackTestView.__super.call(this);
+			this.fileSelect=new FileSelect(this.selectFileBtn,"*",new Handler(this,this.onChange));
+			this.list.renderHandler=new Handler(this,this.stockRender);
+			this.list.array=[];
+			this.list.mouseHandler=new Handler(this,this.onMouseList);
+			this.list.scrollBar.touchScrollEnable=true;
+			this.tip.text="回测文件显示";
+		}
+
+		__class(BackTestView,'view.BackTestView',_super);
+		var __proto=BackTestView.prototype;
+		__proto.onMouseList=function(e,index){
+			if (e.type=="mouseup"){
+				var tTime=Browser.now();
+				if (tTime-this.preTime > 500){
+					this.preTime=tTime;
+					return;
+				}
+				this.preTime=tTime;
+				var tData;
+				tData=this.list.array[index];
+				this.tI=index;
+				if (!tData)
+					return;
+				console.log(tData);
+				StockListManager.setStockList(this.list.array,this.tI);
+				Notice.notify("Show_Stock_KLine",[tData.code,tData]);
+			}
+		}
+
+		__proto.stockRender=function(cell,index){
+			var item=cell.dataSource;
+			var label;
+			label=cell.getChildByName("label");
+			var dataO;
+			dataO=item;
+			dataO.winRate=StockTools.getGoodPercent(dataO.sellRate);
+			label.text=ValueTools.getTplStr(BackTestView.tpl,dataO);
+			label=cell.getChildByName("info");
+			label.text="";
+		}
+
+		__proto.onChange=function(e){
+			console.log("change:",e);
+			var input;
+			input=e.target;
+			var file;
+			file=input.files[0];
+			if (file){
+				console.log("selectFile:",file.name);
+				JSTools.getTxtFromFile(file,Handler.create(this,this.onFileLoaded));
+			}
+			else{
+				console.log("nofileSelect");
+			}
+		}
+
+		__proto.onFileLoaded=function(txt){
+			var dataO;
+			dataO=JSON.parse(txt);
+			console.log("selectJson:",dataO);
+			if (dataO&&dataO.list){
+				this.list.array=dataO.list;
+			}
+		}
+
+		BackTestView.tpl="{#code#}\n{#date#}\n{#sell#}:{#winRate#}";
+		return BackTestView;
+	})(BackTestViewUI)
+
+
+	/**
+	*...
+	*@author ww
+	*/
 	//class view.KLineView extends ui.KLineViewUI
 	var KLineView=(function(_super){
 		function KLineView(){
@@ -39350,6 +39768,7 @@ var Laya=window.Laya=(function(window,document){
 			this.tDayD=0;
 			this.isFirstStockComing=true;
 			this._preStock=null;
+			this._des=null;
 			KLineView.__super.call(this);
 			this.kLine=new KLine();
 			this.kLine.on("DataInited",this,this.onStockInited);
@@ -39614,9 +40033,11 @@ var Laya=window.Laya=(function(window,document){
 			this.refreshKLine();
 		}
 
-		__proto.showStockKline=function(stock){
+		__proto.showStockKline=function(stock,des){
 			this.isFirstStockComing=true;
 			this.stockInput.text=stock;
+			this._des=des;
+			this.kLine.markO=des;
 			this.tradeTest.tradeInfo.sellAll();
 			this.onPlayInput();
 			if (StockListManager.hasStock(stock)){
@@ -39647,9 +40068,39 @@ var Laya=window.Laya=(function(window,document){
 				this.dayScroll.setScroll(0,max,tValue);
 			}
 			else {
-				this.dayScroll.setScroll(0,max,max);
+				if (this._des && this._des.date){
+					var curI=0;
+					curI=DataUtils.getKeyIndex(this.kLine.dataList,"date",this._des.date);
+					if (curI > 0){
+						if (curI < max){
+							var cHalf=0;
+							cHalf=Math.floor(dayCount/2);
+							if (curI > cHalf){
+								curI-=cHalf;
+								}else{
+								curI=0;
+							}
+							}else{
+							cHalf=Math.floor(dayCount/2);
+							if (curI > cHalf){
+								curI-=cHalf;
+								}else{
+								curI=0;
+							}
+							if (curI > max){
+								curI=max;
+							}
+						}
+						}else{
+						curI=max;
+					}
+					this.dayScroll.setScroll(0,max,curI);
+					}else{
+					this.dayScroll.setScroll(0,max,max);
+				}
 			}
 			if (this.maxDayEnable.selected){
+				if (this.dayScroll.value > this.kLine.dataList.length)debugger;
 				this.kLine.start=Math.floor(this.dayScroll.value);
 			}
 			else {
@@ -39719,6 +40170,7 @@ var Laya=window.Laya=(function(window,document){
 			}
 			if (this.maxDayEnable.selected){
 				this.kLine.maxShowCount=ValueTools.mParseFloat(this.dayCountInput.text);
+				if (this.dayScroll.value > this.kLine.dataList.length)debugger;
 				this.kLine.start=Math.floor(this.dayScroll.value);
 			}
 			else {
@@ -39758,16 +40210,16 @@ var Laya=window.Laya=(function(window,document){
 		__class(MainView,'view.MainView',_super);
 		var __proto=MainView.prototype;
 		__proto.init=function(){
-			this.views=[this.stockListView,this.kLineView,this.selectView,this.realTimeView,this.logoView];
+			this.views=[this.stockListView,this.kLineView,this.selectView,this.realTimeView,this.bactTestView,this.logoView];
 			this.typeSelect.selectHandler=new Handler(this,this.updateSelect);
 			this.updateSelect();
 			this.stockListView.init();
 			Notice.listen("Show_Stock_KLine",this,this.onShowStockKline);
 		}
 
-		__proto.onShowStockKline=function(stock){
+		__proto.onShowStockKline=function(stock,des){
 			this.typeSelect.selectedIndex=1;
-			this.kLineView.showStockKline(stock);
+			this.kLineView.showStockKline(stock,des);
 		}
 
 		__proto.updateSelect=function(){
@@ -40840,6 +41292,25 @@ var Laya=window.Laya=(function(window,document){
 	*...
 	*@author ww
 	*/
+	//class laya.debug.view.nodeInfo.nodetree.FindNodeSmall extends laya.debug.ui.debugui.FindNodeSmallUI
+	var FindNodeSmall=(function(_super){
+		function FindNodeSmall(){
+			FindNodeSmall.__super.call(this);
+			Base64AtlasManager.replaceRes(FindNodeSmallUI.uiView);
+			this.createView(FindNodeSmallUI.uiView);
+		}
+
+		__class(FindNodeSmall,'laya.debug.view.nodeInfo.nodetree.FindNodeSmall',_super);
+		var __proto=FindNodeSmall.prototype;
+		__proto.createChildren=function(){}
+		return FindNodeSmall;
+	})(FindNodeSmallUI)
+
+
+	/**
+	*...
+	*@author ww
+	*/
 	//class laya.debug.view.nodeInfo.nodetree.FindNode extends laya.debug.ui.debugui.FindNodeUI
 	var FindNode=(function(_super){
 		function FindNode(){
@@ -40856,25 +41327,6 @@ var Laya=window.Laya=(function(window,document){
 
 		return FindNode;
 	})(FindNodeUI)
-
-
-	/**
-	*...
-	*@author ww
-	*/
-	//class laya.debug.view.nodeInfo.nodetree.FindNodeSmall extends laya.debug.ui.debugui.FindNodeSmallUI
-	var FindNodeSmall=(function(_super){
-		function FindNodeSmall(){
-			FindNodeSmall.__super.call(this);
-			Base64AtlasManager.replaceRes(FindNodeSmallUI.uiView);
-			this.createView(FindNodeSmallUI.uiView);
-		}
-
-		__class(FindNodeSmall,'laya.debug.view.nodeInfo.nodetree.FindNodeSmall',_super);
-		var __proto=FindNodeSmall.prototype;
-		__proto.createChildren=function(){}
-		return FindNodeSmall;
-	})(FindNodeSmallUI)
 
 
 	/**
@@ -40979,6 +41431,26 @@ var Laya=window.Laya=(function(window,document){
 		__proto.createChildren=function(){}
 		return NodeTool;
 	})(NodeToolUI)
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class laya.debug.view.nodeInfo.nodetree.NodeTreeSetting extends laya.debug.ui.debugui.NodeTreeSettingUI
+	var NodeTreeSetting=(function(_super){
+		function NodeTreeSetting(){
+			NodeTreeSetting.__super.call(this);
+			Base64AtlasManager.replaceRes(NodeTreeSettingUI.uiView);
+			this.createView(NodeTreeSettingUI.uiView);
+		}
+
+		__class(NodeTreeSetting,'laya.debug.view.nodeInfo.nodetree.NodeTreeSetting',_super);
+		var __proto=NodeTreeSetting.prototype;
+		//inits();
+		__proto.createChildren=function(){}
+		return NodeTreeSetting;
+	})(NodeTreeSettingUI)
 
 
 	/**
@@ -41222,26 +41694,6 @@ var Laya=window.Laya=(function(window,document){
 		]);
 		return NodeTree;
 	})(NodeTreeUI)
-
-
-	/**
-	*...
-	*@author ww
-	*/
-	//class laya.debug.view.nodeInfo.nodetree.NodeTreeSetting extends laya.debug.ui.debugui.NodeTreeSettingUI
-	var NodeTreeSetting=(function(_super){
-		function NodeTreeSetting(){
-			NodeTreeSetting.__super.call(this);
-			Base64AtlasManager.replaceRes(NodeTreeSettingUI.uiView);
-			this.createView(NodeTreeSettingUI.uiView);
-		}
-
-		__class(NodeTreeSetting,'laya.debug.view.nodeInfo.nodetree.NodeTreeSetting',_super);
-		var __proto=NodeTreeSetting.prototype;
-		//inits();
-		__proto.createChildren=function(){}
-		return NodeTreeSetting;
-	})(NodeTreeSettingUI)
 
 
 	/**
