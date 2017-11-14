@@ -3,6 +3,7 @@ package view
 	import laya.debug.tools.JSTools;
 	import laya.debug.tools.Notice;
 	import laya.events.Event;
+	import laya.math.ArrayMethods;
 	import laya.math.ValueTools;
 	import laya.stock.StockTools;
 	import laya.utils.Browser;
@@ -101,6 +102,16 @@ package view
 			if (dataO&&dataO.list)
 			{
 				list.array = dataO.list;
+				var tList:Array;
+				tList = dataO.list;
+				var tInfoO:Object;
+				tInfoO = { };
+				tInfoO.count = tList.length;
+				tInfoO.avgRate = ArrayMethods.sumKey(tList, "sellRate") / tInfoO.count;
+				tInfoO.avgRatePercent = StockTools.getGoodPercent(ArrayMethods.sumKey(tList, "sellRate") / tInfoO.count) + "%";
+				tInfoO.avgDay = 1+Math.floor(ArrayMethods.sumKey(tList, "sell") / tInfoO.count);
+				tInfoO.yearRate =  StockTools.getGoodPercent((tInfoO.avgRate / tInfoO.avgDay) * 240)+"%";
+				tip.text=ValueTools.getTplStr("购买次数:{#count#}\n平均盈利:{#avgRatePercent#},{#avgDay#}Day\nYearRate:{#yearRate#}", tInfoO);
 			}
 		}
 	}
