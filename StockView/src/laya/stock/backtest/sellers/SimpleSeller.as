@@ -1,5 +1,6 @@
 package laya.stock.backtest.sellers 
 {
+	import laya.math.ArrayMethods;
 	/**
 	 * ...
 	 * @author ww
@@ -20,6 +21,10 @@ package laya.stock.backtest.sellers
 		public var maxDay:int = 20;
 		private var tPrice:Number;
 		private	var tHigh:Number;
+		public var downPriceRateLimit:Number = -0.01;
+		public var sellByDownVolume:Boolean = false;
+		public var sellByOneDown:Boolean = false;
+		public var oneDownLimit:Number = -0.05;
 		override public function doSell():Number 
 		{
 			if (!dataList[startIndex]) return buyPrice;
@@ -34,6 +39,10 @@ package laya.stock.backtest.sellers
 				tStockInfo = dataList[i];
 				sellDay++;
 				tPrice = tStockInfo["open"];
+				if (sellByOneDown)
+				{
+					if (JudgeOneDown(dataList, i)) return tPrice;
+				}
 				if (sellDay >= maxDay) return tPrice;
 				tRst=doJudge();
 				if (tRst > 0) return tRst;
@@ -47,10 +56,43 @@ package laya.stock.backtest.sellers
 				//if (tRst > 0) return tRst;
 				
 				tPrice = tStockInfo["close"];
+				
+				if (sellByOneDown)
+				{
+					if (JudgeOneDown(dataList, i)) return tPrice;
+				}
+				
+				if (sellByDownVolume)
+				{
+					if (JudgeDownVolume(dataList,i)) return tPrice;
+				}
 				tRst=doJudge();
 				if (tRst > 0) return tRst;
 			}
 			return tPrice;
+		}
+		public function JudgeOneDown(dataList:Array,index:int):Boolean
+		{
+			if (index < 1) return false;
+			var prePrice:Number;
+			prePrice = dataList[index-1]["close"];
+			var curRate:Number;
+			curRate = (tPrice-prePrice) / prePrice;
+			if (curRate < oneDownLimit) return true;
+			return false;
+		}
+		public function JudgeDownVolume(dataList:Array,index:int):Boolean
+		{
+			var isDown:Boolean;
+			isDown = ArrayMethods.isDowns(dataList, "volume", index - 2, index);
+			var prePrice:Number;
+			prePrice = dataList[index - 2]["close"];
+			var curPrice:Number;
+			curPrice = dataList[index]["close"];
+			var priceRate:Number;
+			priceRate = (curPrice-prePrice) / prePrice;
+			if (priceRate > downPriceRateLimit) return false;
+			return isDown;
 		}
 		public function doJudge():Number
 		{

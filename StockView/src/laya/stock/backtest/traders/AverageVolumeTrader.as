@@ -55,9 +55,14 @@ package laya.stock.backtest.traders
 		}
 		public var maxRate:Number = 0.04;
 		public var minRate:Number = 0.00;
+		public var priceDays:int = 3;
+		public var maxDaysRate:Number = 0.1;
+		public var minDaysRate:Number = -0.1;
 		public var longVolume:int = 5;
 		public var shortVolume:int = 2;
 		public var minVolumeRate:Number = 0.5;
+		public var maxVolumeRate:Number = 20;
+		public var minMyVolumeRate:Number = 0.7;
 		private static var _tempDataO:Object = { };
 		public function tryBuyAt(buyI:int,stockDataList:Array):void
 		{
@@ -68,7 +73,18 @@ package laya.stock.backtest.traders
 			curPrice = stockDataList[buyI]["close"]
 			var curRate:Number;
 			curRate = (curPrice-prePrice) / prePrice;
+			if (curRate > maxRate) return;
+			if (curRate < minRate) return;
 			if (buyI < longVolume) return;
+			var preDayI:int;
+			preDayI = buyI - priceDays;
+			if (preDayI < 0) return;
+			var dayPrice:Number;
+			dayPrice = stockDataList[preDayI]["close"];
+			var daysRate:Number;
+			daysRate = (curPrice-dayPrice) / dayPrice;
+			if (daysRate > maxDaysRate) return;
+			if (daysRate < minDaysRate) return;
 			var daysVolume:Number;
 			daysVolume = ArrayMethods.averageKey(stockDataList, "volume", buyI - longVolume, buyI);
 			var nearVolumes:Number;
@@ -76,13 +92,22 @@ package laya.stock.backtest.traders
 			
 			var volumeRate:Number;
 			volumeRate = nearVolumes / daysVolume;
+			
+			var tVolume:Number;
+			tVolume = stockDataList[buyI]["volume"];
+			var maxVolume:Number;
+			maxVolume = ArrayMethods.getMax(stockDataList, "volume", buyI - shortVolume, buyI);
+			var myVolumeRate:Number;
+			myVolumeRate = tVolume / maxVolume;
+			
 			//trace("volume:",daysVolume,nearVolumes,volumeRate);
 			_tempDataO = { };
 			_tempDataO["longVolume"] = daysVolume;
 			_tempDataO["shortVolume"] = nearVolumes;
 			_tempDataO["volumeRate"] = StockTools.getGoodPercent(volumeRate);
+			_tempDataO["myVolumeRate"] = StockTools.getGoodPercent(myVolumeRate);
 			_tempDataO["curRate"] = curRate;
-			if (volumeRate > minVolumeRate)
+			if (volumeRate > minVolumeRate && volumeRate < maxVolumeRate&&myVolumeRate>minMyVolumeRate)
 			{
 				buyStaticAt(buyI, maxDay, seller,_tempDataO);
 			}

@@ -51,6 +51,26 @@ package laya.math
 			if (!key) return obj;
 			return obj[key];
 		}
+		
+		public static function isUps(dataList:Array,key:String, start:int, end:int):Boolean
+		{
+			var i:int, len:int;
+			for (i = start + 1; i <= end; i++ )
+			{
+				if (dataList[i][key] < dataList[i - 1][key]) return false;
+			}
+			return true;
+		}
+		
+		public static function isDowns(dataList:Array,key:String, start:int, end:int):Boolean
+		{
+			var i:int, len:int;
+			for (i = start + 1; i <= end; i++ )
+			{
+				if (dataList[i][key] > dataList[i - 1][key]) return false;
+			}
+			return true;
+		}
 		public static function isHighThenBefore(dataList:Array, index:int, count:int):Boolean
 		{
 			if (index <= 0) return false;
@@ -70,6 +90,43 @@ package laya.math
 			return true;
 		}
 		
+		public static function getMax(dataList:Array, key:String, start:int = 0, end:int = -1):Number
+		{
+			var rst:Number;
+			rst = dataList[start][key];
+			var i:int, len:int;
+			len = dataList.length;
+			if (end >= 0)
+			{
+				len = Math.min(end+1, len);
+			}
+			var tValue:Number;
+			for (i = start; i < len; i++)
+			{
+				tValue = dataList[i][key];
+				if (tValue > rst) rst = tValue;
+			}
+			return rst;
+		}
+		
+		public static function getMin(dataList:Array, key:String, start:int = 0, end:int = -1):Number
+		{
+			var rst:Number;
+			rst = dataList[start][key];
+			var i:int, len:int;
+			len = dataList.length;
+			if (end >= 0)
+			{
+				len = Math.min(end+1, len);
+			}
+			var tValue:Number;
+			for (i = start; i < len; i++)
+			{
+				tValue = dataList[i][key];
+				if (tValue < rst) rst = tValue;
+			}
+			return rst;
+		}
 		public static function sumKey(dataList:Array,key:String,start:int=0,end:int=-1):Number
 		{
 			var rst:Number;

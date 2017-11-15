@@ -40,8 +40,24 @@ package laya.math {
 			}
 		}
 		
+		public static function createObjectArrs(dataList:Array):Array
+		{
+			var i:int, len:int;
+			len = dataList.length;
+			var rst:Array;
+			rst = [];
+			for (i = 0; i < len; i++)
+			{
+				rst.push(createObjectByConfig(dataList[i]));
+			}
+			return rst;
+		}
 		public static function createObjectByConfig(config:Object):*
 		{
+			if (config is Array)
+			{
+				return createObjectArrs(config as Array);
+			}
 			var Clz:String;
 			Clz = config["Class"];
 			var tRstO:Object;

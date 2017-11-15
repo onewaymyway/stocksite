@@ -242,6 +242,23 @@ package laya.math
 			return true;
 			
 		}
+		
+		public static function isSmallThenBefore(index:int, dataList:Array, priceSign:String="close",count:int = 3):Boolean
+		{
+			var tPrice:Number;
+			tPrice = dataList[index][priceSign];
+			var tI:int;
+			var i:int, len:int;
+			len = count;
+			for (i = 1; i <= len; i++)
+			{
+				tI = index - i;
+				if (!dataList[tI] || dataList[tI][priceSign] < tPrice) return false;
+			}
+			
+			return true;
+			
+		}
 		public static function findFirstUp(startI:int,dataList:Array, priceSign:String="close", minLen:int = 3):int
 		{
 			var i:int, len:int;
