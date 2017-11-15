@@ -83,12 +83,17 @@ package laya.stock.backtest.sellers
 		}
 		public function JudgeDownVolume(dataList:Array,index:int):Boolean
 		{
+			
 			var isDown:Boolean;
 			isDown = ArrayMethods.isDowns(dataList, "volume", index - 2, index);
 			var prePrice:Number;
 			prePrice = dataList[index - 2]["close"];
 			var curPrice:Number;
 			curPrice = dataList[index]["close"];
+			var curOpen:Number;
+			curOpen = dataList[index]["open"];
+			if (curPrice > curOpen) return false;
+			if (curPrice > dataList[index - 1]["close"]) return false;
 			var priceRate:Number;
 			priceRate = (curPrice-prePrice) / prePrice;
 			if (priceRate > downPriceRateLimit) return false;
