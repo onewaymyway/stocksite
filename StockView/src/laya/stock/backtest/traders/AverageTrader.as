@@ -16,7 +16,6 @@ package laya.stock.backtest.traders
 		{
 			super();
 			averageAnalyser = new AverageLineAnalyser();
-			var seller:SimpleSeller;
 			seller = new SimpleSeller();
 			seller.loseSell = -0.2;
 			seller.winSell = 0.9;
@@ -65,7 +64,7 @@ package laya.stock.backtest.traders
 			}
 		}
 		
-		public function getBuyInfos(onlyLast:Boolean=false):void 
+		override public function getBuyInfos(onlyLast:Boolean=false):void 
 		{
 			averageAnalyser.analyser(stockData, 0, -1, false);
 			var rstData:Object;

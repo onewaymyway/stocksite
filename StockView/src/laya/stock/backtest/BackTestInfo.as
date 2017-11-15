@@ -81,7 +81,7 @@ package laya.stock.backtest
 		public static function getStaticInfo(dataList:Array, buyI:int,maxDay:int=15,seller:SellerBase,stock:String):Object
 		{
 			var priceBuy:Number;
-			priceBuy = dataList[buyI]["high"];
+			priceBuy = dataList[buyI]["close"];
 			var priceHigh:Number;
 			priceHigh = StockTools.getHighInDays(buyI+1, maxDay, dataList)||priceBuy;
 			var priceLow:Number;

@@ -70,17 +70,38 @@ package laya.math
 			return true;
 		}
 		
-		public static function sumKey(dataList:Array,key:String):Number
+		public static function sumKey(dataList:Array,key:String,start:int=0,end:int=-1):Number
 		{
 			var rst:Number;
 			rst = 0;
 			var i:int, len:int;
 			len = dataList.length;
-			for (i = 0; i < len; i++)
+			if (end >= 0)
+			{
+				len = Math.min(end+1, len);
+			}	
+			for (i = start; i < len; i++)
 			{
 				rst += dataList[i][key];
 			}
 			return rst;
+		}
+		
+		public static function averageKey(dataList:Array, key:String, start:int = 0, end:int = -1):Number
+		{
+			var rst:Number;
+			rst = 0;
+			var i:int, len:int;
+			len = dataList.length;
+			if (end >= 0)
+			{
+				len = Math.min(end+1, len);
+			}	
+			for (i = start; i < len; i++)
+			{
+				rst += dataList[i][key];
+			}
+			return rst/(len-start);
 		}
 	}
 

@@ -104,6 +104,10 @@ package view
 				list.array = dataO.list;
 				var tList:Array;
 				tList = dataO.list;
+				if (dataO.tpl)
+				{
+					tpl = dataO.tpl;
+				}
 				var tInfoO:Object;
 				tInfoO = { };
 				tInfoO.count = tList.length;
