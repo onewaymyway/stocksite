@@ -159,6 +159,7 @@ package stockcmd
 			tStockName = FileManager.getFileName(path);
 			var stockData:StockData;
 			stockData = new StockData();
+			stockData.stockName = tStockName;
 			stockData.init(data);
 			
 			//var stockData:StockData;

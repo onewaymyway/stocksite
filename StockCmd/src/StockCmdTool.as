@@ -7,6 +7,7 @@ package {
 	import laya.stock.analysers.KLineAnalyser;
 	import laya.stock.analysers.lines.PositionLine;
 	import laya.stock.analysers.staticinfo.PositionStatic;
+	import laya.stock.backtest.TradersReg;
 	import laya.stock.StockTools;
 	import laya.structs.RankInfo;
 	import laya.utils.Browser;
@@ -19,6 +20,8 @@ package {
 	import nodetools.devices.SystemSetting;
 	import stock.StockData;
 	import stockcmd.BackTestWorker;
+	import stockcmd.GetAllBuysWorker;
+	import stockcmd.GetLastBuysWorker;
 	import stockcmd.GreatKLineWorker;
 	import stockcmd.RankWorker;
 	import stockcmd.RunConfig;
@@ -43,6 +46,10 @@ package {
 			RankWorker;
 			GreatKLineWorker;
 			BackTestWorker;
+			GetLastBuysWorker;
+			GetAllBuysWorker;
+			
+			TradersReg;
 		}
 		private function init():void {
 			

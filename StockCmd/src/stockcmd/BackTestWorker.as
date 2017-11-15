@@ -23,6 +23,7 @@ package stockcmd {
 				try {
 					var configO:Object;
 					configO = FileManager.readJSONFile(RunConfig.paramFile);
+					if (configO.param) configO = configO.param;
 					if (configO && configO.trader) {
 						var traderO:Object;
 						traderO = configO.trader;
