@@ -1,0 +1,39 @@
+{
+    "param": {
+        "nextCMD": null,
+		"tpl":"{#code#}:v{#volumeRate#}\n{#date#}\n{#sell#}:{#winRate#}",
+        "trader": {
+            "Class": "AverageVolumeTrader",
+            "config": {
+                "maxRate": 0.03,
+                "maxDay": 15,
+                "minRate": 0.00,
+                "longVolume": 7,
+                "shortVolume": 3,
+				"maxDaysRate": 0.1,
+				"minDaysRate": -0.1,
+				"minMyVolumeRate": 0.7,
+				"maxVolumeRate": 20,
+                "minVolumeRate": 1.2
+            },
+            "values": [
+                [
+                    "seller",
+                    {
+                        "Class": "SimpleSeller",
+                        "config": {
+                            "backSell": -0.1,
+                            "loseSell": -0.06,
+							"sellByDownVolume": true,
+							"downPriceRateLimit": -0.01,
+							"sellByOneDown": true,
+							"oneDownLimit": -0.05,
+                            "maxDay": 15,
+                            "winSell": 0.25
+                        }
+                    }
+                ]
+            ]
+        }
+    }
+}
