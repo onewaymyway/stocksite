@@ -55,6 +55,7 @@ package laya.stock.backtest.traders
 		}
 		public var maxRate:Number = 0.04;
 		public var minRate:Number = 0.00;
+		public var preMaxRate:Number = 0.05;
 		public var priceDays:int = 3;
 		public var maxDaysRate:Number = 0.1;
 		public var minDaysRate:Number = -0.1;
@@ -77,6 +78,13 @@ package laya.stock.backtest.traders
 			curRate = (curPrice-prePrice) / prePrice;
 			if (curRate > maxRate) return;
 			if (curRate < minRate) return;
+			
+			var preDayRate:Number;
+			preDayRate = StockTools.getStockRateAtDay(stockDataList, buyI - 1);
+			if (preDayRate > 0)
+			{
+				if ((preDayRate-1) > preMaxRate) return;
+			}
 			if (buyI < longVolume) return;
 			var preDayI:int;
 			preDayI = buyI - priceDays;

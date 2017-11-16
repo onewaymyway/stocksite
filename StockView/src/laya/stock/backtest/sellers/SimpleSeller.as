@@ -30,6 +30,7 @@ package laya.stock.backtest.sellers
 		public var downVolumeRateLimit:Number = 0.5;
 		public var enalble5DayProtected:Boolean = false;
 		public var min5DayRate:Number = 0.99;
+		public var sellBy3Down:Boolean = false;
 		private var curMaxVolume:Number;
 		override public function doSell():Number 
 		{
