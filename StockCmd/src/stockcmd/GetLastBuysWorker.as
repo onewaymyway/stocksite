@@ -86,10 +86,12 @@ package stockcmd
 				{
 					tData.sell = curData.sellDay;
 					tData.sellRate = curData.sellRate;
+					tData.sellReason = curData.sellReason;
 				}else
 				{
 					tData.sell = 0;
 					tData.sellRate = 1;
+					tData.sellReason = "None";
 				}
 				mList.push(tData);
 			}
