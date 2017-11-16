@@ -25,6 +25,9 @@ package laya.stock.backtest.sellers
 		public var sellByDownVolume:Boolean = false;
 		public var sellByOneDown:Boolean = false;
 		public var oneDownLimit:Number = -0.05;
+		public var sellByVolumeRateDown:Boolean = false;
+		public var downVolumeRateLimit:Number = 0.5;
+		private var curMaxVolume:Number;
 		override public function doSell():Number 
 		{
 			if (!dataList[startIndex]) return buyPrice;
@@ -34,6 +37,7 @@ package laya.stock.backtest.sellers
 			tHigh = buyPrice;
 			var tRst:Number;
 			sellDay = 0;
+			curMaxVolume = dataList[startIndex]["volume"];
 			for (i = startIndex; i < len; i++)
 			{
 				tStockInfo = dataList[i];
@@ -83,7 +87,18 @@ package laya.stock.backtest.sellers
 		}
 		public function JudgeDownVolume(dataList:Array,index:int):Boolean
 		{
-			
+			var curVolume:Number;
+			curVolume = dataList[index]["volume"];
+			var curVolumeRate:Number;
+			curVolumeRate = curVolume / curMaxVolume;
+			if (curVolume > curMaxVolume) curMaxVolume = curVolume;
+			if (sellByVolumeRateDown)
+			{
+				if (curVolumeRate < downVolumeRateLimit)
+				{
+					return true;
+				}
+			}
 			var isDown:Boolean;
 			isDown = ArrayMethods.isDowns(dataList, "volume", index - 2, index);
 			var prePrice:Number;

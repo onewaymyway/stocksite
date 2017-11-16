@@ -17,7 +17,7 @@ package wrap
 	{
 		private var _target:Sprite;
 		private var _input:Object;
-		
+		public var autoClear:Boolean=true;
 		public function FileSelect(target:Node, accept:String, changeHandler:Handler = null)
 		{
 			_changeHandler = changeHandler;
@@ -34,6 +34,10 @@ package wrap
 				bounds = _target.getSelfBounds();
 				if (bounds.contains(_target.mouseX, _target.mouseY))
 				{
+					if (autoClear)
+					{
+						_input.value = "";
+					}
 					_input.click();
 				}
 			}
