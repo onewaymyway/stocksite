@@ -132,9 +132,10 @@ package view {
 				var showStr:String;
 				if (preStockData) {
 					showStr = tStockData.date + 
-					"\n" + "Close:" + tStockData.close + ":" + StockTools.getGoodPercent((tStockData.close - preStockData.open) / preStockData.close) + "%" + 
-					"\n" + "High:" + tStockData.high + ":" + StockTools.getGoodPercent((tStockData.high - preStockData.open) / preStockData.close) + "%" + 
-					"\n" + "Low:" + tStockData.low + ":" + StockTools.getGoodPercent((tStockData.low - preStockData.open) / preStockData.close) + "%";
+					"\n" + "Open:" + tStockData.open + ":" + StockTools.getGoodPercent((tStockData.open - preStockData.close) / preStockData.close) + "%" + 
+					"\n" + "Close:" + tStockData.close + ":" + StockTools.getGoodPercent((tStockData.close - preStockData.close) / preStockData.close) + "%" + 
+					"\n" + "High:" + tStockData.high + ":" + StockTools.getGoodPercent((tStockData.high - preStockData.close) / preStockData.close) + "%" + 
+					"\n" + "Low:" + tStockData.low + ":" + StockTools.getGoodPercent((tStockData.low - preStockData.close) / preStockData.close) + "%";
 					
 					if (tStockData.close - tStockData.open >= 0) {
 						dayStockInfoTxt.color = "#ff0000";

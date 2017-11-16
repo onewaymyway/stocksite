@@ -246,7 +246,7 @@ package stock.views {
 					{
 						prePrice=dataList[buyI]["high"]
 						tData = dataList[i];
-						curPrice=tData["close"]
+						curPrice=markO.sellPrice||tData["close"]
 						tPos = getAdptXV(i * gridWidth);
 						this.graphics.drawLine(tPos, getAdptYV(tData["low"]), tPos, getAdptYV(tData["low"]) + 30, "#00ff00");
 						var curInfo:String;

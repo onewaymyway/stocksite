@@ -63,6 +63,8 @@ package laya.stock.backtest.traders
 		public var minVolumeRate:Number = 0.5;
 		public var maxVolumeRate:Number = 20;
 		public var minMyVolumeRate:Number = 0.7;
+		public var maxCurVolumeRate:Number = 1.5;
+	
 		private static var _tempDataO:Object = { };
 		public function tryBuyAt(buyI:int,stockDataList:Array):void
 		{
@@ -85,6 +87,8 @@ package laya.stock.backtest.traders
 			daysRate = (curPrice-dayPrice) / dayPrice;
 			if (daysRate > maxDaysRate) return;
 			if (daysRate < minDaysRate) return;
+			
+			if (stockDataList[buyI]["close"] < stockDataList[buyI]["open"]) return;
 			var daysVolume:Number;
 			daysVolume = ArrayMethods.averageKey(stockDataList, "volume", buyI - longVolume, buyI);
 			var nearVolumes:Number;
@@ -92,9 +96,9 @@ package laya.stock.backtest.traders
 			
 			var volumeRate:Number;
 			volumeRate = nearVolumes / daysVolume;
-			
 			var tVolume:Number;
 			tVolume = stockDataList[buyI]["volume"];
+			if (tVolume / nearVolumes > maxCurVolumeRate) return;
 			var maxVolume:Number;
 			maxVolume = ArrayMethods.getMax(stockDataList, "volume", buyI - shortVolume, buyI);
 			var myVolumeRate:Number;

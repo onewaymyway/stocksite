@@ -28,6 +28,8 @@ package laya.stock.backtest.sellers
 		public var oneDownLimit:Number = -0.05;
 		public var sellByVolumeRateDown:Boolean = false;
 		public var downVolumeRateLimit:Number = 0.5;
+		public var enalble5DayProtected:Boolean = false;
+		public var min5DayRate:Number = 0.99;
 		private var curMaxVolume:Number;
 		override public function doSell():Number 
 		{
@@ -61,6 +63,10 @@ package laya.stock.backtest.sellers
 				//if (tRst > 0) return tRst;
 				
 				tPrice = tStockInfo["close"];
+				if (enalble5DayProtected)
+				{
+					if (isHighThen5DayLine(dataList, i, tPrice)) continue;
+				}
 				
 				if (sellByOneDown)
 				{
@@ -76,6 +82,16 @@ package laya.stock.backtest.sellers
 			}
 			return tPrice;
 		}
+		public function isHighThen5DayLine(dataList:Array, index:int,tPrice:Number):Boolean
+		{
+			if (index == 0) return true;
+			var startI:int;
+			startI = index - 5;
+			if (startI < 0) startI = 0;
+			var average:Number;
+			average = ArrayMethods.averageKey(dataList, "close", index - 5, index - 1);
+			return tPrice / average>min5DayRate;
+		}
 		public function JudgeOneDown(dataList:Array,index:int):Boolean
 		{
 			if (index < 1) return false;
@@ -85,13 +101,14 @@ package laya.stock.backtest.sellers
 			curRate = (tPrice-prePrice) / prePrice;
 			if (curRate < oneDownLimit)
 			{
-				sellReason = "priceDown:"+StockTools.getGoodPercent(curRate)+"%";
+				sellReason = "priceDown:"+StockTools.getGoodPercent(curRate)+"%"+tPrice;
 				return true;
 			} 
 			return false;
 		}
 		public function JudgeDownVolume(dataList:Array,index:int):Boolean
 		{
+			
 			var curVolume:Number;
 			curVolume = dataList[index]["volume"];
 			var curVolumeRate:Number;
