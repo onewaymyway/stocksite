@@ -10,6 +10,7 @@ package laya.stock.backtest.sellers
 		public var startIndex:int; 
 		public var buyPrice:Number;
 		public var sellDay:int;
+		public var sellReason:String = "";
 		public function SellerBase() 
 		{
 			

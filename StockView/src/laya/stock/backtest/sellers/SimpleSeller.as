@@ -1,6 +1,7 @@
 package laya.stock.backtest.sellers 
 {
 	import laya.math.ArrayMethods;
+	import laya.stock.StockTools;
 	/**
 	 * ...
 	 * @author ww
@@ -82,7 +83,11 @@ package laya.stock.backtest.sellers
 			prePrice = dataList[index-1]["close"];
 			var curRate:Number;
 			curRate = (tPrice-prePrice) / prePrice;
-			if (curRate < oneDownLimit) return true;
+			if (curRate < oneDownLimit)
+			{
+				sellReason = "priceDown:"+StockTools.getGoodPercent(curRate)+"%";
+				return true;
+			} 
 			return false;
 		}
 		public function JudgeDownVolume(dataList:Array,index:int):Boolean
@@ -92,13 +97,7 @@ package laya.stock.backtest.sellers
 			var curVolumeRate:Number;
 			curVolumeRate = curVolume / curMaxVolume;
 			if (curVolume > curMaxVolume) curMaxVolume = curVolume;
-			if (sellByVolumeRateDown)
-			{
-				if (curVolumeRate < downVolumeRateLimit)
-				{
-					return true;
-				}
-			}
+			
 			var isDown:Boolean;
 			isDown = ArrayMethods.isDowns(dataList, "volume", index - 2, index);
 			var prePrice:Number;
@@ -109,9 +108,23 @@ package laya.stock.backtest.sellers
 			curOpen = dataList[index]["open"];
 			if (curPrice > curOpen) return false;
 			if (curPrice > dataList[index - 1]["close"]) return false;
+			
+			if (sellByVolumeRateDown)
+			{
+				if (curVolumeRate < downVolumeRateLimit)
+				{
+					sellReason = "volumeRateDown:"+StockTools.getGoodPercent(curVolumeRate)+"%";
+					return true;
+				}
+			}
 			var priceRate:Number;
+			curPrice = dataList[index]["low"];
 			priceRate = (curPrice-prePrice) / prePrice;
 			if (priceRate > downPriceRateLimit) return false;
+			if (isDown)
+			{
+				sellReason = "volume3down";
+			}
 			return isDown;
 		}
 		public function doJudge():Number
@@ -121,10 +134,12 @@ package laya.stock.backtest.sellers
 			tRate = tPrice / buyPrice-1;
 			if (tRate > winSell)
 			{
+				sellReason = "rate>winSell";
 				return tPrice;
 			}
 			if (tRate < loseSell)
 			{
+				sellReason = "rate<loseSell";
 				return tPrice;
 			}
 			//var dRate:Number;

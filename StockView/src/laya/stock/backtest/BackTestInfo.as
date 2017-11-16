@@ -21,6 +21,7 @@ package laya.stock.backtest
 		public var sellDay:int;
 		public var date:String;
 		public var stock:String;
+		public var sellReason:String;
 		
 		public function get sellRate():Number
 		{
@@ -97,6 +98,7 @@ package laya.stock.backtest
 			{
 				rst.sell = seller.sell(dataList, buyI + 1, priceBuy);
 				rst.sellDay = seller.sellDay;
+				rst.sellReason = seller.sellReason;
 			}
 			
 			//rst.sell = SellTools.sellSimple(dataList, buyI + 1, priceBuy,maxDay, -0.2, 0.4, -0.1);

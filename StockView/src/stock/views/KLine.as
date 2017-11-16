@@ -249,7 +249,16 @@ package stock.views {
 						curPrice=tData["close"]
 						tPos = getAdptXV(i * gridWidth);
 						this.graphics.drawLine(tPos, getAdptYV(tData["low"]), tPos, getAdptYV(tData["low"]) + 30, "#00ff00");
-						this.graphics.fillText("Sell:"+StockTools.getGoodPercent((curPrice-prePrice)/prePrice)+"%"+tData["date"], tPos, getAdptYV(tData["low"]) + 30, null, "#00ff00", "center");
+						var curInfo:String;
+						if (markO.sellReason)
+						{
+							curInfo = "Sell:" + StockTools.getGoodPercent((curPrice-prePrice) / prePrice) + "%" + markO.sellReason;
+						}else
+						{
+							curInfo = "Sell:" + StockTools.getGoodPercent((curPrice-prePrice) / prePrice) + "%" + tData["date"];
+						}
+						
+						this.graphics.fillText(curInfo, tPos, getAdptYV(tData["low"]) + 30, null, "#00ff00", "center");
 					}
 				}
 			}
