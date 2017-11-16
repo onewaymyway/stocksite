@@ -25040,7 +25040,13 @@ var Laya=window.Laya=(function(window,document){
 						curPrice=tData["close"]
 						tPos=this.getAdptXV(i *this.gridWidth);
 						this.graphics.drawLine(tPos,this.getAdptYV(tData["low"]),tPos,this.getAdptYV(tData["low"])+30,"#00ff00");
-						this.graphics.fillText("Sell:"+StockTools.getGoodPercent((curPrice-prePrice)/prePrice)+"%"+tData["date"],tPos,this.getAdptYV(tData["low"])+30,null,"#00ff00","center");
+						var curInfo;
+						if (this.markO.sellReason){
+							curInfo="Sell:"+StockTools.getGoodPercent((curPrice-prePrice)/ prePrice)+"%"+this.markO.sellReason;
+							}else{
+							curInfo="Sell:"+StockTools.getGoodPercent((curPrice-prePrice)/ prePrice)+"%"+tData["date"];
+						}
+						this.graphics.fillText(curInfo,tPos,this.getAdptYV(tData["low"])+30,null,"#00ff00","center");
 					}
 				}
 			}
