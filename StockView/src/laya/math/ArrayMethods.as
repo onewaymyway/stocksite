@@ -127,6 +127,20 @@ package laya.math
 			}
 			return rst;
 		}
+		public static function count(dataList:Array, key:String, judgeFun:Function):int
+		{
+			var i:int, len:int;
+			len = dataList.length;
+			var rst:int = 0;
+			for (i = 0; i < len; i++)
+			{
+				if (judgeFun(dataList[i][key]))
+				{
+					rst++;
+				}
+			}
+			return rst;
+		}
 		public static function sumKey(dataList:Array,key:String,start:int=0,end:int=-1):Number
 		{
 			var rst:Number;

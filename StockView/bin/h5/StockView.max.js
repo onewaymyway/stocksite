@@ -499,6 +499,18 @@ var Laya=window.Laya=(function(window,document){
 			return rst;
 		}
 
+		ArrayMethods.count=function(dataList,key,judgeFun){
+			var i=0,len=0;
+			len=dataList.length;
+			var rst=0;
+			for (i=0;i < len;i++){
+				if (judgeFun(dataList[i][key])){
+					rst++;
+				}
+			}
+			return rst;
+		}
+
 		ArrayMethods.sumKey=function(dataList,key,start,end){
 			(start===void 0)&& (start=0);
 			(end===void 0)&& (end=-1);
@@ -39865,9 +39877,15 @@ var Laya=window.Laya=(function(window,document){
 				tInfoO.avgRate=ArrayMethods.sumKey(tList,"sellRate")/ tInfoO.count;
 				tInfoO.avgRatePercent=StockTools.getGoodPercent(ArrayMethods.sumKey(tList,"sellRate")/ tInfoO.count)+"%";
 				tInfoO.avgDay=1+Math.floor(ArrayMethods.sumKey(tList,"sell")/ tInfoO.count);
+				tInfoO.winTime=ArrayMethods.count(tList,"sellRate",BackTestView.bigThenZero);
+				tInfoO.winRate=StockTools.getGoodPercent(tInfoO.winTime / tInfoO.count)+"%";
 				tInfoO.yearRate=StockTools.getGoodPercent((tInfoO.avgRate / tInfoO.avgDay)*240)+"%";
-				this.tip.text=ValueTools.getTplStr("购买次数:{#count#}\n平均盈利:{#avgRatePercent#},{#avgDay#}Day\nYearRate:{#yearRate#}",tInfoO);
+				this.tip.text=ValueTools.getTplStr("购买次数:{#count#},胜率:{#winRate#}\n平均盈利:{#avgRatePercent#},{#avgDay#}Day\nYearRate:{#yearRate#}",tInfoO);
 			}
+		}
+
+		BackTestView.bigThenZero=function(v){
+			return v > 0;
 		}
 
 		BackTestView.tpl="{#code#}\n{#date#}\n{#sell#}:{#winRate#}";

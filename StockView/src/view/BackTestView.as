@@ -113,10 +113,16 @@ package view
 				tInfoO.count = tList.length;
 				tInfoO.avgRate = ArrayMethods.sumKey(tList, "sellRate") / tInfoO.count;
 				tInfoO.avgRatePercent = StockTools.getGoodPercent(ArrayMethods.sumKey(tList, "sellRate") / tInfoO.count) + "%";
-				tInfoO.avgDay = 1+Math.floor(ArrayMethods.sumKey(tList, "sell") / tInfoO.count);
+				tInfoO.avgDay = 1 + Math.floor(ArrayMethods.sumKey(tList, "sell") / tInfoO.count);
+				tInfoO.winTime = ArrayMethods.count(tList, "sellRate", bigThenZero);
+				tInfoO.winRate = StockTools.getGoodPercent(tInfoO.winTime / tInfoO.count) + "%";
 				tInfoO.yearRate =  StockTools.getGoodPercent((tInfoO.avgRate / tInfoO.avgDay) * 240)+"%";
-				tip.text=ValueTools.getTplStr("购买次数:{#count#}\n平均盈利:{#avgRatePercent#},{#avgDay#}Day\nYearRate:{#yearRate#}", tInfoO);
+				tip.text=ValueTools.getTplStr("购买次数:{#count#},胜率:{#winRate#}\n平均盈利:{#avgRatePercent#},{#avgDay#}Day\nYearRate:{#yearRate#}", tInfoO);
 			}
+		}
+		public static function bigThenZero(v:Number):Boolean
+		{
+			return v > 0;
 		}
 	}
 

@@ -89,7 +89,7 @@ package laya.stock.backtest.sellers
 			startI = index - 5;
 			if (startI < 0) startI = 0;
 			var average:Number;
-			average = ArrayMethods.averageKey(dataList, "close", index - 5, index - 1);
+			average = ArrayMethods.averageKey(dataList, "close", startI, index - 1);
 			return tPrice / average>min5DayRate;
 		}
 		public function JudgeOneDown(dataList:Array,index:int):Boolean
