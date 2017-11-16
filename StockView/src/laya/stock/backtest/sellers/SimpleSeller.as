@@ -30,7 +30,8 @@ package laya.stock.backtest.sellers
 		public var downVolumeRateLimit:Number = 0.5;
 		public var enalble5DayProtected:Boolean = false;
 		public var min5DayRate:Number = 0.99;
-		public var sellBy3Down:Boolean = false;
+		public var sellByDaysDown:Boolean = false;
+		public var daysDownLimit:int = 4;
 		private var curMaxVolume:Number;
 		override public function doSell():Number 
 		{
@@ -51,7 +52,11 @@ package laya.stock.backtest.sellers
 				{
 					if (JudgeOneDown(dataList, i)) return tPrice;
 				}
-				if (sellDay >= maxDay) return tPrice;
+				if (sellDay >= maxDay)
+				{
+					sellReason = "maxDayLimit";
+					return tPrice;
+				} 
 				tRst=doJudge();
 				if (tRst > 0) return tRst;
 				
@@ -69,6 +74,14 @@ package laya.stock.backtest.sellers
 					if (isHighThen5DayLine(dataList, i, tPrice)) continue;
 				}
 				
+				if (sellByDaysDown)
+				{
+					if (isDaysDown(dataList, i))
+					{
+						sellReason = "Day3Down";
+						return tPrice;
+					}
+				}
 				if (sellByOneDown)
 				{
 					if (JudgeOneDown(dataList, i)) return tPrice;
@@ -82,6 +95,18 @@ package laya.stock.backtest.sellers
 				if (tRst > 0) return tRst;
 			}
 			return tPrice;
+		}
+		public function isDaysDown(dataList:Array, index:int):Boolean
+		{
+			var i:int, len:int;
+			len = daysDownLimit;
+			var tChange:Number;
+			for (i = 0; i < len; i++)
+			{
+				tChange = StockTools.getChangePriceAtDay(dataList, index - 1 - i);
+				if (tChange < 0) return true;
+			}
+			return false;
 		}
 		public function isHighThen5DayLine(dataList:Array, index:int,tPrice:Number):Boolean
 		{

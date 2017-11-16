@@ -89,6 +89,10 @@ package laya.stock
 			if (!dataList[index] || !dataList[index - 1]) return -1;
 			return dataList[index]["close"] / dataList[index - 1]["close"];
 		}
+		public static function getChangePriceAtDay(dataList:Array, index:int):Number
+		{
+			return dataList[index]["close"] - dataList[index]["open"];
+		}
 		public static function getBuyStaticInfos(buyI:int, dataList:Array, rst:Object):void
 		{
 			var priceLast:Number;
