@@ -1892,6 +1892,18 @@ var Laya=window.Laya=(function(window,document){
 			return rst;
 		}
 
+		ArrayMethods.count=function(dataList,key,judgeFun){
+			var i=0,len=0;
+			len=dataList.length;
+			var rst=0;
+			for (i=0;i < len;i++){
+				if (judgeFun(dataList[i][key])){
+					rst++;
+				}
+			}
+			return rst;
+		}
+
 		ArrayMethods.sumKey=function(dataList,key,start,end){
 			(start===void 0)&& (start=0);
 			(end===void 0)&& (end=-1);
@@ -3087,6 +3099,7 @@ var Laya=window.Laya=(function(window,document){
 			this.sellDay=0;
 			this.date=null;
 			this.stock=null;
+			this.sellReason=null;
 		}
 
 		__class(BackTestInfo,'laya.stock.backtest.BackTestInfo');
@@ -3159,6 +3172,7 @@ var Laya=window.Laya=(function(window,document){
 			if (seller){
 				rst.sell=seller.sell(dataList,buyI+1,priceBuy);
 				rst.sellDay=seller.sellDay;
+				rst.sellReason=seller.sellReason;
 			}
 			return rst;
 		}
@@ -3213,6 +3227,7 @@ var Laya=window.Laya=(function(window,document){
 			this.startIndex=0;
 			this.buyPrice=NaN;
 			this.sellDay=0;
+			this.sellReason="";
 		}
 
 		__class(SellerBase,'laya.stock.backtest.sellers.SellerBase');
@@ -3588,6 +3603,15 @@ var Laya=window.Laya=(function(window,document){
 
 		StockTools.getStockPriceEx=function(index,type,analyser){
 			return StockTools.getStockPrice(index,type,analyser.disDataList);
+		}
+
+		StockTools.getStockRateAtDay=function(dataList,index){
+			if (!dataList[index] || !dataList[index-1])return-1;
+			return dataList[index]["close"] / dataList[index-1]["close"];
+		}
+
+		StockTools.getChangePriceAtDay=function(dataList,index){
+			return dataList[index]["close"]-dataList[index]["open"];
 		}
 
 		StockTools.getBuyStaticInfos=function(buyI,dataList,rst){
@@ -4943,6 +4967,7 @@ var Laya=window.Laya=(function(window,document){
 		function FileSelect(target,accept,changeHandler){
 			this._target=null;
 			this._input=null;
+			this.autoClear=true;
 			this._myChangeH=null;
 			this._changeHandler=null;
 			this._clickH=null;
@@ -4960,6 +4985,9 @@ var Laya=window.Laya=(function(window,document){
 				var bounds;
 				bounds=_$this._target.getSelfBounds();
 				if (bounds.contains(_$this._target.mouseX,_$this._target.mouseY)){
+					if (_$this.autoClear){
+						_$this._input.value="";
+					}
 					_$this._input.click();
 				}
 			}
@@ -18553,10 +18581,14 @@ var Laya=window.Laya=(function(window,document){
 				tData.buyPrice=curData.buy;
 				if (curData.sellDay){
 					tData.sell=curData.sellDay;
+					tData.sellPrice=curData.sell;
 					tData.sellRate=curData.sellRate;
+					tData.sellReason=curData.sellReason;
 					}else{
 					tData.sell=0;
-					tData.sellRate=1;
+					tData.sellRate=0;
+					tData.sellPrice=tData.buyPrice;
+					tData.sellReason="None";
 				}
 				mList.push(tData);
 			}
@@ -19675,6 +19707,7 @@ var Laya=window.Laya=(function(window,document){
 		function SimpleSeller(){
 			this.loseSell=-0.05;
 			this.winSell=0.2;
+			this.sellByBack=false;
 			this.backSell=-0.1;
 			this.maxDay=20;
 			this.tPrice=NaN;
@@ -19683,53 +19716,141 @@ var Laya=window.Laya=(function(window,document){
 			this.sellByDownVolume=false;
 			this.sellByOneDown=false;
 			this.oneDownLimit=-0.05;
+			this.sellByVolumeRateDown=false;
+			this.downVolumeRateLimit=0.5;
+			this.enalble5DayProtected=false;
+			this.min5DayRate=0.99;
+			this.sellByDaysDown=false;
+			this.daysDownLimit=4;
+			this.sell5DayDanger=false;
+			this.min5DayDangerRate=1;
+			this.curMaxVolume=NaN;
 			SimpleSeller.__super.call(this);
 		}
 
 		__class(SimpleSeller,'laya.stock.backtest.sellers.SimpleSeller',_super);
 		var __proto=SimpleSeller.prototype;
 		__proto.doSell=function(){
-			if (!this.dataList[this.startIndex])return this.buyPrice;
+			if (!this.dataList[this.startIndex])
+				return this.buyPrice;
 			var i=0,len=0;
 			len=this.dataList.length;
 			var tStockInfo;
 			this.tHigh=this.buyPrice;
 			var tRst=NaN;
 			this.sellDay=0;
+			this.curMaxVolume=this.dataList[this.startIndex]["volume"];
 			for (i=this.startIndex;i < len;i++){
 				tStockInfo=this.dataList[i];
 				this.sellDay++;
 				this.tPrice=tStockInfo["open"];
 				if (this.sellByOneDown){
-					if (this.JudgeOneDown(this.dataList,i))return this.tPrice;
+					if (this.JudgeOneDown(this.dataList,i))
+						return this.tPrice;
 				}
-				if (this.sellDay >=this.maxDay)return this.tPrice;
+				if (this.sellDay >=this.maxDay){
+					this.sellReason="maxDayLimit";
+					return this.tPrice;
+				}
 				tRst=this.doJudge();
-				if (tRst > 0)return tRst;
+				if (tRst > 0)
+					return tRst;
 				this.tPrice=tStockInfo["close"];
+				if (this.sell5DayDanger){
+					if (this.is5DayLineDanger(this.dataList,i)){
+						this.sellReason="5DayDanger";
+						return this.tPrice;
+					}
+				}
+				if (this.enalble5DayProtected){
+					if (this.isHighThen5DayLine(this.dataList,i,this.tPrice))
+						continue ;
+				}
+				if (this.sellByDaysDown){
+					if (this.isDaysDown(this.dataList,i)){
+						this.sellReason="Day3Down";
+						return this.tPrice;
+					}
+				}
 				if (this.sellByOneDown){
-					if (this.JudgeOneDown(this.dataList,i))return this.tPrice;
+					if (this.JudgeOneDown(this.dataList,i))
+						return this.tPrice;
 				}
 				if (this.sellByDownVolume){
-					if (this.JudgeDownVolume(this.dataList,i))return this.tPrice;
+					if (this.JudgeDownVolume(this.dataList,i))
+						return this.tPrice;
 				}
 				tRst=this.doJudge();
-				if (tRst > 0)return tRst;
+				if (tRst > 0)
+					return tRst;
 			}
 			return this.tPrice;
 		}
 
+		__proto.isDaysDown=function(dataList,index){
+			var i=0,len=0;
+			len=this.daysDownLimit;
+			var tChange=NaN;
+			for (i=0;i < len;i++){
+				tChange=StockTools.getChangePriceAtDay(dataList,index-1-i);
+				if (tChange < 0)
+					return true;
+			}
+			return false;
+		}
+
+		__proto.is5DayLineDanger=function(dataList,index){
+			var average=NaN;
+			average=this.get5DayLine(dataList,index);
+			if (average <=0)
+				return false;
+			if (dataList[index]["high"] < average *this.min5DayDangerRate){
+				return true;
+			}
+			return false;
+		}
+
+		__proto.get5DayLine=function(dataList,index){
+			if (index==0)
+				return 0;
+			var startI=0;
+			startI=index-5;
+			if (startI < 0)
+				startI=0;
+			var average=NaN;
+			average=ArrayMethods.averageKey(dataList,"close",startI,index-1);
+			return average;
+		}
+
+		__proto.isHighThen5DayLine=function(dataList,index,tPrice){
+			if (index==0)
+				return true;
+			var average=NaN;
+			average=this.get5DayLine(dataList,index);
+			return tPrice / average > this.min5DayRate;
+		}
+
 		__proto.JudgeOneDown=function(dataList,index){
-			if (index < 1)return false;
+			if (index < 1)
+				return false;
 			var prePrice=NaN;
 			prePrice=dataList[index-1]["close"];
 			var curRate=NaN;
 			curRate=(this.tPrice-prePrice)/ prePrice;
-			if (curRate < this.oneDownLimit)return true;
+			if (curRate < this.oneDownLimit){
+				this.sellReason="priceDown:"+StockTools.getGoodPercent(curRate)+"%"+this.tPrice;
+				return true;
+			}
 			return false;
 		}
 
 		__proto.JudgeDownVolume=function(dataList,index){
+			var curVolume=NaN;
+			curVolume=dataList[index]["volume"];
+			var curVolumeRate=NaN;
+			curVolumeRate=curVolume / this.curMaxVolume;
+			if (curVolume > this.curMaxVolume)
+				this.curMaxVolume=curVolume;
 			var isDown=false;
 			isDown=ArrayMethods.isDowns(dataList,"volume",index-2,index);
 			var prePrice=NaN;
@@ -19738,23 +19859,46 @@ var Laya=window.Laya=(function(window,document){
 			curPrice=dataList[index]["close"];
 			var curOpen=NaN;
 			curOpen=dataList[index]["open"];
-			if (curPrice > curOpen)return false;
-			if (curPrice > dataList[index-1]["close"])return false;
+			if (curPrice > curOpen)
+				return false;
+			if (curPrice > dataList[index-1]["close"])
+				return false;
+			if (this.sellByVolumeRateDown){
+				if (curVolumeRate < this.downVolumeRateLimit){
+					this.sellReason="volumeRateDown:"+StockTools.getGoodPercent(curVolumeRate)+"%";
+					return true;
+				}
+			};
 			var priceRate=NaN;
+			curPrice=dataList[index]["low"];
 			priceRate=(curPrice-prePrice)/ prePrice;
-			if (priceRate > this.downPriceRateLimit)return false;
+			if (priceRate > this.downPriceRateLimit)
+				return false;
+			if (isDown){
+				this.sellReason="volume3down";
+			}
 			return isDown;
 		}
 
 		__proto.doJudge=function(){
-			if (this.tPrice > this.tHigh)this.tHigh=this.tPrice;
+			if (this.tPrice > this.tHigh)
+				this.tHigh=this.tPrice;
 			var tRate=NaN;
 			tRate=this.tPrice / this.buyPrice-1;
 			if (tRate > this.winSell){
+				this.sellReason="rate>winSell";
 				return this.tPrice;
 			}
 			if (tRate < this.loseSell){
+				this.sellReason="rate<loseSell";
 				return this.tPrice;
+			}
+			if (this.sellByBack){
+				var dRate=NaN;
+				dRate=this.tPrice / this.tHigh-1;
+				if (dRate < this.backSell){
+					return this.tPrice;
+				}
 			}
 			return 0;
 		}
@@ -19864,6 +20008,8 @@ var Laya=window.Laya=(function(window,document){
 			this.averageAnalyser=null;
 			this.maxRate=0.04;
 			this.minRate=0.00;
+			this.preMaxRate=0.05;
+			this.preMaxDays=3;
 			this.priceDays=3;
 			this.maxDaysRate=0.1;
 			this.minDaysRate=-0.1;
@@ -19872,6 +20018,7 @@ var Laya=window.Laya=(function(window,document){
 			this.minVolumeRate=0.5;
 			this.maxVolumeRate=20;
 			this.minMyVolumeRate=0.7;
+			this.maxCurVolumeRate=1.5;
 			AverageVolumeTrader.__super.call(this);
 			this.averageAnalyser=new AverageLineAnalyser();
 			this.seller=new SimpleSeller();
@@ -19890,7 +20037,8 @@ var Laya=window.Laya=(function(window,document){
 			rstData=this.averageAnalyser.resultData;
 			var buyPoints;
 			buyPoints=rstData["buys"];
-			if (!buyPoints)return;
+			if (!buyPoints)
+				return;
 			var i=0,len=0;
 			len=buyPoints.length;
 			var buyI=0;
@@ -19907,26 +20055,52 @@ var Laya=window.Laya=(function(window,document){
 			}
 		}
 
+		__proto.isPreDaysOK=function(dataList,buyI){
+			var i=0,len=0;
+			len=this.preMaxDays;
+			var preDayRate=NaN;
+			for (i=0;i < len;i++){
+				preDayRate=StockTools.getStockRateAtDay(dataList,buyI-1-i);
+				if (preDayRate > 0){
+					if ((preDayRate-1)> this.preMaxRate)
+						return false;
+				}
+			}
+			return true;
+		}
+
 		__proto.tryBuyAt=function(buyI,stockDataList){
 			var prePrice=NaN;
-			if (!stockDataList[buyI-1])return;
+			if (!stockDataList[buyI-1])
+				return;
 			prePrice=stockDataList[buyI-1]["close"];
 			var curPrice=NaN;
 			curPrice=stockDataList[buyI]["close"];
 			var curRate=NaN;
 			curRate=(curPrice-prePrice)/ prePrice;
-			if (curRate > this.maxRate)return;
-			if (curRate < this.minRate)return;
-			if (buyI < this.longVolume)return;
+			if (curRate > this.maxRate)
+				return;
+			if (curRate < this.minRate)
+				return;
+			if (!this.isPreDaysOK(stockDataList,buyI)){
+				return;
+			}
+			if (buyI < this.longVolume)
+				return;
 			var preDayI=0;
 			preDayI=buyI-this.priceDays;
-			if (preDayI < 0)return;
+			if (preDayI < 0)
+				return;
 			var dayPrice=NaN;
 			dayPrice=stockDataList[preDayI]["close"];
 			var daysRate=NaN;
 			daysRate=(curPrice-dayPrice)/ dayPrice;
-			if (daysRate > this.maxDaysRate)return;
-			if (daysRate < this.minDaysRate)return;
+			if (daysRate > this.maxDaysRate)
+				return;
+			if (daysRate < this.minDaysRate)
+				return;
+			if (stockDataList[buyI]["close"] < stockDataList[buyI]["open"])
+				return;
 			var daysVolume=NaN;
 			daysVolume=ArrayMethods.averageKey(stockDataList,"volume",buyI-this.longVolume,buyI);
 			var nearVolumes=NaN;
@@ -19935,6 +20109,8 @@ var Laya=window.Laya=(function(window,document){
 			volumeRate=nearVolumes / daysVolume;
 			var tVolume=NaN;
 			tVolume=stockDataList[buyI]["volume"];
+			if (tVolume / nearVolumes > this.maxCurVolumeRate)
+				return;
 			var maxVolume=NaN;
 			maxVolume=ArrayMethods.getMax(stockDataList,"volume",buyI-this.shortVolume,buyI);
 			var myVolumeRate=NaN;
@@ -19945,7 +20121,7 @@ var Laya=window.Laya=(function(window,document){
 			AverageVolumeTrader._tempDataO["volumeRate"]=StockTools.getGoodPercent(volumeRate);
 			AverageVolumeTrader._tempDataO["myVolumeRate"]=StockTools.getGoodPercent(myVolumeRate);
 			AverageVolumeTrader._tempDataO["curRate"]=curRate;
-			if (volumeRate > this.minVolumeRate && volumeRate < this.maxVolumeRate&&myVolumeRate>this.minMyVolumeRate){
+			if (volumeRate > this.minVolumeRate && volumeRate < this.maxVolumeRate && myVolumeRate > this.minMyVolumeRate){
 				this.buyStaticAt(buyI,this.maxDay,this.seller,AverageVolumeTrader._tempDataO);
 			}
 		}
@@ -26261,10 +26437,16 @@ var Laya=window.Laya=(function(window,document){
 					if (dataList[i]){
 						prePrice=dataList[buyI]["high"]
 						tData=dataList[i];
-						curPrice=tData["close"]
+						curPrice=this.markO.sellPrice||tData["close"]
 						tPos=this.getAdptXV(i *this.gridWidth);
 						this.graphics.drawLine(tPos,this.getAdptYV(tData["low"]),tPos,this.getAdptYV(tData["low"])+30,"#00ff00");
-						this.graphics.fillText("Sell:"+StockTools.getGoodPercent((curPrice-prePrice)/prePrice)+"%"+tData["date"],tPos,this.getAdptYV(tData["low"])+30,null,"#00ff00","center");
+						var curInfo;
+						if (this.markO.sellReason){
+							curInfo="Sell:"+StockTools.getGoodPercent((curPrice-prePrice)/ prePrice)+"%"+this.markO.sellReason;
+							}else{
+							curInfo="Sell:"+StockTools.getGoodPercent((curPrice-prePrice)/ prePrice)+"%"+tData["date"];
+						}
+						this.graphics.fillText(curInfo,tPos,this.getAdptYV(tData["low"])+30,null,"#00ff00","center");
 					}
 				}
 			}
@@ -41083,9 +41265,15 @@ var Laya=window.Laya=(function(window,document){
 				tInfoO.avgRate=ArrayMethods.sumKey(tList,"sellRate")/ tInfoO.count;
 				tInfoO.avgRatePercent=StockTools.getGoodPercent(ArrayMethods.sumKey(tList,"sellRate")/ tInfoO.count)+"%";
 				tInfoO.avgDay=1+Math.floor(ArrayMethods.sumKey(tList,"sell")/ tInfoO.count);
+				tInfoO.winTime=ArrayMethods.count(tList,"sellRate",BackTestView.bigThenZero);
+				tInfoO.winRate=StockTools.getGoodPercent(tInfoO.winTime / tInfoO.count)+"%";
 				tInfoO.yearRate=StockTools.getGoodPercent((tInfoO.avgRate / tInfoO.avgDay)*240)+"%";
-				this.tip.text=ValueTools.getTplStr("购买次数:{#count#}\n平均盈利:{#avgRatePercent#},{#avgDay#}Day\nYearRate:{#yearRate#}",tInfoO);
+				this.tip.text=ValueTools.getTplStr("购买次数:{#count#},胜率:{#winRate#}\n平均盈利:{#avgRatePercent#},{#avgDay#}Day\nYearRate:{#yearRate#}",tInfoO);
 			}
+		}
+
+		BackTestView.bigThenZero=function(v){
+			return v > 0;
 		}
 
 		BackTestView.tpl="{#code#}\n{#date#}\n{#sell#}:{#winRate#}";
@@ -41189,9 +41377,10 @@ var Laya=window.Laya=(function(window,document){
 				var showStr;
 				if (preStockData){
 					showStr=tStockData.date+
-					"\n"+"Close:"+tStockData.close+":"+StockTools.getGoodPercent((tStockData.close-preStockData.open)/ preStockData.close)+"%"+
-					"\n"+"High:"+tStockData.high+":"+StockTools.getGoodPercent((tStockData.high-preStockData.open)/ preStockData.close)+"%"+
-					"\n"+"Low:"+tStockData.low+":"+StockTools.getGoodPercent((tStockData.low-preStockData.open)/ preStockData.close)+"%";
+					"\n"+"Open:"+tStockData.open+":"+StockTools.getGoodPercent((tStockData.open-preStockData.close)/ preStockData.close)+"%"+
+					"\n"+"Close:"+tStockData.close+":"+StockTools.getGoodPercent((tStockData.close-preStockData.close)/ preStockData.close)+"%"+
+					"\n"+"High:"+tStockData.high+":"+StockTools.getGoodPercent((tStockData.high-preStockData.close)/ preStockData.close)+"%"+
+					"\n"+"Low:"+tStockData.low+":"+StockTools.getGoodPercent((tStockData.low-preStockData.close)/ preStockData.close)+"%";
 					if (tStockData.close-tStockData.open >=0){
 						this.dayStockInfoTxt.color="#ff0000";
 					}
