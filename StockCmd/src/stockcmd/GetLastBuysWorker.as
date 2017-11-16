@@ -91,7 +91,7 @@ package stockcmd
 				}else
 				{
 					tData.sell = 0;
-					tData.sellRate = 1;
+					tData.sellRate = 0;
 					tData.sellPrice = tData.buyPrice;
 					tData.sellReason = "None";
 				}
