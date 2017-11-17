@@ -49,7 +49,15 @@ package laya.stock.backtest.traders {
 				}
 			}
 		}
+		
+		
+		/**
+		 * 购买当天允许的最大涨幅
+		 */
 		public var maxRate:Number = 0.04;
+		/*
+		 * 购买当天允许的最小涨幅
+		 */
 		public var minRate:Number = 0.00;
 		public var preMaxRate:Number = 0.05;
 		public var preMaxSumRate:Number = 0.10;
