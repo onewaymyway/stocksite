@@ -198,11 +198,7 @@ package laya.stock.backtest.sellers {
 				//sellReason = "TopConer";
 				//return tPrice;
 				//}
-				if (StockTools.isDownBreakContainAtDay(dataList, i)) {
-					sellReason = "DownBreakContain";
-					//trace("DownBreakContain");
-					return tPrice;
-				}
+				
 				if (sell5DayDanger) {
 					if (is5DayLineDanger(dataList, i)) {
 						sellReason = "5DayDanger";
@@ -225,15 +221,20 @@ package laya.stock.backtest.sellers {
 						continue;
 				}
 				
-				
-				if (StockTools.getStockFallDownPartRate(dataList, i - 1) < 0.33) 
-				{
-					if (StockTools.getStockKeyRateAtDay(dataList, i, "close") < 0.99)
-					{
-						sellReason = "Fall&<0.99";
-						return tPrice;
-					}
+				if (StockTools.isDownBreakContainAtDay(dataList, i)) {
+					sellReason = "DownBreakContain";
+					//trace("DownBreakContain");
+					return tPrice;
 				}
+				
+				//if (StockTools.getStockFallDownPartRate(dataList, i - 1) < 0.33) 
+				//{
+					//if (StockTools.getStockKeyRateAtDay(dataList, i, "close") < 0.99)
+					//{
+						//sellReason = "Fall&<0.99";
+						//return tPrice;
+					//}
+				//}
 				
 				if (sellByDaysDown) {
 					if (isDaysDown(dataList, i)) {
