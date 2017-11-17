@@ -52,6 +52,7 @@ package laya.stock.backtest.traders {
 		public var maxRate:Number = 0.04;
 		public var minRate:Number = 0.00;
 		public var preMaxRate:Number = 0.05;
+		public var preMaxSumRate:Number = 0.10;
 		public var preMaxDays:int = 3;
 		public var priceDays:int = 3;
 		public var maxDaysRate:Number = 0.1;
@@ -69,14 +70,21 @@ package laya.stock.backtest.traders {
 			var i:int, len:int;
 			len = preMaxDays;
 			var preDayRate:Number;
+			var sumRate:Number;
+			sumRate = 0;
 			for (i = 0; i < len; i++) {
-				preDayRate = StockTools.getStockRateAtDay(dataList, buyI - 1-i);
+				preDayRate = StockTools.getStockRateAtDay(dataList, buyI - 1 - i);
+				
 				if (preDayRate > 0) {
+					sumRate += (preDayRate - 1);
 					if ((preDayRate - 1) > preMaxRate)
 						return false;
 				}
 			}
-			
+			if (sumRate > preMaxSumRate)
+			{
+				return false;
+			}
 			return true;
 		}
 		
