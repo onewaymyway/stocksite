@@ -79,15 +79,122 @@ package laya.stock
 		{
 			return dataList[index][type];
 		}
-		
+		public static function getContinueDownCount(dataList:Array, index:int,key:String="close"):int
+		{
+			var rst:int;
+			rst = 0;
+			while (dataList[index - 1] && dataList[index - 1][key] > dataList[index][key])
+			{
+				index--;
+				rst++;
+			}
+			return rst;
+		}
 		public static function getStockPriceEx(index:int, type:String, analyser:AnalyserBase):Number
 		{
 			return getStockPrice(index, type, analyser.disDataList);
+		}
+		public static function getStockKeyRateAtDay(dataList:Array, index:int, key:String):Number
+		{
+			if (!dataList[index] || !dataList[index - 1]) return -1;
+			return dataList[index][key] / dataList[index - 1][key];
 		}
 		public static function getStockRateAtDay(dataList:Array, index:int):Number
 		{
 			if (!dataList[index] || !dataList[index - 1]) return -1;
 			return dataList[index]["close"] / dataList[index - 1]["close"];
+		}
+		public static function getBodyRate(dataList:Array, index:int):Number
+		{
+			if (!dataList[index]) return -1;
+			var tData:Object;
+			tData = dataList[index];
+			var totalLen:Number;
+			totalLen = tData["high"] - tData["low"];
+			if (totalLen == 0) return - 1;
+			//if (bodyLen * 4 > totalLen) return false;
+			var tBLine:Number;
+			tBLine = Math.abs(tData["close"]-tData["open"]);
+			var tLineRate:Number;
+			tLineRate = tBLine / totalLen;
+			return tLineRate;
+		}
+		public static function getStockFallDownPartRate(dataList:Array, index:int):Number
+		{
+			if (!dataList[index]) return -1;
+			var tData:Object;
+			tData = dataList[index];
+			var totalLen:Number;
+			totalLen = tData["high"] - tData["low"];
+			if (totalLen == 0) return - 1;
+			//if (bodyLen * 4 > totalLen) return false;
+			var tBLine:Number;
+			tBLine = Math.max(tData["close"], tData["open"]);
+			var tLineRate:Number;
+			tLineRate = (tBLine-tData["low"]) / totalLen;
+			return tLineRate;
+		}
+		public static function isAttackUpFailAtDay(dataList:Array, index:int):Boolean
+		{
+			if (!dataList[index]) return false;
+			var tData:Object;
+			tData = dataList[index];
+			var bodyLen:Number;
+			bodyLen = Math.abs((tData["close"] - tData["open"]));
+			var totalLen:Number;
+			totalLen = tData["high"] - tData["low"];
+			//if (bodyLen * 4 > totalLen) return false;
+			var tBLine:Number;
+			tBLine = Math.max(tData["close"], tData["open"]);
+			var tLineRate:Number;
+			tLineRate = (tBLine-tData["low"]) / totalLen;
+			return tLineRate < 0.25;
+		}
+		public static function isDownTrendAtDay(dataList:Array, index:int):Boolean
+		{
+			if (!dataList[index - 1]) return false;
+			var preData:Object;
+			var tData:Object;
+			preData = dataList[index - 1];
+			tData = dataList[index];
+			return tData["high"] < preData["high"] && tData["low"] < preData["low"];
+		}
+		public static function isUpTrendAtDay(dataList:Array, index:int):Boolean
+		{
+			if (!dataList[index - 1]) return false;
+			var preData:Object;
+			var tData:Object;
+			preData = dataList[index - 1];
+			tData = dataList[index];
+			return tData["high"] > preData["high"] && tData["low"] > preData["low"];
+		}
+		public static function isTopConer(dataList:Array, index:int):Boolean
+		{
+			if (!dataList[index - 2]) return false;
+			return isUpTrendAtDay(dataList, index - 1) && isDownTrendAtDay(dataList, index);
+		}
+		public static function isDownBreakContainAtDay(dataList:Array, index:int):Boolean
+		{
+			//trace("isDownBreakContainAtDay");
+			if (!dataList[index - 1]) return false;
+			if (!isContainedByBefore(dataList,index - 1)) return false;
+			//trace("contained",dataList[index]["low"] < dataList[index - 1]["low"]);
+			return dataList[index]["close"] < dataList[index - 2]["low"];
+			
+		}
+		public static function isContainedByBefore(dataList:Array, index:int):Boolean
+		{
+			if (!dataList[index - 1]) return false;
+			var preData:Object;
+			var tData:Object;
+			preData = dataList[index - 1];
+			tData = dataList[index];
+			//trace("isContaine:",tData["high"] , preData["high"] , tData["low"] , preData["low"]);
+			return tData["high"] < preData["high"] && tData["low"] > preData["low"];
+		}
+		public static function getNoDownUpRateBeforeDay(dataList:Array, index:int):Number
+		{
+			
 		}
 		public static function getChangePriceAtDay(dataList:Array, index:int):Number
 		{

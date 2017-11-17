@@ -151,6 +151,8 @@ package view {
 					"\n" + "Low:" + tStockData.low ;
 					dayStockInfoTxt.color = "#ff0000";
 				}
+				showStr += "\nFall:" + StockTools.getGoodPercent(StockTools.getStockFallDownPartRate(kLine.disDataList, curI));
+				showStr += "\nBody:"+StockTools.getGoodPercent(StockTools.getBodyRate(kLine.disDataList,curI));
 				if (dayLine.x + dayStockInfoTxt.width > this.width - 20) {
 					dayStockInfoTxt.align = "right";
 					dayStockInfoTxt.x = -dayStockInfoTxt.width;
@@ -458,7 +460,7 @@ package view {
 			dayLine.graphics.clear();
 			dayLine.graphics.drawLine(0, 0, 0, -kLine.y, "#ff0000");
 			dayLine.visible = false;
-			dayStockInfoTxt.y = -100;
+			dayStockInfoTxt.y = -150;
 		}
 		
 		private function onDetail():void {

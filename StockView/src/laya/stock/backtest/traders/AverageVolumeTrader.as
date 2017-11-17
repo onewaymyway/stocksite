@@ -44,7 +44,7 @@ package laya.stock.backtest.traders {
 				buyI = tBuyArr[1];
 				if (buyI) {
 					
-					tryBuyAt(buyI, stockDataList);
+					tryBuyAt(buyI, stockDataList, delayBuy);
 					
 				}
 			}
@@ -64,6 +64,8 @@ package laya.stock.backtest.traders {
 		public var minMyVolumeRate:Number = 0.7;
 		public var maxCurVolumeRate:Number = 1.5;
 		
+		public var delayBuy:Boolean = false;
+		
 		private static var _tempDataO:Object = {};
 		
 		public function isPreDaysOK(dataList:Array, buyI:int):Boolean {
@@ -81,20 +83,35 @@ package laya.stock.backtest.traders {
 						return false;
 				}
 			}
-			if (sumRate > preMaxSumRate)
-			{
+			if (sumRate > preMaxSumRate) {
 				return false;
 			}
 			return true;
 		}
 		
-		public function tryBuyAt(buyI:int, stockDataList:Array):void {
+		public function tryBuyAt(buyI:int, stockDataList:Array, delay:Boolean = false):void {
+			//if (StockTools.isDownTrendAtDay(stockDataList, buyI)) {
+				//return;
+			//}
+			if (delay) {
+				buyI++;
+				if (!stockDataList[buyI])
+					return;
+				delay = false;
+				if (StockTools.isDownTrendAtDay(stockDataList, buyI)) {
+					return;
+				}
+			}
+			if (StockTools.getStockFallDownPartRate(stockDataList, buyI)<0.22)
+			{
+				return;
+			}
 			var prePrice:Number;
 			if (!stockDataList[buyI - 1])
 				return;
 			prePrice = stockDataList[buyI - 1]["close"];
 			var curPrice:Number;
-			curPrice = stockDataList[buyI]["close"]
+			curPrice = stockDataList[buyI]["close"];
 			var curRate:Number;
 			curRate = (curPrice - prePrice) / prePrice;
 			if (curRate > maxRate)
@@ -102,8 +119,11 @@ package laya.stock.backtest.traders {
 			if (curRate < minRate)
 				return;
 			
-			if (!isPreDaysOK(stockDataList, buyI))
-			{
+			var changeRate:Number;
+			changeRate = Math.abs((stockDataList[buyI]["open"] - stockDataList[buyI]["close"]) / prePrice);
+			if (changeRate > maxRate)
+				return;
+			if (!isPreDaysOK(stockDataList, buyI)) {
 				return;
 			}
 			if (buyI < longVolume)
@@ -147,7 +167,28 @@ package laya.stock.backtest.traders {
 			_tempDataO["myVolumeRate"] = StockTools.getGoodPercent(myVolumeRate);
 			_tempDataO["curRate"] = curRate;
 			if (volumeRate > minVolumeRate && volumeRate < maxVolumeRate && myVolumeRate > minMyVolumeRate) {
-				buyStaticAt(buyI, maxDay, seller, _tempDataO);
+				if (delay) {
+					
+					buyI++;
+					if (!stockDataList[buyI])
+						return;
+					tryBuyAt(buyI, stockDataList);
+						//var nextDayRate:Number;
+						//nextDayRate = StockTools.getStockRateAtDay(stockDataList, buyI);
+						//var nextVoluneRate:Number;
+						//nextVoluneRate = StockTools.getStockKeyRateAtDay(stockDataList, buyI, "volume");
+						//if (nextDayRate > 0 && nextVoluneRate > 0)
+						//{
+						//if (nextDayRate < 1 && nextVoluneRate < 1) return;
+						//}
+//
+						//buyStaticAt(buyI, maxDay, seller, _tempDataO);
+					
+				}
+				else {
+					buyStaticAt(buyI, maxDay, seller, _tempDataO);
+				}
+				
 			}
 		}
 	
