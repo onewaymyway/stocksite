@@ -112,7 +112,7 @@ package laya.events
 			}
 		}
 		
-		private function getPointDistance(pA:Point, pB:Point):void
+		private function getPointDistance(pA:Point, pB:Point):Number
 		{
 			return pA.distance(pB.x, pB.y);
 		}
