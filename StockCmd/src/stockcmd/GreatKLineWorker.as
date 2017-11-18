@@ -86,7 +86,7 @@ package stockcmd
 					tType = tData[2];
 					var preIndex:int;
 					preIndex = preData[0];
-					if (tType = "high")
+					if (tType == "high")
 					{
 						var tPrice:Number;
 						var prePrice:Number;

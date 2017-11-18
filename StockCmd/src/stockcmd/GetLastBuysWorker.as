@@ -22,6 +22,7 @@ package stockcmd
 		
 		public var tTrader:Trader;
 		public var tplStr:String;
+		public var curConfigO:Object;
 		override public function workInits():void {
 			trace("isConfigExist:",RunConfig.paramFile,FileManager.exists(RunConfig.paramFile));
 			if (FileManager.exists(RunConfig.paramFile)) {
@@ -35,6 +36,9 @@ package stockcmd
 						traderO = configO.trader;
 						tTrader = ValueTools.createObjectByConfig(traderO);
 						tplStr = configO.tpl;
+						
+						curConfigO = configO;
+						trace("setCurConfigO",curConfigO);
 					}
 					trace("createByConfig success");
 				}
@@ -101,6 +105,14 @@ package stockcmd
 			if (tplStr)
 			{
 				rstO.tpl = tplStr;
+			}
+			if (!curConfigO)
+			{
+				trace("configO==null");
+			}
+			if (curConfigO&&curConfigO.rankInfos)
+			{
+				rstO.rankInfos = curConfigO.rankInfos;
 			}
 			mList.sort(ValueTools.sortByKeyEX("date",true,false));
 			//JsonTool.getJsonString(rstO, false);
