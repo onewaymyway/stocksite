@@ -1,15 +1,24 @@
 {
     "param": {
         "nextCMD": null,
-		"tpl":"{#code#}:{#sellReason#}\n{#date#}\n{#sell#}:{#winRate#}",
+		"rankInfos":[
+		{"label":"date","sortParams":["date",true,false]},
+		{"label":"sellRate","sortParams":["sellRate",true,true]},
+		{"label":"sellRateU","sortParams":["sellRate",false,true]},
+		{"label":"sell","sortParams":["sell",true,true]},
+		{"label":"sellU","sortParams":["sell",false,true]}
+		],
+		"tpl":"{#code#}:{#date#}\n{#sellReason#}\n{#sell#}:{#winRate#}",
         "trader": {
             "Class": "AverageVolumeTrader",
             "config": {
                 "maxRate": 0.03,
                 "maxDay": 20,
-				"preMaxRate":0.05,
+				"delayBuy":true,
+				"preMaxRate":0.04,
+				"preMaxSumRate":0.075,
 				"preMaxDays":9,
-                "minRate": 0.00,
+                "minRate": -0.01,
                 "longVolume": 7,
                 "shortVolume": 3,
 				"maxDaysRate": 0.1,
@@ -31,15 +40,17 @@
 							"sellByDownVolume": true,
 							"downPriceRateLimit": -0.01,
 							"sellByOneDown": true,
-							"oneDownLimit": -0.05,
+							"oneDownLimit": -0.048,
 							"sellByDaysDown":false,
 							"daysDownLimit":4,
 							"sellByVolumeRateDown": true,
-							"downVolumeRateLimit": 0.6,
-							"enalble5DayProtected":true,
+							"downVolumeRateLimit": 0.3,
+							"enalble5DayProtected":true,	
 							"min5DayRate":0.99,
-							"sell5DayDanger":false,
-							"min5DayDangerRate":0.97,
+							"sell5DayDanger":true,
+							"DayDangerDays":2,
+							"min5DayDangerRate":1,
+							"sellByDownBreak":false,
                             "maxDay": 30,
                             "winSell": 0.75
                         }
