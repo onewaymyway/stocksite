@@ -664,7 +664,7 @@ package nodetools.devices
 				return;
 			if(isPathSame(oldPath,newPath))
 			{
-				Alert.show("在移动文件到同一个位置！！");
+				trace("在移动文件到同一个位置！！");
 				return;
 			}
 			copyE(oldPath,newPath);
