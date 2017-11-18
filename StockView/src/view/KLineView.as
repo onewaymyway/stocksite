@@ -5,6 +5,7 @@ package view {
 	import laya.events.Event;
 	import laya.events.Keyboard;
 	import laya.events.MultiTouchManager;
+	import laya.math.ArrayMethods;
 	import laya.math.DataUtils;
 	import laya.math.ValueTools;
 	import laya.maths.Point;
@@ -133,9 +134,9 @@ package view {
 				if (preStockData) {
 					showStr = tStockData.date + 
 					"\n" + "Open:" + tStockData.open + ":" + StockTools.getGoodPercent((tStockData.open - preStockData.close) / preStockData.close) + "%" + 
-					"\n" + "Close:" + tStockData.close + ":" + StockTools.getGoodPercent((tStockData.close - preStockData.close) / preStockData.close) + "%" + 
+					"" + "Close:" + tStockData.close + ":" + StockTools.getGoodPercent((tStockData.close - preStockData.close) / preStockData.close) + "%" + 
 					"\n" + "High:" + tStockData.high + ":" + StockTools.getGoodPercent((tStockData.high - preStockData.close) / preStockData.close) + "%" + 
-					"\n" + "Low:" + tStockData.low + ":" + StockTools.getGoodPercent((tStockData.low - preStockData.close) / preStockData.close) + "%";
+					"" + "Low:" + tStockData.low + ":" + StockTools.getGoodPercent((tStockData.low - preStockData.close) / preStockData.close) + "%";
 					
 					if (tStockData.close - tStockData.open >= 0) {
 						dayStockInfoTxt.color = "#ff0000";
@@ -152,7 +153,10 @@ package view {
 					dayStockInfoTxt.color = "#ff0000";
 				}
 				showStr += "\nFall:" + StockTools.getGoodPercent(StockTools.getStockFallDownPartRate(kLine.disDataList, curI));
-				showStr += "\nBody:"+StockTools.getGoodPercent(StockTools.getBodyRate(kLine.disDataList,curI));
+				showStr += " Body:" + StockTools.getGoodPercent(StockTools.getBodyRate(kLine.disDataList, curI));
+				showStr += "\nAngle:" + StockTools.getDayLineAngleDay(kLine.disDataList, curI, 5, 0).toFixed(2) + " down:" + StockTools.getContinueDayLineAngleDownCount(kLine.disDataList, curI, 5, 0, "close");
+				showStr += " Rise:" + StockTools.getGoodPercent(StockTools.getNoDownUpRateBeforeDay(kLine.disDataList, curI));
+				showStr += "\n" + "Tops:" + ArrayMethods.getItemValues(StockTools.findTopPoints(kLine.disDataList, curI - 100, curI, 6, 6),"price").join(",");
 				if (dayLine.x + dayStockInfoTxt.width > this.width - 20) {
 					dayStockInfoTxt.align = "right";
 					dayStockInfoTxt.x = -dayStockInfoTxt.width;

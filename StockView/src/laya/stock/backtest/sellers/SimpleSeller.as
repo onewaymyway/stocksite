@@ -121,30 +121,47 @@ package laya.stock.backtest.sellers {
 			var tStockInfo:Object;
 			tHigh = buyPrice;
 			var tRst:Number;
+			var preDayPrice:Number;
+			var tDayRate:Number;
+			var upStopPrice:Number;
+			var downStopPrice:Number;
 			sellDay = 0;
 			curMaxVolume = dataList[startIndex]["volume"];
+			var preTopPoints:Array;
+			preTopPoints = StockTools.findTopPoints(dataList, startIndex - 100, startIndex - 1, 6, 6, true);
+			var lastTop:Number = -1;
+			if (preTopPoints.length > 0) {
+				lastTop = preTopPoints[preTopPoints.length - 1];
+			}
+			var preBreakTopFailIndex:int = -1;
 			for (i = startIndex; i < len; i++) {
 				tStockInfo = dataList[i];
 				sellDay++;
-				tPrice = tStockInfo["open"];
+				preDayPrice = dataList[i - 1]["close"];
 				
-				if (sellByDownBreak) {
-					if (isDownBreak(dataList, i)) {
-						sellReason = "downBreak";
+				tPrice = tStockInfo["open"];
+				tDayRate = tPrice / preDayPrice;
+				
+				if (Math.abs(tDayRate - 1) < 0.098) {
+					
+					if (sellByDownBreak) {
+						if (isDownBreak(dataList, i)) {
+							sellReason = "downBreak";
+							return tPrice;
+						}
+					}
+					if (sellByOneDown) {
+						if (JudgeOneDown(dataList, i))
+							return tPrice;
+					}
+					if (sellDay >= maxDay) {
+						sellReason = "maxDayLimit";
 						return tPrice;
 					}
+					tRst = doJudge();
+					if (tRst > 0)
+						return tRst;
 				}
-				if (sellByOneDown) {
-					if (JudgeOneDown(dataList, i))
-						return tPrice;
-				}
-				if (sellDay >= maxDay) {
-					sellReason = "maxDayLimit";
-					return tPrice;
-				}
-				tRst = doJudge();
-				if (tRst > 0)
-					return tRst;
 				
 				//tPrice = tStockInfo["high"];
 				//tRst=doJudge();
@@ -155,15 +172,31 @@ package laya.stock.backtest.sellers {
 				//if (tRst > 0) return tRst;
 				
 				tPrice = tStockInfo["close"];
-				
-				
+				tDayRate = tPrice / preDayPrice;
+				if (Math.abs(tDayRate - 1) > 0.098)
+					continue;
 				//if (StockTools.getContinueDownCount(dataList, i, "high") >= 2) {
-					//if (StockTools.getStockKeyRateAtDay(dataList, i, "close") < 1) {
-						//sellReason = "ContinueDown";
+				//if (StockTools.getStockKeyRateAtDay(dataList, i, "close") < 1) {
+				//sellReason = "ContinueDown";
+				//return tPrice;
+				//}
+				//
+				//}
+				
+				//if (preBreakTopFailIndex == i - 1)
+				//{
+					//if (tDayRate < 1)
+					//{
+						//sellReason = "downAfterBreakTop";
 						//return tPrice;
 					//}
-					//
 				//}
+				if (lastTop > 0) {
+					if (dataList[i]["high"] > lastTop) {
+						if(preBreakTopFailIndex<0)
+						preBreakTopFailIndex = i;
+					}
+				}
 				if (StockTools.getStockKeyRateAtDay(dataList, i, "volume") > 1.1) {
 					if (StockTools.getStockKeyRateAtDay(dataList, i, "close") < 0.96) {
 						sellReason = "volumeAgPrice";
@@ -229,11 +262,11 @@ package laya.stock.backtest.sellers {
 				
 				//if (StockTools.getStockFallDownPartRate(dataList, i - 1) < 0.33) 
 				//{
-					//if (StockTools.getStockKeyRateAtDay(dataList, i, "close") < 0.99)
-					//{
-						//sellReason = "Fall&<0.99";
-						//return tPrice;
-					//}
+				//if (StockTools.getStockKeyRateAtDay(dataList, i, "close") < 0.99)
+				//{
+				//sellReason = "Fall&<0.99";
+				//return tPrice;
+				//}
 				//}
 				
 				if (sellByDaysDown) {
@@ -281,8 +314,11 @@ package laya.stock.backtest.sellers {
 			return false;
 		}
 		
-		public function is5DayLineDanger(dataList:Array, index:int):Boolean {
+		public function is5DayLineDanger(dataList:Array, index:int, offset:int = -1):Boolean {
 			if (StockTools.getStockRateAtDay(dataList, index) > 1) {
+				return false;
+			}
+			if (StockTools.getStockBounceUpPartRate(dataList, index) > 0.6) {
 				return false;
 			}
 			var average:Number;
@@ -291,7 +327,7 @@ package laya.stock.backtest.sellers {
 			var tIndex:int;
 			for (i = 0; i < len; i++) {
 				tIndex = index - i;
-				average = get5DayLine(dataList, tIndex);
+				average = get5DayLine(dataList, tIndex, offset);
 				if (average <= 0)
 					continue;
 				if (dataList[tIndex]["close"] > average * min5DayDangerRate) {
@@ -302,23 +338,24 @@ package laya.stock.backtest.sellers {
 			return true;
 		}
 		
-		public function get5DayLine(dataList:Array, index:int):Number {
-			if (index == 0)
-				return 0;
-			var startI:int;
-			startI = index - 5;
-			if (startI < 0)
-				startI = 0;
-			var average:Number;
-			average = ArrayMethods.averageKey(dataList, "close", startI, index - 1);
-			return average;
+		public function get5DayLine(dataList:Array, index:int, offset:int = -1):Number {
+			return StockTools.getDayLineAtDay(dataList, index, 5, offset);
+			//if (index == 0)
+			//return 0;
+			//var startI:int;
+			//startI = index - 5;
+			//if (startI < 0)
+			//startI = 0;
+			//var average:Number;
+			//average = ArrayMethods.averageKey(dataList, "close", startI, index - 1);
+			//return average;
 		}
 		
-		public function isHighThen5DayLine(dataList:Array, index:int, tPrice:Number):Boolean {
+		public function isHighThen5DayLine(dataList:Array, index:int, tPrice:Number, offset:int = -1):Boolean {
 			if (index == 0)
 				return true;
 			var average:Number;
-			average = get5DayLine(dataList, index);
+			average = get5DayLine(dataList, index, offset);
 			return tPrice / average > min5DayRate;
 		}
 		
@@ -380,6 +417,7 @@ package laya.stock.backtest.sellers {
 				tHigh = tPrice;
 			var tRate:Number;
 			tRate = tPrice / buyPrice - 1;
+			
 			if (tRate > winSell) {
 				sellReason = "rate>winSell";
 				return tPrice;

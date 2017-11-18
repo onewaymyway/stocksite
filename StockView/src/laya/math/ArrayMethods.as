@@ -22,6 +22,18 @@ package laya.math
 				}
 			}
 		}
+		public static function getItemValues(arr:Array, key:String):Array
+		{
+			var i:int, len:int;
+			len = arr.length;
+			var rst:Array;
+			rst = [];
+			for (i = 0; i < len; i++)
+			{
+				rst.push(arr[i][key]);
+			}
+			return rst;
+		}
 		public static function findFirstLowThen(v:int, arr:Array, startPos:int,step:int=1):int
 		{
 			return 0;
@@ -174,6 +186,24 @@ package laya.math
 			}
 			return rst/(len-start);
 		}
+		public static function averageFun(dataList:Array,fun:Function, start:int = 0, end:int = -1):Number
+		{
+			var rst:Number;
+			rst = 0;
+			var i:int, len:int;
+			len = dataList.length;
+			if (end >= 0)
+			{
+				len = Math.min(end+1, len);
+			}	
+			for (i = start; i < len; i++)
+			{
+				rst += fun(dataList[i]);
+			}
+			return rst/(len-start);
+		}
+		
+		
 	}
 
 }

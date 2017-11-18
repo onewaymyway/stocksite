@@ -1,5 +1,6 @@
 package laya.stock 
 {
+	import laya.math.ArrayMethods;
 	import laya.stock.analysers.AnalyserBase;
 	import laya.tools.StockJsonP;
 	/**
@@ -134,6 +135,21 @@ package laya.stock
 			tLineRate = (tBLine-tData["low"]) / totalLen;
 			return tLineRate;
 		}
+		public static function getStockBounceUpPartRate(dataList:Array, index:int):Number
+		{
+			if (!dataList[index]) return -1;
+			var tData:Object;
+			tData = dataList[index];
+			var totalLen:Number;
+			totalLen = tData["high"] - tData["low"];
+			if (totalLen == 0) return - 1;
+			//if (bodyLen * 4 > totalLen) return false;
+			var tBLine:Number;
+			tBLine = Math.min(tData["close"], tData["open"]);
+			var tLineRate:Number;
+			tLineRate = (tBLine-tData["low"]) / totalLen;
+			return tLineRate;
+		}
 		public static function isAttackUpFailAtDay(dataList:Array, index:int):Boolean
 		{
 			if (!dataList[index]) return false;
@@ -158,6 +174,51 @@ package laya.stock
 			preData = dataList[index - 1];
 			tData = dataList[index];
 			return tData["high"] < preData["high"] && tData["low"] < preData["low"];
+		}
+		public static function getDayLineRateAtDay(dataList:Array, index:int, dayCount:int = 5, offset:int = -1, key:String = "close"):Number
+		{
+			var preValue:Number;
+			preValue = getDayLineAtDay(dataList, index - 1, dayCount, offset, key);
+			var curValue:Number;
+			curValue = getDayLineAtDay(dataList, index, dayCount, offset, key);
+			if (preValue == 0) return 0;
+			return  curValue / preValue;
+		}
+		public static function getContinueDayLineAngleDownCount(dataList:Array, index:int, dayCount:int = 5, offset:int = -1, key:String="close"):int
+		{
+			var rst:int;
+			rst = 0;
+			while (dataList[index - 1] && getDayLineAngleDay(dataList,index-1,dayCount,offset,key) > getDayLineAngleDay(dataList,index,dayCount,offset,key))
+			{
+				index--;
+				rst++;
+			}
+			return rst;
+		}
+		public static function getDayLineAngleDay(dataList:Array, index:int, dayCount:int = 5, offset:int = -1, key:String = "close"):Number
+		{
+			var preValue:Number;
+			preValue = getDayLineAtDay(dataList, index - 1, dayCount, offset, key);
+			var curValue:Number;
+			curValue = getDayLineAtDay(dataList, index, dayCount, offset, key);
+			if (preValue == 0) return 0;
+			var dValue:Number;
+			dValue = curValue-preValue;
+			var angle:Number;
+			angle = Math.atan2(dValue, 1);
+			angle = angle*180 / Math.PI;
+			return angle;
+		}
+		public static function getDayLineAtDay(dataList:Array, index:int,dayCount:int=5,offset:int=-1,key:String="close"):Number {
+			if (index == 0)
+				return 0;
+			var startI:int;
+			startI = index - dayCount+1+offset;
+			if (startI < 0)
+				startI = 0;
+			var average:Number;
+			average = ArrayMethods.averageKey(dataList, key, startI, index +offset);
+			return average;
 		}
 		public static function isUpTrendAtDay(dataList:Array, index:int):Boolean
 		{
@@ -192,13 +253,105 @@ package laya.stock
 			//trace("isContaine:",tData["high"] , preData["high"] , tData["low"] , preData["low"]);
 			return tData["high"] < preData["high"] && tData["low"] > preData["low"];
 		}
+		public static function getUpStopValue(price:Number):Number
+		{
+			return Math.round(price * 1.1 * 1000) / 1000;
+		}
+		public static function getDownStopValue(price:Number):Number
+		{
+			return Math.round(price * 0.9 * 1000) / 1000;
+		}
 		public static function getNoDownUpRateBeforeDay(dataList:Array, index:int):Number
 		{
-			return 0;
+			var curHigh:Number;
+			curHigh = dataList[index]["high"];
+			var dayCount:int;
+			dayCount = 0;
+			var tLow:Number = 0;
+			while (dataList[index - 1] && (dataList[index - 1]["low"]<dataList[index]["low"]||getChangePriceAtDay(dataList, index - 1) > 0 || getStockRateAtDay(dataList, index - 1) > 1))
+			{
+				index--;
+				dayCount++;
+				if (tLow <= 0 || dataList[index]["low"] < tLow)
+				{
+					tLow=dataList[index]["low"]
+				}
+			}
+			if (tLow <= 0) return 0;
+			
+			return curHigh/tLow;
 		}
+		public static function findTopPoints(dataList:Array, start:int, end:int, leftLimit:int=6, rightLimit:int=6,onlyPrice:Boolean=false):Array
+		{
+			var rst:Array;
+			rst = [];
+			var i:int, len:int;
+			if (start < 0) start = 0;
+			for (i = start+leftLimit; i < end-rightLimit; i++)
+			{
+				if (isTopPoint(dataList, i, leftLimit, rightLimit))
+				{
+					if (onlyPrice)
+					{
+						rst.push(dataList[i]["high"]);
+					}else
+					{
+						rst.push({"index":i,"price":dataList[i]["high"]});
+					}
+					
+				}
+			}
+			return rst;
+		}
+		public static function isTopPoint(dataList:Array, index:int, leftLimit:int, rightLimit:int):Boolean
+		{
+			var curValue:Number;
+			
+			var i:int, len:int;
+			
+			var tIndex:int;
+			var tValue:Number;
+			curValue = dataList[index]["high"];
+			len = leftLimit;
+			for (i = 0; i < len; i++)
+			{
+				tIndex = index - i - 1;
+				tValue = dataList[tIndex]["high"];
+				if (tValue > curValue) return false;
+			}
+			
+			len = rightLimit;
+			for (i = 0; i < len; i++)
+			{
+				tIndex = index + i + 1;
+				tValue = dataList[tIndex]["high"];
+				if (tValue > curValue) return false;
+			}
+			return true;
+		}
+		
 		public static function getChangePriceAtDay(dataList:Array, index:int):Number
 		{
 			return dataList[index]["close"] - dataList[index]["open"];
+		}
+		public static function getChangeDownDays(dataList:Array, index:int, len:int):int
+		{
+			var rst:Number;
+			rst = 0;
+			var i:int;
+			var tData:Object;
+			for (i = 0; i < len; i++)
+			{
+				tData = dataList[index - i];
+				if (tData)
+				{
+					if (tData["close"] < tData["open"])
+					{
+						rst++;
+					}
+				}
+			}
+			return rst;
 		}
 		public static function getBuyStaticInfos(buyI:int, dataList:Array, rst:Object):void
 		{

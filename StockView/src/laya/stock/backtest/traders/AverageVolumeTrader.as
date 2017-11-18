@@ -52,7 +52,6 @@ package laya.stock.backtest.traders {
 			}
 		}
 		
-		
 		/**
 		 * 购买当天允许的最大涨幅
 		 */
@@ -101,7 +100,7 @@ package laya.stock.backtest.traders {
 		
 		public function tryBuyAt(buyI:int, stockDataList:Array, delay:Boolean = false):void {
 			//if (StockTools.isDownTrendAtDay(stockDataList, buyI)) {
-				//return;
+			//return;
 			//}
 			if (delay) {
 				buyI++;
@@ -112,10 +111,67 @@ package laya.stock.backtest.traders {
 					return;
 				}
 			}
-			if (StockTools.getStockFallDownPartRate(stockDataList, buyI)<0.22)
-			{
+			
+			var preTopPoints:Array;
+			preTopPoints = StockTools.findTopPoints(stockDataList, buyI - 100, buyI, 6, 6, true);
+			if (preTopPoints.length > 0) {
+				var lastTop:Number;
+				lastTop = preTopPoints[preTopPoints.length - 1];
+				if (stockDataList[buyI]["open"] > lastTop && stockDataList[buyI]["close"] < lastTop) {
+					return;
+				}
+				if (stockDataList[buyI]["high"] > lastTop && stockDataList[buyI]["low"] < lastTop) {
+					if (StockTools.getStockFallDownPartRate(stockDataList, buyI) < 0.26) {
+						return;
+					}
+				}
+				
+			}
+			var preTopPoints2:Array;
+			preTopPoints2 = StockTools.findTopPoints(stockDataList, buyI - 100, buyI, 6, 6, false);
+			if (preTopPoints2.length > 0) {
+				//if (preTopPoints2.length > 4) {
+					//if (ArrayMethods.isDowns(preTopPoints2, "price", preTopPoints2.length - 1-3, preTopPoints2.length - 1)) {
+						//return;
+					//}
+				//}
+				//else {
+					if (ArrayMethods.isDowns(preTopPoints2, "price", 0, preTopPoints2.length - 1)) {
+						return;
+					}
+				//}
+				
+			}
+			if (StockTools.getNoDownUpRateBeforeDay(stockDataList, buyI) > 1.21) {
 				return;
 			}
+			if (StockTools.getNoDownUpRateBeforeDay(stockDataList, buyI) < 1.08) {
+				return;
+			}
+			if (StockTools.getContinueDownCount(stockDataList, buyI, "high") >= 2 || StockTools.getContinueDownCount(stockDataList, buyI - 1, "high") >= 2) {
+				return;
+			}
+			//if (StockTools.getStockFallDownPartRate(stockDataList, buyI)<0.22)
+			//{
+			//return;
+			//}
+			if (StockTools.getChangeDownDays(stockDataList, buyI, 5) >= 3) {
+				return;
+			}
+			//if (StockTools.getDayLineAngleDay(stockDataList, buyI, 5, 0, "close") < 0)
+			//{
+			//return;
+			//}
+			//if (StockTools.getContinueDayLineAngleDownCount(stockDataList, buyI, 5, 0, "close") >= 2)
+			//{
+			//return;
+			//}
+			var tday5Rate:Number;
+			tday5Rate = StockTools.getDayLineRateAtDay(stockDataList, buyI, 5, -1, "close");
+			//if (tday5Rate > 0 && tday5Rate < 1)
+			//{
+			//return;
+			//}
 			var prePrice:Number;
 			if (!stockDataList[buyI - 1])
 				return;
