@@ -403,6 +403,17 @@ var Laya=window.Laya=(function(window,document){
 			}
 		}
 
+		ArrayMethods.getItemValues=function(arr,key){
+			var i=0,len=0;
+			len=arr.length;
+			var rst;
+			rst=[];
+			for (i=0;i < len;i++){
+				rst.push(arr[i][key]);
+			}
+			return rst;
+		}
+
 		ArrayMethods.findFirstLowThen=function(v,arr,startPos,step){
 			(step===void 0)&& (step=1);
 			return 0;
@@ -539,6 +550,22 @@ var Laya=window.Laya=(function(window,document){
 			}
 			for (i=start;i < len;i++){
 				rst+=dataList[i][key];
+			}
+			return rst/(len-start);
+		}
+
+		ArrayMethods.averageFun=function(dataList,fun,start,end){
+			(start===void 0)&& (start=0);
+			(end===void 0)&& (end=-1);
+			var rst=NaN;
+			rst=0;
+			var i=0,len=0;
+			len=dataList.length;
+			if (end >=0){
+				len=Math.min(end+1,len);
+			}
+			for (i=start;i < len;i++){
+				rst+=fun(dataList[i]);
 			}
 			return rst/(len-start);
 		}
@@ -1396,7 +1423,7 @@ var Laya=window.Laya=(function(window,document){
 
 		__proto.addToConfigTypes=function(types){}
 		__proto.addToShowData=function(showData){}
-		__proto.addGridLine=function(barHeight,gridLineValue){
+		__proto.addGridLine=function(barHeight,gridLineValue,color){
 			var i=0,len=0;
 			var gridLine;
 			gridLine=[];
@@ -1406,7 +1433,7 @@ var Laya=window.Laya=(function(window,document){
 			for (i=0;i < len;i++){
 				values[i]=ValueTools.mParseFloat(values[i])*barHeight;
 			}
-			gridLine.push(0,this.disDataList.length-1,values,/*no*/this.color,gridLineValue.split(","));
+			gridLine.push(0,this.disDataList.length-1,values,color,gridLineValue.split(","));
 			this.resultData["gridLine"]=gridLine;
 		}
 
@@ -1954,8 +1981,262 @@ var Laya=window.Laya=(function(window,document){
 			return dataList[index][type];
 		}
 
+		StockTools.getContinueDownCount=function(dataList,index,key){
+			(key===void 0)&& (key="close");
+			var rst=0;
+			rst=0;
+			while (dataList[index-1] && dataList[index-1][key] > dataList[index][key]){
+				index--;
+				rst++;
+			}
+			return rst;
+		}
+
 		StockTools.getStockPriceEx=function(index,type,analyser){
 			return StockTools.getStockPrice(index,type,analyser.disDataList);
+		}
+
+		StockTools.getStockKeyRateAtDay=function(dataList,index,key){
+			if (!dataList[index] || !dataList[index-1])return-1;
+			return dataList[index][key] / dataList[index-1][key];
+		}
+
+		StockTools.getStockRateAtDay=function(dataList,index){
+			if (!dataList[index] || !dataList[index-1])return-1;
+			return dataList[index]["close"] / dataList[index-1]["close"];
+		}
+
+		StockTools.getBodyRate=function(dataList,index){
+			if (!dataList[index])return-1;
+			var tData;
+			tData=dataList[index];
+			var totalLen=NaN;
+			totalLen=tData["high"]-tData["low"];
+			if (totalLen==0)return-1;
+			var tBLine=NaN;
+			tBLine=Math.abs(tData["close"]-tData["open"]);
+			var tLineRate=NaN;
+			tLineRate=tBLine / totalLen;
+			return tLineRate;
+		}
+
+		StockTools.getStockFallDownPartRate=function(dataList,index){
+			if (!dataList[index])return-1;
+			var tData;
+			tData=dataList[index];
+			var totalLen=NaN;
+			totalLen=tData["high"]-tData["low"];
+			if (totalLen==0)return-1;
+			var tBLine=NaN;
+			tBLine=Math.max(tData["close"],tData["open"]);
+			var tLineRate=NaN;
+			tLineRate=(tBLine-tData["low"])/ totalLen;
+			return tLineRate;
+		}
+
+		StockTools.getStockBounceUpPartRate=function(dataList,index){
+			if (!dataList[index])return-1;
+			var tData;
+			tData=dataList[index];
+			var totalLen=NaN;
+			totalLen=tData["high"]-tData["low"];
+			if (totalLen==0)return-1;
+			var tBLine=NaN;
+			tBLine=Math.min(tData["close"],tData["open"]);
+			var tLineRate=NaN;
+			tLineRate=(tBLine-tData["low"])/ totalLen;
+			return tLineRate;
+		}
+
+		StockTools.isAttackUpFailAtDay=function(dataList,index){
+			if (!dataList[index])return false;
+			var tData;
+			tData=dataList[index];
+			var bodyLen=NaN;
+			bodyLen=Math.abs((tData["close"]-tData["open"]));
+			var totalLen=NaN;
+			totalLen=tData["high"]-tData["low"];
+			var tBLine=NaN;
+			tBLine=Math.max(tData["close"],tData["open"]);
+			var tLineRate=NaN;
+			tLineRate=(tBLine-tData["low"])/ totalLen;
+			return tLineRate < 0.25;
+		}
+
+		StockTools.isDownTrendAtDay=function(dataList,index){
+			if (!dataList[index-1])return false;
+			var preData;
+			var tData;
+			preData=dataList[index-1];
+			tData=dataList[index];
+			return tData["high"] < preData["high"] && tData["low"] < preData["low"];
+		}
+
+		StockTools.getDayLineRateAtDay=function(dataList,index,dayCount,offset,key){
+			(dayCount===void 0)&& (dayCount=5);
+			(offset===void 0)&& (offset=-1);
+			(key===void 0)&& (key="close");
+			var preValue=NaN;
+			preValue=StockTools.getDayLineAtDay(dataList,index-1,dayCount,offset,key);
+			var curValue=NaN;
+			curValue=StockTools.getDayLineAtDay(dataList,index,dayCount,offset,key);
+			if (preValue==0)return 0;
+			return curValue / preValue;
+		}
+
+		StockTools.getContinueDayLineAngleDownCount=function(dataList,index,dayCount,offset,key){
+			(dayCount===void 0)&& (dayCount=5);
+			(offset===void 0)&& (offset=-1);
+			(key===void 0)&& (key="close");
+			var rst=0;
+			rst=0;
+			while (dataList[index-1] && StockTools.getDayLineAngleDay(dataList,index-1,dayCount,offset,key)> StockTools.getDayLineAngleDay(dataList,index,dayCount,offset,key)){
+				index--;
+				rst++;
+			}
+			return rst;
+		}
+
+		StockTools.getDayLineAngleDay=function(dataList,index,dayCount,offset,key){
+			(dayCount===void 0)&& (dayCount=5);
+			(offset===void 0)&& (offset=-1);
+			(key===void 0)&& (key="close");
+			var preValue=NaN;
+			preValue=StockTools.getDayLineAtDay(dataList,index-1,dayCount,offset,key);
+			var curValue=NaN;
+			curValue=StockTools.getDayLineAtDay(dataList,index,dayCount,offset,key);
+			if (preValue==0)return 0;
+			var dValue=NaN;
+			dValue=curValue-preValue;
+			var angle=NaN;
+			angle=Math.atan2(dValue,1);
+			angle=angle*180 / Math.PI;
+			return angle;
+		}
+
+		StockTools.getDayLineAtDay=function(dataList,index,dayCount,offset,key){
+			(dayCount===void 0)&& (dayCount=5);
+			(offset===void 0)&& (offset=-1);
+			(key===void 0)&& (key="close");
+			if (index==0)
+				return 0;
+			var startI=0;
+			startI=index-dayCount+1+offset;
+			if (startI < 0)
+				startI=0;
+			var average=NaN;
+			average=ArrayMethods.averageKey(dataList,key,startI,index+offset);
+			return average;
+		}
+
+		StockTools.isUpTrendAtDay=function(dataList,index){
+			if (!dataList[index-1])return false;
+			var preData;
+			var tData;
+			preData=dataList[index-1];
+			tData=dataList[index];
+			return tData["high"] > preData["high"] && tData["low"] > preData["low"];
+		}
+
+		StockTools.isTopConer=function(dataList,index){
+			if (!dataList[index-2])return false;
+			return StockTools.isUpTrendAtDay(dataList,index-1)&& StockTools.isDownTrendAtDay(dataList,index);
+		}
+
+		StockTools.isDownBreakContainAtDay=function(dataList,index){
+			if (!dataList[index-1])return false;
+			if (!StockTools.isContainedByBefore(dataList,index-1))return false;
+			return dataList[index]["close"] < dataList[index-2]["low"];
+		}
+
+		StockTools.isContainedByBefore=function(dataList,index){
+			if (!dataList[index-1])return false;
+			var preData;
+			var tData;
+			preData=dataList[index-1];
+			tData=dataList[index];
+			return tData["high"] < preData["high"] && tData["low"] > preData["low"];
+		}
+
+		StockTools.getUpStopValue=function(price){
+			return Math.round(price *1.1 *1000)/ 1000;
+		}
+
+		StockTools.getDownStopValue=function(price){
+			return Math.round(price *0.9 *1000)/ 1000;
+		}
+
+		StockTools.getNoDownUpRateBeforeDay=function(dataList,index){
+			var curHigh=NaN;
+			curHigh=dataList[index]["high"];
+			var dayCount=0;
+			dayCount=0;
+			var tLow=0;
+			while (dataList[index-1] && (dataList[index-1]["low"]<dataList[index]["low"]||StockTools.getChangePriceAtDay(dataList,index-1)> 0 || StockTools.getStockRateAtDay(dataList,index-1)> 1)){
+				index--;
+				dayCount++;
+				if (tLow <=0 || dataList[index]["low"] < tLow){
+					tLow=dataList[index]["low"]
+				}
+			}
+			if (tLow <=0)return 0;
+			return curHigh/tLow;
+		}
+
+		StockTools.findTopPoints=function(dataList,start,end,leftLimit,rightLimit){
+			(leftLimit===void 0)&& (leftLimit=6);
+			(rightLimit===void 0)&& (rightLimit=6);
+			var rst;
+			rst=[];
+			var i=0,len=0;
+			if (start < 0)start=0;
+			for (i=start+leftLimit;i < end-rightLimit;i++){
+				if (StockTools.isTopPoint(dataList,i,leftLimit,rightLimit)){
+					rst.push({"index":i,"price":dataList[i]["high"]});
+				}
+			}
+			return rst;
+		}
+
+		StockTools.isTopPoint=function(dataList,index,leftLimit,rightLimit){
+			var curValue=NaN;
+			var i=0,len=0;
+			var tIndex=0;
+			var tValue=NaN;
+			curValue=dataList[index]["high"];
+			len=leftLimit;
+			for (i=0;i < len;i++){
+				tIndex=index-i-1;
+				tValue=dataList[tIndex]["high"];
+				if (tValue > curValue)return false;
+			}
+			len=rightLimit;
+			for (i=0;i < len;i++){
+				tIndex=index+i+1;
+				tValue=dataList[tIndex]["high"];
+				if (tValue > curValue)return false;
+			}
+			return true;
+		}
+
+		StockTools.getChangePriceAtDay=function(dataList,index){
+			return dataList[index]["close"]-dataList[index]["open"];
+		}
+
+		StockTools.getChangeDownDays=function(dataList,index,len){
+			var rst=NaN;
+			rst=0;
+			var i=0;
+			var tData;
+			for (i=0;i < len;i++){
+				tData=dataList[index-i];
+				if (tData){
+					if (tData["close"] < tData["open"]){
+						rst++;
+					}
+				}
+			}
+			return rst;
 		}
 
 		StockTools.getBuyStaticInfos=function(buyI,dataList,rst){
@@ -18284,7 +18565,7 @@ var Laya=window.Laya=(function(window,document){
 			for (i=0;i < len;i++){
 				positionList.push(this.getWinLoseData(ValueTools.mParseFloat(days[i]),dataList));
 			}
-			this.addGridLine(this.barHeight,this.gridLineValue);
+			this.addGridLine(this.barHeight,this.gridLineValue,this.color);
 		}
 
 		__proto.getBuyList=function(positionData){
@@ -22194,6 +22475,7 @@ var Laya=window.Laya=(function(window,document){
 		function AverageLineAnalyser(){
 			this.showBuy=0;
 			this.showTrend=1;
+			this.color="#ffff00";
 			this.barHeight=500;
 			AverageLineAnalyser.__super.call(this);
 			this.days="5,12,26";
@@ -22285,7 +22567,7 @@ var Laya=window.Laya=(function(window,document){
 					distanceList.push([i,this.barHeight *this.getAvgDistance(avgs,i),AverageLineAnalyser._colorDic[this.getTrendType(avgs,i)]]);
 				}
 				this.resultData["distanceList"]=distanceList;
-				this.addGridLine(this.barHeight,"0,0.025,0.05,0.1,0.15,0.20,0.25");
+				this.addGridLine(this.barHeight,"0,0.025,0.05,0.1,0.15,0.20,0.25",this.color);
 			}
 		}
 
@@ -22351,7 +22633,6 @@ var Laya=window.Laya=(function(window,document){
 				var prePrice=NaN;
 				var tPrice=NaN;
 				var tIndex=0;
-				var lastIndex=tI;
 				tIndex=this.disDataList.length-1;
 				prePrice=StockTools.getStockPriceEx(lastIndex,"close",this);
 				tPrice=StockTools.getStockPriceEx(tIndex,"close",this);
@@ -38380,6 +38661,7 @@ var Laya=window.Laya=(function(window,document){
 			this.list=null;
 			this.tip=null;
 			this.selectFileBtn=null;
+			this.typeSelect=null;
 			BackTestViewUI.__super.call(this);
 		}
 
@@ -38390,7 +38672,7 @@ var Laya=window.Laya=(function(window,document){
 			this.createView(BackTestViewUI.uiView);
 		}
 
-		BackTestViewUI.uiView={"type":"View","props":{"width":445,"height":400},"child":[{"type":"List","props":{"var":"list","vScrollBarSkin":"comp/vscroll.png","top":30,"right":10,"left":10,"bottom":10},"child":[{"type":"Box","props":{"y":0,"x":0,"width":168,"name":"render","height":61},"child":[{"type":"Label","props":{"wordWrap":true,"top":0,"text":"this is a list","skin":"comp/label.png","right":0,"name":"label","left":0,"fontSize":14,"color":"#efe82f","bottom":0,"borderColor":"#fb125d"}},{"type":"Label","props":{"y":39,"x":72,"wordWrap":true,"width":96,"text":"this is a list","skin":"comp/label.png","name":"info","height":22,"fontSize":14,"color":"#efe82f","align":"right"}}]}]},{"type":"Label","props":{"y":-11,"width":271,"var":"tip","text":"股票代码:当前盈利:最高盈利","right":150,"height":38,"color":"#f33713"}},{"type":"Button","props":{"y":4,"x":8,"width":94,"var":"selectFileBtn","skin":"comp/button.png","label":"选择回测文件","height":24,"labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}}]};
+		BackTestViewUI.uiView={"type":"View","props":{"width":445,"height":400},"child":[{"type":"List","props":{"var":"list","vScrollBarSkin":"comp/vscroll.png","top":30,"right":10,"left":10,"bottom":10},"child":[{"type":"Box","props":{"y":0,"x":0,"width":168,"name":"render","height":61},"child":[{"type":"Label","props":{"wordWrap":true,"top":0,"text":"this is a list","skin":"comp/label.png","right":0,"name":"label","left":0,"fontSize":14,"color":"#efe82f","bottom":0,"borderColor":"#fb125d"}},{"type":"Label","props":{"y":39,"x":72,"wordWrap":true,"width":96,"text":"this is a list","skin":"comp/label.png","name":"info","height":22,"fontSize":14,"color":"#efe82f","align":"right"}}]}]},{"type":"Label","props":{"y":-11,"width":271,"var":"tip","text":"股票代码:当前盈利:最高盈利","right":150,"height":38,"color":"#f33713"}},{"type":"Button","props":{"y":4,"x":8,"width":94,"var":"selectFileBtn","skin":"comp/button.png","label":"选择回测文件","height":24,"labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"ComboBox","props":{"y":3,"x":10,"visibleNum":15,"var":"typeSelect","skin":"comp/combobox.png","selectedIndex":0,"scrollBarSkin":"comp/vscroll.png","right":20,"labels":"date","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}}]};
 		return BackTestViewUI;
 	})(View)
 
@@ -39803,6 +40085,9 @@ var Laya=window.Laya=(function(window,document){
 			this.fileSelect=null;
 			this.tI=0;
 			this.preTime=0;
+			this.tDatas=null;
+			this.typeDic={};
+			this.tType="date";
 			BackTestView.__super.call(this);
 			this.fileSelect=new FileSelect(this.selectFileBtn,"*",new Handler(this,this.onChange));
 			this.list.renderHandler=new Handler(this,this.stockRender);
@@ -39810,6 +40095,7 @@ var Laya=window.Laya=(function(window,document){
 			this.list.mouseHandler=new Handler(this,this.onMouseList);
 			this.list.scrollBar.touchScrollEnable=true;
 			this.tip.text="回测文件显示";
+			this.typeSelect.on("change",this,this.onTypeChange);
 		}
 
 		__class(BackTestView,'view.BackTestView',_super);
@@ -39868,8 +40154,14 @@ var Laya=window.Laya=(function(window,document){
 				this.list.array=dataO.list;
 				var tList;
 				tList=dataO.list;
+				this.tDatas=tList;
 				if (dataO.tpl){
 					BackTestView.tpl=dataO.tpl;
+				}
+				if (dataO.rankInfos){
+					this.initRankSelect(dataO.rankInfos);
+					}else{
+					this.initRankSelect([]);
 				};
 				var tInfoO;
 				tInfoO={};
@@ -39882,6 +40174,44 @@ var Laya=window.Laya=(function(window,document){
 				tInfoO.yearRate=StockTools.getGoodPercent((tInfoO.avgRate / tInfoO.avgDay)*240)+"%";
 				this.tip.text=ValueTools.getTplStr("购买次数:{#count#},胜率:{#winRate#}\n平均盈利:{#avgRatePercent#},{#avgDay#}Day\nYearRate:{#yearRate#}",tInfoO);
 			}
+		}
+
+		__proto.onTypeChange=function(){
+			this.tType=this.typeSelect.selectedLabel;
+			this.refreshData();
+		}
+
+		__proto.refreshData=function(){
+			if (!this.tDatas)
+				return;
+			if (this.typeDic[this.tType]){;
+				this.tDatas.sort(ValueTools.sortByKeyEX.apply(null,this.typeDic[this.tType]["sortParams"]));
+			}
+			else {
+				this.tDatas.sort(MathUtil.sortByKey("date",true,false));
+			}
+			this.list.array=this.tDatas;
+		}
+
+		__proto.initRankSelect=function(rankInfos){
+			var types;
+			types=rankInfos;
+			this.typeDic={};
+			var typesStr;
+			typesStr=[];
+			var tTypeO;
+			var i=0,len=0;
+			len=types.length;
+			for (i=0;i < len;i++){
+				tTypeO=types[i];
+				typesStr.push(tTypeO.label);
+				this.typeDic[tTypeO.label]=tTypeO;
+			}
+			if (typesStr.length < 1)typesStr=["date"];
+			this.typeSelect.labels=typesStr.join(",");
+			this.typeSelect.selectedIndex=0;
+			this.tType=this.typeSelect.selectedLabel;
+			this.refreshData();
 		}
 
 		BackTestView.bigThenZero=function(v){
@@ -39990,9 +40320,9 @@ var Laya=window.Laya=(function(window,document){
 				if (preStockData){
 					showStr=tStockData.date+
 					"\n"+"Open:"+tStockData.open+":"+StockTools.getGoodPercent((tStockData.open-preStockData.close)/ preStockData.close)+"%"+
-					"\n"+"Close:"+tStockData.close+":"+StockTools.getGoodPercent((tStockData.close-preStockData.close)/ preStockData.close)+"%"+
+					""+"Close:"+tStockData.close+":"+StockTools.getGoodPercent((tStockData.close-preStockData.close)/ preStockData.close)+"%"+
 					"\n"+"High:"+tStockData.high+":"+StockTools.getGoodPercent((tStockData.high-preStockData.close)/ preStockData.close)+"%"+
-					"\n"+"Low:"+tStockData.low+":"+StockTools.getGoodPercent((tStockData.low-preStockData.close)/ preStockData.close)+"%";
+					""+"Low:"+tStockData.low+":"+StockTools.getGoodPercent((tStockData.low-preStockData.close)/ preStockData.close)+"%";
 					if (tStockData.close-tStockData.open >=0){
 						this.dayStockInfoTxt.color="#ff0000";
 					}
@@ -40007,6 +40337,11 @@ var Laya=window.Laya=(function(window,document){
 					"\n"+"Low:"+tStockData.low;
 					this.dayStockInfoTxt.color="#ff0000";
 				}
+				showStr+="\nFall:"+StockTools.getGoodPercent(StockTools.getStockFallDownPartRate(this.kLine.disDataList,curI));
+				showStr+=" Body:"+StockTools.getGoodPercent(StockTools.getBodyRate(this.kLine.disDataList,curI));
+				showStr+="\nAngle:"+StockTools.getDayLineAngleDay(this.kLine.disDataList,curI,5,0).toFixed(2)+" down:"+StockTools.getContinueDayLineAngleDownCount(this.kLine.disDataList,curI,5,0,"close");
+				showStr+=" Rise:"+StockTools.getGoodPercent(StockTools.getNoDownUpRateBeforeDay(this.kLine.disDataList,curI));
+				showStr+="\n"+"Tops:"+ArrayMethods.getItemValues(StockTools.findTopPoints(this.kLine.disDataList,curI-100,curI,6,6),"price").join(",");
 				if (this.dayLine.x+this.dayStockInfoTxt.width > this.width-20){
 					this.dayStockInfoTxt.align="right";
 					this.dayStockInfoTxt.x=-this.dayStockInfoTxt.width;
@@ -40286,7 +40621,7 @@ var Laya=window.Laya=(function(window,document){
 			this.dayLine.graphics.clear();
 			this.dayLine.graphics.drawLine(0,0,0,-this.kLine.y,"#ff0000");
 			this.dayLine.visible=false;
-			this.dayStockInfoTxt.y=-100;
+			this.dayStockInfoTxt.y=-150;
 		}
 
 		__proto.onDetail=function(){
@@ -41998,8 +42333,3 @@ var Laya=window.Laya=(function(window,document){
 	new StockMain();
 
 })(window,document,Laya);
-
-
-/*
-1 file:///D:/stocksite.git/trunk/StockView/src/laya/stock/analysers/AnalyserBase.as (160):warning:color This variable is not defined.
-*/
