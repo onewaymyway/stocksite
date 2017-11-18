@@ -51,13 +51,13 @@ package laya.stock.backtest
 		}
 		public var seller:SellerBase;
 		public var staticInfoList:Array;
-		public function buyStaticAt(index:int,maxDay:int=20,seller:SellerBase,dataO:Object=null):Object
+		public function buyStaticAt(index:int,maxDay:int=20,seller:SellerBase=null,dataO:Object=null):Object
 		{
 			var dataList:Array;
 			dataList = stockData.dataList;
 			var curInfo:Object;
 			curInfo = dataList[index];
-			if (!curInfo) return;
+			if (!curInfo) return null;
 			var tData:Object;
 			tData = BackTestInfo.getStaticInfo(dataList, index, maxDay, seller, stockData.stockName);
 			if (dataO)

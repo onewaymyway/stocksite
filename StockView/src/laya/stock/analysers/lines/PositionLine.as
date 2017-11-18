@@ -50,7 +50,7 @@ package laya.stock.analysers.lines {
 			for (i = 0; i < len; i++) {
 				positionList.push(getWinLoseData(ValueTools.mParseFloat(days[i]), dataList));
 			}
-			addGridLine(barHeight,gridLineValue);
+			addGridLine(barHeight,gridLineValue,color);
 		}
 		
 		

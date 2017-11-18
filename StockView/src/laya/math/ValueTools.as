@@ -155,7 +155,7 @@ package laya.math {
 			return str;
 		}
 		
-		public static function getFlatKeyValueNum(obj:Object, key:String):int
+		public static function getFlatKeyValueNum(obj:Object, key:String):*
 		{
 			var str:String;
 			str = getFlatKeyValue(obj, key);

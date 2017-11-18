@@ -16,11 +16,13 @@ package laya.stock.backtest.traders
 		{
 			super();
 			averageAnalyser = new AverageLineAnalyser();
-			seller = new SimpleSeller();
-			seller.loseSell = -0.2;
-			seller.winSell = 0.9;
-			seller.backSell = -0.1;
-			seller.maxDay = maxDay;
+			var mySeller:SimpleSeller;
+			mySeller = new SimpleSeller();
+			seller = mySeller;
+			mySeller.loseSell = -0.2;
+			mySeller.winSell = 0.9;
+			mySeller.backSell = -0.1;
+			mySeller.maxDay = maxDay;
 		}
 		override public function reset():void 
 		{

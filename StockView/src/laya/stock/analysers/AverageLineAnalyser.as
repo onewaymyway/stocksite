@@ -10,7 +10,7 @@ package laya.stock.analysers {
 	public class AverageLineAnalyser extends AverageLine {
 		public var showBuy:int = 0;
 		public var showTrend:int = 1;
-		
+		public var color:String = "#ffff00";
 		public function AverageLineAnalyser() {
 			super();
 			days = "5,12,26";
@@ -110,7 +110,7 @@ package laya.stock.analysers {
 					distanceList.push([i, barHeight * getAvgDistance(avgs, i),_colorDic[getTrendType(avgs,i)]]);
 				}
 				resultData["distanceList"] = distanceList;
-				addGridLine(barHeight, "0,0.025,0.05,0.1,0.15,0.20,0.25");
+				addGridLine(barHeight, "0,0.025,0.05,0.1,0.15,0.20,0.25",color);
 			}
 		
 		}
@@ -186,7 +186,7 @@ package laya.stock.analysers {
 				var prePrice:Number;
 				var tPrice:Number;
 				var tIndex:int;
-				var lastIndex:int = tI;
+				//var lastIndex:int = tI;
 				tIndex = disDataList.length - 1;
 				prePrice = StockTools.getStockPriceEx(lastIndex, "close", this);
 				tPrice = StockTools.getStockPriceEx(tIndex, "close", this);

@@ -148,7 +148,7 @@ package laya.stock.analysers
 			
 		}
 		
-		public function addGridLine(barHeight:Number,gridLineValue:String):void
+		public function addGridLine(barHeight:Number,gridLineValue:String,color:String):void
 		{
 			var i:int, len:int;
 			var gridLine:Array;

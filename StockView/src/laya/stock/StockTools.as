@@ -194,7 +194,7 @@ package laya.stock
 		}
 		public static function getNoDownUpRateBeforeDay(dataList:Array, index:int):Number
 		{
-			
+			return 0;
 		}
 		public static function getChangePriceAtDay(dataList:Array, index:int):Number
 		{

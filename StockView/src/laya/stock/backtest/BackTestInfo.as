@@ -50,7 +50,7 @@ package laya.stock.backtest
 			return exp > 0?1:0;
 		}
 
-		public function ifWin(key:String):int
+		public function ifWinX(key:String):int
 		{
 			return this[key] > 0?1:0;
 		}
@@ -79,7 +79,7 @@ package laya.stock.backtest
 			}
 			return rst;
 		}
-		public static function getStaticInfo(dataList:Array, buyI:int,maxDay:int=15,seller:SellerBase,stock:String):Object
+		public static function getStaticInfo(dataList:Array, buyI:int,maxDay:int=15,seller:SellerBase=null,stock:String=null):Object
 		{
 			var priceBuy:Number;
 			priceBuy = dataList[buyI]["close"];

@@ -19,7 +19,7 @@ package laya.tools
 			Browser.document.body.appendChild(scp);
 			scp.type = "text/javascript";
 			scp.src = url;
-			scp.onload = function()
+			scp.onload = function():void
 			{
 				scp.src = "";
 				Browser.removeElement(scp);

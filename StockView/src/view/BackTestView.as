@@ -5,6 +5,7 @@ package view
 	import laya.events.Event;
 	import laya.math.ArrayMethods;
 	import laya.math.ValueTools;
+	import laya.maths.MathUtil;
 	import laya.stock.StockTools;
 	import laya.utils.Browser;
 	import laya.utils.Handler;
@@ -26,6 +27,8 @@ package view
 			list.mouseHandler = new Handler(this, onMouseList);
 			list.scrollBar.touchScrollEnable = true;
 			tip.text = "回测文件显示";
+			
+			typeSelect.on(Event.CHANGE, this, onTypeChange);
 		}
 		
 		public var tI:int = 0;
@@ -104,9 +107,17 @@ package view
 				list.array = dataO.list;
 				var tList:Array;
 				tList = dataO.list;
+				tDatas = tList;
 				if (dataO.tpl)
 				{
 					tpl = dataO.tpl;
+				}
+				if (dataO.rankInfos)
+				{
+					initRankSelect(dataO.rankInfos);
+				}else
+				{
+					initRankSelect([]);
 				}
 				var tInfoO:Object;
 				tInfoO = { };
@@ -119,6 +130,47 @@ package view
 				tInfoO.yearRate =  StockTools.getGoodPercent((tInfoO.avgRate / tInfoO.avgDay) * 240)+"%";
 				tip.text=ValueTools.getTplStr("购买次数:{#count#},胜率:{#winRate#}\n平均盈利:{#avgRatePercent#},{#avgDay#}Day\nYearRate:{#yearRate#}", tInfoO);
 			}
+		}
+		
+		private function onTypeChange():void {
+			tType = typeSelect.selectedLabel;
+			refreshData();
+		}
+		
+		private function refreshData():void {
+			if (!tDatas)
+				return;
+			if (typeDic[tType]) {;
+				tDatas.sort(ValueTools.sortByKeyEX.apply(null, typeDic[tType]["sortParams"]));
+			}
+			else {
+				tDatas.sort(MathUtil.sortByKey("date", true, false));
+			}
+			list.array = tDatas;
+		}
+		private var tDatas:Array;
+		private var typeDic:Object = { };
+		public var tType:String = "date";
+		public function initRankSelect(rankInfos:Array):void
+		{
+			var types:Array;
+			types = rankInfos;
+			typeDic = {};
+			var typesStr:Array;
+			typesStr = [];
+			var tTypeO:Object;
+			var i:int, len:int;
+			len = types.length;
+			for (i = 0; i < len; i++) {
+				tTypeO = types[i];
+				typesStr.push(tTypeO.label);
+				typeDic[tTypeO.label] = tTypeO;
+			}
+			if (typesStr.length < 1) typesStr = ["date"];
+			typeSelect.labels = typesStr.join(",");
+			typeSelect.selectedIndex = 0;
+			tType = typeSelect.selectedLabel;
+			refreshData();
 		}
 		public static function bigThenZero(v:Number):Boolean
 		{
