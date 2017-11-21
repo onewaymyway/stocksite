@@ -1,0 +1,62 @@
+{
+    "param": {
+        "nextCMD": null,
+		"rankInfos":[
+		{"label":"date","sortParams":["date",true,false]},
+		{"label":"sellRate","sortParams":["sellRate",true,true]},
+		{"label":"sellRateU","sortParams":["sellRate",false,true]},
+		{"label":"sell","sortParams":["sell",true,true]},
+		{"label":"sellU","sortParams":["sell",false,true]}
+		],
+		"tpl":"{#code#}:{#date#}\n{#sellReason#}\n{#sell#}:{#winRate#}",
+        "trader": {
+            "Class": "PropsTrader",
+            "config": {
+                "maxRate": 0.03,
+                "maxDay": 20,
+				"delayBuy":true,
+				"preMaxRate":0.04,
+				"preMaxSumRate":0.075,
+				"preMaxDays":9,
+                "minRate": -0.01,
+                "longVolume": 7,
+                "shortVolume": 3,
+				"maxDaysRate": 0.1,
+				"minDaysRate": -0.1,
+				"minMyVolumeRate": 0.8,
+				"maxCurVolumeRate":1.5,
+				"maxVolumeRate": 20,
+                "minVolumeRate": 1.2
+            },
+            "values": [
+                [
+                    "seller",
+                    {
+                        "Class": "SimpleSeller",
+                        "config": {
+							"sellByBack":false,
+                            "backSell": -0.04,
+                            "loseSell": -0.06,
+							"sellByDownVolume": true,
+							"downPriceRateLimit": -0.01,
+							"sellByOneDown": true,
+							"oneDownLimit": -0.048,
+							"sellByDaysDown":false,
+							"daysDownLimit":4,
+							"sellByVolumeRateDown": true,
+							"downVolumeRateLimit": 0.3,
+							"enalble5DayProtected":true,	
+							"min5DayRate":0.99,
+							"sell5DayDanger":true,
+							"DayDangerDays":2,
+							"min5DayDangerRate":1,
+							"sellByDownBreak":false,
+                            "maxDay": 30,
+                            "winSell": 0.75
+                        }
+                    }
+                ]
+            ]
+        }
+    }
+}

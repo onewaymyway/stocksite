@@ -6,6 +6,7 @@ package stockcmd
 	import laya.stock.backtest.BackTestInfo;
 	import laya.stock.backtest.Trader;
 	import laya.stock.backtest.traders.AverageTrader;
+	import nodetools.devices.CSVTools;
 	import nodetools.devices.FileManager;
 	import stock.StockData;
 	/**
@@ -86,6 +87,8 @@ package stockcmd
 				tData.code = curData.stock;
 				tData.date = curData.date;
 				tData.buyPrice = curData.buy;
+				tData.high = curData.high;
+				tData.low = curData.low;
 				if (curData.sellDay)
 				{
 					tData.sell = curData.sellDay;
@@ -116,7 +119,15 @@ package stockcmd
 			}
 			mList.sort(ValueTools.sortByKeyEX("date",true,false));
 			//JsonTool.getJsonString(rstO, false);
-			FileManager.createTxtFile(RunConfig.outFile, JsonTool.getJsonString(rstO, false, "\n"));
+			
+			if (RunConfig.resultType == "csv")
+			{
+				FileManager.createTxtFile(RunConfig.outFile, CSVTools.objListToCsv(mList));
+			}else
+			{
+				FileManager.createTxtFile(RunConfig.outFile, JsonTool.getJsonString(rstO, false, "\n"));
+			}
+			
 			//FileManager.createJSONFile(RunConfig.outFile, rstO);
 		}
 	}
