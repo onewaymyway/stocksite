@@ -2,6 +2,7 @@ package laya.stock.backtest
 {
 	import laya.stock.backtest.traders.AverageTrader;
 	import laya.stock.backtest.traders.AverageVolumeTrader;
+	import laya.stock.backtest.traders.PropsTrader;
 	/**
 	 * ...
 	 * @author ww
@@ -13,6 +14,7 @@ package laya.stock.backtest
 		{
 			AverageTrader;
 			AverageVolumeTrader;
+			PropsTrader;
 		}
 		
 	}
