@@ -439,6 +439,55 @@ var Laya=window.Laya=(function(window,document){
 
 
 	/**
+	*...
+	*@author ww
+	*/
+	//class nodetools.devices.CSVTools
+	var CSVTools=(function(){
+		function CSVTools(){}
+		__class(CSVTools,'nodetools.devices.CSVTools');
+		CSVTools.objListToCsv=function(list){
+			var i=0,len=0;
+			len=list.length;
+			var keys;
+			keys=CSVTools.getKeysFromObj(list[0]);
+			var tVArr;
+			var rstList;
+			rstList=[];
+			rstList.push(keys.join(","));
+			tVArr=[];
+			tVArr.length=keys.length;
+			var tData;
+			var j=0,jLen=0;
+			jLen=keys.length;
+			console.log("keys",keys);
+			console.log("dataLen:",list.length);
+			for (i=0;i < len;i++){
+				tData=list[i];
+				for (j=0;j < jLen;j++){
+					tVArr[j]=tData[keys[j]];
+				}
+				rstList.push(tVArr.join(","));
+			}
+			return rstList.join("\n");
+		}
+
+		CSVTools.getKeysFromObj=function(obj){
+			var key;
+			var keys;
+			keys=[];
+			for (key in obj){
+				keys.push(key);
+			}
+			keys.sort();
+			return keys;
+		}
+
+		return CSVTools;
+	})()
+
+
+	/**
 	*封装所有驱动级接口
 	*@author yung
 	*/
@@ -1724,6 +1773,7 @@ var Laya=window.Laya=(function(window,document){
 		RunConfig.type="RankWorker";
 		RunConfig.paramFile="param.json";
 		RunConfig.tempCache="";
+		RunConfig.resultType="json";
 		return RunConfig;
 	})()
 
@@ -3359,6 +3409,7 @@ var Laya=window.Laya=(function(window,document){
 		function TradersReg(){
 			AverageTrader;
 			AverageVolumeTrader;
+			PropsTrader;
 		}
 
 		__class(TradersReg,'laya.stock.backtest.TradersReg');
@@ -18859,6 +18910,8 @@ var Laya=window.Laya=(function(window,document){
 				tData.code=curData.stock;
 				tData.date=curData.date;
 				tData.buyPrice=curData.buy;
+				tData.high=curData.high;
+				tData.low=curData.low;
 				if (curData.sellDay){
 					tData.sell=curData.sellDay;
 					tData.sellPrice=curData.sell;
@@ -18883,7 +18936,11 @@ var Laya=window.Laya=(function(window,document){
 				rstO.rankInfos=this.curConfigO.rankInfos;
 			}
 			mList.sort(ValueTools.sortByKeyEX("date",true,false));
-			FileManager.createTxtFile(RunConfig.outFile,JsonTool.getJsonString(rstO,false,"\n"));
+			if (RunConfig.resultType=="csv"){
+				FileManager.createTxtFile(RunConfig.outFile,CSVTools.objListToCsv(mList));
+				}else{
+				FileManager.createTxtFile(RunConfig.outFile,JsonTool.getJsonString(rstO,false,"\n"));
+			}
 		}
 
 		return GetLastBuysWorker;
@@ -20546,6 +20603,100 @@ var Laya=window.Laya=(function(window,document){
 
 		AverageVolumeTrader._tempDataO={};
 		return AverageVolumeTrader;
+	})(Trader)
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class laya.stock.backtest.traders.PropsTrader extends laya.stock.backtest.Trader
+	var PropsTrader=(function(_super){
+		function PropsTrader(){
+			this.maxDay=30;
+			this.averageAnalyser=null;
+			this.longVolume=5;
+			this.shortVolume=2;
+			PropsTrader.__super.call(this);
+			this.averageAnalyser=new AverageLineAnalyser();
+			var mySeller;
+			mySeller=new SimpleSeller();
+			this.seller=mySeller;
+			mySeller.loseSell=-0.2;
+			mySeller.winSell=0.9;
+			mySeller.backSell=-0.1;
+			mySeller.maxDay=this.maxDay;
+		}
+
+		__class(PropsTrader,'laya.stock.backtest.traders.PropsTrader',_super);
+		var __proto=PropsTrader.prototype;
+		__proto.getBuyInfos=function(onlyLast){
+			(onlyLast===void 0)&& (onlyLast=false);
+			this.averageAnalyser.analyser(this.stockData,0,-1,false);
+			var rstData;
+			rstData=this.averageAnalyser.resultData;
+			var buyPoints;
+			buyPoints=rstData["buys"];
+			if (!buyPoints)
+				return;
+			var i=0,len=0;
+			len=buyPoints.length;
+			var buyI=0;
+			var posInfo;
+			var stockDataList;
+			stockDataList=this.stockData.dataList;
+			for (i=len-1;i >=0;i--){
+				var tBuyArr;
+				tBuyArr=buyPoints[i];
+				buyI=tBuyArr[1];
+				if (buyI){
+					this.tryBuyAt(buyI,stockDataList);
+				}
+			}
+		}
+
+		__proto.tryBuyAt=function(buyI,stockDataList,delay){
+			(delay===void 0)&& (delay=false);
+			var dataO;
+			dataO={};
+			dataO["isDown"]=StockTools.isDownTrendAtDay(stockDataList,buyI)? 1 :0;
+			dataO["isUp"]=StockTools.isUpTrendAtDay(stockDataList,buyI)? 1 :0;
+			var preTopPoints;
+			preTopPoints=StockTools.findTopPoints(stockDataList,buyI-100,buyI,6,6,true);
+			dataO["topCount"]=preTopPoints.length;
+			dataO["lastTop"]=preTopPoints[preTopPoints.length-1];
+			dataO["fallDown"]=StockTools.getStockFallDownPartRate(stockDataList,buyI);
+			dataO["bounceUp"]=StockTools.getStockBounceUpPartRate(stockDataList,buyI);
+			dataO["noDownRate"]=StockTools.getNoDownUpRateBeforeDay(stockDataList,buyI);
+			dataO["continueDownHigh"]=StockTools.getContinueDownCount(stockDataList,buyI,"high");
+			dataO["continueDownLow"]=StockTools.getContinueDownCount(stockDataList,buyI,"low");
+			dataO["ChangeDownDays"]=StockTools.getChangeDownDays(stockDataList,buyI,5);
+			dataO["DayLineAngle"]=StockTools.getDayLineAngleDay(stockDataList,buyI,5,0,"close");
+			dataO["DayLineAngleDownCount"]=StockTools.getContinueDayLineAngleDownCount(stockDataList,buyI,5,0,"close");
+			dataO["DayLineRate"]=StockTools.getDayLineRateAtDay(stockDataList,buyI,5,-1,"close");
+			var prePrice=NaN;
+			prePrice=stockDataList[buyI-1]["close"];
+			dataO["changeRate"]=Math.abs((stockDataList[buyI]["open"]-stockDataList[buyI]["close"])/ prePrice);
+			dataO["curRate"]=StockTools.getStockRateAtDay(stockDataList,buyI);
+			dataO["bodyRate"]=StockTools.getBodyRate(stockDataList,buyI);
+			if (buyI < this.longVolume)
+				return;
+			var daysVolume=NaN;
+			daysVolume=ArrayMethods.averageKey(stockDataList,"volume",buyI-this.longVolume,buyI);
+			var nearVolumes=NaN;
+			nearVolumes=ArrayMethods.averageKey(stockDataList,"volume",buyI-this.shortVolume,buyI);
+			var volumeRate=NaN;
+			volumeRate=nearVolumes / daysVolume;
+			dataO["volumeRate"]=volumeRate;
+			var maxVolume=NaN;
+			maxVolume=ArrayMethods.getMax(stockDataList,"volume",buyI-this.shortVolume,buyI);
+			var myVolumeRate=NaN;
+			myVolumeRate=stockDataList[buyI]["volume"] / maxVolume;
+			dataO["myVolumeRate"]=myVolumeRate;
+			this.buyStaticAt(buyI,this.maxDay,this.seller,dataO);
+		}
+
+		return PropsTrader;
 	})(Trader)
 
 
@@ -43296,6 +43447,25 @@ var Laya=window.Laya=(function(window,document){
 	*...
 	*@author ww
 	*/
+	//class laya.debug.view.nodeInfo.nodetree.FindNodeSmall extends laya.debug.ui.debugui.FindNodeSmallUI
+	var FindNodeSmall=(function(_super){
+		function FindNodeSmall(){
+			FindNodeSmall.__super.call(this);
+			Base64AtlasManager.replaceRes(FindNodeSmallUI.uiView);
+			this.createView(FindNodeSmallUI.uiView);
+		}
+
+		__class(FindNodeSmall,'laya.debug.view.nodeInfo.nodetree.FindNodeSmall',_super);
+		var __proto=FindNodeSmall.prototype;
+		__proto.createChildren=function(){}
+		return FindNodeSmall;
+	})(FindNodeSmallUI)
+
+
+	/**
+	*...
+	*@author ww
+	*/
 	//class laya.debug.view.nodeInfo.nodetree.FindNode extends laya.debug.ui.debugui.FindNodeUI
 	var FindNode=(function(_super){
 		function FindNode(){
@@ -43312,25 +43482,6 @@ var Laya=window.Laya=(function(window,document){
 
 		return FindNode;
 	})(FindNodeUI)
-
-
-	/**
-	*...
-	*@author ww
-	*/
-	//class laya.debug.view.nodeInfo.nodetree.FindNodeSmall extends laya.debug.ui.debugui.FindNodeSmallUI
-	var FindNodeSmall=(function(_super){
-		function FindNodeSmall(){
-			FindNodeSmall.__super.call(this);
-			Base64AtlasManager.replaceRes(FindNodeSmallUI.uiView);
-			this.createView(FindNodeSmallUI.uiView);
-		}
-
-		__class(FindNodeSmall,'laya.debug.view.nodeInfo.nodetree.FindNodeSmall',_super);
-		var __proto=FindNodeSmall.prototype;
-		__proto.createChildren=function(){}
-		return FindNodeSmall;
-	})(FindNodeSmallUI)
 
 
 	/**
@@ -43435,26 +43586,6 @@ var Laya=window.Laya=(function(window,document){
 		__proto.createChildren=function(){}
 		return NodeTool;
 	})(NodeToolUI)
-
-
-	/**
-	*...
-	*@author ww
-	*/
-	//class laya.debug.view.nodeInfo.nodetree.NodeTreeSetting extends laya.debug.ui.debugui.NodeTreeSettingUI
-	var NodeTreeSetting=(function(_super){
-		function NodeTreeSetting(){
-			NodeTreeSetting.__super.call(this);
-			Base64AtlasManager.replaceRes(NodeTreeSettingUI.uiView);
-			this.createView(NodeTreeSettingUI.uiView);
-		}
-
-		__class(NodeTreeSetting,'laya.debug.view.nodeInfo.nodetree.NodeTreeSetting',_super);
-		var __proto=NodeTreeSetting.prototype;
-		//inits();
-		__proto.createChildren=function(){}
-		return NodeTreeSetting;
-	})(NodeTreeSettingUI)
 
 
 	/**
@@ -43698,6 +43829,26 @@ var Laya=window.Laya=(function(window,document){
 		]);
 		return NodeTree;
 	})(NodeTreeUI)
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class laya.debug.view.nodeInfo.nodetree.NodeTreeSetting extends laya.debug.ui.debugui.NodeTreeSettingUI
+	var NodeTreeSetting=(function(_super){
+		function NodeTreeSetting(){
+			NodeTreeSetting.__super.call(this);
+			Base64AtlasManager.replaceRes(NodeTreeSettingUI.uiView);
+			this.createView(NodeTreeSettingUI.uiView);
+		}
+
+		__class(NodeTreeSetting,'laya.debug.view.nodeInfo.nodetree.NodeTreeSetting',_super);
+		var __proto=NodeTreeSetting.prototype;
+		//inits();
+		__proto.createChildren=function(){}
+		return NodeTreeSetting;
+	})(NodeTreeSettingUI)
 
 
 	/**
