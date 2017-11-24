@@ -13,7 +13,7 @@
             "Class": "PropsTrader",
             "config": {
                 "maxRate": 0.03,
-                "maxDay": 20,
+                "maxDay": 15,
 				"delayBuy":true,
 				"preMaxRate":0.04,
 				"preMaxSumRate":0.075,
@@ -51,7 +51,7 @@
 							"DayDangerDays":2,
 							"min5DayDangerRate":1,
 							"sellByDownBreak":false,
-                            "maxDay": 30,
+                            "maxDay": 15,
                             "winSell": 0.75
                         }
                     }
