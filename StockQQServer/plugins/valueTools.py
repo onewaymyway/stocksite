@@ -115,6 +115,7 @@ def getTplStr(tplStr, data):
     preOpen=False
     nextEnd=False
     lenTps=len(tps)
+    #print(tps)
     for i in range(0,lenTps):
         tStr=tps[i]
         if i+1<lenTps:
@@ -127,9 +128,10 @@ def getTplStr(tplStr, data):
             nextEnd=False
         if preOpen and nextEnd:
             if tStr in data:
+                #print(data,tStr)
                 tps[i]=getStr(data[tStr])
             else:
-                tps[i]="None"
+                tps[i]=getFlatKeyValueStr(data,tStr)
             tps[i-1]=""
             tps[i+1]=""
         if tStr=="{":
