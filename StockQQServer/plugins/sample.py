@@ -90,6 +90,7 @@ def getRank(rankID,count):
     return rst
 
 def getStockMoreInfo(stock):
+    initDatas()
     stockO=getStockDataOByCode(stock)
     
     avgs=stockO["averageO"]["avgs"]
