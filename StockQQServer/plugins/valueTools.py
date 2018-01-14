@@ -1,5 +1,13 @@
 # -*- coding: utf-8 -*-
+import os
+
 tplArrDic={}
+
+def getMyPath(filepath):
+    myRoot=os.path.split(os.path.realpath(filepath))[0]
+    myRoot=myRoot.replace("\\","/")+"/"
+    return myRoot
+
 def getFlatKeyValue(obj,key):
     if not obj:
         return None
