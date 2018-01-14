@@ -8,6 +8,7 @@ package stockcmd
 	import laya.stock.analysers.ChanAnalyser;
 	import laya.stock.analysers.KLineAnalyser;
 	import laya.stock.analysers.lines.PositionLine;
+	import laya.stock.analysers.staticinfo.DaysStatic;
 	import laya.stock.analysers.staticinfo.PositionStatic;
 	import laya.stock.StockTools;
 	import laya.structs.RankInfo;
@@ -99,6 +100,7 @@ package stockcmd
 			analysers.push(new PositionStatic());
 			
 			analysers.push(new AverageLineAnalyser());
+			analysers.push(new DaysStatic());
 			var i:int, len:int;
 			len = analysers.length;
 			var tAnalyser:AnalyserBase;

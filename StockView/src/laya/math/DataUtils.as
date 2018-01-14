@@ -430,6 +430,37 @@ package laya.math
 			sum = Math.sqrt(sum) / avg;
 			return sum;
 		}
+		
+		public static function isUpStop(dataList:Array, i:int):Boolean
+		{
+			if (!dataList||!dataList[i]) return false;
+			var tData:Object;
+			tData = dataList[i];
+			if (tData.high != tData.low) return false;
+			var preData:Object;
+			preData = dataList[i - 1];
+			if (!preData) return false;
+			return tData.high > preData.high;
+			
+		}
+		public static function getContinueUpStops(dataList:Array, i:int =-1):int
+		{
+			
+			if (i<0||i>=dataList.length) i=dataList.length-1;
+			var count:int = 0;
+			while (i >= 0)
+			{
+				if (isUpStop(dataList, i))
+				{
+					count++;
+				}else
+				{
+					break;
+				}
+				i--;
+			}
+			return count;
+		}
 	}
 
 }
