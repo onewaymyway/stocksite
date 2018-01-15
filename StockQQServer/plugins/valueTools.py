@@ -1,7 +1,14 @@
 # -*- coding: utf-8 -*-
 import os
+import time
 
 tplArrDic={}
+
+def getDayStr():
+    return time.strftime('%Y-%m-%d',time.localtime())
+
+def getClockStr():
+    return time.strftime('%H:%M:%S',time.localtime())
 
 def getMyPath(filepath):
     myRoot=os.path.split(os.path.realpath(filepath))[0]
