@@ -22620,6 +22620,7 @@ var Laya=window.Laya=(function(window,document){
 				var prePrice=NaN;
 				var tPrice=NaN;
 				var tIndex=0;
+				lastIndex=tI;
 				tIndex=this.disDataList.length-1;
 				prePrice=StockTools.getStockPriceEx(lastIndex,"close",this);
 				tPrice=StockTools.getStockPriceEx(tIndex,"close",this);
