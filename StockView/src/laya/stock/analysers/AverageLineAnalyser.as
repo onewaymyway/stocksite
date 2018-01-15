@@ -187,6 +187,7 @@ package laya.stock.analysers {
 				var tPrice:Number;
 				var tIndex:int;
 				//var lastIndex:int = tI;
+				lastIndex = tI;
 				tIndex = disDataList.length - 1;
 				prePrice = StockTools.getStockPriceEx(lastIndex, "close", this);
 				tPrice = StockTools.getStockPriceEx(tIndex, "close", this);
