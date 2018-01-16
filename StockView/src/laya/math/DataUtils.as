@@ -431,6 +431,29 @@ package laya.math
 			return sum;
 		}
 		
+		public static function getUpStopPrice(price:Number):Number
+		{
+			var rst:Number;
+			rst = price * 1.1;
+			rst = Math.floor(rst * 100+0.5) / 100;
+			return rst;
+		}
+		
+		public static function isUpStopAt(dataList:Array, i:int,once:Boolean=false):Boolean
+		{
+			if (!dataList||!dataList[i]) return false;
+			var tData:Object;
+			tData = dataList[i];
+			var preData:Object;
+			preData = dataList[i - 1];
+			if (!preData) return false;
+			if (once)
+			{
+				return tData.high >= getUpStopPrice(preData.close);
+			}
+			return tData.close >= getUpStopPrice(preData.close);
+		}
+		
 		public static function isUpStop(dataList:Array, i:int):Boolean
 		{
 			if (!dataList||!dataList[i]) return false;
@@ -440,7 +463,7 @@ package laya.math
 			var preData:Object;
 			preData = dataList[i - 1];
 			if (!preData) return false;
-			return tData.high > preData.high;
+			return tData.high > preData.close;
 			
 		}
 		public static function getContinueUpStops(dataList:Array, i:int =-1):int
@@ -451,6 +474,26 @@ package laya.math
 			while (i >= 0)
 			{
 				if (isUpStop(dataList, i))
+				{
+					count++;
+				}else
+				{
+					break;
+				}
+				i--;
+			}
+			return count;
+		}
+		
+		public static function getContinueCounts(dataList:Array, i:int = -1, fun:Function = null):int
+		{
+			if (fun==null) return 0;
+			
+			if (i<0||i>=dataList.length) i=dataList.length-1;
+			var count:int = 0;
+			while (i >= 0)
+			{
+				if (fun(dataList, i))
 				{
 					count++;
 				}else
