@@ -42,26 +42,35 @@ def checkLoop(codes):
             continue
         tprice=float(dataO["price"])
         preprice=float(dataO["pre_close"])
-        rate=100*(tprice/preprice-1)
+        rate=round(100*(tprice/preprice-1),2)
         preCount=codeCounts[dataO["code"]]
         code=dataO["code"]
         print("code:",dataO["code"],dataO["name"],rate," ",preCount)
         if rate <9.8:
             if not code in reported:
+                msg="一字板开板提示:"+dataO["code"]+":"+dataO["name"]+" 当前涨跌幅:"+str(rate)+"% 连续一字板数:"+str(preCount)
                 print("Warning code:",dataO["code"],dataO["name"],rate," ",preCount)
+                os.system("qq send group LayaAir机器人 "+msg)
                 reported[code]=code
 
+def workCodes():
+    clock=vt.getClockStr()
+    if clock<"09:25:00" or clock >"15:00:00":
+        print("not trade time:",clock)
+        time.sleep(15)
+        return;
+    initData()
+    checkLoop(codes)       
+    time.sleep(15)
+    
 def doLoop():
     global codes
     while(1):
-        clock=vt.getClockStr()
-        if clock<"09:25:00" or clock >"15:00:00":
-            print("not trade time:",clock)
+        try:
+            workCodes()
+        except:
             time.sleep(15)
-            continue;
-        initData()
-        checkLoop(codes)       
-        time.sleep(15)
+        
         
 
 
