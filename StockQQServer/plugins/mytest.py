@@ -51,6 +51,8 @@ def checkLoop(codes):
                 msg="一字板开板提示:"+dataO["code"]+":"+dataO["name"]+" 当前涨跌幅:"+str(rate)+"% 连续一字板数:"+str(preCount)
                 print("Warning code:",dataO["code"],dataO["name"],rate," ",preCount)
                 os.system("qq send group LayaAir机器人 "+msg)
+                os.system("qq send group 股票精英大蓝筹白马股 "+msg)
+                
                 reported[code]=code
 
 def workCodes():
