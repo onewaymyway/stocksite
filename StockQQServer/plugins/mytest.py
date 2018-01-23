@@ -35,6 +35,7 @@ def checkLoop(codes):
     
     datas=ts.get_realtime_quotes(codes)
     #print(datas)
+    tDaystr=vt.getDayStr()
     for index in datas.index:
         dataO=datas.loc[index]
         openP=float(dataO["open"])
@@ -45,6 +46,10 @@ def checkLoop(codes):
         rate=round(100*(tprice/preprice-1),2)
         preCount=codeCounts[dataO["code"]]
         code=dataO["code"]
+        tstockdate=dataO["date"]
+        if tstockdate!=tDaystr:
+            continue;
+
         print("code:",dataO["code"],dataO["name"],rate," ",preCount)
         if rate <9.8:
             if not code in reported:
