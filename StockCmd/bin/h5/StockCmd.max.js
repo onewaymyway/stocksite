@@ -2398,6 +2398,27 @@ var Laya=window.Laya=(function(window,document){
 			return sum;
 		}
 
+		DataUtils.getUpStopPrice=function(price){
+			var rst=NaN;
+			rst=price *1.1;
+			rst=Math.floor(rst *100+0.5)/ 100;
+			return rst;
+		}
+
+		DataUtils.isUpStopAt=function(dataList,i,once){
+			(once===void 0)&& (once=false);
+			if (!dataList||!dataList[i])return false;
+			var tData;
+			tData=dataList[i];
+			var preData;
+			preData=dataList[i-1];
+			if (!preData)return false;
+			if (once){
+				return tData.high >=DataUtils.getUpStopPrice(preData.close);
+			}
+			return tData.close >=DataUtils.getUpStopPrice(preData.close);
+		}
+
 		DataUtils.isUpStop=function(dataList,i){
 			if (!dataList||!dataList[i])return false;
 			var tData;
@@ -2406,7 +2427,7 @@ var Laya=window.Laya=(function(window,document){
 			var preData;
 			preData=dataList[i-1];
 			if (!preData)return false;
-			return tData.high > preData.high;
+			return tData.high > preData.close;
 		}
 
 		DataUtils.getContinueUpStops=function(dataList,i){
@@ -2447,6 +2468,106 @@ var Laya=window.Laya=(function(window,document){
 
 		GraphicUtils.addGridLineToResult=function(result,lineStr){}
 		return GraphicUtils;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class laya.math.maps.Distribution
+	var Distribution=(function(){
+		function Distribution(){
+			this.dividCount=30;
+			this.datas=null;
+			this.values=null;
+			this.percents=null;
+			this.min=NaN;
+			this.d=NaN;
+		}
+
+		__class(Distribution,'laya.math.maps.Distribution');
+		var __proto=Distribution.prototype;
+		__proto.getPriceI=function(price){
+			return Math.round((price-this.min)/ this.d);
+		}
+
+		__proto.addDatas=function(dataList){
+			var i=0,len=0;
+			len=dataList.length;
+			var min=NaN,max=NaN;
+			min=max=-1;
+			var tData;
+			var tValue=NaN;
+			var sumCount=NaN;
+			var tCount=NaN;
+			sumCount=0;
+			this.values=[];
+			this.percents=[];
+			for (i=0;i < len;i++){
+				tData=dataList[i];
+				tCount=tData[2];
+				tValue=tData[0];
+				if (min==-1 || tValue < min){
+					min=tValue;
+				}
+				if (max==-1 || tValue > max){
+					max=tValue;
+				}
+				tValue=tData[1];
+				if (min==-1 || tValue < min){
+					min=tValue;
+				}
+				if (max==-1 || tValue > max){
+					max=tValue;
+				}
+				sumCount+=tCount;
+			};
+			var d=NaN;
+			d=(max-min)/ this.dividCount;
+			this.min=min;
+			this.d=d;
+			var valueArr;
+			valueArr=[];
+			valueArr.length=this.dividCount;
+			len=this.dividCount;
+			for (i=0;i < len;i++){
+				valueArr[i]=0;
+				this.values[i]=min+d *i;
+			}
+			len=dataList.length;
+			var startNum=NaN;
+			var endNum=NaN;
+			var sumValue=NaN;
+			sumValue=0;
+			for (i=0;i < len;i++){
+				tData=dataList[i];
+				tValue=tData[0];
+				startNum=Math.round((tValue-min)/ d);
+				tValue=tData[1];
+				endNum=Math.round((tValue-min)/ d);
+				tCount=tData[2];
+				var j=0,jlen=0;
+				var tRange=0;
+				tRange=(endNum-startNum+1);
+				var tRate=NaN;
+				tRate=(tCount/sumCount)/tRange;
+				for (j=startNum;j <=endNum;j++){
+					valueArr[j]+=tRate;
+				}
+			}
+			this.datas=valueArr;
+			len=valueArr.length;
+			this.percents=[];
+			var tPercent=NaN;
+			tPercent=0;
+			for (i=0;i < len;i++){
+				tPercent+=valueArr[i];
+				this.percents[i]=tPercent;
+			}
+		}
+
+		return Distribution;
 	})()
 
 
@@ -3362,6 +3483,188 @@ var Laya=window.Laya=(function(window,document){
 	*...
 	*@author ww
 	*/
+	//class laya.stock.models.OrdedList
+	var OrdedList=(function(){
+		function OrdedList(){
+			this.dataList=[];
+			this.sign="low";
+		}
+
+		__class(OrdedList,'laya.stock.models.OrdedList');
+		var __proto=OrdedList.prototype;
+		__proto.reset=function(){
+			this.dataList.length=0;
+		}
+
+		__proto.add=function(data){
+			if (this.dataList.length==0){
+				this.dataList.push(data);
+				return true;
+			}
+			if (this.isOK(this.getLastPrice(),this.getDataPrice(data))){
+				this.dataList.push(data);
+				return true;
+			}
+			return false;
+		}
+
+		__proto.isOK=function(left,right){
+			return left > right;
+		}
+
+		__proto.getDataPrice=function(data){
+			return data[this.sign];
+		}
+
+		__proto.getDataKey=function(data,key){
+			return data[key];
+		}
+
+		__proto.getLastPrice=function(){
+			if (this.dataList.length==0){
+				return-1;
+			}
+			return this.getDataPrice(this.dataList[this.dataList.length-1]);
+		}
+
+		__proto.getFirstPrice=function(){
+			if (this.dataList.length==0){
+				return-1;
+			}
+			return this.getDataPrice(this.dataList[0]);
+		}
+
+		__proto.getPriceLen=function(){
+			if (this.dataList.length < 2)return 0;
+			return Math.abs(this.getFirstPrice()-this.getLastPrice());
+		}
+
+		__proto.getIndexLen=function(){
+			if (this.dataList.length < 2)return 0;
+			return Math.abs(this.dataList[0]["index"]-this.dataList[this.dataList.length-1]["index"]);
+		}
+
+		__proto.getLen=function(){
+			return this.dataList.length;
+		}
+
+		return OrdedList;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class laya.stock.models.Trend
+	var Trend=(function(){
+		function Trend(){
+			this.isDown=true;
+			this.upList=null;
+			this.downList=null;
+			this.sign="low";
+			this.preData=null;
+			this.upList=new UpList();
+			this.downList=new DownList();
+		}
+
+		__class(Trend,'laya.stock.models.Trend');
+		var __proto=Trend.prototype;
+		__proto.addData=function(data){
+			if (this.isDown){
+				if (this.downList.add(data)){
+					this.upList.reset();
+				}
+				else {
+					if (this.downList.getLen()> 0){
+						if (this.upList.getLen()==0){
+							this.upList.add(this.preData);
+							this.upList.add(data);
+						}
+						else {
+							this.upList.add(data);
+						}
+					}
+				}
+			}
+			this.preData=data;
+		}
+
+		__proto.clear=function(){
+			this.preData=null;
+			this.downList.reset();
+			this.upList.reset();
+		}
+
+		return Trend;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class laya.stock.StockInfoManager
+	var StockInfoManager=(function(){
+		function StockInfoManager(){}
+		__class(StockInfoManager,'laya.stock.StockInfoManager');
+		StockInfoManager.setStockList=function(stockList){
+			StockInfoManager._stockList=stockList;
+			var i=0,len=0;
+			len=stockList.length;
+			var tStockO;
+			var tCode;
+			for (i=0;i < len;i++){
+				tStockO=stockList[i];
+				tCode=tStockO.code;
+				tCode=StockTools.getPureStock(tCode);
+				StockInfoManager._stockInfoDic[tCode]=tStockO;
+			}
+		}
+
+		StockInfoManager.getStockInfo=function(stock){
+			return StockInfoManager._stockInfoDic[StockTools.getPureStock(stock)];
+		}
+
+		StockInfoManager.getStockName=function(stock){
+			var stockO;
+			stockO=StockJsonP.getStockData(stock);
+			if (!stockO)return "";
+			return stockO.name;
+		}
+
+		StockInfoManager.getStockAvgTrendSign=function(stock,price){
+			var tStockO;
+			tStockO=StockInfoManager.getStockInfo(stock);
+			if (!tStockO||!tStockO.averageO)return "~";
+			var tAvgs;
+			tAvgs=tStockO.averageO.avgs;
+			if (!tAvgs)return "~";
+			var i=0,len=0;
+			len=tAvgs.length;
+			var curCount=0;
+			curCount=0;
+			for (i=0;i < len;i++){
+				if (price >=tAvgs[i])curCount++;
+			};
+			var rst;
+			rst="~";
+			if (StockTools.isSameTrend(tAvgs,true))rst="↗";
+			if (StockTools.isSameTrend(tAvgs,false))rst="↘";
+			rst+=""+curCount;
+			return rst;
+		}
+
+		StockInfoManager._stockList=null
+		StockInfoManager._stockInfoDic={};
+		return StockInfoManager;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
 	//class laya.stock.StockTools
 	var StockTools=(function(){
 		function StockTools(){}
@@ -3785,6 +4088,54 @@ var Laya=window.Laya=(function(window,document){
 	*...
 	*@author ww
 	*/
+	//class laya.tools.DateTools
+	var DateTools=(function(){
+		function DateTools(){}
+		__class(DateTools,'laya.tools.DateTools');
+		DateTools.getDate=function(time){
+			(time===void 0)&& (time=0);
+			var d=new Date();
+			if (time > 0){
+				d.setTime(time);
+			}
+			return d;
+		}
+
+		DateTools.getDateEx=function(addCount){
+			(addCount===void 0)&& (addCount=-1);
+			var d;
+			d=DateTools.getDate();
+			d.setDate(d.getDate()+addCount);
+			return d;
+		}
+
+		DateTools.getDateArr=function(d){
+			return [d.getFullYear(),d.getMonth()+1,d.getDate()];
+		}
+
+		DateTools.getDateStr=function(d,sign){
+			(sign===void 0)&& (sign="");
+			if (!d)d=DateTools.getDate();
+			var arr;
+			arr=DateTools.getDateArr(d);
+			if (arr[1] < 10)arr[1]="0"+arr[1];
+			if (arr[2] < 10)arr[2]="0"+arr[2];
+			return arr.join(sign);
+		}
+
+		DateTools.getTimeStr=function(time,sign){
+			(time===void 0)&& (time=-1);
+			return DateTools.getDateStr(DateTools.getDate(time),sign);
+		}
+
+		return DateTools;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
 	//class laya.tools.JsonP
 	var JsonP=(function(){
 		function JsonP(){}
@@ -3803,6 +4154,119 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		return JsonP;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class laya.tools.SinaMData
+	var SinaMData=(function(){
+		function SinaMData(){
+			this.stock=null;
+			this.completeHandler=null;
+			this.basic=null;
+			this.dataArr=null;
+			this.color=null;
+			this.color=SinaMData.getRandomColor();
+		}
+
+		__class(SinaMData,'laya.tools.SinaMData');
+		var __proto=SinaMData.prototype;
+		//https://hq.sinajs.cn/?list=ml_sh600012
+		__proto.getData=function(stock){
+			stock=StockTools.getAdptStockStr(stock);
+			this.stock=stock;
+			this.basic=null;
+			this.getBasicFromServer();
+		}
+
+		__proto.getBasicFromServer=function(){
+			var path;
+			path="https://hq.sinajs.cn/list="+this.stock;;
+			JsonP.getData(path,Handler.create(this,this.basicComplete));
+		}
+
+		__proto.basicComplete=function(){
+			StockJsonP.parserStockData(this.stock);
+			this.basic=StockJsonP.getStockData(this.stock);
+			this.getDataFromServer();
+		}
+
+		__proto.getDataFromServer=function(){
+			if (!this.basic)return;
+			JsonP.getData("https://hq.sinajs.cn/?list=ml_"+this.stock,Handler.create(this,this.dataComplete));
+		}
+
+		__proto.dataComplete=function(){
+			this.parserStockData(this.stock);
+		}
+
+		__proto.parserStockData=function(stock){
+			var tStr;
+			tStr="hq_str_ml_"+stock;
+			if (Browser.window[tStr]){
+				SinaMData.parseStockStrToData(stock,Browser.window[tStr]);
+				if (this.completeHandler){
+					this.dataArr=SinaMData.stockDataDic[stock];
+					this.completeHandler.runWith([this]);
+				}
+			}
+		}
+
+		SinaMData.getRandomColor=function(){
+			return ColorTool.getRGBStr([Math.random()*100,Math.random()*100,Math.random()*255]);
+			return ColorTool.getRGBStr([Math.random()*255,Math.random()*255,Math.random()*255]);
+		}
+
+		SinaMData.parseStockStrToData=function(stock,dataStr){
+			SinaMData.stockDataDic[stock]=DataTool.parseMinutesData(dataStr);
+			Notice.notify("MD"+stock,SinaMData.stockDataDic[stock]);
+		}
+
+		SinaMData.stockDataDic={};
+		return SinaMData;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class laya.tools.SohuDData
+	var SohuDData=(function(){
+		//http://q.stock.sohu.com/hisHq?code=cn_601918,cn_300080&start=20170806&end=20170807&stat=1&order=D&period=d&callback=historySearchHa&rt=jsonp
+		function SohuDData(){}
+		__class(SohuDData,'laya.tools.SohuDData');
+		SohuDData.getData=function(stock,handler,start,end){
+			if (!Browser.window.orzHistorySearch){
+				Browser.window.orzHistorySearch=SohuDData.onStockData;
+			}
+			if (!start){
+				start=DateTools.getDateStr(DateTools.getDateEx(-1));
+			}
+			if (!end){
+				end=start;
+			};
+			var pureCode;
+			pureCode=StockTools.getPureStock(stock);
+			var url;
+			url="http://q.stock.sohu.com/hisHq?code=cn_"+pureCode+"&start="+start+"&end="+end+"&stat=1&order=D&period=d&callback=orzHistorySearch&rt=jsonp";
+			JsonP.getData(url,handler);
+		}
+
+		SohuDData.onStockData=function(stockData){
+			console.log("sohuStock:",stockData);
+			var i=0,len=0;
+			len=stockData.length;
+			for (i=0;i < len;i++){
+				SohuDData.dealStockData(stockData[i]);
+			}
+		}
+
+		SohuDData.dealStockData=function(stockData){}
+		return SohuDData;
 	})()
 
 
@@ -4032,6 +4496,26 @@ var Laya=window.Laya=(function(window,document){
 			"sell5price"];}
 		]);
 		return StockJsonP;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class laya.tools.WebTools
+	var WebTools=(function(){
+		function WebTools(){}
+		__class(WebTools,'laya.tools.WebTools');
+		WebTools.openUrl=function(path){
+			Browser.window.open(path,"_blank");
+		}
+
+		WebTools.openStockDetail=function(stock){
+			WebTools.openUrl("http://q.stock.sohu.com/cn/"+stock+"/");
+		}
+
+		return WebTools;
 	})()
 
 
@@ -4333,6 +4817,33 @@ var Laya=window.Laya=(function(window,document){
 	*...
 	*@author ww
 	*/
+	//class msgs.MsgConst
+	var MsgConst=(function(){
+		function MsgConst(){}
+		__class(MsgConst,'msgs.MsgConst');
+		MsgConst.Show_Stock_KLine="Show_Stock_KLine";
+		MsgConst.Show_Next_Select="Show_Next_Select";
+		MsgConst.Show_Pre_Select="Show_Pre_Select";
+		MsgConst.AnalyserListChange="AnalyserListChange";
+		MsgConst.Show_Analyser_Prop="Show_Analyser_Prop";
+		MsgConst.Hide_Analyser_Prop="Hide_Analyser_Prop";
+		MsgConst.Set_Analyser_Prop="Set_Analyser_Prop";
+		MsgConst.Fresh_Analyser_Prop="Fresh_Analyser_Prop";
+		MsgConst.Stock_Data_Inited="DataInited";
+		MsgConst.Add_MyStock="AddMyStock";
+		MsgConst.Remove_MyStock="Remove_MyStock";
+		MsgConst.Mark_MyStock="Mark_MyStock";
+		MsgConst.Add_MDLine="Add_MDLine";
+		MsgConst.Remove_MDLine="Remove_MDLine";
+		MsgConst.RealTimeItem_DoubleClick="RealTimeItem_DoubleClick";
+		return MsgConst;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
 	//class stock.CSVParser
 	var CSVParser=(function(){
 		function CSVParser(){
@@ -4387,6 +4898,505 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		return CSVParser;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class stock.PathConfig
+	var PathConfig=(function(){
+		function PathConfig(){}
+		__class(PathConfig,'stock.PathConfig');
+		PathConfig.stockBasic="res/stockinfo.csv";
+		return PathConfig;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class stock.sinastock.DataTool
+	var DataTool=(function(){
+		function DataTool(){}
+		__class(DataTool,'stock.sinastock.DataTool');
+		DataTool.c2b=function(e){
+			e=e.replace(" ","+");
+			var t=DataTool.BStr.indexOf(e);
+			return t >=0 ? t :0
+		}
+
+		DataTool.db=function(e){
+			if (!e)
+				return [];
+			for (var t=0,a=0,r=[],n=0,i=0,l=0,s=e.length;s > l;l++)
+			t=this.c2b(e.charAt(l)),
+			a=6 & i ? 7 & i ^ 7 :5,
+			n |=t >> 5-a << (7 ^ i)-a,
+			64767==n && 63==t && (n=65535),
+			i > 25 && (i-=32,
+			r[r.length]=n,
+			n=0),
+			n |=(t & (1 << 5-a)-1)<< (7 | i)+4+a,
+			i+=6;
+			return r;
+		}
+
+		DataTool.fB=function(t){
+			t.splice(360,3);
+			var c=Math.floor(t.length/3)*3;
+			for (var i=0,s=[],p=0,d=0,u=0;c > u;u+=3){
+				d=Math.floor(u / 3);
+				if (t[u+1] <=0)continue ;
+				s[s.length]={
+					avg_price:t[u] / 1e3,
+					price:t[u+1] / 1e3,
+					volume:t[u+2] / 100
+				};
+			}
+			return s;
+		}
+
+		DataTool.parseMinutesData=function(dataStr){
+			return DataTool.fB(DataTool.db(dataStr));
+		}
+
+		DataTool.BStr="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+		return DataTool;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class StockMain
+	var StockMain=(function(){
+		function StockMain(){
+			this.stockMainBox=null;
+			Laya.init(1000,900);
+			Laya.stage.scaleMode="full";
+			Laya.stage.screenMode="horizontal";
+			var loads;
+			loads=[];
+			loads.push({url:PathConfig.stockBasic,type:"text" });
+			loads.push({url:"res/atlas/comp.json",type:"atlas" });
+			Laya.loader.load(loads,new Handler(this,this.start),null);
+		}
+
+		__class(StockMain,'StockMain');
+		var __proto=StockMain.prototype;
+		//DebugTool.init();
+		__proto.start=function(){
+			StockBasicInfo.I.init(Loader.getRes(PathConfig.stockBasic));
+			this.testMainView();
+		}
+
+		//SohuDData.getData("601918",null);
+		__proto.begin=function(){
+			var view;
+			view=new StockView();
+			view.init();
+			view.left=view.right=view.top=view.bottom=10;
+			Laya.stage.addChild(view);
+		}
+
+		__proto.testKLine=function(){
+			var kLine;
+			kLine=new KLine();
+			var stock;
+			stock="300383";
+			stock="002064";
+			kLine.setStock(stock);
+			kLine.pos(200,500);
+			Laya.stage.addChild(kLine);
+		}
+
+		__proto.testKlineView=function(){
+			var kView;
+			kView=new KLineView();
+			Laya.stage.addChild(kView);
+		}
+
+		__proto.testMainView=function(){
+			this.stockMainBox=new Box();
+			this.onStageResize();
+			Laya.stage.on("resize",this,this.onStageResize);
+			var mainView;
+			mainView=new MainView();
+			mainView.left=mainView.right=mainView.top=mainView.bottom=10;
+			this.stockMainBox.addChild(mainView);
+			Laya.stage.addChild(this.stockMainBox);
+			MultiTouchManager.I.on("Scale",this,this.onScaleEvent);
+		}
+
+		//private var curPoint:Sprite;
+		__proto.onScaleEvent=function(scale,centerPoint){
+			this.stockMainBox.globalToLocal(centerPoint);
+			if (scale > 1.5){
+				this.stockMainBox.scaleX=this.stockMainBox.scaleY=2;
+				this.stockMainBox.pivot(centerPoint.x,centerPoint.y);
+				this.stockMainBox.pos(centerPoint.x,centerPoint.y);
+				}else if (scale < 0.6){
+				this.stockMainBox.pivot(0,0);
+				this.stockMainBox.pos(0,0);
+				this.stockMainBox.scaleX=this.stockMainBox.scaleY=1;
+			}
+		}
+
+		//curPoint.pos(centerPoint.x,centerPoint.y);
+		__proto.onStageResize=function(){
+			this.stockMainBox.size(Laya.stage.width,Laya.stage.height);
+		}
+
+		__proto.testStockInfo=function(){
+			StockJsonP.I.addStock("sh601003");
+			StockJsonP.I.freshData();
+		}
+
+		return StockMain;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class view.netcomps.MainSocket
+	var MainSocket=(function(){
+		function MainSocket(){
+			this.socket=null;
+			this.serverStr="ws://127.0.0.1:9909";
+			this.socket=new stock.StockSocket();
+		}
+
+		__class(MainSocket,'view.netcomps.MainSocket');
+		var __proto=MainSocket.prototype;
+		__proto.connect=function(){
+			this.socket.connect(this.serverStr);
+		}
+
+		__static(MainSocket,
+		['I',function(){return this.I=new MainSocket();}
+		]);
+		return MainSocket;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class view.plugins.TradeInfo
+	var TradeInfo=(function(){
+		function TradeInfo(){
+			this.money=NaN;
+			this.stockCount=0;
+			this.stockMoney=NaN;
+			this.tStockPrice=NaN;
+			this.totalWin=NaN;
+			this.dayCount=0;
+			this.stockDayCount=0;
+			this.tStock=null;
+			this._tDate=null;
+			this.actionDic={};
+			TradeTestManager.curTradeInfo=this;
+			this.reset();
+		}
+
+		__class(TradeInfo,'view.plugins.TradeInfo');
+		var __proto=TradeInfo.prototype;
+		__proto.reset=function(){
+			this.money=100000;
+			this.stockCount=0;
+			this.stockMoney=0;
+			this.tStockPrice=0;
+			this.totalWin=0;
+			this.dayCount=0;
+			this._tDate="";
+			this.actionDic={};
+			this.stockDayCount=0;
+		}
+
+		__proto.getActionDic=function(stock){
+			if (!this.actionDic[stock])this.actionDic[stock]={};
+			return this.actionDic[stock];
+		}
+
+		__proto.setTDayAction=function(action){
+			this.getActionDic(this.tStock)[this.tDate]=action;
+		}
+
+		__proto.sellAll=function(){
+			this.sellStock(this.tStockPrice,this.stockCount);
+		}
+
+		__proto.buyStock=function(price,count){
+			var dStockMoney=NaN;
+			dStockMoney=price *count;
+			if (this.money < dStockMoney){
+				MessageManager.I.show("资金不足");
+				return;
+			}
+			if (this.stockCount==0){
+				this.stockDayCount=1;
+				this.dayCount++;
+			}
+			this.stockCount+=count;
+			this.stockMoney+=dStockMoney;
+			this.money-=dStockMoney;
+			this.setTDayAction("buy");
+		}
+
+		__proto.sellStock=function(price,count){
+			if (this.stockCount < count){
+				MessageManager.I.show("股票不足");
+				return;
+			};
+			var dStockMoney=NaN;
+			dStockMoney=price *count;
+			this.stockCount-=count;
+			this.stockMoney-=dStockMoney;
+			this.money+=dStockMoney;
+			if (this.stockCount==0){
+				this.stockMoney=0;
+				this.stockDayCount=0;
+			}
+			this.setTDayAction("sell");
+		}
+
+		__getset(0,__proto,'stockWinRate',function(){
+			if (this.stockCount <=0)return 0;
+			return this.tStockPrice / this.stockPrice-1;
+		});
+
+		__getset(0,__proto,'stockWinOfTotal',function(){
+			return this.total-100000;
+		});
+
+		__getset(0,__proto,'stockWinRateOfTotal',function(){
+			return this.stockWinOfTotal / 100000;
+		});
+
+		__getset(0,__proto,'stockWin',function(){
+			if (this.stockCount <=0)return 0;
+			return Math.floor((this.tStockPrice-this.stockPrice)*this.stockCount);
+		});
+
+		__getset(0,__proto,'position',function(){
+			return this.curStockMoney / this.total;
+		});
+
+		__getset(0,__proto,'stockPrice',function(){
+			if (this.stockCount <=0)return 0;
+			return this.stockMoney / this.stockCount;
+		});
+
+		__getset(0,__proto,'tDate',function(){
+			return this._tDate;
+			},function(value){
+			if (this._tDate !=value){
+				if (this.stockCount > 0){
+					this.stockDayCount++;
+					this.dayCount++;
+				}
+			}
+			this._tDate=value;
+		});
+
+		__getset(0,__proto,'curStockMoney',function(){
+			return Math.floor(this.tStockPrice *this.stockCount);
+		});
+
+		__getset(0,__proto,'total',function(){
+			return Math.floor(this.money+this.curStockMoney);
+		});
+
+		TradeInfo.INIT_MONEY=100000;
+		return TradeInfo;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class view.StockListManager
+	var StockListManager=(function(){
+		function StockListManager(){}
+		__class(StockListManager,'view.StockListManager');
+		StockListManager.setStockList=function(stockList,tI){
+			StockListManager._tI=tI;
+			StockListManager._tStockList=stockList;
+		}
+
+		StockListManager.next=function(){
+			StockListManager._tI++;
+			StockListManager.showI(StockListManager._tI);
+		}
+
+		StockListManager.pre=function(){
+			StockListManager._tI--;
+			StockListManager.showI(StockListManager._tI);
+		}
+
+		StockListManager.showI=function(i){
+			if (!StockListManager._tStockList)
+				return;
+			var index=0;
+			index=i;
+			if (index < 0)
+				index=StockListManager._tStockList.length-1;
+			index=index % StockListManager._tStockList.length;
+			var tData;
+			tData=StockListManager._tStockList[index];
+			StockListManager._tI=index;
+			if (!tData)
+				return;
+			console.log(tData);
+			Notice.notify("Show_Stock_KLine",[StockListManager.getStockCode(tData),tData]);
+		}
+
+		StockListManager.getStockCode=function(data){
+			if (!data)
+				return "601918";
+			var tStockStr;
+			if ((typeof data=='string')){
+				tStockStr=data;
+			}
+			else {
+				tStockStr=data.code;
+			}
+			return StockJsonP.getPureStock(tStockStr);
+		}
+
+		StockListManager.setMyStockList=function(arr){
+			StockListManager._myStockList=arr;
+		}
+
+		StockListManager.hasStock=function(stock){
+			if(!StockListManager._myStockList)return false;
+			stock=StockTools.getAdptStockStr(stock);
+			var i=0,len=0;
+			len=StockListManager._myStockList.length;
+			for (i=0;i < len;i++){
+				var tStockData;
+				tStockData=StockListManager._myStockList[i];
+				if (StockTools.getAdptStockCode(tStockData)==stock){
+					return true;
+				}
+			}
+			return false;
+		}
+
+		StockListManager.getStockLastMark=function(stock){
+			if (!StockListManager._myStockList)return null;
+			stock=StockTools.getAdptStockStr(stock);
+			var i=0,len=0;
+			len=StockListManager._myStockList.length;
+			for (i=0;i < len;i++){
+				var tStockData;
+				tStockData=StockListManager._myStockList[i];
+				if (StockTools.getAdptStockCode(tStockData)==stock){
+					if (tStockData.markTime){
+						return DateTools.getTimeStr(tStockData.markTime,"-");
+					}
+				}
+			}
+			return null;
+		}
+
+		StockListManager._tI=0;
+		StockListManager._tStockList=null
+		StockListManager._myStockList=null
+		return StockListManager;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class view.TradeTestManager
+	var TradeTestManager=(function(){
+		function TradeTestManager(){}
+		__class(TradeTestManager,'view.TradeTestManager');
+		var __proto=TradeTestManager.prototype;
+		__proto.resetTrade=function(){}
+		TradeTestManager.isTradeTestOn=false;
+		TradeTestManager.curTradeInfo=null
+		__static(TradeTestManager,
+		['I',function(){return this.I=new TradeTestManager();}
+		]);
+		return TradeTestManager;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class wrap.FileSelect
+	var FileSelect=(function(){
+		function FileSelect(target,accept,changeHandler){
+			this._target=null;
+			this._input=null;
+			this.autoClear=true;
+			this._myChangeH=null;
+			this._changeHandler=null;
+			this._clickH=null;
+			var _$this=this;
+			this._changeHandler=changeHandler;
+			this._target=target;
+			this._input=Browser.createElement("input");
+			this._input.type="file";
+			this._input.accept=accept;
+			this._myChangeH=Utils.bind(this.onChange,this);
+			this._input.addEventListener("change",this._myChangeH);
+			var canvas=Render.canvas;
+			this._clickH=function (e){
+				if (!_$this._target.displayedInStage)return;
+				var bounds;
+				bounds=_$this._target.getSelfBounds();
+				if (bounds.contains(_$this._target.mouseX,_$this._target.mouseY)){
+					if (_$this.autoClear){
+						_$this._input.value="";
+					}
+					_$this._input.click();
+				}
+			}
+			canvas.addEventListener('click',this._clickH);
+		}
+
+		__class(FileSelect,'wrap.FileSelect');
+		var __proto=FileSelect.prototype;
+		__proto.onChange=function(e){
+			console.log("change from fileSelect:",e);
+			if (this._changeHandler){
+				this._changeHandler.runWith(e);
+			}
+		}
+
+		__proto.dispose=function(){
+			if (this._target){
+				this._target=null;
+			}
+			if (this._input){
+				this._input.removeEventListener("change",this._myChangeH);
+				this._myChangeH=null;
+				this._input=null;
+			}
+			if (this._clickH){
+				var canvas=Render.canvas.source;
+				canvas.removeEventListener('click',this._clickH);
+				this._clickH=null;
+			}
+			this._changeHandler=null;
+		}
+
+		return FileSelect;
 	})()
 
 
@@ -8073,6 +9083,147 @@ var Laya=window.Laya=(function(window,document){
 
 
 	/**
+	*本类用于操作html对象
+	*@author ww
+	*/
+	//class laya.debug.tools.JSTools
+	var JSTools=(function(){
+		function JSTools(){}
+		__class(JSTools,'laya.debug.tools.JSTools');
+		JSTools.showToBody=function(el,x,y){
+			(x===void 0)&& (x=0);
+			(y===void 0)&& (y=0);
+			Browser.document.body.appendChild(el);
+			var style;
+			style=el.style;
+			style.position="absolute";
+			style.top=y+"px";
+			style.left=x+"px";
+		}
+
+		JSTools.showToParent=function(el,x,y,parent){
+			(x===void 0)&& (x=0);
+			(y===void 0)&& (y=0);
+			parent.appendChild(el);
+			var style;
+			style=el.style;
+			style.position="absolute";
+			style.top=y+"px";
+			style.left=x+"px";
+		}
+
+		JSTools.addToBody=function(el){
+			Browser.document.body.appendChild(el);
+		}
+
+		JSTools.setPos=function(el,x,y){
+			var style;
+			style=el.style;
+			style.top=y+"px";
+			style.left=x+"px";
+		}
+
+		JSTools.setSize=function(el,width,height){
+			var style;
+			style=el.style;
+			style.width=width+"px";
+			style.height=height+"px";
+		}
+
+		JSTools.setTransform=function(el,mat){
+			var style;
+			style=el.style;
+			style.transformOrigin=style.webkitTransformOrigin=style.msTransformOrigin=style.mozTransformOrigin=style.oTransformOrigin="0px 0px 0px";
+			style.transform=style.webkitTransform=style.msTransform=style.mozTransform=style.oTransform="matrix("+mat.toString()+")";
+		}
+
+		JSTools.noMouseEvent=function(el){
+			var style;
+			style=el.style;
+			style["pointer-events"]="none";
+		}
+
+		JSTools.setMouseEnable=function(el,enable){
+			var style;
+			style=el.style;
+			style["pointer-events"]=enable?"auto":"none";
+		}
+
+		JSTools.setZIndex=function(el,zIndex){
+			var style;
+			style=el.style;
+			style["z-index"]=zIndex;
+		}
+
+		JSTools.showAboveSprite=function(el,sprite,dx,dy){
+			(dx===void 0)&& (dx=0);
+			(dy===void 0)&& (dy=0);
+			var pos;
+			pos=new Point();
+			pos=sprite.localToGlobal(pos);
+			pos.x+=dx;
+			pos.y+=dy;
+			pos.x+=Laya.stage.offset.x;
+			pos.y+=Laya.stage.offset.y;
+			JSTools.showToBody(el,pos.x,pos.y);
+		}
+
+		JSTools.removeElement=function(el){
+			Browser.removeElement(el);
+		}
+
+		JSTools.isElementInDom=function(el){
+			return el && el.parentNode;
+		}
+
+		JSTools.getImageSpriteByFile=function(file,width,height){
+			(width===void 0)&& (width=0);
+			(height===void 0)&& (height=0);
+			var reader;
+			reader=new FileReader();;
+			reader.readAsDataURL(file);
+			var sprite;
+			sprite=new Sprite();
+			reader.onload=function (e){
+				var txt;
+				txt=new Texture();
+				txt.load(reader.result);
+				sprite.graphics.drawTexture(txt,0,0,width,height);
+			}
+			return sprite;
+		}
+
+		JSTools.getTxtFromFile=function(file,handler){
+			var reader;
+			reader=new FileReader();;
+			reader.readAsText(file);
+			reader.onload=function (e){
+				handler.runWith(reader.result);
+			}
+		}
+
+		JSTools.getPixelRatio=function(){
+			if (JSTools._pixelRatio > 0)return JSTools._pixelRatio;
+			var canvas=Browser.createElement("canvas");
+			var context=canvas.getContext('2d');
+			var devicePixelRatio=Browser.window.devicePixelRatio || 1;
+			var backingStoreRatio=context.webkitBackingStorePixelRatio ||
+			context.mozBackingStorePixelRatio ||
+			context.msBackingStorePixelRatio ||
+			context.oBackingStorePixelRatio ||
+			context.backingStorePixelRatio || 1;
+			var ratio=devicePixelRatio / backingStoreRatio;
+			console.log("pixelRatioc:",ratio);
+			JSTools._pixelRatio=ratio;
+			return ratio;
+		}
+
+		JSTools._pixelRatio=-1;
+		return JSTools;
+	})()
+
+
+	/**
 	*...
 	*@author ww
 	*/
@@ -11549,6 +12700,116 @@ var Laya=window.Laya=(function(window,document){
 		Event.WORLDMATRIX_NEEDCHANGE="worldmatrixneedchanged";
 		Event.ANIMATION_CHANGED="animationchanged";
 		return Event;
+	})()
+
+
+	/**
+	*<code>Keyboard</code> 类的属性是一些常数，这些常数表示控制游戏时最常用的键。
+	*/
+	//class laya.events.Keyboard
+	var Keyboard=(function(){
+		function Keyboard(){};
+		__class(Keyboard,'laya.events.Keyboard');
+		Keyboard.NUMBER_0=48;
+		Keyboard.NUMBER_1=49;
+		Keyboard.NUMBER_2=50;
+		Keyboard.NUMBER_3=51;
+		Keyboard.NUMBER_4=52;
+		Keyboard.NUMBER_5=53;
+		Keyboard.NUMBER_6=54;
+		Keyboard.NUMBER_7=55;
+		Keyboard.NUMBER_8=56;
+		Keyboard.NUMBER_9=57;
+		Keyboard.A=65;
+		Keyboard.B=66;
+		Keyboard.C=67;
+		Keyboard.D=68;
+		Keyboard.E=69;
+		Keyboard.F=70;
+		Keyboard.G=71;
+		Keyboard.H=72;
+		Keyboard.I=73;
+		Keyboard.J=74;
+		Keyboard.K=75;
+		Keyboard.L=76;
+		Keyboard.M=77;
+		Keyboard.N=78;
+		Keyboard.O=79;
+		Keyboard.P=80;
+		Keyboard.Q=81;
+		Keyboard.R=82;
+		Keyboard.S=83;
+		Keyboard.T=84;
+		Keyboard.U=85;
+		Keyboard.V=86;
+		Keyboard.W=87;
+		Keyboard.X=88;
+		Keyboard.Y=89;
+		Keyboard.Z=90;
+		Keyboard.F1=112;
+		Keyboard.F2=113;
+		Keyboard.F3=114;
+		Keyboard.F4=115;
+		Keyboard.F5=116;
+		Keyboard.F6=117;
+		Keyboard.F7=118;
+		Keyboard.F8=119;
+		Keyboard.F9=120;
+		Keyboard.F10=121;
+		Keyboard.F11=122;
+		Keyboard.F12=123;
+		Keyboard.F13=124;
+		Keyboard.F14=125;
+		Keyboard.F15=126;
+		Keyboard.NUMPAD=21;
+		Keyboard.NUMPAD_0=96;
+		Keyboard.NUMPAD_1=97;
+		Keyboard.NUMPAD_2=98;
+		Keyboard.NUMPAD_3=99;
+		Keyboard.NUMPAD_4=100;
+		Keyboard.NUMPAD_5=101;
+		Keyboard.NUMPAD_6=102;
+		Keyboard.NUMPAD_7=103;
+		Keyboard.NUMPAD_8=104;
+		Keyboard.NUMPAD_9=105;
+		Keyboard.NUMPAD_ADD=107;
+		Keyboard.NUMPAD_DECIMAL=110;
+		Keyboard.NUMPAD_DIVIDE=111;
+		Keyboard.NUMPAD_ENTER=108;
+		Keyboard.NUMPAD_MULTIPLY=106;
+		Keyboard.NUMPAD_SUBTRACT=109;
+		Keyboard.SEMICOLON=186;
+		Keyboard.EQUAL=187;
+		Keyboard.COMMA=188;
+		Keyboard.MINUS=189;
+		Keyboard.PERIOD=190;
+		Keyboard.SLASH=191;
+		Keyboard.BACKQUOTE=192;
+		Keyboard.LEFTBRACKET=219;
+		Keyboard.BACKSLASH=220;
+		Keyboard.RIGHTBRACKET=221;
+		Keyboard.QUOTE=222;
+		Keyboard.ALTERNATE=18;
+		Keyboard.BACKSPACE=8;
+		Keyboard.CAPS_LOCK=20;
+		Keyboard.COMMAND=15;
+		Keyboard.CONTROL=17;
+		Keyboard.DELETE=46;
+		Keyboard.ENTER=13;
+		Keyboard.ESCAPE=27;
+		Keyboard.PAGE_UP=33;
+		Keyboard.PAGE_DOWN=34;
+		Keyboard.END=35;
+		Keyboard.HOME=36;
+		Keyboard.LEFT=37;
+		Keyboard.UP=38;
+		Keyboard.RIGHT=39;
+		Keyboard.DOWN=40;
+		Keyboard.SHIFT=16;
+		Keyboard.SPACE=32;
+		Keyboard.TAB=9;
+		Keyboard.INSERT=45;
+		return Keyboard;
 	})()
 
 
@@ -17526,6 +18787,36 @@ var Laya=window.Laya=(function(window,document){
 	})()
 
 
+	/**
+	*...
+	*@author dongketao
+	*/
+	//class PathFinding.core.Node
+	var Node$1=(function(){
+		function Node(x,y,walkable){
+			this.x=0;
+			this.y=0;
+			this.g=0;
+			this.f=0;
+			this.h=0;
+			this.by=0;
+			this.parent=null;
+			this.opened=null;
+			this.closed=null;
+			this.tested=null;
+			this.retainCount=null;
+			this.walkable=false;
+			(walkable===void 0)&& (walkable=true);
+			this.x=x;
+			this.y=y;
+			this.walkable=walkable;
+		}
+
+		__class(Node,'PathFinding.core.Node',null,'Node$1');
+		return Node;
+	})()
+
+
 	/**全局配置*/
 	//class UIConfig
 	var UIConfig=(function(){
@@ -17793,6 +19084,279 @@ var Laya=window.Laya=(function(window,document){
 	*...
 	*@author ww
 	*/
+	//class laya.stock.analysers.bars.VolumeBar extends laya.stock.analysers.AnalyserBase
+	var VolumeBar=(function(_super){
+		function VolumeBar(){
+			this.barHeight=100;
+			this.offY=0;
+			this.color="#ffff00";
+			this.buyDownCount=3;
+			this.showSign=0;
+			this.sign="volume";
+			VolumeBar.__super.call(this);
+		}
+
+		__class(VolumeBar,'laya.stock.analysers.bars.VolumeBar',_super);
+		var __proto=VolumeBar.prototype;
+		__proto.initParamKeys=function(){
+			this.paramkeys=["barHeight","offY","color","buyDownCount","showSign"];
+		}
+
+		__proto.analyseWork=function(){
+			this.sign="amount";
+			this.sign="volume";
+			var i=0,len=0;
+			var dataList;
+			dataList=this.disDataList;
+			len=dataList.length;
+			var tData;
+			var max=NaN;
+			max=DataUtils.getKeyMax(dataList,this.sign);
+			var MRate=NaN;
+			MRate=this.barHeight / max;
+			var barsData;
+			barsData=[];
+			for (i=0;i < len;i++){
+				barsData.push([i,-dataList[i][this.sign] *MRate]);
+			}
+			this.resultData["bars"]=barsData;
+			this.doBuyPoints(false,"down");
+			this.doBuyPoints(true,"up");
+		}
+
+		__proto.doBuyPoints=function(isBigger,markSign){
+			(isBigger===void 0)&& (isBigger=false);
+			(markSign===void 0)&& (markSign="down");
+			var i=0,len=0;
+			var tDownCount=0;
+			var preValue=0;
+			var dataList;
+			dataList=this.disDataList;
+			len=dataList.length;
+			var tData;
+			var tValue=NaN;
+			tDownCount=0;
+			var buyList;
+			buyList=[];
+			for (i=0;i < len;i++){
+				tData=dataList[i];
+				tValue=tData[this.sign];
+				if (tValue==preValue || (isBigger==(tValue > preValue))){
+					tDownCount++;
+				}
+				else {
+					if (tDownCount >=this.buyDownCount){
+						buyList.push([markSign+":"+tDownCount,i]);
+					}
+					tDownCount=0;
+				}
+				preValue=tValue;
+			}
+			this.resultData[markSign]=buyList;
+		}
+
+		__proto.getDrawCmds=function(){
+			var rst;
+			rst=[];
+			rst.push(["drawBars",[this.resultData["bars"],this.offY,this.color]]);
+			if (this.showSign){
+				rst.push(["drawTexts",[this.resultData["up"],"low",30,"#00ff00",true,"#00ff00"]]);
+				rst.push(["drawTexts",[this.resultData["down"],"low",50,"#ffff00",true,"#00ff00"]]);
+			}
+			return rst;
+		}
+
+		return VolumeBar;
+	})(AnalyserBase)
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class laya.stock.analysers.BottomAnalyser extends laya.stock.analysers.AnalyserBase
+	var BottomAnalyser=(function(_super){
+		function BottomAnalyser(){
+			this.rightMin=15;
+			this.leftMin=15;
+			BottomAnalyser.__super.call(this);
+		}
+
+		__class(BottomAnalyser,'laya.stock.analysers.BottomAnalyser',_super);
+		var __proto=BottomAnalyser.prototype;
+		__proto.initParamKeys=function(){
+			this.paramkeys=["leftMin","rightMin"];
+		}
+
+		__proto.analyseWork=function(){
+			this.myCalculate();
+		}
+
+		__proto.myCalculate=function(){
+			var maxList;
+			maxList=DataUtils.getMaxInfo(this.disDataList,false);
+			var maxs;
+			var mins;
+			maxs=DataUtils.getMaxs(maxList,this.leftMin,this.rightMin);
+			mins=DataUtils.getMins(maxList,this.leftMin,this.rightMin);
+			this.resultData["mins"]=mins;
+			this.resultData["maxs"]=maxs;
+			var tState=0;
+			var tUpCount=0;
+			var tDownCount=0;
+			var i=0,len=0;
+			len=mins.length;
+			var tData;
+			var preData;
+			var buys;
+			buys=[];
+			var tI=0;
+			var startDownI=-1;
+			var startUpI=-1;
+			var lastDownI=-1;
+			var lastUpI=-1;
+			var tDownList=[];
+			var tUpList=[];
+			var preI=0;
+			if (len > 0){
+				preI=mins[0];
+				preData=this.disDataList[preI];
+			};
+			var trend;
+			trend=new Trend();
+			for (i=0;i < len;i++){
+				tI=mins[i];
+				tData=this.disDataList[tI];
+				tData.index=tI;
+				trend.addData(tData);
+				if (trend.upList.getIndexLen()> 10 && trend.downList.getIndexLen()> 30){
+					buys.push([tData["date"]+":Buy",tI]);
+					trend.clear();
+				}
+				if (trend.upList.getIndexLen()> trend.downList.getIndexLen()){
+					trend.clear();
+				}
+			}
+			this.resultData["buys"]=buys;
+		}
+
+		__proto.getDrawCmds=function(){
+			var rst;
+			rst=[];
+			rst.push(["drawTexts",[this.resultData["buys"],"low",30,"#00ff00",true,"#00ff00"]]);
+			rst.push(["drawPointsLine",[this.resultData["maxs"],"high",-20]]);
+			rst.push(["drawPointsLine",[this.resultData["mins"],"low",20]]);
+			return rst;
+		}
+
+		return BottomAnalyser;
+	})(AnalyserBase)
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class laya.stock.analysers.BreakAnalyser extends laya.stock.analysers.AnalyserBase
+	var BreakAnalyser=(function(_super){
+		function BreakAnalyser(){
+			this.rightMin=5;
+			this.leftMin=15;
+			BreakAnalyser.__super.call(this);
+		}
+
+		__class(BreakAnalyser,'laya.stock.analysers.BreakAnalyser',_super);
+		var __proto=BreakAnalyser.prototype;
+		__proto.initParamKeys=function(){
+			this.paramkeys=["leftMin","rightMin"];
+		}
+
+		__proto.analyseWork=function(){
+			this.getBreaks();
+		}
+
+		__proto.getBreaks=function(){
+			var breaks;
+			breaks=DataUtils.getBreakInfo(this.disDataList);
+			this.resultData["breaks"]=breaks;
+			var i=0,len=0;
+			len=breaks.length;
+			var upBreaks;
+			upBreaks=[];
+			var downBreaks;
+			downBreaks=[];
+			var tBreak;
+			for (i=0;i < len;i++){
+				tBreak=breaks[i];
+				if (tBreak["type"]=="down"){
+					downBreaks.push(tBreak["index"]);
+				}
+				else {
+					upBreaks.push(tBreak["index"]);
+				}
+			}
+			this.resultData["upBreaks"]=upBreaks;
+			this.resultData["downBreaks"]=downBreaks;
+			var maxList;
+			maxList=DataUtils.getMaxInfo(this.disDataList,false);
+			var maxs;
+			var mins;
+			maxs=DataUtils.getMaxs(maxList,this.leftMin,this.rightMin);
+			mins=DataUtils.getMins(maxList,this.leftMin,this.rightMin);
+			this.resultData["mins"]=mins;
+			this.resultData["maxs"]=maxs;
+			var tBreaks;
+			tBreaks=downBreaks;
+			len=tBreaks.length;
+			var buyPoints=[];
+			buyPoints=[];
+			var buyedDic;
+			buyedDic={};
+			var tI=0;
+			var tBuy=0;
+			var tData;
+			for (i=0;i < len;i++){
+				tI=tBreaks[i];
+				var preMax=0;
+				var maxPos;
+				maxPos=ArrayMethods.findPos(tI,maxs);
+				if (maxPos.length==2 && maxPos[0] >=0){
+					var minPos;
+					minPos=ArrayMethods.findPos(tI,mins);
+					if (minPos.length==2 && minPos[1] >=0){
+						tBuy=mins[minPos[1]]+this.rightMin;
+						tBreak=this.disDataList[maxs[maxPos[0]]];
+						tData=this.disDataList[tBuy];
+						if (tData["high"] < tBreak["low"]*0.8){
+							if (!buyedDic[tBuy]){
+								buyedDic[tBuy]=true;
+								buyPoints.push([tData["date"]+":Buy",tBuy]);
+							}
+						}
+					}
+				}
+			}
+			this.resultData["buys"]=buyPoints;
+		}
+
+		__proto.getDrawCmds=function(){
+			var rst;
+			rst=[];
+			rst.push(["drawPoints",[this.resultData["downBreaks"],"high",3,"#00ff00"]]);
+			rst.push(["drawTexts",[this.resultData["buys"],"low",30,"#00ff00",true,"#00ff00"]]);
+			rst.push(["drawPointsLine",[this.resultData["maxs"],"high",-20]]);
+			rst.push(["drawPointsLine",[this.resultData["mins"],"low",20]]);
+			return rst;
+		}
+
+		return BreakAnalyser;
+	})(AnalyserBase)
+
+
+	/**
+	*...
+	*@author ww
+	*/
 	//class laya.stock.analysers.ChanAnalyser extends laya.stock.analysers.AnalyserBase
 	var ChanAnalyser=(function(_super){
 		function ChanAnalyser(){
@@ -17996,6 +19560,107 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		return ChanAnalyser;
+	})(AnalyserBase)
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class laya.stock.analysers.DistAnalyser extends laya.stock.analysers.AnalyserBase
+	var DistAnalyser=(function(_super){
+		function DistAnalyser(){
+			this.width=40;
+			this.color="#ffff00";
+			this.showPercent=0;
+			this.dayCount=-1;
+			DistAnalyser.__super.call(this);
+		}
+
+		__class(DistAnalyser,'laya.stock.analysers.DistAnalyser',_super);
+		var __proto=DistAnalyser.prototype;
+		__proto.initParamKeys=function(){
+			this.paramkeys=["width","color","showPercent","dayCount"];
+		}
+
+		__proto.analyseWork=function(){
+			this.doDist();
+		}
+
+		__proto.doDist=function(){
+			var dataList=this.disDataList;
+			if (this.dayCount > 0){
+				var tarCount=0;
+				tarCount=this.dayCount < this.disDataList.length?this.dayCount:this.disDataList.length;
+				dataList=this.disDataList.slice(this.disDataList.length-tarCount);
+			};
+			var i=0,len=0;
+			len=dataList.length;
+			var tDistData;
+			tDistData=[];
+			for (i=0;i < len;i++){
+				var tData;
+				tData=dataList[i];
+				tDistData.push([tData["low"],tData["high"],tData["volume"]]);
+			};
+			var tDis;
+			tDis=new Distribution();
+			tDis.addDatas(tDistData);
+			var tPriceI=0;
+			var tStockPrice=NaN;
+			tStockPrice=dataList[dataList.length-1]["close"];
+			tPriceI=tDis.getPriceI(tStockPrice);
+			var disDatas;
+			disDatas=tDis.datas;
+			var values;
+			values=tDis.values;
+			len=values.length;
+			var lines;
+			lines=[];
+			var rate=NaN;
+			rate=this.width *this.disDataList.length / 10;
+			var percents;
+			percents=tDis.percents;
+			var tLineParam;
+			for (i=0;i < len;i++){
+				tLineParam=[values[i],disDatas[i] *rate];
+				if (this.showPercent > 0){
+					tLineParam[2]=StockTools.getGoodPercent(disDatas[i])+"%"+"("+StockTools.getGoodPercent(percents[i])+"%)";
+					}else{
+					if (percents[i] >=0.5 && percents[i-1] <=0.5){
+						tLineParam[2]=StockTools.getGoodPercent(disDatas[i])+"%"+"("+StockTools.getGoodPercent(percents[i])+"%)";
+					}
+				}
+				if (i==tPriceI){
+					if (!tLineParam[2]){
+						tLineParam[2]="●"+tStockPrice+"("+StockTools.getGoodPercent(percents[i])+"%)";
+						}else{
+						tLineParam[2]+="●"+tStockPrice+"("+StockTools.getGoodPercent(percents[i])+"%)";
+					}
+				}
+				tLineParam[3]=this.getRateColor(percents[i]);
+				lines.push(tLineParam);
+			}
+			this.resultData["bars"]=lines;
+		}
+
+		__proto.getRateColor=function(rate){
+			var id=0;
+			id=Math.floor(rate / 0.2);
+			return DistAnalyser.colorList[id];
+		}
+
+		__proto.getDrawCmds=function(){
+			var rst;
+			rst=[];
+			rst.push(["drawBarsH",[this.resultData["bars"],10,this.color]]);
+			return rst;
+		}
+
+		__static(DistAnalyser,
+		['colorList',function(){return this.colorList=["#FFFFCC","#0099CC","#996699","#FF6666","#FFFF66","#CC3333","#003399"];}
+		]);
+		return DistAnalyser;
 	})(AnalyserBase)
 
 
@@ -19109,6 +20774,46 @@ var Laya=window.Laya=(function(window,document){
 
 
 	/**
+	*...
+	*@author ww
+	*/
+	//class laya.stock.models.DownList extends laya.stock.models.OrdedList
+	var DownList=(function(_super){
+		function DownList(){
+			DownList.__super.call(this);
+		}
+
+		__class(DownList,'laya.stock.models.DownList',_super);
+		var __proto=DownList.prototype;
+		__proto.isOK=function(left,right){
+			return left > right;
+		}
+
+		return DownList;
+	})(OrdedList)
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class laya.stock.models.UpList extends laya.stock.models.OrdedList
+	var UpList=(function(_super){
+		function UpList(){
+			UpList.__super.call(this);
+		}
+
+		__class(UpList,'laya.stock.models.UpList',_super);
+		var __proto=UpList.prototype;
+		__proto.isOK=function(left,right){
+			return left < right;
+		}
+
+		return UpList;
+	})(OrdedList)
+
+
+	/**
 	*<code>Node</code> 类用于创建节点对象，节点是最基本的元素。
 	*/
 	//class laya.display.Node extends laya.events.EventDispatcher
@@ -19534,6 +21239,63 @@ var Laya=window.Laya=(function(window,document){
 		Node.PROP_EMPTY={};
 		return Node;
 	})(EventDispatcher)
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class stock.StockBasicInfo extends stock.CSVParser
+	var StockBasicInfo=(function(_super){
+		function StockBasicInfo(){
+			this.stockList=null;
+			this.stockCodeList=null;
+			this.stockDic={};
+			StockBasicInfo.__super.call(this);
+		}
+
+		__class(StockBasicInfo,'stock.StockBasicInfo',_super);
+		var __proto=StockBasicInfo.prototype;
+		__proto.init=function(csvStr){
+			_super.prototype.init.call(this,csvStr);
+			this.stockList=this.dataList;
+			var i=0,len=0;
+			len=this.stockList.length;
+			this.stockCodeList=[];
+			var tCode;
+			for (i=0;i < len;i++){
+				this.stockList[i]["code"]=StockTools.getPureStock(this.stockList[i]["code"]);
+				tCode=this.stockList[i]["code"];
+				this.stockDic[tCode]=this.stockList[i];
+				this.stockCodeList.push(tCode);
+			}
+		}
+
+		__proto.getRandomStock=function(){
+			var i=0;
+			i=Math.floor(Math.random()*this.stockCodeList.length);
+			return this.stockCodeList[i];
+		}
+
+		__proto.getStockData=function(code){
+			return this.stockDic[code];
+		}
+
+		__proto.getStockName=function(code){
+			if (!code)return "unknow";
+			var adptCode;
+			adptCode=StockTools.getPureStock(code);
+			var stockO;
+			stockO=StockJsonP.getStockData(adptCode)|| this.stockDic[adptCode];
+			if (stockO)return stockO.name;
+			return adptCode;
+		}
+
+		__static(StockBasicInfo,
+		['I',function(){return this.I=new StockBasicInfo();}
+		]);
+		return StockBasicInfo;
+	})(CSVParser)
 
 
 	/**
@@ -22687,6 +24449,159 @@ var Laya=window.Laya=(function(window,document){
 
 
 	/**
+	*...
+	*@author ww
+	*/
+	//class laya.stock.analysers.lines.StrongLine extends laya.stock.analysers.lines.AverageLine
+	var StrongLine=(function(_super){
+		function StrongLine(){
+			this.lineHeight=100;
+			this.offY=10;
+			this.buyCount=3;
+			this.sellCount=1;
+			StrongLine.__super.call(this);
+			this.days="4";
+		}
+
+		__class(StrongLine,'laya.stock.analysers.lines.StrongLine',_super);
+		var __proto=StrongLine.prototype;
+		__proto.initParamKeys=function(){
+			this.paramkeys=["days","colors","lineHeight","offY","buyCount","sellCount"];
+		}
+
+		__proto.getAverageData=function(dayCount,color){
+			var avList;
+			avList=DataUtils.getAverage(this.disDataList,dayCount,this.priceType);
+			var avPoints
+			avPoints=[];
+			var i=0,len=0;
+			len=avList.length;
+			var strongList=[];
+			for (i=0;i < len;i++){
+				avPoints.push([i,(this.disDataList[i]["close"] / avList[i])*this.lineHeight]);
+				strongList.push(this.disDataList[i]["close"] / avList[i]);
+			};
+			var rst;
+			rst=[[avPoints,color,this.offY],this.makeBuys(strongList)];
+			return rst;
+		}
+
+		__proto.makeBuys=function(strongList){
+			var buys;
+			buys=[];
+			var i=0,len=0;
+			len=strongList.length;
+			var tState=0;
+			var bigger=0;
+			var smaller=0;
+			bigger=0;
+			smaller=0;
+			var preSign;
+			for (i=0;i < len;i++){
+				if (strongList[i]==1)continue ;
+				if (strongList[i] >=1){
+					bigger++;
+					smaller=0
+					}else{
+					smaller++;
+					bigger=0;
+				}
+				if (bigger==this.buyCount){
+					if (preSign=="buy"){
+					}
+					preSign="buy";
+					buys.push(["buy",i]);
+				}
+				if (smaller==this.sellCount){
+					preSign="sell";
+					buys.push(["sell",i]);
+				}
+			}
+			return buys;
+		}
+
+		__proto.getDrawCmds=function(){
+			var rst;
+			rst=[];
+			var avgs;
+			avgs=this.resultData["averages"];
+			var i=0,len=0;
+			len=avgs.length;
+			for (i=0;i < len;i++){
+				rst.push(["drawLinesEx",avgs[i][0]]);
+				rst.push(["drawTexts",[avgs[i][1],"low",30,"#00ff00",true,"#00ff00"]]);
+			}
+			rst.push(["drawLinesEx",[[[0,this.lineHeight],[this.disDataList.length-1,this.lineHeight]],"#ff0000",this.offY]]);
+			return rst;
+		}
+
+		return StrongLine;
+	})(AverageLine)
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class laya.stock.analysers.lines.WinRateLine extends laya.stock.analysers.lines.AverageLine
+	var WinRateLine=(function(_super){
+		function WinRateLine(){
+			this.lineHeight=100;
+			this.offY=10;
+			WinRateLine.__super.call(this);
+			this.priceType="rise";
+		}
+
+		__class(WinRateLine,'laya.stock.analysers.lines.WinRateLine',_super);
+		var __proto=WinRateLine.prototype;
+		__proto.initParamKeys=function(){
+			this.paramkeys=["days","colors","lineHeight","offY"];
+		}
+
+		__proto.analyseWork=function(){
+			this.doAverages();
+		}
+
+		__proto.adptDataList=function(dataList,dayCount){
+			var i=0,len=0;
+			len=dataList.length;
+			var tData;
+			for (i=0;i < len;i++){
+				tData=dataList[i];
+				if (tData["close"] > tData["open"]){
+					tData["rise"]=this.lineHeight*1;
+					}else{
+					tData["rise"]=0;
+				}
+			}
+		}
+
+		__proto.getAverageData=function(dayCount,color){
+			this.adptDataList(this.disDataList,dayCount);
+			var rst;
+			rst=_super.prototype.getAverageData.call(this,dayCount,color);
+			rst.push(this.offY);
+			return rst;
+		}
+
+		__proto.getDrawCmds=function(){
+			var rst;
+			rst=[];
+			var avgs;
+			avgs=this.resultData["averages"];
+			var i=0,len=0;
+			len=avgs.length;
+			for (i=0;i < len;i++){
+				rst.push(["drawLinesEx",avgs[i]]);
+			}
+			return rst;
+		}
+
+		return WinRateLine;
+	})(AverageLine)
+
+
+	/**
 	*<p> <code>Sprite</code> 类是基本显示列表构造块：一个可显示图形并且也可包含子项的显示列表节点。</p>
 	*
 	*@example 以下示例代码，创建了一个 <code>Text</code> 实例。
@@ -24381,6 +26296,60 @@ var Laya=window.Laya=(function(window,document){
 	})(SoundChannel)
 
 
+	/**消息管理器
+	*/
+	//class laya.uicomps.MessageManager extends laya.display.Sprite
+	var MessageManager=(function(_super){
+		function MessageManager(){
+			this.preTime=0;
+			MessageManager.__super.call(this);
+			this._vbox=new Box();
+			this.addChild(this._vbox);
+			this.setBounds(new Rectangle(0,0,150,150));
+			Laya.stage.addChild(this);
+		}
+
+		__class(MessageManager,'laya.uicomps.MessageManager',_super);
+		var __proto=MessageManager.prototype;
+		__proto.show=function(msg,color,time){
+			(color===void 0)&& (color="#ff0000");
+			(time===void 0)&& (time=1000);
+			var label=new Label();
+			label.fontSize=14;
+			label.text=msg;
+			label.y=100;
+			label.height=30;
+			label.color=color;
+			var delayTime=0;
+			var nowTime=0;
+			var startTime=0;
+			nowTime=Browser.now();
+			startTime=Math.max(this.preTime+500,nowTime);
+			delayTime=startTime-nowTime;
+			this.preTime=startTime;
+			Laya.timer.once(delayTime,this,this.showLabel,[label,time],false);
+		}
+
+		__proto.showLabel=function(label,time){
+			this.pos(Laya.stage.width *0.5-100,20);
+			this._vbox.addChild(label);
+			Tween.to(label,{y:-20},time,Ease.cubicOut,null);
+			Laya.timer.once(time,this,this.clear,[label],false);
+		}
+
+		__proto.clear=function(label){
+			label.removeSelf();
+		}
+
+		__getset(1,MessageManager,'I',function(){
+			return MessageManager._instance ? MessageManager._instance :MessageManager._instance=new MessageManager();
+		},laya.display.Sprite._$SET_I);
+
+		MessageManager._instance=null
+		return MessageManager;
+	})(Sprite)
+
+
 	/**
 	*<code>Component</code> 是ui控件类的基类。
 	*<p>生命周期：preinitialize > createChildren > initialize > 组件构造函数</p>
@@ -24856,6 +26825,625 @@ var Laya=window.Laya=(function(window,document){
 		});
 
 		return Component;
+	})(Sprite)
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class stock.views.DrawBoard extends laya.display.Sprite
+	var DrawBoard=(function(_super){
+		function DrawBoard(){
+			this.lineHeight=400;
+			this.lineWidth=800;
+			this.yRate=NaN;
+			this.xRate=NaN;
+			DrawBoard.__super.call(this);
+		}
+
+		__class(DrawBoard,'stock.views.DrawBoard',_super);
+		var __proto=DrawBoard.prototype;
+		__proto.setDataSize=function(xMax,yMax){
+			this.xRate=this.lineWidth / xMax;
+			this.yRate=this.lineHeight / yMax;
+		}
+
+		__proto.fresh=function(){}
+		__proto.getAdptYV=function(v){
+			return-DataUtils.mParseFloat(v)*this.yRate;
+		}
+
+		__proto.getAdptXV=function(v){
+			return DataUtils.mParseFloat(v)*this.xRate;
+		}
+
+		return DrawBoard;
+	})(Sprite)
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class stock.views.KLine extends laya.display.Sprite
+	var KLine=(function(_super){
+		function KLine(){
+			this.analysers=null;
+			this.autoPlay=false;
+			this.tStock=null;
+			this.stockUrl=null;
+			this.gridWidth=3;
+			this.start=0;
+			this._myLoader=null;
+			this.stockData=null;
+			this.dataList=null;
+			this.disDataList=null;
+			this.tLen=10;
+			this.maxShowCount=-1;
+			this.lineHeight=400;
+			this.lineWidth=800;
+			this.markO=null;
+			this.yRate=NaN;
+			this.xRate=NaN;
+			KLine.__super.call(this);
+			this.analysers=[];
+			this.analysers.push(new KLineAnalyser());
+			this._myLoader=new Loader();
+		}
+
+		__class(KLine,'stock.views.KLine',_super);
+		var __proto=KLine.prototype;
+		__proto.setStock=function(stock){
+			Laya.timer.clear(this,this.timeEffect);
+			this.graphics.clear();
+			this.showMsg("loadingData:"+stock);
+			this.tStock=stock;
+			this.stockUrl="https://onewaymyway.github.io/stockdata/stockdatas/"+stock+".csv";
+			this.stockUrl=StockTools.getStockCsvPath(stock);
+			this._myLoader.once("complete",this,this.dataLoaded);
+			this._myLoader.load(this.stockUrl,"text");
+		}
+
+		//Laya.loader.load(stockUrl,Handler.create(this,dataLoaded),null,Loader.TEXT);
+		__proto.dataErr=function(){
+			this.showMsg("dataErr");
+		}
+
+		__proto.dataLoaded=function(){
+			var data;
+			data=Loader.getRes(this.stockUrl);
+			if (!data){
+				this.dataErr();
+				return;
+			}
+			this.showMsg("dataLoaded");
+			this.initByStrData(data);
+		}
+
+		__proto.initByStrData=function(data){
+			var stockData;
+			stockData=new StockData();
+			stockData.init(data);
+			this.setStockData(stockData);
+		}
+
+		__proto.freshStockData=function(){
+			var dataO;
+			dataO=StockJsonP.getStockData(this.tStock);
+			if (!dataO)
+				return;
+			dataO=StockJsonP.adptStockO(dataO);
+			if (dataO.price <=0)
+				return;
+			if (dataO.amount <=0)
+				return;
+			var lastDataO;
+			lastDataO=this.dataList[this.dataList.length-1];
+			if (dataO.date==lastDataO.date){
+				this.dataList[this.dataList.length-1]=dataO;
+			}
+			else {
+				if (dataO.date > lastDataO.date){
+					this.dataList.push(dataO);
+				}
+			}
+		}
+
+		__proto.showMsg=function(msg){
+			this.event("msg",StockBasicInfo.I.getStockName(this.tStock)+":"+msg);
+		}
+
+		__proto.setStockData=function(stockData){
+			this.stockData=stockData;
+			this.dataList=stockData.dataList;
+			this.freshStockData();
+			this.cacheAsBitmap=false;
+			this.event("DataInited");
+			this.drawdata(this.start);
+			this.tLen=10;
+			if (this.autoPlay){
+				this.showMsg("playing K-line Animation");
+				Laya.timer.loop(10,this,this.timeEffect);
+			}
+			else {
+				this.showMsg("K-line Showed:"+this.disDataList[this.disDataList.length-1].date);
+				this.cacheAsBitmap=true;
+				this.event("KlineShowed");
+			}
+		}
+
+		__proto.timeEffect=function(){
+			this.tLen++;
+			if (this.tLen >=this.dataList.length){
+				this.showMsg("Animation End");
+				Laya.timer.clear(this,this.timeEffect);
+				this.cacheAsBitmap=true;
+				return;
+			}
+			this.drawdata(this.start,this.tLen);
+		}
+
+		__proto.analysersDoAnalyse=function(start,end){
+			(start===void 0)&& (start=0);
+			(end===void 0)&& (end=-1);
+			var i=0,len=0;
+			len=this.analysers.length;
+			var tAnalyser;
+			for (i=0;i < len;i++){
+				tAnalyser=this.analysers[i];
+				tAnalyser.analyser(this.stockData,start,end);
+			}
+		}
+
+		__proto.drawdata=function(start,end){
+			(start===void 0)&& (start=0);
+			(end===void 0)&& (end=-1);
+			if (this.maxShowCount > 0){
+				end=start+this.maxShowCount;
+				if (end > this.dataList.length)
+					end=this.dataList.length;
+				if (start > this.dataList.length)debugger;
+			}
+			this.analysersDoAnalyse(start,end);
+			this.graphics.clear();
+			if (end < start)
+				end=this.dataList.length;
+			this.disDataList=this.dataList.slice(start,end);
+			this.drawStockKLine();
+			this.drawGrid();
+			this.drawAnalysers();
+		}
+
+		__proto.drawStockKLine=function(){
+			var i=0,len=0;
+			var dataList;
+			dataList=this.disDataList;
+			len=dataList.length;
+			var tData;
+			var max=NaN;
+			max=DataUtils.getKeyMax(dataList,"close");
+			this.yRate=this.lineHeight / max;
+			var tColor;
+			this.xRate=this.lineWidth / (len *this.gridWidth);
+			var markTime;
+			markTime=StockListManager.getStockLastMark(this.tStock);
+			var prePrice=0;
+			var curPrice=0;
+			for (i=0;i < len;i++){
+				tData=dataList[i];
+				var tPos=NaN;
+				tPos=this.getAdptXV(i *this.gridWidth);
+				if (tData["close"] >=tData["open"]){
+					tColor="#ff0000";
+				}
+				else {
+					tColor="#00ffff";
+				}
+				if (tData["high"]==tData["low"]){
+					if (tData["high"] < prePrice){
+						tColor="#00ffff";
+					}
+					this.graphics.drawLine(tPos,this.getAdptYV(tData["open"]),tPos,this.getAdptYV(tData["close"])+1,tColor,this.gridWidth *this.xRate);
+				}
+				else {
+					this.graphics.drawLine(tPos,this.getAdptYV(tData["high"]),tPos,this.getAdptYV(tData["low"]),tColor,1 *this.xRate);
+					if (tData["open"]==tData["close"]){
+						this.graphics.drawLine(tPos,this.getAdptYV(tData["open"]),tPos,this.getAdptYV(tData["close"])+0.5,tColor,this.gridWidth *this.xRate);
+					}
+					else {
+						this.graphics.drawLine(tPos,this.getAdptYV(tData["open"]),tPos,this.getAdptYV(tData["close"]),tColor,this.gridWidth *this.xRate);
+					}
+				}
+				prePrice=tData["close"];
+			}
+			if (markTime){
+				for (i=0;i < len;i++){
+					tData=dataList[i];
+					if (tData.date==markTime || (tData.date < markTime && dataList[i+1] && dataList[i+1].date > markTime)){
+						tPos=this.getAdptXV(i *this.gridWidth);
+						this.graphics.drawLine(tPos,this.getAdptYV(tData["low"]),tPos,this.getAdptYV(tData["low"])+30,"#00ff00");
+						this.graphics.fillText("Mark",tPos,this.getAdptYV(tData["low"])+30,null,"#00ff00","center");
+						break ;
+					}
+					if (tData.date > markTime){
+						break ;
+					}
+				}
+			}
+			if (this.markO && this.markO.date){
+				var buyI=0;
+				buyI=this.drawMark(this.markO.date,"Buy",dataList);
+				if (buyI >=0&&this.markO.sell){
+					var sellI=0;
+					i=buyI+this.markO.sell;
+					if (dataList[i]){
+						prePrice=dataList[buyI]["high"]
+						tData=dataList[i];
+						curPrice=this.markO.sellPrice||tData["close"]
+						tPos=this.getAdptXV(i *this.gridWidth);
+						this.graphics.drawLine(tPos,this.getAdptYV(tData["low"]),tPos,this.getAdptYV(tData["low"])+30,"#00ff00");
+						var curInfo;
+						if (this.markO.sellReason){
+							curInfo="Sell:"+StockTools.getGoodPercent((curPrice-prePrice)/ prePrice)+"%"+this.markO.sellReason;
+							}else{
+							curInfo="Sell:"+StockTools.getGoodPercent((curPrice-prePrice)/ prePrice)+"%"+tData["date"];
+						}
+						this.graphics.fillText(curInfo,tPos,this.getAdptYV(tData["low"])+30,null,"#00ff00","center");
+					}
+				}
+			}
+			if (TradeTestManager.isTradeTestOn){
+				var tradeActionDic;
+				tradeActionDic=TradeTestManager.curTradeInfo.getActionDic(this.tStock);
+				for (i=0;i < len;i++){
+					tData=dataList[i];
+					var tDate;
+					tDate=tData.date;
+					if (tradeActionDic[tDate]){
+						tPos=this.getAdptXV(i *this.gridWidth);
+						this.graphics.drawLine(tPos,this.getAdptYV(tData["low"]),tPos,this.getAdptYV(tData["low"])+30,"#00ff00");
+						this.graphics.fillText(tradeActionDic[tDate],tPos,this.getAdptYV(tData["low"])+30,null,"#00ff00","center");
+					}
+				}
+			}
+		}
+
+		__proto.drawMark=function(markTime,markSign,dataList){
+			var i=0,len=0;
+			len=dataList.length;
+			var tPos=NaN;
+			var tData;
+			for (i=0;i < len;i++){
+				tData=dataList[i];
+				if (tData.date==markTime || (tData.date < markTime && dataList[i+1] && dataList[i+1].date > markTime)){
+					tPos=this.getAdptXV(i *this.gridWidth);
+					this.graphics.drawLine(tPos,this.getAdptYV(tData["low"]),tPos,this.getAdptYV(tData["low"])+30,"#00ff00");
+					this.graphics.fillText(markSign+":"+tData["high"]+":"+tData.date,tPos,this.getAdptYV(tData["low"])+30,null,"#00ff00","center");
+					return i;
+				}
+				if (tData.date > markTime){
+					break ;
+				}
+			}
+			return-1;
+		}
+
+		__proto.drawAmounts=function(){
+			var sign;
+			sign="amount";
+			sign="volume";
+			var i=0,len=0;
+			var dataList;
+			dataList=this.disDataList;
+			len=dataList.length;
+			var tData;
+			var max=NaN;
+			max=DataUtils.getKeyMax(dataList,sign);
+			var MRate=NaN;
+			MRate=100 / max;
+			var barsData;
+			barsData=[];
+			for (i=0;i < len;i++){
+				barsData.push([i,-dataList[i][sign] *MRate]);
+			}
+			this.drawBars(barsData,0);
+		}
+
+		__proto.drawGrid=function(){
+			var dataList;
+			dataList=this.disDataList;
+			var maxI=0;
+			maxI=DataUtils.getKeyMaxI(dataList,"high");
+			var minI=0;
+			minI=DataUtils.getKeyMinI(dataList,"low");
+			var xPos=NaN;
+			this.drawPoint(maxI,dataList[maxI]["high"],"high:"+dataList[maxI]["high"],-10);
+			this.drawPoint(minI,dataList[minI]["low"],"low:"+dataList[minI]["low"],10);
+		}
+
+		__proto.drawAnalysers=function(){
+			var i=0,len=0;
+			len=this.analysers.length;
+			var tAnalyser;
+			for (i=0;i < len;i++){
+				tAnalyser=this.analysers[i];
+				this.drawAnalyser(tAnalyser);
+			}
+		}
+
+		//tAnalyser.analyser(stockData,start,end);
+		__proto.drawAnalyser=function(analyser){
+			var cmds;
+			cmds=analyser.getDrawCmds();
+			if (!cmds)
+				return;
+			var i=0,len=0;
+			len=cmds.length;
+			var tCmdArr;
+			var tFunSign;
+			for (i=0;i < len;i++){
+				tCmdArr=cmds[i];
+				tFunSign=tCmdArr[0];
+				if ((typeof (this[tFunSign])=='function')){
+					this[tFunSign].apply(this,tCmdArr[1]);
+				}
+			}
+		}
+
+		__proto.drawTexts=function(texts,sign,dy,color,withLine,lineColor){
+			(dy===void 0)&& (dy=0);
+			(color===void 0)&& (color="#ff0000");
+			(withLine===void 0)&& (withLine=false);
+			var i=0,len=0;
+			len=texts.length;
+			var tArr;
+			for (i=0;i < len;i++){
+				tArr=texts[i];
+				this.drawText(tArr[0],tArr[1],sign,dy,color,withLine,lineColor);
+			}
+		}
+
+		__proto.drawText=function(text,i,sign,dY,color,withLine,lineColor){
+			(dY===void 0)&& (dY=0);
+			(color===void 0)&& (color="#ff0000");
+			(withLine===void 0)&& (withLine=false);
+			this.graphics.fillText(text,this.getAdptXV(i *this.gridWidth),this.getAdptYV(this.disDataList[i][sign])+dY,null,color,"center");
+			if (withLine){
+				if (!lineColor)
+					lineColor=color;
+				this.graphics.drawLine(this.getAdptXV(i *this.gridWidth),this.getAdptYV(this.disDataList[i][sign])+dY,this.getAdptXV(i *this.gridWidth),this.getAdptYV(this.disDataList[i][sign]),lineColor);
+			}
+		}
+
+		__proto.drawPointsLine=function(iList,sign,dY){
+			(sign===void 0)&& (sign="high");
+			(dY===void 0)&& (dY=-20);
+			var dataList;
+			dataList=this.disDataList;
+			var tI=0;
+			var i=0,len=0;
+			var preData;
+			var tData;
+			len=iList.length;
+			for (i=0;i < len;i++){
+				tI=iList[i];
+				tData=dataList[tI];
+				this.drawPoint(tI,tData[sign],tData[sign],dY,"#ff00ff");
+			}
+			for (i=1;i < len;i++){
+				preData=dataList[iList[i-1]];
+				tData=dataList[iList[i]];
+				this.drawLine(iList[i-1],preData[sign],iList[i],tData[sign],"#ff0000");
+			}
+		}
+
+		__proto.drawPointsLineEx=function(iList,lineWidth){
+			(lineWidth===void 0)&& (lineWidth=2);
+			var dataList;
+			dataList=this.disDataList;
+			var tI=0;
+			var i=0,len=0;
+			var preData;
+			var tData;
+			len=iList.length;
+			var tArr;
+			var tSign;
+			var exTxt;
+			for (i=0;i < len;i++){
+				tArr=iList[i];
+				tI=tArr[0];
+				tData=dataList[tI];
+				tSign=tArr[1];
+				exTxt=tArr[2];
+				if (exTxt){
+					this.drawPoint(tI,tData[tSign],exTxt,KLine.SignDrawDes[tSign]["dy"],KLine.SignDrawDes[tSign]["color"],3);
+				}
+				else {
+					this.drawPoint(tI,tData[tSign],tData[tSign],KLine.SignDrawDes[tSign]["dy"],KLine.SignDrawDes[tSign]["color"],3);
+				}
+			}
+			for (i=1;i < len;i++){
+				preData=dataList[iList[i-1][0]];
+				tData=dataList[iList[i][0]];
+				this.drawLine(iList[i-1][0],preData[iList[i-1][1]],iList[i][0],tData[iList[i][1]],"#ff00ff",2);
+			}
+		}
+
+		__proto.drawBars=function(barList,yZero,color){
+			(yZero===void 0)&& (yZero=0);
+			(color===void 0)&& (color="#ffff00");
+			var i=0,len=0;
+			len=barList.length;
+			var tData;
+			var tX=NaN;
+			var tV=NaN;
+			for (i=0;i < len;i++){
+				tData=barList[i];
+				tX=tData[0];
+				tV=tData[1];
+				this.graphics.drawLine(this.getAdptXV(tX *this.gridWidth),yZero+tV,this.getAdptXV(tX *this.gridWidth),yZero,color,this.gridWidth *this.xRate);
+			}
+		}
+
+		//this.graphics.drawLine(getAdptXV(tX *gridWidth),yZero+tV,getAdptXV(tX *gridWidth),yZero,"#ff0000",5);
+		__proto.drawBarsH=function(barList,xZero,color){
+			(xZero===void 0)&& (xZero=0);
+			(color===void 0)&& (color="#ffff00");
+			var i=0,len=0;
+			len=barList.length;
+			var tData;
+			var tY=NaN;
+			var tV=NaN;
+			var tTxt;
+			var tColor;
+			for (i=0;i < len;i++){
+				tData=barList[i];
+				tY=this.getAdptYV(tData[0]);
+				tV=tData[1];
+				tTxt=tData[2];
+				tColor=tData[3];
+				if (!tColor)
+					tColor=color;
+				this.graphics.drawLine(this.getAdptXV(tV *this.gridWidth)+xZero,tY,xZero,tY,tColor,this.gridWidth);
+				if (tTxt){
+					this.graphics.fillText(tTxt,this.getAdptXV(tV *this.gridWidth)+xZero+5,tY-6,null,tColor,"left");
+				}
+			}
+		}
+
+		//this.graphics.drawLine(getAdptXV(tX *gridWidth),yZero+tV,getAdptXV(tX *gridWidth),yZero,"#ff0000",5);
+		__proto.drawLines=function(pointList,color){
+			(color===void 0)&& (color="#ff0000");
+			var i=0,len=0;
+			len=pointList.length;
+			for (i=1;i < len;i++){
+				this.drawLine(pointList[i-1][0],pointList[i-1][1],pointList[i][0],pointList[i][1],color);
+			}
+		}
+
+		__proto.drawLinesEx=function(pointList,color,offY){
+			(color===void 0)&& (color="#ff0000");
+			(offY===void 0)&& (offY=0);
+			var i=0,len=0;
+			len=pointList.length;
+			var color;
+			for (i=1;i < len;i++){
+				color=pointList[i][2] ? pointList[i][2] :color;
+				this.drawLineEx(pointList[i-1][0],pointList[i-1][1]+offY,pointList[i][0],pointList[i][1]+offY,color);
+			}
+		}
+
+		__proto.drawPoints=function(iList,sign,r,color){
+			(r===void 0)&& (r=2);
+			(color===void 0)&& (color="#ff0000");
+			var dataList;
+			dataList=this.disDataList;
+			var tI=0;
+			var i=0,len=0;
+			var preData;
+			var tData;
+			len=iList.length;
+			for (i=0;i < len;i++){
+				tI=iList[i];
+				tData=dataList[tI];
+				this.drawCircle(tI,tData[sign],r,color);
+			}
+		}
+
+		__proto.drawCircle=function(i,y,r,color){
+			(r===void 0)&& (r=2);
+			(color===void 0)&& (color="#ff0000");
+			this.graphics.drawCircle(this.getAdptXV(i *this.gridWidth),this.getAdptYV(y),r,color);
+		}
+
+		__proto.drawPoint=function(i,y,text,dy,color,radio){
+			(dy===void 0)&& (dy=10);
+			(color===void 0)&& (color="#ffff00");
+			(radio===void 0)&& (radio=2);
+			var xPos=NaN;
+			xPos=this.getAdptXV(i *this.gridWidth);
+			this.graphics.drawCircle(xPos,this.getAdptYV(y),radio,color);
+			if (text){
+				this.graphics.fillText(text,xPos,this.getAdptYV(y)+dy,null,color,"center");
+			}
+		}
+
+		__proto.drawLine=function(startI,startY,endI,endY,color,lineWidth){
+			(color===void 0)&& (color="#ff0000");
+			(lineWidth===void 0)&& (lineWidth=1);
+			this.graphics.drawLine(this.getAdptXV(startI *this.gridWidth),this.getAdptYV(startY),this.getAdptXV(endI *this.gridWidth),this.getAdptYV(endY),color,lineWidth);
+		}
+
+		__proto.drawLineEx=function(startI,startY,endI,endY,color){
+			(color===void 0)&& (color="#ff0000");
+			this.graphics.drawLine(this.getAdptXV(startI *this.gridWidth),-startY,this.getAdptXV(endI *this.gridWidth),-endY,color);
+		}
+
+		__proto.drawGridLine=function(startI,endI,values,color,texts){
+			(color===void 0)&& (color="#ff0000");
+			var i=0,len=0;
+			len=values.length;
+			var tValue=NaN;
+			var tTxt;
+			for (i=0;i < len;i++){
+				tValue=values;
+				this.drawLine(startI,tValue,endI,tValue,color);
+			}
+			if (texts){
+				len=texts.length;
+				for (i=0;i < len;i++){
+					tTxt=texts[i];
+					tValue=values[i];
+					this.graphics.fillText(tTxt,this.getAdptXV(startI *this.gridWidth),this.getAdptYV(tValue),null,color,"left");
+					this.graphics.fillText(tTxt,this.getAdptXV(endI *this.gridWidth),this.getAdptYV(tValue),null,color,"right");
+				}
+			}
+		}
+
+		__proto.drawGridLineEx=function(startI,endI,values,color,texts){
+			(color===void 0)&& (color="#ff0000");
+			var i=0,len=0;
+			len=values.length;
+			var tValue=NaN;
+			var tTxt;
+			var g;
+			g=this.graphics;
+			g.save();
+			g.alpha(0.5)
+			for (i=0;i < len;i++){
+				tValue=values[i];
+				this.drawLineEx(startI,tValue,endI,tValue,color);
+			}
+			g.restore();
+			if (texts){
+				len=texts.length;
+				for (i=0;i < len;i++){
+					tTxt=texts[i];
+					tValue=values[i];
+					this.graphics.fillText(tTxt,this.getAdptXV(startI *this.gridWidth),-tValue,null,color,"left");
+					this.graphics.fillText(tTxt,this.getAdptXV(endI *this.gridWidth),-tValue,null,color,"right");
+				}
+			}
+		}
+
+		__proto.getAdptYV=function(v){
+			return-DataUtils.mParseFloat(v)*this.yRate;
+		}
+
+		__proto.getAdptXV=function(v){
+			return DataUtils.mParseFloat(v)*this.xRate;
+		}
+
+		__proto.getIByX=function(x){
+			return Math.round(x / (this.xRate *this.gridWidth));
+		}
+
+		KLine.KlineShowed="KlineShowed";
+		__static(KLine,
+		['SignDrawDes',function(){return this.SignDrawDes={"high":{color:"#ffff00",dy:-20},"low":{color:"#00ff00",dy:20}};}
+		]);
+		return KLine;
 	})(Sprite)
 
 
@@ -27453,6 +30041,165 @@ var Laya=window.Laya=(function(window,document){
 
 		return Box;
 	})(Component)
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class stock.views.MDLine extends stock.views.DrawBoard
+	var MDLine=(function(_super){
+		function MDLine(){
+			this.stockSp=null;
+			this.stock=null;
+			this.MDData=null;
+			this.stockList=[];
+			this.maxXCount=241;
+			this.topLine=1.1;
+			this.bottomLine=0.9;
+			MDLine.__super.call(this);
+			this.stockSp=new Sprite();
+			this.addChild(this.stockSp);
+			this.MDData=new SinaMData();
+			this.MDData.completeHandler=new Handler(this,this.onStockData);
+		}
+
+		__class(MDLine,'stock.views.MDLine',_super);
+		var __proto=MDLine.prototype;
+		__proto.setUpGrids=function(){
+			this.drawGrids(this);
+		}
+
+		__proto.fresh=function(){
+			this.freshData();
+		}
+
+		__proto.addStock=function(stock){
+			var mdData;
+			mdData=new SinaMData();
+			var sp;
+			sp=new Sprite();
+			this.addChild(sp);
+			sp.name=StockTools.getAdptStockStr(stock);
+			mdData.completeHandler=new Handler(this,this.onStockData,[mdData,sp]);
+			mdData.getData(stock);
+			this.stockList.push(mdData);
+		}
+
+		__proto.removeStock=function(stock){
+			var i=0,len=0;
+			len=this.stockList.length;
+			var tStockStr;
+			var tMDData;
+			tStockStr=StockTools.getAdptStockStr(stock);
+			for (i=0;i < len;i++){
+				tMDData=this.stockList[i];
+				if (tMDData.stock==tStockStr){
+					this.stockList.splice(i,1);
+					break ;
+				}
+			};
+			var tChild;
+			tChild=this.getChildByName(tStockStr);
+			if (tChild)tChild.removeSelf();
+		}
+
+		__proto.setStock=function(stock){
+			this.MDData.getData(stock);
+		}
+
+		__proto.freshData=function(){
+			if (!this.displayedInStage)return;
+			this.MDData.getDataFromServer();
+			var i=0,len=0;
+			len=this.stockList.length;
+			var tStockData;
+			for (i=0;i < len;i++){
+				tStockData=this.stockList[i];
+				tStockData.getDataFromServer();
+			}
+		}
+
+		__proto.startFresh=function(interval){
+			(interval===void 0)&& (interval=5000);
+			Laya.timer.loop(interval,this,this.freshData);
+		}
+
+		__proto.stopFresh=function(){
+			Laya.timer.clear(this,this.freshData);
+		}
+
+		__proto.setRateSize=function(baseLine){
+			var maxP=NaN;
+			maxP=baseLine *this.topLine;
+			var minP=NaN;
+			minP=baseLine *this.bottomLine;
+			var d=NaN;
+			d=maxP-minP;
+			this.setDataSize(this.maxXCount,d);
+			return minP;
+		}
+
+		__proto.onStockData=function(mdData,sp){
+			if (!sp)sp=this.stockSp;
+			var data
+			data=mdData.dataArr;
+			var basic;
+			basic=mdData.basic;
+			sp.graphics.clear();
+			var color;
+			color=mdData.color;
+			var preClose=NaN;
+			preClose=parseFloat(basic.close);
+			var minP=NaN;
+			minP=this.setRateSize(preClose);
+			var i=0,len=0;
+			len=data.length;
+			var preX=NaN;
+			var preY=NaN;
+			var xpos=NaN;
+			var yPos=NaN;
+			for (i=1;i < len;i++){
+				preX=this.getAdptXV(i-1);
+				preY=this.getAdptYV(data[i-1].price-minP);
+				xpos=this.getAdptXV(i);
+				yPos=this.getAdptYV(data[i].price-minP);
+				sp.graphics.drawLine(preX,preY,xpos,yPos,color);
+			}
+		}
+
+		//this.graphics.drawCircle(xpos,yPos,2,"#ff0000");
+		__proto.drawGrids=function(sp){
+			if (!sp)sp=this;
+			sp.graphics.clear();
+			var minP=NaN;
+			minP=this.setRateSize(1);
+			var rates;
+			rates=[];
+			var i=0,len=0;
+			var tV=NaN;
+			tV=0.9;
+			var tDrawV=NaN;
+			var color;
+			while (tV <=1.1){
+				tDrawV=tV;
+				if (tV < 1){
+					color="#00ff00";
+				}
+				else if (tV==1){
+					color="#00ffff";
+				}
+				else {
+					color="#ff0000";
+				}
+				sp.graphics.drawLine(this.getAdptXV(0),this.getAdptYV(tDrawV-minP),this.getAdptXV(this.maxXCount),this.getAdptYV(tDrawV-minP),color);
+				sp.graphics.fillText(StockTools.getGoodPercent(tV-1)+"%",this.getAdptXV(this.maxXCount),this.getAdptYV(tDrawV-minP)-6,null,color,"left");
+				tV+=0.01;
+			}
+		}
+
+		return MDLine;
+	})(DrawBoard)
 
 
 	/**
@@ -32233,6 +34980,70 @@ var Laya=window.Laya=(function(window,document){
 
 		return HTMLImage;
 	})(FileBitmap)
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class stock.prop.PropItem extends laya.ui.Box
+	var PropItem=(function(_super){
+		function PropItem(){
+			this.box=null;
+			this.label=null;
+			this.tInput=null;
+			this.tType=null;
+			this.key=null;
+			PropItem.__super.call(this);
+		}
+
+		__class(PropItem,'stock.prop.PropItem',_super);
+		var __proto=PropItem.prototype;
+		__proto.initByType=function(type){
+			(type===void 0)&& (type="");
+			this.tType=type;
+			this.createPropItem(type);
+		}
+
+		__proto.createPropItem=function(type){
+			this.removeChildren();
+			this.label=new Label();
+			this.label.color="#ff0000";
+			this.label.pos(0,0);
+			this.tInput=new TextInput();
+			this.tInput.skin="comp/textinput.png";
+			this.tInput.pos(70,0);
+			this.tInput.width=100;
+			this.tInput.color="#ffffff";
+			this.addChild(this.label);
+			this.addChild(this.tInput);
+		}
+
+		__proto.setLabel=function(txt){
+			this.label.text=txt;
+		}
+
+		__proto.setValue=function(v){
+			this.tInput.text=v;
+		}
+
+		__proto.getValue=function(){
+			if (this.tType=="NUMBER"){
+				return ValueTools.mParseFloat(this.tInput.text);
+			}
+			return this.tInput.text;
+		}
+
+		PropItem.createByType=function(type){
+			(type===void 0)&& (type="");
+			var rst;
+			rst=new PropItem();
+			rst.initByType(type);
+			return rst;
+		}
+
+		return PropItem;
+	})(Box)
 
 
 	/**
@@ -37573,6 +40384,283 @@ var Laya=window.Laya=(function(window,document){
 	})(FrameAnimation)
 
 
+	//class ui.prop.PropPanelUI extends laya.ui.View
+	var PropPanelUI=(function(_super){
+		function PropPanelUI(){
+			this.title=null;
+			this.okBtn=null;
+			this.propBox=null;
+			PropPanelUI.__super.call(this);
+		}
+
+		__class(PropPanelUI,'ui.prop.PropPanelUI',_super);
+		var __proto=PropPanelUI.prototype;
+		__proto.createChildren=function(){
+			laya.ui.Component.prototype.createChildren.call(this);
+			this.createView(PropPanelUI.uiView);
+		}
+
+		PropPanelUI.uiView={"type":"View","props":{"width":230,"height":400},"child":[{"type":"Label","props":{"y":18,"x":18,"width":80,"var":"title","text":"属性设置","height":20,"color":"#e72b28"}},{"type":"Button","props":{"y":13,"x":100,"var":"okBtn","skin":"comp/button.png","label":"应用设置","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Box","props":{"y":45,"x":13,"width":190,"var":"propBox","height":237}}]};
+		return PropPanelUI;
+	})(View)
+
+
+	//class ui.BackTestViewUI extends laya.ui.View
+	var BackTestViewUI=(function(_super){
+		function BackTestViewUI(){
+			this.list=null;
+			this.tip=null;
+			this.selectFileBtn=null;
+			this.typeSelect=null;
+			BackTestViewUI.__super.call(this);
+		}
+
+		__class(BackTestViewUI,'ui.BackTestViewUI',_super);
+		var __proto=BackTestViewUI.prototype;
+		__proto.createChildren=function(){
+			laya.ui.Component.prototype.createChildren.call(this);
+			this.createView(BackTestViewUI.uiView);
+		}
+
+		BackTestViewUI.uiView={"type":"View","props":{"width":445,"height":400},"child":[{"type":"List","props":{"var":"list","vScrollBarSkin":"comp/vscroll.png","top":30,"right":10,"left":10,"bottom":10},"child":[{"type":"Box","props":{"y":0,"x":0,"width":168,"name":"render","height":61},"child":[{"type":"Label","props":{"wordWrap":true,"top":0,"text":"this is a list","skin":"comp/label.png","right":0,"name":"label","left":0,"fontSize":14,"color":"#efe82f","bottom":0,"borderColor":"#fb125d"}},{"type":"Label","props":{"y":39,"x":72,"wordWrap":true,"width":96,"text":"this is a list","skin":"comp/label.png","name":"info","height":22,"fontSize":14,"color":"#efe82f","align":"right"}}]}]},{"type":"Label","props":{"y":-11,"width":271,"var":"tip","text":"股票代码:当前盈利:最高盈利","right":150,"height":38,"color":"#f33713"}},{"type":"Button","props":{"y":4,"x":8,"width":94,"var":"selectFileBtn","skin":"comp/button.png","label":"选择回测文件","height":24,"labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"ComboBox","props":{"y":3,"x":10,"visibleNum":15,"var":"typeSelect","skin":"comp/combobox.png","selectedIndex":0,"scrollBarSkin":"comp/vscroll.png","right":20,"labels":"date","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}}]};
+		return BackTestViewUI;
+	})(View)
+
+
+	//class ui.KLineViewUI extends laya.ui.View
+	var KLineViewUI=(function(_super){
+		function KLineViewUI(){
+			this.stockSelect=null;
+			this.playBtn=null;
+			this.infoTxt=null;
+			this.stockInput=null;
+			this.playInputBtn=null;
+			this.enableAnimation=null;
+			this.detailBtn=null;
+			this.preBtn=null;
+			this.nextBtn=null;
+			this.analyserList=null;
+			this.propPanel=null;
+			this.dayScroll=null;
+			this.maxDayEnable=null;
+			this.dayCountInput=null;
+			this.clickControlEnable=null;
+			this.addToStockBtn=null;
+			this.tradeTest=null;
+			this.tradeSelect=null;
+			this.markBtn=null;
+			KLineViewUI.__super.call(this);
+		}
+
+		__class(KLineViewUI,'ui.KLineViewUI',_super);
+		var __proto=KLineViewUI.prototype;
+		__proto.createChildren=function(){
+			View.regComponent("view.plugins.AnalyserList",AnalyserList);
+			View.regComponent("stock.prop.PropPanel",PropPanel);
+			View.regComponent("view.plugins.TradeTest",TradeTest);
+			laya.ui.Component.prototype.createChildren.call(this);
+			this.createView(KLineViewUI.uiView);
+		}
+
+		KLineViewUI.uiView={"type":"View","props":{"width":800,"height":400},"child":[{"type":"ComboBox","props":{"y":9,"x":8,"var":"stockSelect","skin":"comp/combobox.png","scrollBarSkin":"comp/vscroll.png","labels":"000233,600322","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":9,"x":114,"var":"playBtn","skin":"comp/button.png","label":"play","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Label","props":{"y":13,"x":225,"width":147,"var":"infoTxt","text":"label","height":20,"color":"#ffffff"}},{"type":"TextInput","props":{"y":43,"x":8,"width":90,"var":"stockInput","text":"002234","skin":"comp/textinput.png","height":22,"color":"#f1dede"}},{"type":"Button","props":{"y":42,"x":114,"var":"playInputBtn","skin":"comp/button.png","label":"play","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"CheckBox","props":{"y":45,"x":226,"var":"enableAnimation","skin":"comp/checkbox.png","selected":true,"label":"开启动画","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":39,"x":301,"var":"detailBtn","skin":"comp/button.png","label":"详情","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":80,"x":8,"var":"preBtn","skin":"comp/button.png","label":"pre","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":80,"x":100,"var":"nextBtn","skin":"comp/button.png","label":"next","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"AnalyserList","props":{"var":"analyserList","top":10,"runtime":"view.plugins.AnalyserList","right":10}},{"type":"PropPanel","props":{"y":0,"var":"propPanel","runtime":"stock.prop.PropPanel","right":180}},{"type":"HScrollBar","props":{"y":101,"x":225,"width":166,"var":"dayScroll","skin":"comp/hscroll.png","height":13}},{"type":"CheckBox","props":{"y":76,"x":226,"var":"maxDayEnable","skin":"comp/checkbox.png","selected":false,"label":"天数限制","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"TextInput","props":{"y":73,"x":300,"width":90,"var":"dayCountInput","text":"300","skin":"comp/textinput.png","height":22,"color":"#f1dede"}},{"type":"CheckBox","props":{"y":77,"x":403,"var":"clickControlEnable","skin":"comp/checkbox.png","selected":true,"label":"单击平移","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":39,"x":383,"width":51,"var":"addToStockBtn","skin":"comp/button.png","label":"加自选","height":24,"labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"TradeTest","props":{"var":"tradeTest","runtime":"view.plugins.TradeTest","left":5,"bottom":5}},{"type":"CheckBox","props":{"y":109,"x":8,"var":"tradeSelect","skin":"comp/checkbox.png","selected":true,"label":"模拟交易","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":39,"x":440,"width":51,"var":"markBtn","skin":"comp/button.png","label":"Mark","height":24,"labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}}]};
+		return KLineViewUI;
+	})(View)
+
+
+	//class ui.MainViewUI extends laya.ui.View
+	var MainViewUI=(function(_super){
+		function MainViewUI(){
+			this.typeSelect=null;
+			this.stockListView=null;
+			this.kLineView=null;
+			this.selectView=null;
+			this.realTimeView=null;
+			this.logoView=null;
+			this.bactTestView=null;
+			MainViewUI.__super.call(this);
+		}
+
+		__class(MainViewUI,'ui.MainViewUI',_super);
+		var __proto=MainViewUI.prototype;
+		__proto.createChildren=function(){
+			View.regComponent("view.StockView",StockView);
+			View.regComponent("view.KLineView",KLineView);
+			View.regComponent("view.SelectStockView",SelectStockView);
+			View.regComponent("view.RealTimeView",RealTimeView);
+			View.regComponent("view.netcomps.LoginView",LoginView);
+			View.regComponent("view.BackTestView",BackTestView);
+			laya.ui.Component.prototype.createChildren.call(this);
+			this.createView(MainViewUI.uiView);
+		}
+
+		MainViewUI.uiView={"type":"View","props":{"width":445,"height":400},"child":[{"type":"Tab","props":{"y":4,"x":4,"var":"typeSelect","skin":"comp/tab.png","selectedIndex":0,"labels":"股票列表,K线动画,选股,自选,回测,扫码","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"StockView","props":{"var":"stockListView","top":40,"runtime":"view.StockView","right":10,"left":10,"bottom":10}},{"type":"KLineView","props":{"var":"kLineView","top":40,"runtime":"view.KLineView","right":10,"left":10,"bottom":10}},{"type":"SelectStockView","props":{"var":"selectView","top":40,"runtime":"view.SelectStockView","right":10,"left":10,"bottom":10}},{"type":"RealTime","props":{"var":"realTimeView","top":40,"runtime":"view.RealTimeView","right":10,"left":10,"bottom":10}},{"type":"Image","props":{"y":106,"var":"logoView","skin":"comp/logo.png","centerX":0}},{"type":"LoginView","props":{"y":4,"runtime":"view.netcomps.LoginView","right":5}},{"type":"BackTestView","props":{"var":"bactTestView","top":40,"runtime":"view.BackTestView","right":10,"left":10,"bottom":10}}]};
+		return MainViewUI;
+	})(View)
+
+
+	//class ui.netcomps.LoginViewUI extends laya.ui.View
+	var LoginViewUI=(function(_super){
+		function LoginViewUI(){
+			this.loginBox=null;
+			this.userNameInput=null;
+			this.pwdInput=null;
+			this.loginBtn=null;
+			this.loginedBox=null;
+			this.logoutBtn=null;
+			this.usernameTxt=null;
+			LoginViewUI.__super.call(this);
+		}
+
+		__class(LoginViewUI,'ui.netcomps.LoginViewUI',_super);
+		var __proto=LoginViewUI.prototype;
+		__proto.createChildren=function(){
+			laya.ui.Component.prototype.createChildren.call(this);
+			this.createView(LoginViewUI.uiView);
+		}
+
+		LoginViewUI.uiView={"type":"View","props":{"width":288,"height":26},"child":[{"type":"Box","props":{"y":2,"x":6,"var":"loginBox"},"child":[{"type":"TextInput","props":{"width":96,"var":"userNameInput","skin":"comp/input_24.png","prompt":"username","height":22,"color":"#f6e1e1"}},{"type":"TextInput","props":{"x":107,"width":96,"var":"pwdInput","skin":"comp/input_24.png","prompt":"pwd","height":22,"color":"#f6e1e1"}},{"type":"Button","props":{"x":212,"var":"loginBtn","skin":"comp/button.png","label":"login","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}}]},{"type":"Box","props":{"y":2,"x":8,"visible":false,"var":"loginedBox"},"child":[{"type":"Button","props":{"x":210,"var":"logoutBtn","skin":"comp/button.png","label":"logout","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Label","props":{"width":141,"visible":true,"var":"usernameTxt","text":"username","height":20,"color":"#ffffff"}}]}]};
+		return LoginViewUI;
+	})(View)
+
+
+	//class ui.plugins.AnalyserListUI extends laya.ui.View
+	var AnalyserListUI=(function(_super){
+		function AnalyserListUI(){
+			this.list=null;
+			this.showSelect=null;
+			AnalyserListUI.__super.call(this);
+		}
+
+		__class(AnalyserListUI,'ui.plugins.AnalyserListUI',_super);
+		var __proto=AnalyserListUI.prototype;
+		__proto.createChildren=function(){
+			laya.ui.Component.prototype.createChildren.call(this);
+			this.createView(AnalyserListUI.uiView);
+		}
+
+		AnalyserListUI.uiView={"type":"View","props":{"width":160,"height":212},"child":[{"type":"List","props":{"y":19,"x":0,"width":160,"var":"list","vScrollBarSkin":"comp/vscroll.png","height":193},"child":[{"type":"Box","props":{"y":0,"x":0,"width":148,"renderType":"render","height":17},"child":[{"type":"Label","props":{"width":80,"text":"limittxt","name":"nameTxt","height":17,"color":"#e0211d"}},{"type":"CheckBox","props":{"x":92,"skin":"comp/checkbox.png","name":"ifShow","label":"启用","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}}]}]},{"type":"CheckBox","props":{"y":0,"x":2,"var":"showSelect","skin":"comp/checkbox.png","selected":true,"label":"显示插件列表","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}}]};
+		return AnalyserListUI;
+	})(View)
+
+
+	//class ui.plugins.TradeTestUI extends laya.ui.View
+	var TradeTestUI=(function(_super){
+		function TradeTestUI(){
+			this.buyBtn=null;
+			this.sellBtn=null;
+			this.tradeInfoTxt=null;
+			this.resetBtn=null;
+			this.anotherBtn=null;
+			this.countTxt=null;
+			this.nextDayBtn=null;
+			this.stockInfoTxt=null;
+			TradeTestUI.__super.call(this);
+		}
+
+		__class(TradeTestUI,'ui.plugins.TradeTestUI',_super);
+		var __proto=TradeTestUI.prototype;
+		__proto.createChildren=function(){
+			laya.ui.Component.prototype.createChildren.call(this);
+			this.createView(TradeTestUI.uiView);
+		}
+
+		TradeTestUI.uiView={"type":"View","props":{"width":271,"height":137},"child":[{"type":"Button","props":{"y":78,"x":113,"var":"buyBtn","skin":"comp/button.png","label":"买入","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":79,"x":195,"var":"sellBtn","skin":"comp/button.png","label":"卖出","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Label","props":{"y":0,"x":0,"width":139,"var":"tradeInfoTxt","text":"总金额:xxxx\\n股票:xxxx\\n总盈亏:xxxx\\n持仓盈亏:xxx","height":74,"color":"#f33713"}},{"type":"Button","props":{"y":111,"x":31,"var":"resetBtn","skin":"comp/button.png","label":"重置","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":112,"x":113,"var":"anotherBtn","skin":"comp/button.png","label":"随机开局","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"TextInput","props":{"y":79,"x":36,"width":66,"var":"countTxt","text":"300","skin":"comp/textinput.png","height":22,"color":"#f1dede"}},{"type":"Button","props":{"y":111,"x":195,"var":"nextDayBtn","skin":"comp/button.png","label":"下一天","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Label","props":{"y":84,"x":2,"text":"数量","color":"#ee1613"}},{"type":"Label","props":{"y":0,"x":165,"width":104,"var":"stockInfoTxt","text":"当前股价:xxx","height":74,"color":"#f33713"}}]};
+		return TradeTestUI;
+	})(View)
+
+
+	//class ui.realtime.RealTimeUI extends laya.ui.View
+	var RealTimeUI=(function(_super){
+		function RealTimeUI(){
+			this.list=null;
+			this.autoFresh=null;
+			this.freshBtn=null;
+			this.stockInput=null;
+			this.addBtn=null;
+			this.showMDCheck=null;
+			this.showListCheck=null;
+			this.netBox=null;
+			this.saveBtn=null;
+			this.loadBtn=null;
+			RealTimeUI.__super.call(this);
+		}
+
+		__class(RealTimeUI,'ui.realtime.RealTimeUI',_super);
+		var __proto=RealTimeUI.prototype;
+		__proto.createChildren=function(){
+			View.regComponent("view.realtime.RealTimeItem",RealTimeItem);
+			laya.ui.Component.prototype.createChildren.call(this);
+			this.createView(RealTimeUI.uiView);
+		}
+
+		RealTimeUI.uiView={"type":"View","props":{"width":445,"height":400},"child":[{"type":"List","props":{"y":10,"x":10,"var":"list","vScrollBarSkin":"comp/vscroll.png","top":30,"right":10,"repeatX":1,"left":10,"bottom":10},"child":[{"type":"StockRealTimeItem","props":{"y":0,"x":0,"runtime":"view.realtime.RealTimeItem","renderType":"render"}}]},{"type":"CheckBox","props":{"y":7,"x":7,"width":61,"var":"autoFresh","skin":"comp/checkbox.png","label":"自动刷新","height":19,"labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":3,"x":90,"var":"freshBtn","skin":"comp/button.png","label":"刷新","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"TextInput","props":{"y":5,"x":185,"width":90,"var":"stockInput","text":"002234","skin":"comp/textinput.png","height":22,"color":"#f1dede"}},{"type":"Button","props":{"y":4,"x":285,"var":"addBtn","skin":"comp/button.png","label":"添加","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"CheckBox","props":{"y":8,"x":364,"width":61,"var":"showMDCheck","skin":"comp/checkbox.png","label":"分时图","height":19,"labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"CheckBox","props":{"y":8,"x":425,"width":61,"var":"showListCheck","skin":"comp/checkbox.png","label":"列表","height":19,"labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Box","props":{"y":3,"x":477,"var":"netBox"},"child":[{"type":"Button","props":{"var":"saveBtn","skin":"comp/button.png","label":"save","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":1,"x":85,"var":"loadBtn","skin":"comp/button.png","label":"load","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}}]}]};
+		return RealTimeUI;
+	})(View)
+
+
+	//class ui.realtime.StockRealTimeItemUI extends laya.ui.View
+	var StockRealTimeItemUI=(function(_super){
+		function StockRealTimeItemUI(){
+			this.txt=null;
+			this.delBtn=null;
+			this.showLine=null;
+			this.markBtn=null;
+			StockRealTimeItemUI.__super.call(this);
+		}
+
+		__class(StockRealTimeItemUI,'ui.realtime.StockRealTimeItemUI',_super);
+		var __proto=StockRealTimeItemUI.prototype;
+		__proto.createChildren=function(){
+			laya.ui.Component.prototype.createChildren.call(this);
+			this.createView(StockRealTimeItemUI.uiView);
+		}
+
+		StockRealTimeItemUI.uiView={"type":"View","props":{"width":546,"height":25},"child":[{"type":"Box","props":{"y":0,"x":0,"width":546,"height":25},"child":[{"type":"Label","props":{"wordWrap":true,"var":"txt","top":0,"text":"this is a list","skin":"comp/label.png","right":0,"name":"label","left":0,"fontSize":14,"color":"#efe82f","bottom":0,"borderColor":"#fb125d"}}]},{"type":"Button","props":{"y":0,"x":457,"width":42,"var":"delBtn","skin":"comp/button.png","label":"删除","height":24,"labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"CheckBox","props":{"y":5,"x":410,"var":"showLine","skin":"comp/checkbox.png","label":"分时","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":0,"x":500,"width":42,"var":"markBtn","skin":"comp/button.png","label":"Mark","height":24,"labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}}]};
+		return StockRealTimeItemUI;
+	})(View)
+
+
+	//class ui.SelectStockViewUI extends laya.ui.View
+	var SelectStockViewUI=(function(_super){
+		function SelectStockViewUI(){
+			this.list=null;
+			this.tip=null;
+			this.typeSelect=null;
+			this.autoFresh=null;
+			SelectStockViewUI.__super.call(this);
+		}
+
+		__class(SelectStockViewUI,'ui.SelectStockViewUI',_super);
+		var __proto=SelectStockViewUI.prototype;
+		__proto.createChildren=function(){
+			laya.ui.Component.prototype.createChildren.call(this);
+			this.createView(SelectStockViewUI.uiView);
+		}
+
+		SelectStockViewUI.uiView={"type":"View","props":{"width":445,"height":400},"child":[{"type":"List","props":{"var":"list","vScrollBarSkin":"comp/vscroll.png","top":30,"right":10,"left":10,"bottom":10},"child":[{"type":"Box","props":{"y":0,"x":0,"width":168,"name":"render","height":61},"child":[{"type":"Label","props":{"wordWrap":true,"top":0,"text":"this is a list","skin":"comp/label.png","right":0,"name":"label","left":0,"fontSize":14,"color":"#efe82f","bottom":0,"borderColor":"#fb125d"}},{"type":"Label","props":{"y":39,"x":72,"wordWrap":true,"width":96,"text":"this is a list","skin":"comp/label.png","name":"info","height":22,"fontSize":14,"color":"#efe82f","align":"right"}}]}]},{"type":"Label","props":{"y":-11,"width":271,"var":"tip","text":"股票代码:当前盈利:最高盈利","right":150,"height":38,"color":"#f33713"}},{"type":"ComboBox","props":{"y":3,"visibleNum":15,"var":"typeSelect","skin":"comp/combobox.png","selectedIndex":0,"scrollBarSkin":"comp/vscroll.png","right":20,"labels":"KLine,Position","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"CheckBox","props":{"y":10,"x":11,"width":75,"var":"autoFresh","skin":"comp/checkbox.png","selected":false,"label":"自动刷新","height":14,"labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}}]};
+		return SelectStockViewUI;
+	})(View)
+
+
+	//class ui.StockViewUI extends laya.ui.View
+	var StockViewUI=(function(_super){
+		function StockViewUI(){
+			this.stockList=null;
+			StockViewUI.__super.call(this);
+		}
+
+		__class(StockViewUI,'ui.StockViewUI',_super);
+		var __proto=StockViewUI.prototype;
+		__proto.createChildren=function(){
+			laya.ui.Component.prototype.createChildren.call(this);
+			this.createView(StockViewUI.uiView);
+		}
+
+		StockViewUI.uiView={"type":"View","props":{"width":445,"height":400},"child":[{"type":"List","props":{"x":20,"width":405,"var":"stockList","vScrollBarSkin":"comp/vscroll.png","top":30,"right":20,"left":20,"height":360,"bottom":20},"child":[{"type":"Box","props":{"width":120,"renderType":"render","height":80},"child":[{"type":"Image","props":{"width":100,"skin":"comp/image.png","name":"img","height":75}}]}]},{"type":"Label","props":{"y":7,"x":8,"width":149,"text":"点击查看详情，注意不要屏蔽弹窗","height":12,"color":"#f3ecec"}}]};
+		return StockViewUI;
+	})(View)
+
+
 	//class laya.debug.ui.debugui.comps.ListItemUI extends laya.ui.View
 	var ListItemUI=(function(_super){
 		function ListItemUI(){
@@ -38648,6 +41736,1706 @@ var Laya=window.Laya=(function(window,document){
 	*...
 	*@author ww
 	*/
+	//class stock.prop.PropPanel extends ui.prop.PropPanelUI
+	var PropPanel=(function(_super){
+		function PropPanel(){
+			this.propBox=null;
+			this.tPropO=null;
+			this.tPropDes=null;
+			this.tPropItems=[];
+			PropPanel.__super.call(this);
+			this.okBtn.on("mousedown",this,this.onOk);
+			this.on("doubleclick",this,this.onDoubleClick);
+		}
+
+		__class(PropPanel,'stock.prop.PropPanel',_super);
+		var __proto=PropPanel.prototype;
+		__proto.onDoubleClick=function(){
+			this.visible=false;
+		}
+
+		__proto.onOk=function(){
+			if (!this.tPropO || !this.tPropItems)return;
+			var i=0,len=0;
+			len=this.tPropItems.length;
+			var tPropItem;
+			var key;
+			var tValue;
+			for (i=0;i < len;i++){
+				tPropItem=this.tPropItems[i];
+				key=tPropItem.key;
+				this.tPropO[key]=tPropItem.getValue();
+			}
+			this.event("MakeChange");
+		}
+
+		__proto.initByData=function(propDes,propO){
+			if (this.tPropO==propO){
+				return;
+			}
+			this.tPropO=propO;
+			this.tPropDes=propDes;
+			this.createBox(propDes);
+			this.initValue(propO);
+		}
+
+		__proto.refresh=function(){
+			if (this.tPropO){
+				this.initValue(this.tPropO);
+			}
+		}
+
+		__proto.initValue=function(propO){
+			if (!this.tPropDes)return;
+			var i=0,len=0;
+			len=this.tPropItems.length;
+			var tPropItem;
+			var key;
+			for (i=0;i < len;i++){
+				tPropItem=this.tPropItems[i];
+				key=tPropItem.key;
+				if (propO.hasOwnProperty(key)){
+					tPropItem.setValue(propO[key]);
+					}else{
+					tPropItem.setValue("");
+				}
+			}
+		}
+
+		__proto.createBox=function(propDes){
+			this.tPropItems.length=0;
+			this.propBox.removeChildren();
+			var i=0,len=0;
+			len=propDes.length;
+			var tItem;
+			var tPropO;
+			for (i=0;i < len;i++){
+				tPropO=propDes[i];
+				tItem=PropItem.createByType(tPropO[1]);
+				tItem.setLabel(tPropO[0]);
+				tItem.key=tPropO[0];
+				this.propBox.addChild(tItem);
+				tItem.pos(0,i *30);
+				this.tPropItems.push(tItem);
+			}
+		}
+
+		PropPanel.MakeChange="MakeChange";
+		return PropPanel;
+	})(PropPanelUI)
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class view.BackTestView extends ui.BackTestViewUI
+	var BackTestView=(function(_super){
+		function BackTestView(){
+			this.fileSelect=null;
+			this.tI=0;
+			this.preTime=0;
+			this.tDatas=null;
+			this.typeDic={};
+			this.tType="date";
+			BackTestView.__super.call(this);
+			this.fileSelect=new FileSelect(this.selectFileBtn,"*",new Handler(this,this.onChange));
+			this.list.renderHandler=new Handler(this,this.stockRender);
+			this.list.array=[];
+			this.list.mouseHandler=new Handler(this,this.onMouseList);
+			this.list.scrollBar.touchScrollEnable=true;
+			this.tip.text="回测文件显示";
+			this.typeSelect.on("change",this,this.onTypeChange);
+		}
+
+		__class(BackTestView,'view.BackTestView',_super);
+		var __proto=BackTestView.prototype;
+		__proto.onMouseList=function(e,index){
+			if (e.type=="mouseup"){
+				var tTime=Browser.now();
+				if (tTime-this.preTime > 500){
+					this.preTime=tTime;
+					return;
+				}
+				this.preTime=tTime;
+				var tData;
+				tData=this.list.array[index];
+				this.tI=index;
+				if (!tData)
+					return;
+				console.log(tData);
+				StockListManager.setStockList(this.list.array,this.tI);
+				Notice.notify("Show_Stock_KLine",[tData.code,tData]);
+			}
+		}
+
+		__proto.stockRender=function(cell,index){
+			var item=cell.dataSource;
+			var label;
+			label=cell.getChildByName("label");
+			var dataO;
+			dataO=item;
+			dataO.winRate=StockTools.getGoodPercent(dataO.sellRate);
+			label.text=ValueTools.getTplStr(BackTestView.tpl,dataO);
+			label=cell.getChildByName("info");
+			label.text="";
+		}
+
+		__proto.onChange=function(e){
+			console.log("change:",e);
+			var input;
+			input=e.target;
+			var file;
+			file=input.files[0];
+			if (file){
+				console.log("selectFile:",file.name);
+				JSTools.getTxtFromFile(file,Handler.create(this,this.onFileLoaded));
+			}
+			else{
+				console.log("nofileSelect");
+			}
+		}
+
+		__proto.onFileLoaded=function(txt){
+			var dataO;
+			dataO=JSON.parse(txt);
+			console.log("selectJson:",dataO);
+			if (dataO&&dataO.list){
+				this.list.array=dataO.list;
+				var tList;
+				tList=dataO.list;
+				this.tDatas=tList;
+				if (dataO.tpl){
+					BackTestView.tpl=dataO.tpl;
+				}
+				if (dataO.rankInfos){
+					this.initRankSelect(dataO.rankInfos);
+					}else{
+					this.initRankSelect([]);
+				};
+				var tInfoO;
+				tInfoO={};
+				tInfoO.count=tList.length;
+				tInfoO.avgRate=ArrayMethods.sumKey(tList,"sellRate")/ tInfoO.count;
+				tInfoO.avgRatePercent=StockTools.getGoodPercent(ArrayMethods.sumKey(tList,"sellRate")/ tInfoO.count)+"%";
+				tInfoO.avgDay=1+Math.floor(ArrayMethods.sumKey(tList,"sell")/ tInfoO.count);
+				tInfoO.winTime=ArrayMethods.count(tList,"sellRate",BackTestView.bigThenZero);
+				tInfoO.winRate=StockTools.getGoodPercent(tInfoO.winTime / tInfoO.count)+"%";
+				tInfoO.yearRate=StockTools.getGoodPercent((tInfoO.avgRate / tInfoO.avgDay)*240)+"%";
+				this.tip.text=ValueTools.getTplStr("购买次数:{#count#},胜率:{#winRate#}\n平均盈利:{#avgRatePercent#},{#avgDay#}Day\nYearRate:{#yearRate#}",tInfoO);
+			}
+		}
+
+		__proto.onTypeChange=function(){
+			this.tType=this.typeSelect.selectedLabel;
+			this.refreshData();
+		}
+
+		__proto.refreshData=function(){
+			if (!this.tDatas)
+				return;
+			if (this.typeDic[this.tType]){;
+				this.tDatas.sort(ValueTools.sortByKeyEX.apply(null,this.typeDic[this.tType]["sortParams"]));
+			}
+			else {
+				this.tDatas.sort(MathUtil.sortByKey("date",true,false));
+			}
+			this.list.array=this.tDatas;
+		}
+
+		__proto.initRankSelect=function(rankInfos){
+			var types;
+			types=rankInfos;
+			this.typeDic={};
+			var typesStr;
+			typesStr=[];
+			var tTypeO;
+			var i=0,len=0;
+			len=types.length;
+			for (i=0;i < len;i++){
+				tTypeO=types[i];
+				typesStr.push(tTypeO.label);
+				this.typeDic[tTypeO.label]=tTypeO;
+			}
+			if (typesStr.length < 1)typesStr=["date"];
+			this.typeSelect.labels=typesStr.join(",");
+			this.typeSelect.selectedIndex=0;
+			this.tType=this.typeSelect.selectedLabel;
+			this.refreshData();
+		}
+
+		BackTestView.bigThenZero=function(v){
+			return v > 0;
+		}
+
+		BackTestView.tpl="{#code#}\n{#date#}\n{#sell#}:{#winRate#}";
+		return BackTestView;
+	})(BackTestViewUI)
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class view.KLineView extends ui.KLineViewUI
+	var KLineView=(function(_super){
+		function KLineView(){
+			this.kLine=null;
+			this.tAnalyser=null;
+			this.addOnLayer=null;
+			this.dayLine=null;
+			this.dayStockInfoTxt=null;
+			this.preMouseX=NaN;
+			this.isLongPress=false;
+			this.isMyMouseDown=false;
+			this.tDayD=0;
+			this.isFirstStockComing=true;
+			this._preStock=null;
+			this._des=null;
+			KLineView.__super.call(this);
+			this.kLine=new KLine();
+			this.kLine.on("DataInited",this,this.onStockInited);
+			this.dayScroll.on("change",this,this.onDayScrollChange);
+			this.maxDayEnable.on("change",this,this.onPlayInput);
+			this.kLine.analysers=[];
+			var analyserClassList;
+			analyserClassList=[];
+			analyserClassList.push(KLineAnalyser);
+			analyserClassList.push(BreakAnalyser);
+			analyserClassList.push(BottomAnalyser);
+			analyserClassList.push(AverageLine);
+			analyserClassList.push(VolumeBar);
+			analyserClassList.push(WinRateLine);
+			analyserClassList.push(PositionLine);
+			analyserClassList.push(ChanAnalyser);
+			analyserClassList.push(StrongLine);
+			analyserClassList.push(AverageLineAnalyser);
+			analyserClassList.push(DistAnalyser);
+			this.analyserList.initAnalysers(analyserClassList);
+			this.addChild(this.kLine);
+			this.kLine.pos(0,this.kLine.lineHeight+90);
+			this.kLine.on("msg",this,this.onKlineMsg);
+			this.addOnLayer=new Sprite();
+			this.addChild(this.addOnLayer);
+			this.addOnLayer.pos(this.kLine.x,this.kLine.y);
+			this.dayLine=new Sprite();
+			this.dayStockInfoTxt=new Text();
+			this.dayStockInfoTxt.color="#ff0000";
+			this.dayStockInfoTxt.x=2;
+			this.dayStockInfoTxt.width=120;
+			this.dayStockInfoTxt.align="left";
+			this.dayLine.addChild(this.dayStockInfoTxt);
+			this.addOnLayer.addChild(this.dayLine);
+			var stock;
+			stock="300383";
+			stock="002064";
+			this.init();
+			this.propPanel.visible=false;
+			Notice.listen("AnalyserListChange",this,this.analysersChanged);
+			Notice.listen("Show_Analyser_Prop",this,this.showAnalyserProp);
+			Notice.listen("Hide_Analyser_Prop",this,this.updatePropPanelPos);
+			Notice.listen("Set_Analyser_Prop",this,this.onSetAnalyserProps);
+			this.propPanel.on("MakeChange",this,this.refreshKLine);
+			this.on("mousedown",this,this.onMMouseDown);
+			this.on("mouseup",this,this.onMMouseUp);
+			this.enableAnimation.selected=false;
+			this.addToStockBtn.on("mousedown",this,this.onAddToStock);
+			this.markBtn.on("mousedown",this,this.onMarkBtn);
+			this.on("keydown",this,this.onKeyDown);
+			this.tradeSelect.selected=false;
+			this.tradeSelect.on("change",this,this.updateTradeVisible);
+			this.updateTradeVisible();
+			this.kLine.on("KlineShowed",this,this.onKlineShowed);
+			this.tradeTest.on("NEXT_Day",this,this.onNextDay);
+			this.tradeTest.on("ANOTHER",this,this.onAnotherTradeTest);
+			if (Browser.onMobile)this.tradeSelect.scaleX=this.tradeSelect.scaleY=2;
+			MultiTouchManager.I.on("MultiStart",this,this.clearAllMouseDown);
+		}
+
+		__class(KLineView,'view.KLineView',_super);
+		var __proto=KLineView.prototype;
+		__proto.updateDayLine=function(){
+			if (this.clickControlEnable.selected)
+				return;
+			var curI=NaN;
+			curI=this.kLine.getIByX(this.addOnLayer.mouseX);
+			this.dayLine.x=this.kLine.getAdptXV(curI)*this.kLine.gridWidth;
+			this.dayLine.visible=true;
+			var tStockData;
+			tStockData=this.kLine.disDataList[curI];
+			var preStockData;
+			preStockData=this.kLine.disDataList[curI-1];
+			if (tStockData){
+				var showStr;
+				if (preStockData){
+					showStr=tStockData.date+
+					"\n"+"Open:"+tStockData.open+":"+StockTools.getGoodPercent((tStockData.open-preStockData.close)/ preStockData.close)+"%"+
+					""+"Close:"+tStockData.close+":"+StockTools.getGoodPercent((tStockData.close-preStockData.close)/ preStockData.close)+"%"+
+					"\n"+"High:"+tStockData.high+":"+StockTools.getGoodPercent((tStockData.high-preStockData.close)/ preStockData.close)+"%"+
+					""+"Low:"+tStockData.low+":"+StockTools.getGoodPercent((tStockData.low-preStockData.close)/ preStockData.close)+"%";
+					if (tStockData.close-tStockData.open >=0){
+						this.dayStockInfoTxt.color="#ff0000";
+					}
+					else {
+						this.dayStockInfoTxt.color="#00ff00";
+					}
+				}
+				else {
+					showStr=tStockData.date+
+					"\n"+"Close:"+tStockData.close+
+					"\n"+"High:"+tStockData.high+
+					"\n"+"Low:"+tStockData.low;
+					this.dayStockInfoTxt.color="#ff0000";
+				}
+				showStr+="\nFall:"+StockTools.getGoodPercent(StockTools.getStockFallDownPartRate(this.kLine.disDataList,curI));
+				showStr+=" Body:"+StockTools.getGoodPercent(StockTools.getBodyRate(this.kLine.disDataList,curI));
+				showStr+="\nAngle:"+StockTools.getDayLineAngleDay(this.kLine.disDataList,curI,5,0).toFixed(2)+" down:"+StockTools.getContinueDayLineAngleDownCount(this.kLine.disDataList,curI,5,0,"close");
+				showStr+=" Rise:"+StockTools.getGoodPercent(StockTools.getNoDownUpRateBeforeDay(this.kLine.disDataList,curI));
+				showStr+="\n"+"Tops:"+ArrayMethods.getItemValues(StockTools.findTopPoints(this.kLine.disDataList,curI-100,curI,6,6),"price").join(",");
+				if (this.dayLine.x+this.dayStockInfoTxt.width > this.width-20){
+					this.dayStockInfoTxt.align="right";
+					this.dayStockInfoTxt.x=-this.dayStockInfoTxt.width;
+				}
+				else {
+					this.dayStockInfoTxt.align="left";
+					this.dayStockInfoTxt.x=5;
+				}
+				this.dayStockInfoTxt.text=showStr;
+			}
+			else {
+				this.dayStockInfoTxt.text="";
+			}
+		}
+
+		__proto.onNextDay=function(){
+			this.dayScroll.value=this.dayScroll.value+1;
+		}
+
+		__proto.onAnotherTradeTest=function(){
+			Notice.notify("Show_Stock_KLine",StockBasicInfo.I.getRandomStock());
+		}
+
+		__proto.onKlineShowed=function(){
+			this.tradeTest.setDataList(this.kLine.disDataList,this.kLine.tStock);
+		}
+
+		__proto.updateTradeVisible=function(){
+			this.tradeTest.visible=this.tradeSelect.selected;
+			TradeTestManager.isTradeTestOn=this.tradeSelect.selected;
+			if (this.tradeSelect.selected){
+				if (!this.maxDayEnable.selected){
+					this.maxDayEnable.selected=true;
+				}
+			}
+		}
+
+		__proto.onKeyDown=function(e){
+			switch (e.keyCode){
+				case 40:
+					this.onNext();
+					break ;
+				case 38:
+					this.onPre();
+					break ;
+				case 37:
+					this.dayScroll.value=this.dayScroll.value-1;
+					break ;
+				case 39:
+					this.dayScroll.value=this.dayScroll.value+1;
+					break ;
+				}
+		}
+
+		__proto.onMarkBtn=function(){
+			Notice.notify("AddMyStock",this.kLine.tStock);
+			this.addToStockBtn.label="删自选";
+			Laya.timer.once(1000,this,this.markLater,[this.kLine.tStock]);
+		}
+
+		__proto.markLater=function(stock){
+			Notice.notify("Mark_MyStock",stock);
+		}
+
+		__proto.onAddToStock=function(){
+			if (this.addToStockBtn.label=="加自选"){
+				Notice.notify("AddMyStock",this.kLine.tStock);
+				MessageManager.I.show("add stock:"+this.kLine.tStock);
+				this.addToStockBtn.label="删自选";
+			}
+			else {
+				Notice.notify("Remove_MyStock",this.kLine.tStock);
+				MessageManager.I.show("remove stock:"+this.kLine.tStock);
+				this.addToStockBtn.label="加自选";
+			}
+		}
+
+		__proto.onMMouseDown=function(e){
+			Laya.stage.focus=this;
+			this.isMyMouseDown=false;
+			if (e.target !=this)
+				return;
+			if (MultiTouchManager.I.isMultiDown())return;
+			this.isMyMouseDown=true;
+			this.preMouseX=Laya.stage.mouseX;
+			this.isLongPress=false;
+			Laya.timer.once(800,this,this.longDown);
+			this.updateDayLine();
+		}
+
+		__proto.clearAllMouseDown=function(){
+			Laya.timer.clear(this,this.longDown);
+			Laya.timer.clear(this,this.loopChangeDay);
+			this.isMyMouseDown=false;
+		}
+
+		__proto.longDown=function(){
+			if (!this.maxDayEnable.selected)
+				return;
+			this.isLongPress=true;
+			var dX=NaN;
+			dX=Laya.stage.mouseX-this.preMouseX;
+			var tD=0;
+			if (dX > 80){
+				this.tDayD=1;
+			}
+			else if (dX <-80){
+				this.tDayD=-1;
+			}
+			Laya.timer.frameLoop(2,this,this.loopChangeDay);
+		}
+
+		__proto.loopChangeDay=function(){
+			this.dayScroll.value=this.dayScroll.value+this.tDayD;
+		}
+
+		__proto.onMMouseUp=function(){
+			if (!this.isMyMouseDown)
+				return;
+			Laya.timer.clear(this,this.longDown);
+			Laya.timer.clear(this,this.loopChangeDay);
+			if (this.isLongPress)
+				return;
+			var dX=NaN;
+			dX=Laya.stage.mouseX-this.preMouseX;
+			if (dX > 100){
+				this.onNext();
+			}
+			else if (dX <-100){
+				this.onPre();
+			}
+			else {
+				if (this.clickControlEnable.selected){
+					if (Laya.stage.mouseX > Laya.stage.width *0.5){
+						this.dayScroll.value=this.dayScroll.value+1;
+					}
+					else {
+						if (TradeTestManager.isTradeTestOn)
+							return;
+						this.dayScroll.value=this.dayScroll.value-1;
+					}
+				}
+			}
+		}
+
+		__proto.onSetAnalyserProps=function(analyserName,paramsO){
+			this.analyserList.setAnalyserParams(analyserName,paramsO);
+			this.propPanel.refresh();
+		}
+
+		__proto.refreshKLine=function(freshRealTimeData){
+			(freshRealTimeData===void 0)&& (freshRealTimeData=true);
+			this.showKline(this.kLine.tStock,freshRealTimeData);
+		}
+
+		__proto.showAnalyserProp=function(desArr,dataO){
+			this.propPanel.visible=true;
+			this.propPanel.initByData(desArr,dataO);
+			this.updatePropPanelPos();
+		}
+
+		__proto.updatePropPanelPos=function(){
+			this.propPanel.x=this.analyserList.x-this.propPanel.width-1;
+		}
+
+		__proto.analysersChanged=function(analysers){
+			this.kLine.analysers=analysers;
+			this.refreshKLine();
+		}
+
+		__proto.showStockKline=function(stock,des){
+			this.isFirstStockComing=true;
+			this.stockInput.text=stock;
+			this._des=des;
+			this.kLine.markO=des;
+			this.tradeTest.tradeInfo.sellAll();
+			this.onPlayInput();
+			if (StockListManager.hasStock(stock)){
+				this.addToStockBtn.label="删自选";
+			}
+			else {
+				this.addToStockBtn.label="加自选";
+			}
+		}
+
+		__proto.getDayCount=function(){
+			return ValueTools.mParseFloat(this.dayCountInput.text);
+		}
+
+		__proto.onStockInited=function(){
+			if (this.kLine.tStock==this._preStock)
+				return;
+			this._preStock=this.kLine.tStock;
+			var max=NaN;
+			var dayCount=0;
+			dayCount=this.getDayCount();
+			max=this.kLine.dataList.length-dayCount;
+			if (max < 0)
+				max=0;
+			if (TradeTestManager.isTradeTestOn){
+				var tValue=0;
+				tValue=Math.floor(Math.random()*max);
+				this.dayScroll.setScroll(0,max,tValue);
+			}
+			else {
+				if (this._des && this._des.date){
+					var curI=0;
+					curI=DataUtils.getKeyIndex(this.kLine.dataList,"date",this._des.date);
+					if (curI > 0){
+						if (curI < max){
+							var cHalf=0;
+							cHalf=Math.floor(dayCount/2);
+							if (curI > cHalf){
+								curI-=cHalf;
+								}else{
+								curI=0;
+							}
+							}else{
+							cHalf=Math.floor(dayCount/2);
+							if (curI > cHalf){
+								curI-=cHalf;
+								}else{
+								curI=0;
+							}
+							if (curI > max){
+								curI=max;
+							}
+						}
+						}else{
+						curI=max;
+					}
+					this.dayScroll.setScroll(0,max,curI);
+					}else{
+					this.dayScroll.setScroll(0,max,max);
+				}
+			}
+			if (this.maxDayEnable.selected){
+				if (this.dayScroll.value > this.kLine.dataList.length)debugger;
+				this.kLine.start=Math.floor(this.dayScroll.value);
+			}
+			else {
+				this.kLine.start=0;
+			}
+		}
+
+		__proto.onKlineMsg=function(msg){
+			this.infoTxt.text=msg;
+		}
+
+		__proto.init=function(){
+			var tLabel;
+			tLabel=StockBasicInfo.I.stockCodeList.join(",");
+			this.stockSelect.labels=tLabel;
+			this.stockSelect.selectedIndex=0;
+			this.stockSelect.selectHandler=new Handler(this,this.onSelect);
+			this.playBtn.on("mousedown",this,this.onPlayBtn);
+			this.playInputBtn.on("mousedown",this,this.onPlayInput);
+			var stock;
+			stock="300383";
+			this.kLine.setStock(stock);
+			this.detailBtn.on("mousedown",this,this.onDetail);
+			this.preBtn.on("mousedown",this,this.onPre);
+			this.nextBtn.on("mousedown",this,this.onNext);
+		}
+
+		__proto.onDayScrollChange=function(){
+			if (this.maxDayEnable){
+				this.showKline(this.stockInput.text,false);
+			}
+		}
+
+		__proto.changeSize=function(){
+			laya.ui.Component.prototype.changeSize.call(this);
+			this.kLine.lineHeight=this.height-100;
+			this.kLine.lineWidth=this.width-20;
+			this.kLine.pos(0,this.kLine.lineHeight+90);
+			this.dayLine.graphics.clear();
+			this.dayLine.graphics.drawLine(0,0,0,-this.kLine.y,"#ff0000");
+			this.dayLine.visible=false;
+			this.dayStockInfoTxt.y=-150;
+		}
+
+		__proto.onDetail=function(){
+			WebTools.openStockDetail(this.kLine.tStock);
+		}
+
+		__proto.onSelect=function(){
+			this.showKline(this.stockSelect.selectedLabel);
+		}
+
+		__proto.onPlayBtn=function(){
+			this.showKline(this.stockSelect.selectedLabel);
+		}
+
+		__proto.onPlayInput=function(){
+			this.showKline(this.stockInput.text);
+		}
+
+		__proto.showKline=function(stock,freshRealTimeData){
+			(freshRealTimeData===void 0)&& (freshRealTimeData=true);
+			this.kLine.autoPlay=this.enableAnimation.selected;
+			this.dayLine.visible=false;
+			if (freshRealTimeData){
+				StockJsonP.getStockData2(stock,Handler.create(this,this.refreshKLine,[false]));
+			}
+			if (this.maxDayEnable.selected){
+				this.kLine.maxShowCount=ValueTools.mParseFloat(this.dayCountInput.text);
+				if (this.dayScroll.value > this.kLine.dataList.length)debugger;
+				this.kLine.start=Math.floor(this.dayScroll.value);
+			}
+			else {
+				this.kLine.maxShowCount=-1;
+				this.kLine.start=0;
+				if (TradeTestManager.isTradeTestOn){
+					this.kLine.maxShowCount=Math.floor(this.dayScroll.value)+ValueTools.mParseFloat(this.dayCountInput.text);
+				}
+			}
+			this.kLine.setStock(stock);
+		}
+
+		__proto.onPre=function(){
+			StockListManager.pre();
+		}
+
+		__proto.onNext=function(){
+			StockListManager.next();
+		}
+
+		return KLineView;
+	})(KLineViewUI)
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class view.MainView extends ui.MainViewUI
+	var MainView=(function(_super){
+		function MainView(){
+			this.views=null;
+			MainView.__super.call(this);
+			this.init();
+		}
+
+		__class(MainView,'view.MainView',_super);
+		var __proto=MainView.prototype;
+		__proto.init=function(){
+			this.views=[this.stockListView,this.kLineView,this.selectView,this.realTimeView,this.bactTestView,this.logoView];
+			this.typeSelect.selectHandler=new Handler(this,this.updateSelect);
+			this.updateSelect();
+			this.stockListView.init();
+			Notice.listen("Show_Stock_KLine",this,this.onShowStockKline);
+		}
+
+		__proto.onShowStockKline=function(stock,des){
+			this.typeSelect.selectedIndex=1;
+			this.kLineView.showStockKline(stock,des);
+		}
+
+		__proto.updateSelect=function(){
+			var i=0,len=0;
+			len=this.views.length;
+			var tV;
+			for (i=0;i < len;i++){
+				tV=this.views[i];
+				if (i !=this.typeSelect.selectedIndex){
+					tV.visible=false;
+					tV.removeSelf();
+					}else{
+					tV.visible=true;
+					this.addChild(tV);
+				}
+			}
+		}
+
+		return MainView;
+	})(MainViewUI)
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class view.netcomps.LoginView extends ui.netcomps.LoginViewUI
+	var LoginView=(function(_super){
+		function LoginView(){
+			this.DataSign="loginInfo";
+			LoginView.__super.call(this);
+			this.pwdInput.asPassword=true;
+			this.visible=false;
+			MainSocket.I.serverStr="ws://orzooo.com:9909";
+			MainSocket.I.connect();
+			MainSocket.I.socket.on(stock.StockSocket.Logined,this,this.onLogin);
+			MainSocket.I.socket.on(stock.StockSocket.Welcome,this,this.onConnected);
+			this.loginBtn.on("mousedown",this,this.onLoginBtn);
+			this.logoutBtn.on("mousedown",this,this.onLogOut);
+		}
+
+		__class(LoginView,'view.netcomps.LoginView',_super);
+		var __proto=LoginView.prototype;
+		__proto.onLogOut=function(){
+			MainSocket.I.socket.isLogined=false;
+			MainSocket.I.socket.md5Pwd="";
+			this.pwdInput.text="";
+			this.saveLoginData();
+			this.updateUIState();
+			MessageManager.I.show("logout success");
+		}
+
+		__proto.onConnected=function(){
+			MessageManager.I.show("Connect to server success");
+			this.visible=true;
+			this.tryLogin();
+		}
+
+		__proto.tryLogin=function(){
+			var data;
+			data=LocalStorage.getJSON(this.DataSign);
+			if (data && data.user && data.pwd){
+				MessageManager.I.show("try login");
+				MainSocket.I.socket.loginRaw(data.user,data.pwd);
+			}
+		}
+
+		__proto.onLoginBtn=function(){
+			MessageManager.I.show("try login");
+			MainSocket.I.socket.login(this.userNameInput.text,this.pwdInput.text);
+		}
+
+		__proto.onLogin=function(){
+			if (MainSocket.I.socket.isLogined){
+				this.saveLoginData();
+			}
+			this.updateUIState();
+		}
+
+		__proto.saveLoginData=function(){
+			var userData;
+			userData={};
+			userData.user=MainSocket.I.socket.userName;
+			userData.pwd=MainSocket.I.socket.md5Pwd;
+			LocalStorage.setJSON(this.DataSign,userData);
+		}
+
+		__proto.updateUIState=function(){
+			if (MainSocket.I.socket.isLogined){
+				MessageManager.I.show("login success");
+				this.loginedBox.visible=true;
+				this.loginBox.visible=false;
+				this.usernameTxt.text=MainSocket.I.socket.userName;
+				}else{
+				MessageManager.I.show("login fail");
+				this.loginedBox.visible=false;
+				this.loginBox.visible=true;
+			}
+		}
+
+		return LoginView;
+	})(LoginViewUI)
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class view.plugins.AnalyserList extends ui.plugins.AnalyserListUI
+	var AnalyserList=(function(_super){
+		function AnalyserList(){
+			this.dataList=null;
+			this.checkHandler=null;
+			AnalyserList.__super.call(this);
+			this.list.renderHandler=new Handler(this,this.mRender);
+			this.list.array=[];
+			this.list.scrollBar.autoHide=true;
+			this.showSelect.on("change",this,this.updateUIState);
+			this.on("doubleclick",this,this.onDoubleClick);
+		}
+
+		__class(AnalyserList,'view.plugins.AnalyserList',_super);
+		var __proto=AnalyserList.prototype;
+		__proto.onDoubleClick=function(e){
+			this.scaleX=this.scaleY=3-this.scaleX;
+			Notice.notify("Hide_Analyser_Prop");
+		}
+
+		__proto.updateUIState=function(){
+			this.list.visible=this.showSelect.selected;
+		}
+
+		__proto.initAnalysers=function(analyserList){
+			this.dataList=[];
+			var i=0,len=0;
+			len=analyserList.length;
+			var tData;
+			var tAnalyserClass;
+			for (i=0;i < len;i++){
+				tAnalyserClass=analyserList[i];
+				tData={};
+				tData.name=ClassTool.getClassName(tAnalyserClass);
+				tData.Analyser=new tAnalyserClass();
+				tData.enabled=false;
+				this.dataList.push(tData);
+			}
+			this.list.array=this.dataList;
+		}
+
+		__proto.refreshList=function(){
+			if (this.list && this.list.array){
+				this.list.refresh();
+			}
+		}
+
+		__proto.getAnalyserByName=function(analyserName){
+			var i=0,len=0;
+			len=this.dataList.length;
+			var tData;
+			for (i=0;i < len;i++){
+				tData=this.dataList[i];
+				if (tData.name==analyserName){
+					return tData;
+				}
+			}
+			return null;
+		}
+
+		__proto.setAnalyserParams=function(analyserName,paramO){
+			var analyserO;
+			analyserO=this.getAnalyserByName(analyserName);
+			if (!analyserO)return;
+			var tAnalyser;
+			tAnalyser=analyserO["Analyser"];
+			if (!tAnalyser)return;
+			tAnalyser.setByParam(paramO);
+			this.refreshList();
+		}
+
+		__proto.mRender=function(cell,index){
+			var item=cell.dataSource;
+			var label;
+			label=cell.getChildByName("nameTxt");
+			var check;
+			check=cell.getChildByName("ifShow");
+			label.text=item.name;
+			check.selected=item.enabled;
+			cell.off("click",this,this.onAnalyserDoubleDown);
+			cell.on("click",this,this.onAnalyserDoubleDown,[item]);
+			check.clickHandler=new Handler(this,this.onCheckChange,[check,item]);
+		}
+
+		__proto.onAnalyserDoubleDown=function(item){
+			var tAnalyser;
+			tAnalyser=item.Analyser;
+			console.log("tAnalyser",tAnalyser);
+			Notice.notify("Show_Analyser_Prop",[tAnalyser.paramDes,tAnalyser]);
+		}
+
+		__proto.onCheckChange=function(check,item){
+			item.enabled=check.selected;
+			this.noticeSelectAnalyses();
+		}
+
+		__proto.noticeSelectAnalyses=function(){
+			var analyserList;
+			analyserList=[];
+			var i=0,len=0;
+			len=this.dataList.length;
+			var tData;
+			for (i=0;i < len;i++){
+				tData=this.dataList[i];
+				if (tData.enabled){
+					analyserList.push(tData.Analyser);
+				}
+			}
+			Notice.notify("AnalyserListChange",[analyserList]);
+		}
+
+		return AnalyserList;
+	})(AnalyserListUI)
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class view.plugins.TradeTest extends ui.plugins.TradeTestUI
+	var TradeTest=(function(_super){
+		function TradeTest(){
+			this.tradeInfo=null;
+			this._dataList=null;
+			this._stock=null;
+			TradeTest.__super.call(this);
+			this.tState="close";
+			this.tradeInfo=new TradeInfo();
+			this.tradeInfo.reset();
+			var btns;
+			btns=[this.buyBtn,this.sellBtn,this.resetBtn,this.anotherBtn,this.nextDayBtn];
+			var i=0,len=0;
+			len=btns.length;
+			for (i=0;i < len;i++){
+				var tBtn;
+				tBtn=btns[i];
+				tBtn.on("click",this,this.onBtnClick,[tBtn]);
+			}
+			this.setDataList(null);
+			this.on("doubleclick",this,this.onDoubleClick);
+		}
+
+		__class(TradeTest,'view.plugins.TradeTest',_super);
+		var __proto=TradeTest.prototype;
+		__proto.onDoubleClick=function(e){
+			if (e.target !=this)return;
+			this.scaleX=this.scaleY=3-this.scaleX;
+		}
+
+		__proto.setDataList=function(dataList,stock){
+			this._dataList=dataList;
+			this._stock=stock;
+			this.tradeInfo.tStock=stock;
+			this.updateUIInfo();
+		}
+
+		__proto.updateUIInfo=function(){
+			this.updateCurInfo();
+			this.updateInfo();
+		}
+
+		__proto.updateCurInfo=function(){
+			if (!this._dataList){
+				this.stockInfoTxt.text="";
+				this.tradeInfo.tStockPrice=0;
+				return;
+			};
+			var len=0;
+			len=this._dataList.length;
+			var tData;
+			var preData;
+			tData=this._dataList[len-1];
+			preData=this._dataList[len-2];
+			this.tradeInfo.tStockPrice=tData.close;
+			this.tradeInfo.tDate=tData.date;
+			if (this.tState=="open"){
+				this.stockInfoTxt.text="当前股价:"+tData.open;
+				}else{
+				this.stockInfoTxt.text="当前股价:"+tData.close+"\n涨幅:"+StockTools.getGoodPercent((tData.close-preData.close)/preData.close)+"%";
+			}
+		}
+
+		__proto.updateInfo=function(){
+			this.tradeInfoTxt.text="总金额:"+this.tradeInfo.total
+			+"\n当前仓位:"+StockTools.getGoodPercent(this.tradeInfo.position)+"%"
+			+"\n股票:"+this.tradeInfo.curStockMoney+" 现金:"+Math.floor(this.tradeInfo.money)
+			+"\n总盈亏:"+this.tradeInfo.stockWinOfTotal+","+StockTools.getGoodPercent(this.tradeInfo.stockWinRateOfTotal)+"%"+"("+this.tradeInfo.dayCount+" days)"
+			+"\n持仓盈亏:"+this.tradeInfo.stockWin+","+StockTools.getGoodPercent(this.tradeInfo.stockWinRate)+"%"+"("+this.tradeInfo.stockDayCount+" days)";
+		}
+
+		__proto.onBtnClick=function(btn){
+			switch (btn){
+				case this.buyBtn:
+					this.tradeInfo.buyStock(this.tradeInfo.tStockPrice,this.curStockCount);
+					this.updateUIInfo();
+					break ;
+				case this.sellBtn:
+					this.tradeInfo.sellStock(this.tradeInfo.tStockPrice,this.curStockCount);
+					this.updateUIInfo();
+					break ;
+				case this.resetBtn:
+					this.tradeInfo.reset();
+					this.updateUIInfo();
+					break ;
+				case this.anotherBtn:
+					this.tradeInfo.sellAll();
+					this.event("ANOTHER");
+					break ;
+				case this.nextDayBtn:
+					this.event("NEXT_Day");
+					break ;
+				}
+		}
+
+		__getset(0,__proto,'curStockCount',function(){
+			return parseInt(this.countTxt.text);
+		});
+
+		TradeTest.OPEN="open";
+		TradeTest.CLOSE="close";
+		TradeTest.NEXT_DAY="NEXT_Day";
+		TradeTest.ANOTHER="ANOTHER";
+		return TradeTest;
+	})(TradeTestUI)
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class view.realtime.RealTimeItem extends ui.realtime.StockRealTimeItemUI
+	var RealTimeItem=(function(_super){
+		function RealTimeItem(){
+			this.index=0;
+			this.stock=null;
+			this.isSettingV=false;
+			RealTimeItem.__super.call(this);
+			this.delBtn.on("mousedown",this,this.onDeleteBtn);
+			this.markBtn.on("mousedown",this,this.onMarkBtn);
+			this.on("doubleclick",this,this.onDoubleClick);
+		}
+
+		__class(RealTimeItem,'view.realtime.RealTimeItem',_super);
+		var __proto=RealTimeItem.prototype;
+		__proto.onMarkBtn=function(){
+			Notice.notify("Mark_MyStock",this.stock);
+		}
+
+		__proto.initByStock=function(stockData){
+			if (!stockData)return;
+			var stock;
+			stock=RealTimeView.getStockCode(stockData);
+			this.stock=stock;
+			this.txt.text=stock;
+			var dataO;
+			dataO=StockJsonP.getStockData(stock);
+			if (dataO){
+				this.txt.text=dataO.code+","+dataO.name+","+dataO.price+","+StockTools.getGoodPercent((dataO.price-dataO.close)/ dataO.close)+"%";
+				this.txt.color=dataO.price-dataO.close > 0?"#ff0000":"#00ff00";
+				this.isSettingV=true;
+				this.showLine.selected=RealTimeItem.showStockDic[stock];
+				this.showLine.on("change",this,this.onShowLineChange);
+				this.isSettingV=false;
+			}
+			if ((typeof stockData=='object')){
+				if (stockData.markTime){
+					this.txt.text+=" M:"+DateTools.getTimeStr(stockData.markTime);
+				}
+				if (stockData.markPrice&&dataO&&dataO.price){
+					this.txt.text+=","+StockTools.getGoodPercent((dataO.price-stockData.markPrice)/ stockData.markPrice)+"%"
+				}
+			}
+			if (dataO){
+				this.txt.text+=" "+StockInfoManager.getStockAvgTrendSign(stock,dataO.price);
+			}
+		}
+
+		__proto.onShowLineChange=function(){
+			if (this.isSettingV)return;
+			RealTimeItem.showStockDic[this.stock]=this.showLine.selected;
+			if (this.showLine.selected){
+				Notice.notify("Add_MDLine",[this.stock]);
+				}else{
+				Notice.notify("Remove_MDLine",[this.stock]);
+			}
+		}
+
+		__proto.onDoubleClick=function(){
+			Notice.notify("RealTimeItem_DoubleClick",this.index);
+			Notice.notify("Show_Stock_KLine",StockJsonP.getPureStock(this.stock));
+		}
+
+		__proto.onDeleteBtn=function(){
+			Notice.notify("Remove_MyStock",this.stock);
+		}
+
+		__getset(0,__proto,'dataSource',_super.prototype._$get_dataSource,function(value){
+			_super.prototype._$set_dataSource.call(this,value);
+			this.initByStock(value);
+		});
+
+		RealTimeItem.showStockDic={};
+		return RealTimeItem;
+	})(StockRealTimeItemUI)
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class view.RealTimeView extends ui.realtime.RealTimeUI
+	var RealTimeView=(function(_super){
+		function RealTimeView(){
+			this.mdView=null;
+			this.stockList=[];
+			RealTimeView.__super.call(this);
+			this.list.renderHandler=new Handler(this,this.stockRenderHandler);
+			this.mdView=new MDLine();
+			this.recoverData();
+			this.fresh();
+			Notice.listen("StockFresh",this,this.fresh);
+			StockJsonP.I.freshData();
+			this.checkAuto();
+			this.on("display",this,this.mDisplayChanged);
+			this.on("undisplay",this,this.mDisplayChanged);
+			this.addBtn.on("mousedown",this,this.onAddClick);
+			this.autoFresh.on("change",this,this.checkAuto);
+			Notice.listen("AddMyStock",this,this.addStockAndSave);
+			Notice.listen("Remove_MyStock",this,this.removeStockAndSave);
+			Notice.listen("Mark_MyStock",this,this.markStock);
+			Notice.listen("Add_MDLine",this,this.addMdStock);
+			Notice.listen("Remove_MDLine",this,this.removeMdStock);
+			this.showMDCheck.on("change",this,this.showMDChange);
+			this.showListCheck.selected=true;
+			this.showListCheck.on("change",this,this.showListChange);
+			this.netBox.visible=false;
+			MainSocket.I.socket.on(stock.StockSocket.Logined,this,this.onLogin);
+			MainSocket.I.socket.on("stocks",this,this.onServerStock);
+			this.saveBtn.on("mousedown",this,this.onSaveStocks);
+			this.loadBtn.on("mousedown",this,this.onLoadStocks);
+			Notice.listen("RealTimeItem_DoubleClick",this,this.onRealTimeDoubleClick);
+		}
+
+		__class(RealTimeView,'view.RealTimeView',_super);
+		var __proto=RealTimeView.prototype;
+		__proto.onRealTimeDoubleClick=function(index){
+			StockListManager.setStockList(this.list.array,index);
+		}
+
+		__proto.onServerStock=function(dataO){
+			console.log("onServerStock:",dataO);
+			MessageManager.I.show("get stock success");
+			if (dataO.data){
+				var tArr;
+				tArr=dataO.data;
+				this.switchStockList(tArr);
+				this.fresh();
+			}
+		}
+
+		__proto.onSaveStocks=function(){
+			MainSocket.I.socket.saveUserData("stocks",this.stockList);
+		}
+
+		__proto.onLoadStocks=function(){
+			MainSocket.I.socket.getUserData("stocks");
+		}
+
+		__proto.onLogin=function(){
+			this.updateUIState();
+		}
+
+		__proto.updateUIState=function(){
+			if (MainSocket.I.socket.isLogined){
+				this.netBox.visible=true;
+			}
+			else {
+				this.netBox.visible=false;
+			}
+		}
+
+		__proto.showListChange=function(){
+			this.list.visible=this.showListCheck.selected;
+		}
+
+		__proto.showMDChange=function(){
+			this.showMDView(this.showMDCheck.selected);
+		}
+
+		__proto.addMdStock=function(stock){
+			this.mdView.addStock(stock);
+		}
+
+		__proto.removeMdStock=function(stock){
+			this.mdView.removeStock(stock);
+		}
+
+		__proto.changeSize=function(){
+			laya.ui.Component.prototype.changeSize.call(this);
+			this.mdView.lineHeight=this.height;
+			this.mdView.lineWidth=this.width;
+			this.mdView.pos(0,this.mdView.lineHeight);
+			this.mdView.setUpGrids();
+		}
+
+		__proto.showMDView=function(show){
+			if (show){
+				this.addChildAt(this.mdView,0);
+				this.mdView.startFresh();
+			}
+			else {
+				this.mdView.removeSelf();
+				this.mdView.stopFresh();
+			}
+		}
+
+		__proto.recoverData=function(){
+			var data;
+			data=LocalStorage.getJSON("Mystocks");
+			if (data && (data instanceof Array)){
+				this.stockList=data;
+			}
+			else {
+				this.addStock("000912");
+			};
+			var i=0,len=0;
+			len=this.stockList.length;
+			for (i=0;i < len;i++){
+				this.addStock(this.stockList[i]);
+			}
+		}
+
+		__proto.switchStockList=function(newList){
+			var i=0,len=0;
+			len=this.stockList.length;
+			for (i=len-1;i >=0;i--){
+				this.removeStock(this.stockList[i]);
+			}
+			this.stockList.length=0;
+			len=newList.length;
+			for (i=0;i < len;i++){
+				this.addStock(newList[i]);
+			}
+			this.fresh();
+			StockJsonP.I.freshData();
+		}
+
+		__proto.saveData=function(){
+			LocalStorage.setJSON("Mystocks",this.stockList);
+		}
+
+		__proto.onAddClick=function(){
+			this.addStockAndSave(this.stockInput.text);
+		}
+
+		__proto.addStockAndSave=function(stock){
+			this.addStock(stock);
+			this.saveData();
+			StockJsonP.I.freshData();
+		}
+
+		//debugger;
+		__proto.markStock=function(stock){
+			var i=0,len=0;
+			len=this.stockList.length;
+			for (i=0;i < len;i++){
+				if (RealTimeView.getStockCode(this.stockList[i])==stock){
+					var tData;
+					tData={};
+					tData.code=stock;
+					tData.markTime=Browser.now();
+					var dataO;
+					dataO=StockJsonP.getStockData(stock);
+					if (dataO){
+						tData.markPrice=dataO.price;
+						MessageManager.I.show("Mark stock success:"+stock);
+					}
+					this.stockList[i]=tData;
+					break ;
+				}
+			}
+			this.saveData();
+			this.fresh();
+		}
+
+		__proto.removeStockAndSave=function(stock){
+			this.removeStock(stock);
+			this.saveData();
+			this.fresh();
+		}
+
+		__proto.mDisplayChanged=function(){
+			this.checkAuto();
+		}
+
+		__proto.checkAuto=function(){
+			if (this.autoFresh.selected && this.displayedInStage){
+				StockJsonP.I.startFresh();
+			}
+			else {
+				StockJsonP.I.stopFresh();
+			}
+		}
+
+		__proto.addStock=function(stock){
+			if (!stock)
+				return;
+			var stockCode;
+			stockCode=RealTimeView.getStockCode(stock);
+			stockCode=StockJsonP.getAdptStockStr(stockCode);
+			StockJsonP.I.addStock(stockCode);
+			if (!this.hasStock(stockCode))
+				this.stockList.push(stock);
+		}
+
+		__proto.hasStock=function(stock){
+			stock=RealTimeView.getStockCode(stock);
+			stock=StockJsonP.getAdptStockStr(stock);
+			var i=0,len=0;
+			len=this.stockList.length;
+			for (i=0;i < len;i++){
+				if (RealTimeView.getAdptStockCode(this.stockList[i])==stock){
+					return true;
+				}
+			}
+			return false;
+		}
+
+		__proto.removeStock=function(stock){
+			if (!stock)return;
+			stock=RealTimeView.getStockCode(stock);
+			stock=StockJsonP.getAdptStockStr(stock);
+			StockJsonP.I.removeStock(stock);
+			var i=0,len=0;
+			len=this.stockList.length;
+			for (i=len-1;i >=0;i--){
+				if (RealTimeView.getAdptStockCode(this.stockList[i])==stock){
+					this.stockList.splice(i,1);
+				}
+			}
+		}
+
+		__proto.fresh=function(){
+			StockListManager.setMyStockList(this.stockList);
+			this.list.array=this.stockList;
+		}
+
+		__proto.stockRenderHandler=function(box,index){
+			box.index=index;
+		}
+
+		RealTimeView.getAdptStockCode=function(stock){
+			return StockJsonP.getAdptStockStr(RealTimeView.getStockCode(stock));
+		}
+
+		RealTimeView.getStockCode=function(stock){
+			if ((typeof stock=='string'))
+				return stock;
+			return stock.code;
+		}
+
+		RealTimeView.DataSign="Mystocks";
+		return RealTimeView;
+	})(RealTimeUI)
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class view.SelectStockView extends ui.SelectStockViewUI
+	var SelectStockView=(function(_super){
+		function SelectStockView(){
+			this.dataUrl="last.json";
+			this.tType="kline";
+			this.stockDataGetter=null;
+			this.configO=null;
+			this.tDatas=null;
+			this.typeDic={};
+			this.tDataKey=null;
+			this.tTpl=null;
+			this.tI=0;
+			this.preTime=0;
+			SelectStockView.__super.call(this);
+			this.init();
+		}
+
+		__class(SelectStockView,'view.SelectStockView',_super);
+		var __proto=SelectStockView.prototype;
+		__proto.init=function(){
+			this.list.renderHandler=new Handler(this,this.stockRender);
+			this.list.array=[];
+			this.list.mouseHandler=new Handler(this,this.onMouseList);
+			this.list.scrollBar.touchScrollEnable=true;
+			Laya.loader.load(this.dataUrl,new Handler(this,this.dataLoaded),null,"json");
+			Notice.listen("Show_Next_Select",this,this.next);
+			Notice.listen("Show_Pre_Select",this,this.pre);
+			this.tip.text="股票:当前盈利:最高盈利\n7天最大盈利,15天最大盈利,30天最大盈利,45天最大盈利\n买入日期";
+			this.typeSelect.on("change",this,this.onTypeChange);
+			this.stockDataGetter=new StockJsonP();
+			this.stockDataGetter.completeNotice="SelectStockDataChange";
+			Notice.listen("SelectStockDataChange",this,this.onStockDataChange);
+			this.autoFresh.on("change",this,this.onAutoFreshChange);
+			this.on("display",this,this.onAutoFreshChange);
+			this.on("undisplay",this,this.onAutoFreshChange);
+		}
+
+		__proto.onAutoFreshChange=function(){
+			if (this.autoFresh.selected&&this.displayedInStage){
+				this.stockDataGetter.freshData();
+				this.stockDataGetter.startFresh();
+				}else{
+				this.stockDataGetter.stopFresh();
+			}
+		}
+
+		__proto.onStockDataChange=function(){
+			this.reRenderCells();
+		}
+
+		__proto.onTypeChange=function(){
+			this.tType=this.typeSelect.selectedLabel;
+			this.refreshData();
+		}
+
+		__proto.dataLoaded=function(){
+			var data;
+			this.configO=Loader.getRes(this.dataUrl);
+			this.tDatas=this.configO["stocks"];
+			StockInfoManager.setStockList(this.configO["stocks"]);
+			this.initByConfigO();
+			this.refreshData();
+			StockListManager.setStockList(this.list.array,this.tI);
+		}
+
+		__proto.initByConfigO=function(){
+			var types;
+			types=this.configO["types"];
+			if (!types)
+				return;
+			this.typeDic={};
+			var typesStr;
+			typesStr=[];
+			var tTypeO;
+			var i=0,len=0;
+			len=types.length;
+			for (i=0;i < len;i++){
+				tTypeO=types[i];
+				typesStr.push(tTypeO.label);
+				this.typeDic[tTypeO.label]=tTypeO;
+			}
+			this.typeSelect.labels=typesStr.join(",");
+			this.typeSelect.selectedIndex=0;
+			this.tType=this.typeSelect.selectedLabel;
+		}
+
+		__proto.refreshData=function(){
+			if (!this.tDatas)
+				return;
+			if (this.typeDic[this.tType]){
+				this.tDataKey=this.typeDic[this.tType].dataKey;
+				this.tip.text=this.typeDic[this.tType].tip;
+				this.tTpl=this.typeDic[this.tType].tpl;
+				this.tDatas.sort(ValueTools.sortByKeyEX.apply(null,this.typeDic[this.tType]["sortParams"]));
+			}
+			else {
+				this.tDataKey=null;
+				this.tip.text="股票列表";
+				this.tDatas.sort(MathUtil.sortByKey("code",true,false));
+			}
+			this.list.array=this.tDatas;
+		}
+
+		__proto.getStockChanges=function(stockO){
+			var i=0,len=0;
+			len=SelectStockView.signList.length;
+			var rst;
+			rst=[];
+			var tSign;
+			for (i=0;i < len;i++){
+				tSign=SelectStockView.signList[i];
+				rst.push(Math.floor(stockO[tSign] *100)+"%")
+			}
+			return rst;
+		}
+
+		__proto.stockRender=function(cell,index){
+			this.callLater(this.resetStocks);
+			var item=cell.dataSource;
+			var label;
+			label=cell.getChildByName("label");
+			var dataO;
+			dataO=ValueTools.getFlatKeyValue(item,this.tDataKey);
+			if (!this.tTpl)this.tTpl=SelectStockView.DefalutTpl;
+			label.text=ValueTools.getTplStr(this.tTpl,dataO);
+			this.renderStockRealTimeInfo(cell);
+		}
+
+		//label.text=dataO.code+":"+Math.floor(dataO.changePercent *100)+"%"+":"+Math.floor(dataO.highPercent *100)+"%"+"\n"+getStockChanges(dataO).join(",")+"\n"+dataO.lastDate;
+		__proto.renderStockRealTimeInfo=function(cell){
+			var item=cell.dataSource;
+			var label;
+			label=cell.getChildByName("info");
+			if (!item){
+				label.text="";
+				return;
+			};
+			var stockData;
+			stockData=StockJsonP.getStockData(item.code)
+			if (stockData){
+				label.text=""+StockTools.getGoodPercent((stockData.price-stockData.close)/ stockData.close)+"%";
+				if (stockData.price-stockData.close >=0){
+					label.color="#ff0000";
+					}else{
+					label.color="#00ff00";
+				}
+				}else{
+				label.text="";
+			}
+		}
+
+		__proto.reRenderCells=function(){
+			var cells;
+			cells=this.list.cells;
+			if (!cells)return;
+			var i=0,len=0;
+			len=cells.length;
+			var tCell;
+			for (i=0;i < len;i++){
+				tCell=cells[i];
+				if (tCell.dataSource && tCell.dataSource.code){
+					this.renderStockRealTimeInfo(tCell);
+				}
+			}
+		}
+
+		__proto.resetStocks=function(){
+			var cells;
+			cells=this.list.cells;
+			if (!cells)return;
+			var i=0,len=0;
+			len=cells.length;
+			this.stockDataGetter.reset();
+			var tCell;
+			for (i=0;i < len;i++){
+				tCell=cells[i];
+				if (tCell.dataSource && tCell.dataSource.code){
+					var adptCode;
+					adptCode=StockJsonP.getAdptStockStr(tCell.dataSource.code);
+					this.stockDataGetter.addStock(adptCode);
+				}
+			}
+			if (this.autoFresh.selected)this.stockDataGetter.freshData();
+		}
+
+		__proto.onMouseList=function(e,index){
+			if (e.type=="mouseup"){
+				var tTime=Browser.now();
+				if (tTime-this.preTime > 500){
+					this.preTime=tTime;
+					return;
+				}
+				this.preTime=tTime;
+				var tData;
+				tData=this.list.array[index];
+				this.tI=index;
+				if (!tData)
+					return;
+				console.log(tData);
+				this.setUpAnalyserData();
+				StockListManager.setStockList(this.list.array,this.tI);
+				Notice.notify("Show_Stock_KLine",tData.code);
+			}
+		}
+
+		__proto.setUpAnalyserData=function(){
+			if (this.typeDic[this.tType]){
+				var analyserInfos;
+				analyserInfos=this.typeDic[this.tType]["analyserInfo"];
+				if (!analyserInfos)
+					return;
+				var i=0,len=0;
+				len=analyserInfos.length;
+				for (i=0;i < len;i++){
+					Notice.notify("Set_Analyser_Prop",analyserInfos[i]);
+				}
+			}
+		}
+
+		__proto.next=function(){
+			this.tI++;
+			this.showI(this.tI);
+		}
+
+		__proto.pre=function(){
+			this.tI--;
+			this.showI(this.tI);
+		}
+
+		__proto.showI=function(i){
+			var index=0;
+			index=i;
+			if (index < 0)
+				index=this.list.array.length-1;
+			index=index % this.list.array.length;
+			var tData;
+			tData=this.list.array[index];
+			this.tI=index;
+			if (!tData)
+				return;
+			console.log(tData);
+			Notice.notify("Show_Stock_KLine",tData.code);
+		}
+
+		SelectStockView.SelectStockDataChange="SelectStockDataChange";
+		SelectStockView.DefalutTpl="{#code#}";
+		__static(SelectStockView,
+		['signList',function(){return this.signList=["high7","high15","high30","high45"];}
+		]);
+		return SelectStockView;
+	})(SelectStockViewUI)
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class view.StockView extends ui.StockViewUI
+	var StockView=(function(_super){
+		function StockView(){
+			this.preTime=0;
+			StockView.__super.call(this);
+		}
+
+		__class(StockView,'view.StockView',_super);
+		var __proto=StockView.prototype;
+		__proto.init=function(){
+			this.stockList.renderHandler=new Handler(this,this.stockRender);
+			this.stockList.array=StockBasicInfo.I.stockList;
+			this.stockList.mouseHandler=new Handler(this,this.onMouseList);
+			this.stockList.scrollBar.touchScrollEnable=true;
+		}
+
+		__proto.stockRender=function(cell,index){
+			var item=cell.dataSource;
+			var img;
+			img=cell.getChildByName("img");
+			img.skin="https://onewaymyway.github.io/stockdata/smallpics/"+item.code+".png";
+		}
+
+		__proto.openUrl=function(path){
+			Browser.window.open(path,"_blank");
+		}
+
+		__proto.onMouseList=function(e,index){
+			if (e.type=="mouseup"){
+				var tTime=Browser.now();
+				if (tTime-this.preTime > 500){
+					this.preTime=tTime;
+					return;
+				}
+				this.preTime=tTime;
+				var tData;
+				tData=this.stockList.array[index];
+				if (!tData)
+					return;
+				console.log(tData);
+				WebTools.openStockDetail(tData.code);
+			}
+		}
+
+		return StockView;
+	})(StockViewUI)
+
+
+	/**
+	*...
+	*@author ww
+	*/
 	//class laya.debug.uicomps.RankListItem extends laya.debug.ui.debugui.comps.RankListItemUI
 	var RankListItem=(function(_super){
 		function RankListItem(){
@@ -39298,8 +44086,8 @@ var Laya=window.Laya=(function(window,document){
 
 
 /*
-1 file:///D:/lovekxy/codes/python/stocksite.git/trunk/StockCmd/src/nodetools/devices/FileManager.as (225):warning:XMLElement This variable is not defined.
-2 file:///D:/lovekxy/codes/python/stocksite.git/trunk/StockCmd/src/nodetools/devices/FileManager.as (237):warning:XMLElement This variable is not defined.
-3 file:///D:/lovekxy/codes/python/stocksite.git/trunk/StockCmd/src/nodetools/devices/FileTools.as (82):warning:Browser.window.location.href This variable is not defined.
-4 file:///D:/lovekxy/codes/python/stocksite.git/trunk/StockCmd/src/nodetools/devices/FileTools.as (82):warning:Browser.window.location.href This variable is not defined.
+1 file:///D:/stocksite.git/trunk/StockCmd/src/nodetools/devices/FileManager.as (225):warning:XMLElement This variable is not defined.
+2 file:///D:/stocksite.git/trunk/StockCmd/src/nodetools/devices/FileManager.as (237):warning:XMLElement This variable is not defined.
+3 file:///D:/stocksite.git/trunk/StockCmd/src/nodetools/devices/FileTools.as (82):warning:Browser.window.location.href This variable is not defined.
+4 file:///D:/stocksite.git/trunk/StockCmd/src/nodetools/devices/FileTools.as (82):warning:Browser.window.location.href This variable is not defined.
 */
