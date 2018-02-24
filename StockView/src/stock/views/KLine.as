@@ -1,15 +1,20 @@
-package stock.views {
+package stock.views
+{
 	import laya.display.Graphics;
 	import laya.display.Sprite;
+	import laya.display.css.Font;
 	import laya.events.Event;
 	import laya.math.DataUtils;
 	import laya.math.GraphicUtils;
+	import laya.maths.Rectangle;
 	import laya.net.Loader;
+	import laya.stock.StockNoticeManager;
 	import laya.stock.analysers.AnalyserBase;
 	import laya.stock.analysers.KLineAnalyser;
 	import laya.stock.StockTools;
 	import laya.tools.StockJsonP;
 	import laya.utils.Handler;
+	import laya.utils.Utils;
 	import msgs.MsgConst;
 	import stock.StockBasicInfo;
 	import stock.StockData;
@@ -20,9 +25,11 @@ package stock.views {
 	 * ...
 	 * @author ww
 	 */
-	public class KLine extends Sprite {
+	public class KLine extends Sprite
+	{
 		
-		public function KLine() {
+		public function KLine()
+		{
 			analysers = [];
 			
 			//analyser = new KLineAnalyser();
@@ -39,7 +46,8 @@ package stock.views {
 		public var start:int = 0;
 		private var _myLoader:Loader;
 		
-		public function setStock(stock:String):void {
+		public function setStock(stock:String):void
+		{
 			Laya.timer.clear(this, timeEffect);
 			this.graphics.clear();
 			showMsg("loadingData:" + stock);
@@ -49,17 +57,21 @@ package stock.views {
 			stockUrl = StockTools.getStockCsvPath(stock);
 			_myLoader.once(Event.COMPLETE, this, dataLoaded);
 			_myLoader.load(stockUrl, Loader.TEXT);
+		
 			//Laya.loader.load(stockUrl, Handler.create(this, dataLoaded), null, Loader.TEXT);
 		}
 		
-		private function dataErr():void {
+		private function dataErr():void
+		{
 			showMsg("dataErr");
 		}
 		
-		private function dataLoaded():void {
+		private function dataLoaded():void
+		{
 			var data:String;
 			data = Loader.getRes(stockUrl);
-			if (!data) {
+			if (!data)
+			{
 				dataErr();
 				return;
 			}
@@ -67,15 +79,18 @@ package stock.views {
 			initByStrData(data);
 		}
 		
-		public function initByStrData(data:String):void {
+		public function initByStrData(data:String):void
+		{
 			var stockData:StockData;
 			stockData = new StockData();
+			stockData.stockName = StockTools.getPureStock(this.tStock);
 			stockData.init(data);
 			setStockData(stockData);
 		
 		}
 		
-		public function freshStockData():void {
+		public function freshStockData():void
+		{
 			var dataO:Object;
 			dataO = StockJsonP.getStockData(tStock);
 			if (!dataO)
@@ -87,17 +102,21 @@ package stock.views {
 				return;
 			var lastDataO:Object;
 			lastDataO = dataList[dataList.length - 1];
-			if (dataO.date == lastDataO.date) {
+			if (dataO.date == lastDataO.date)
+			{
 				dataList[dataList.length - 1] = dataO;
 			}
-			else {
-				if (dataO.date > lastDataO.date) {
+			else
+			{
+				if (dataO.date > lastDataO.date)
+				{
 					dataList.push(dataO);
 				}
 			}
 		}
 		
-		public function showMsg(msg:String):void {
+		public function showMsg(msg:String):void
+		{
 			event("msg", StockBasicInfo.I.getStockName(tStock) + ":" + msg);
 		}
 		public var stockData:StockData;
@@ -105,7 +124,8 @@ package stock.views {
 		public var disDataList:Array;
 		public static const KlineShowed:String = "KlineShowed";
 		
-		public function setStockData(stockData:StockData):void {
+		public function setStockData(stockData:StockData):void
+		{
 			this.stockData = stockData;
 			dataList = stockData.dataList;
 			freshStockData();
@@ -115,12 +135,14 @@ package stock.views {
 			drawdata(this.start);
 			tLen = 10;
 			
-			if (autoPlay) {
+			if (autoPlay)
+			{
 				
 				showMsg("playing K-line Animation");
 				Laya.timer.loop(10, this, timeEffect);
 			}
-			else {
+			else
+			{
 				showMsg("K-line Showed:" + disDataList[disDataList.length - 1].date);
 				this.cacheAsBitmap = true;
 				event(KlineShowed);
@@ -130,9 +152,11 @@ package stock.views {
 		public var tLen:int = 10;
 		public var maxShowCount:int = -1;
 		
-		public function timeEffect():void {
+		public function timeEffect():void
+		{
 			tLen++;
-			if (tLen >= dataList.length) {
+			if (tLen >= dataList.length)
+			{
 				showMsg("Animation End");
 				Laya.timer.clear(this, timeEffect);
 				this.cacheAsBitmap = true;
@@ -143,19 +167,24 @@ package stock.views {
 		public var lineHeight:Number = 400;
 		public var lineWidth:Number = 800;
 		
-		public function analysersDoAnalyse(start:int = 0, end:int = -1):void {
+		public function analysersDoAnalyse(start:int = 0, end:int = -1):void
+		{
 			var i:int, len:int;
 			len = analysers.length;
 			var tAnalyser:AnalyserBase;
-			for (i = 0; i < len; i++) {
+			for (i = 0; i < len; i++)
+			{
 				tAnalyser = analysers[i];
 				tAnalyser.analyser(stockData, start, end);
 			}
 		}
 		
-		public function drawdata(start:int = 0, end:int = -1):void {
+		public function drawdata(start:int = 0, end:int = -1):void
+		{
 			//debugger;
-			if (maxShowCount > 0) {
+			_autoTexts = [];
+			if (maxShowCount > 0)
+			{
 				end = start + maxShowCount;
 				if (end > dataList.length)
 					end = dataList.length;
@@ -172,10 +201,12 @@ package stock.views {
 			//drawAmounts();
 			drawGrid();
 			drawAnalysers();
+			drawAutoTexts();
 		}
 		public var markO:Object;
 		
-		public function drawStockKLine():void {
+		public function drawStockKLine():void
+		{
 			var i:int, len:int;
 			var dataList:Array;
 			dataList = disDataList;
@@ -190,72 +221,86 @@ package stock.views {
 			markTime = StockListManager.getStockLastMark(tStock);
 			var prePrice:Number = 0;
 			var curPrice:Number = 0;
-			for (i = 0; i < len; i++) {
+			for (i = 0; i < len; i++)
+			{
 				tData = dataList[i];
 				var tPos:Number;
 				tPos = getAdptXV(i * gridWidth);
 				
-				if (tData["close"] >= tData["open"]) {
+				if (tData["close"] >= tData["open"])
+				{
 					tColor = "#ff0000";
 				}
-				else {
+				else
+				{
 					tColor = "#00ffff";
 				}
 				
-				if (tData["high"] == tData["low"]) {
-					if (tData["high"] < prePrice) {
+				if (tData["high"] == tData["low"])
+				{
+					if (tData["high"] < prePrice)
+					{
 						tColor = "#00ffff";
 					}
 					this.graphics.drawLine(tPos, getAdptYV(tData["open"]), tPos, getAdptYV(tData["close"]) + 1, tColor, gridWidth * xRate);
 				}
-				else {
+				else
+				{
 					this.graphics.drawLine(tPos, getAdptYV(tData["high"]), tPos, getAdptYV(tData["low"]), tColor, 1 * xRate);
-					if (tData["open"] == tData["close"]) {
+					if (tData["open"] == tData["close"])
+					{
 						this.graphics.drawLine(tPos, getAdptYV(tData["open"]), tPos, getAdptYV(tData["close"]) + 0.5, tColor, gridWidth * xRate);
 					}
-					else {
+					else
+					{
 						this.graphics.drawLine(tPos, getAdptYV(tData["open"]), tPos, getAdptYV(tData["close"]), tColor, gridWidth * xRate);
 					}
 					
 				}
 				prePrice = tData["close"];
 			}
-			if (markTime) {
-				for (i = 0; i < len; i++) {
+			if (markTime)
+			{
+				for (i = 0; i < len; i++)
+				{
 					tData = dataList[i];
-					if (tData.date == markTime || (tData.date < markTime && dataList[i + 1] && dataList[i + 1].date > markTime)) {
+					if (tData.date == markTime || (tData.date < markTime && dataList[i + 1] && dataList[i + 1].date > markTime))
+					{
 						tPos = getAdptXV(i * gridWidth);
 						this.graphics.drawLine(tPos, getAdptYV(tData["low"]), tPos, getAdptYV(tData["low"]) + 30, "#00ff00");
 						this.graphics.fillText("Mark", tPos, getAdptYV(tData["low"]) + 30, null, "#00ff00", "center");
 						break;
 					}
-					if (tData.date > markTime) {
+					if (tData.date > markTime)
+					{
 						break;
 					}
 				}
 			}
 			
-			if (markO && markO.date) {
+			if (markO && markO.date)
+			{
 				var buyI:int;
 				buyI = drawMark(markO.date, "Buy", dataList);
-				if (buyI >= 0&&markO.sell)
+				if (buyI >= 0 && markO.sell)
 				{
 					var sellI:int;
-					i = buyI+markO.sell;
+					i = buyI + markO.sell;
 					if (dataList[i])
 					{
-						prePrice=dataList[buyI]["high"]
+						prePrice = dataList[buyI]["high"]
 						tData = dataList[i];
-						curPrice=markO.sellPrice||tData["close"]
+						curPrice = markO.sellPrice || tData["close"]
 						tPos = getAdptXV(i * gridWidth);
 						this.graphics.drawLine(tPos, getAdptYV(tData["low"]), tPos, getAdptYV(tData["low"]) + 30, "#00ff00");
 						var curInfo:String;
 						if (markO.sellReason)
 						{
-							curInfo = "Sell:" + StockTools.getGoodPercent((curPrice-prePrice) / prePrice) + "%" + markO.sellReason;
-						}else
+							curInfo = "Sell:" + StockTools.getGoodPercent((curPrice - prePrice) / prePrice) + "%" + markO.sellReason;
+						}
+						else
 						{
-							curInfo = "Sell:" + StockTools.getGoodPercent((curPrice-prePrice) / prePrice) + "%" + tData["date"];
+							curInfo = "Sell:" + StockTools.getGoodPercent((curPrice - prePrice) / prePrice) + "%" + tData["date"];
 						}
 						
 						this.graphics.fillText(curInfo, tPos, getAdptYV(tData["low"]) + 30, null, "#00ff00", "center");
@@ -263,14 +308,17 @@ package stock.views {
 				}
 			}
 			
-			if (TradeTestManager.isTradeTestOn) {
+			if (TradeTestManager.isTradeTestOn)
+			{
 				var tradeActionDic:Object;
 				tradeActionDic = TradeTestManager.curTradeInfo.getActionDic(tStock);
-				for (i = 0; i < len; i++) {
+				for (i = 0; i < len; i++)
+				{
 					tData = dataList[i];
 					var tDate:String;
 					tDate = tData.date;
-					if (tradeActionDic[tDate]) {
+					if (tradeActionDic[tDate])
+					{
 						tPos = getAdptXV(i * gridWidth);
 						this.graphics.drawLine(tPos, getAdptYV(tData["low"]), tPos, getAdptYV(tData["low"]) + 30, "#00ff00");
 						this.graphics.fillText(tradeActionDic[tDate], tPos, getAdptYV(tData["low"]) + 30, null, "#00ff00", "center");
@@ -279,27 +327,32 @@ package stock.views {
 			}
 		}
 		
-		public function drawMark(markTime:String, markSign:String, dataList:Array):int {
+		public function drawMark(markTime:String, markSign:String, dataList:Array):int
+		{
 			var i:int, len:int;
 			len = dataList.length;
 			var tPos:Number;
 			var tData:Object;
-			for (i = 0; i < len; i++) {
+			for (i = 0; i < len; i++)
+			{
 				tData = dataList[i];
-				if (tData.date == markTime || (tData.date < markTime && dataList[i + 1] && dataList[i + 1].date > markTime)) {
+				if (tData.date == markTime || (tData.date < markTime && dataList[i + 1] && dataList[i + 1].date > markTime))
+				{
 					tPos = getAdptXV(i * gridWidth);
 					this.graphics.drawLine(tPos, getAdptYV(tData["low"]), tPos, getAdptYV(tData["low"]) + 30, "#00ff00");
-					this.graphics.fillText(markSign+":"+tData["high"]+":"+tData.date, tPos, getAdptYV(tData["low"]) + 30, null, "#00ff00", "center");
+					this.graphics.fillText(markSign + ":" + tData["high"] + ":" + tData.date, tPos, getAdptYV(tData["low"]) + 30, null, "#00ff00", "center");
 					return i;
 				}
-				if (tData.date > markTime) {
+				if (tData.date > markTime)
+				{
 					break;
 				}
 			}
 			return -1;
 		}
 		
-		public function drawAmounts():void {
+		public function drawAmounts():void
+		{
 			var sign:String;
 			sign = "amount";
 			sign = "volume";
@@ -314,13 +367,15 @@ package stock.views {
 			MRate = 100 / max;
 			var barsData:Array;
 			barsData = [];
-			for (i = 0; i < len; i++) {
+			for (i = 0; i < len; i++)
+			{
 				barsData.push([i, -dataList[i][sign] * MRate]);
 			}
 			drawBars(barsData, 0);
 		}
 		
-		public function drawGrid():void {
+		public function drawGrid():void
+		{
 			var dataList:Array;
 			dataList = disDataList;
 			var maxI:int;
@@ -332,11 +387,13 @@ package stock.views {
 			drawPoint(minI, dataList[minI]["low"], "low:" + dataList[minI]["low"], 10);
 		}
 		
-		public function drawAnalysers():void {
+		public function drawAnalysers():void
+		{
 			var i:int, len:int;
 			len = analysers.length;
 			var tAnalyser:AnalyserBase;
-			for (i = 0; i < len; i++) {
+			for (i = 0; i < len; i++)
+			{
 				tAnalyser = analysers[i];
 				drawAnalyser(tAnalyser);
 					//tAnalyser.analyser(stockData, start, end);
@@ -344,7 +401,8 @@ package stock.views {
 		
 		}
 		
-		public function drawAnalyser(analyser:AnalyserBase):void {
+		public function drawAnalyser(analyser:AnalyserBase):void
+		{
 			var cmds:Array;
 			cmds = analyser.getDrawCmds();
 			if (!cmds)
@@ -353,38 +411,119 @@ package stock.views {
 			len = cmds.length;
 			var tCmdArr:Array;
 			var tFunSign:String;
-			for (i = 0; i < len; i++) {
+			for (i = 0; i < len; i++)
+			{
 				tCmdArr = cmds[i];
 				tFunSign = tCmdArr[0];
-				if (this[tFunSign] is Function) {
+				if (this[tFunSign] is Function)
+				{
 					this[tFunSign].apply(this, tCmdArr[1]);
 				}
 			}
 		}
 		
-		public function drawTexts(texts:Array, sign:String, dy:Number = 0, color:String = "#ff0000", withLine:Boolean = false, lineColor:String = null):void {
+		public function drawTexts(texts:Array, sign:String, dy:Number = 0, color:String = "#ff0000", withLine:Boolean = false, lineColor:String = null, autoPos:Boolean = false):void
+		{
 			var i:int, len:int;
 			len = texts.length;
 			var tArr:Array;
-			for (i = 0; i < len; i++) {
-				tArr = texts[i];
-				drawText(tArr[0], tArr[1], sign, dy, color, withLine, lineColor);
+			var tDy:Number;
+			if (autoPos)
+			{
+				for (i = 0; i < len; i++)
+				{
+					tArr = texts[i];
+					tDy = tArr[2] || 0;
+					drawTextAuto(tArr[0], tArr[1], sign, dy + tDy, color, withLine, lineColor);
+				}
+				
 			}
+			else
+			{
+				for (i = 0; i < len; i++)
+				{
+					tArr = texts[i];
+					tDy = tArr[2] || 0;
+					drawText(tArr[0], tArr[1], sign, dy + tDy, color, withLine, lineColor);
+				}
+			}
+		
 		}
 		
-		public function drawText(text:String, i:int, sign:String, dY:Number = 0, color:String = "#ff0000", withLine:Boolean = false, lineColor:String = null):void {
+		public function drawText(text:String, i:int, sign:String, dY:Number = 0, color:String = "#ff0000", withLine:Boolean = false, lineColor:String = null):void
+		{
 			
 			//var tData:Object;
 			//tData=dataList[i];
 			this.graphics.fillText(text, getAdptXV(i * gridWidth), getAdptYV(disDataList[i][sign]) + dY, null, color, "center");
-			if (withLine) {
+			if (withLine)
+			{
 				if (!lineColor)
 					lineColor = color;
 				this.graphics.drawLine(getAdptXV(i * gridWidth), getAdptYV(disDataList[i][sign]) + dY, getAdptXV(i * gridWidth), getAdptYV(disDataList[i][sign]), lineColor);
 			}
 		}
 		
-		public function drawPointsLine(iList:Array, sign:String = "high", dY:Number = -20):void {
+		private function drawAutoTexts():void
+		{
+		
+		}
+		
+		private function isOKPos(rect:Rectangle):Boolean
+		{
+			var i:int, len:int;
+			var tRec:Rectangle;
+			len = _autoTexts.length;
+			for (i = 0; i < len; i++)
+			{
+				tRec = _autoTexts[i];
+				if (tRec.intersects(rect)) return false;
+			}
+			return true;
+		}
+		
+		private function findOKPosForRect(rect:Rectangle,startDY:Number=50):void
+		{
+			var tY:Number;
+			tY = rect.y;
+			var tDY:Number;
+			tDY = startDY;
+			while (!isOKPos(rect))
+			{
+				rect.y = tY + tDY;
+				if (isOKPos(rect)) break;
+				rect.y = tY - tDY;
+				if (isOKPos(rect)) break;
+				tDY += 2;
+			}
+		}
+		private var _autoTexts:Array;
+		
+		public function drawTextAuto(text:String, i:int, sign:String, dY:Number = 0, color:String = "#ff0000", withLine:Boolean = false, lineColor:String = null):void
+		{
+			var tTextRect:Rectangle;
+			tTextRect = new Rectangle();
+			var x:Number;
+			x = getAdptXV(i * gridWidth);
+			var y:Number;
+			y = getAdptYV(disDataList[i][sign]);
+			var width:Number = Utils.measureText(text, Font.defaultFont).width;
+			tTextRect.setTo(x, y, width, 16);
+			tTextRect.x -= tTextRect.width * 0.5;
+			findOKPosForRect(tTextRect,dY);
+			_autoTexts.push(tTextRect);
+			
+			this.graphics.fillText(text, tTextRect.x + tTextRect.width * 0.5, tTextRect.y, null, color, "center");
+			if (withLine)
+			{
+				if (!lineColor)
+					lineColor = color;
+				this.graphics.drawLine(tTextRect.x + tTextRect.width * 0.5, tTextRect.y, tTextRect.x + tTextRect.width * 0.5, getAdptYV(disDataList[i][sign]), lineColor);
+			}
+		}
+		
+		public function drawPointsLine(iList:Array, sign:String = "high", dY:Number = -20):void
+		{
 			var dataList:Array;
 			dataList = disDataList;
 			var tI:int;
@@ -392,13 +531,15 @@ package stock.views {
 			var preData:Object;
 			var tData:Object;
 			len = iList.length;
-			for (i = 0; i < len; i++) {
+			for (i = 0; i < len; i++)
+			{
 				tI = iList[i];
 				tData = dataList[tI];
 				
 				drawPoint(tI, tData[sign], tData[sign], dY, "#ff00ff");
 			}
-			for (i = 1; i < len; i++) {
+			for (i = 1; i < len; i++)
+			{
 				preData = dataList[iList[i - 1]];
 				tData = dataList[iList[i]];
 				drawLine(iList[i - 1], preData[sign], iList[i], tData[sign], "#ff0000");
@@ -407,7 +548,8 @@ package stock.views {
 		
 		public static var SignDrawDes:Object = {"high": {color: "#ffff00", dy: -20}, "low": {color: "#00ff00", dy: 20}};
 		
-		public function drawPointsLineEx(iList:Array, lineWidth:Number = 2):void {
+		public function drawPointsLineEx(iList:Array, lineWidth:Number = 2):void
+		{
 			var dataList:Array;
 			dataList = disDataList;
 			var tI:int;
@@ -418,34 +560,40 @@ package stock.views {
 			var tArr:Array;
 			var tSign:String;
 			var exTxt:String;
-			for (i = 0; i < len; i++) {
+			for (i = 0; i < len; i++)
+			{
 				tArr = iList[i];
 				tI = tArr[0];
 				tData = dataList[tI];
 				tSign = tArr[1];
 				exTxt = tArr[2];
-				if (exTxt) {
+				if (exTxt)
+				{
 					drawPoint(tI, tData[tSign], exTxt, SignDrawDes[tSign]["dy"], SignDrawDes[tSign]["color"], 3);
 				}
-				else {
+				else
+				{
 					drawPoint(tI, tData[tSign], tData[tSign], SignDrawDes[tSign]["dy"], SignDrawDes[tSign]["color"], 3);
 				}
 				
 			}
-			for (i = 1; i < len; i++) {
+			for (i = 1; i < len; i++)
+			{
 				preData = dataList[iList[i - 1][0]];
 				tData = dataList[iList[i][0]];
 				drawLine(iList[i - 1][0], preData[iList[i - 1][1]], iList[i][0], tData[iList[i][1]], "#ff00ff", 2);
 			}
 		}
 		
-		public function drawBars(barList:Array, yZero:Number = 0, color:String = "#ffff00"):void {
+		public function drawBars(barList:Array, yZero:Number = 0, color:String = "#ffff00"):void
+		{
 			var i:int, len:int;
 			len = barList.length;
 			var tData:Array;
 			var tX:Number;
 			var tV:Number;
-			for (i = 0; i < len; i++) {
+			for (i = 0; i < len; i++)
+			{
 				tData = barList[i];
 				tX = tData[0];
 				tV = tData[1];
@@ -454,7 +602,8 @@ package stock.views {
 			}
 		}
 		
-		public function drawBarsH(barList:Array, xZero:Number = 0, color:String = "#ffff00"):void {
+		public function drawBarsH(barList:Array, xZero:Number = 0, color:String = "#ffff00"):void
+		{
 			var i:int, len:int;
 			len = barList.length;
 			var tData:Array;
@@ -462,7 +611,8 @@ package stock.views {
 			var tV:Number;
 			var tTxt:String;
 			var tColor:String;
-			for (i = 0; i < len; i++) {
+			for (i = 0; i < len; i++)
+			{
 				tData = barList[i];
 				tY = getAdptYV(tData[0]);
 				tV = tData[1];
@@ -471,33 +621,39 @@ package stock.views {
 				if (!tColor)
 					tColor = color;
 				this.graphics.drawLine(getAdptXV(tV * gridWidth) + xZero, tY, xZero, tY, tColor, gridWidth);
-				if (tTxt) {
+				if (tTxt)
+				{
 					this.graphics.fillText(tTxt, getAdptXV(tV * gridWidth) + xZero + 5, tY - 6, null, tColor, "left");
 				}
 					//this.graphics.drawLine(getAdptXV(tX * gridWidth), yZero+tV, getAdptXV(tX * gridWidth),yZero, "#ff0000",5);
 			}
 		}
 		
-		public function drawLines(pointList:Array, color:String = "#ff0000"):void {
+		public function drawLines(pointList:Array, color:String = "#ff0000"):void
+		{
 			var i:int, len:int;
 			len = pointList.length;
 			
-			for (i = 1; i < len; i++) {
+			for (i = 1; i < len; i++)
+			{
 				drawLine(pointList[i - 1][0], pointList[i - 1][1], pointList[i][0], pointList[i][1], color);
 			}
 		}
 		
-		public function drawLinesEx(pointList:Array, color:String = "#ff0000", offY:Number = 0):void {
+		public function drawLinesEx(pointList:Array, color:String = "#ff0000", offY:Number = 0):void
+		{
 			var i:int, len:int;
 			len = pointList.length;
 			var color:String;
-			for (i = 1; i < len; i++) {
+			for (i = 1; i < len; i++)
+			{
 				color = pointList[i][2] ? pointList[i][2] : color;
 				drawLineEx(pointList[i - 1][0], pointList[i - 1][1] + offY, pointList[i][0], pointList[i][1] + offY, color);
 			}
 		}
 		
-		public function drawPoints(iList:Array, sign:String, r:Number = 2, color:String = "#ff0000"):void {
+		public function drawPoints(iList:Array, sign:String, r:Number = 2, color:String = "#ff0000"):void
+		{
 			var dataList:Array;
 			dataList = disDataList;
 			var tI:int;
@@ -505,7 +661,8 @@ package stock.views {
 			var preData:Object;
 			var tData:Object;
 			len = iList.length;
-			for (i = 0; i < len; i++) {
+			for (i = 0; i < len; i++)
+			{
 				tI = iList[i];
 				tData = dataList[tI];
 				
@@ -513,41 +670,50 @@ package stock.views {
 			}
 		}
 		
-		public function drawCircle(i:int, y:Number, r:Number = 2, color:String = "#ff0000"):void {
+		public function drawCircle(i:int, y:Number, r:Number = 2, color:String = "#ff0000"):void
+		{
 			this.graphics.drawCircle(getAdptXV(i * gridWidth), getAdptYV(y), r, color);
 		}
 		
-		public function drawPoint(i:int, y:Number, text:String, dy:Number = 10, color:String = "#ffff00", radio:Number = 2):void {
+		public function drawPoint(i:int, y:Number, text:String, dy:Number = 10, color:String = "#ffff00", radio:Number = 2):void
+		{
 			var xPos:Number;
 			xPos = getAdptXV(i * gridWidth);
 			this.graphics.drawCircle(xPos, getAdptYV(y), radio, color);
-			if (text) {
+			if (text)
+			{
 				this.graphics.fillText(text, xPos, getAdptYV(y) + dy, null, color, "center");
 			}
 		
 		}
 		
-		public function drawLine(startI:int, startY:Number, endI:int, endY:Number, color:String = "#ff0000", lineWidth:Number = 1):void {
+		public function drawLine(startI:int, startY:Number, endI:int, endY:Number, color:String = "#ff0000", lineWidth:Number = 1):void
+		{
 			this.graphics.drawLine(getAdptXV(startI * gridWidth), getAdptYV(startY), getAdptXV(endI * gridWidth), getAdptYV(endY), color, lineWidth);
 		}
 		
-		public function drawLineEx(startI:int, startY:Number, endI:int, endY:Number, color:String = "#ff0000"):void {
+		public function drawLineEx(startI:int, startY:Number, endI:int, endY:Number, color:String = "#ff0000"):void
+		{
 			this.graphics.drawLine(getAdptXV(startI * gridWidth), -startY, getAdptXV(endI * gridWidth), -endY, color);
 		}
 		
-		public function drawGridLine(startI:int, endI:int, values:Array, color:String = "#ff0000", texts:Array = null):void {
+		public function drawGridLine(startI:int, endI:int, values:Array, color:String = "#ff0000", texts:Array = null):void
+		{
 			var i:int, len:int;
 			len = values.length;
 			var tValue:Number;
 			var tTxt:String;
-			for (i = 0; i < len; i++) {
+			for (i = 0; i < len; i++)
+			{
 				tValue = values;
 				drawLine(startI, tValue, endI, tValue, color);
 				
 			}
-			if (texts) {
+			if (texts)
+			{
 				len = texts.length;
-				for (i = 0; i < len; i++) {
+				for (i = 0; i < len; i++)
+				{
 					tTxt = texts[i];
 					tValue = values[i];
 					this.graphics.fillText(tTxt, getAdptXV(startI * gridWidth), getAdptYV(tValue), null, color, "left");
@@ -556,7 +722,8 @@ package stock.views {
 			}
 		}
 		
-		public function drawGridLineEx(startI:int, endI:int, values:Array, color:String = "#ff0000", texts:Array = null):void {
+		public function drawGridLineEx(startI:int, endI:int, values:Array, color:String = "#ff0000", texts:Array = null):void
+		{
 			
 			var i:int, len:int;
 			len = values.length;
@@ -566,14 +733,17 @@ package stock.views {
 			g = this.graphics;
 			g.save();
 			g.alpha(0.5)
-			for (i = 0; i < len; i++) {
+			for (i = 0; i < len; i++)
+			{
 				tValue = values[i];
 				drawLineEx(startI, tValue, endI, tValue, color);
 			}
 			g.restore();
-			if (texts) {
+			if (texts)
+			{
 				len = texts.length;
-				for (i = 0; i < len; i++) {
+				for (i = 0; i < len; i++)
+				{
 					tTxt = texts[i];
 					tValue = values[i];
 					this.graphics.fillText(tTxt, getAdptXV(startI * gridWidth), -tValue, null, color, "left");
@@ -584,15 +754,18 @@ package stock.views {
 		public var yRate:Number;
 		public var xRate:Number;
 		
-		public function getAdptYV(v:Number):Number {
+		public function getAdptYV(v:Number):Number
+		{
 			return -DataUtils.mParseFloat(v) * yRate;
 		}
 		
-		public function getAdptXV(v:Number):Number {
+		public function getAdptXV(v:Number):Number
+		{
 			return DataUtils.mParseFloat(v) * xRate;
 		}
 		
-		public function getIByX(x:Number):int {
+		public function getIByX(x:Number):int
+		{
 			return Math.round(x / (xRate * gridWidth));
 		}
 	}

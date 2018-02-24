@@ -9,18 +9,42 @@ package laya.stock
 	 */
 	public class StockTools 
 	{
-		
+		public static var NoticePath:String = "https://onewaymyway.github.io/stocknotice/notices/";
+		public static var StockPath:String = "https://onewaymyway.github.io/stockdata/";
 		public function StockTools() 
 		{
 			
 		}
+		public static function DebugMode():void
+		{
+			NoticePath = "D:/lovekxy/codes/python/stocknotice.git/trunk/notices/";
+			StockPath = "D:/lovekxy/codes/python/stockdata.git/trunk/";
+		}
+		public static function getStockNoticePath(stock:String):String
+		{
+			stock = getPureStock(stock);
+			var stockUrl:String;
+			stockUrl = NoticePath + stock + ".csv";
+			//stockUrl = "https://onewaymyway.github.io/stocknotice/notices/" + stock + ".csv";
+			//stockUrl = "D:/lovekxy/codes/python/stocknotice.git/trunk/notices/" + stock + ".csv";
+			return stockUrl;
+		}
 		public static function getStockCsvPath(stock:String):String
 		{
 			var stockUrl:String;
-			stockUrl = "https://onewaymyway.github.io/stockdata/stockdatas/" + stock + ".csv";
+			stockUrl = StockPath +"stockdatas/"+ stock + ".csv";
+			//stockUrl = "https://onewaymyway.github.io/stockdata/stockdatas/" + stock + ".csv";
 			//stockUrl = "res/stockdata/" + "002694" + ".csv";
 			return stockUrl;
 		}
+		
+		public static function getStockPicPath(stock:String):String
+		{
+			var stockUrl:String;
+			stockUrl = StockPath +"smallpics/"+ stock + ".png";
+			return stockUrl;
+		}
+		
 		public static function getAdptStockStr(stock:String):String
 		{
 			var tChar:String;

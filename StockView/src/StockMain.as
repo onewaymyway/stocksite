@@ -9,6 +9,7 @@ package
 	import laya.maths.MathUtil;
 	import laya.maths.Point;
 	import laya.net.Loader;
+	import laya.stock.StockTools;
 	import laya.tools.SohuDData;
 	import laya.tools.StockJsonP;
 	import laya.ui.Box;
@@ -30,6 +31,7 @@ package
 		public function StockMain() 
 		{
 			Laya.init(1000, 900);
+			StockTools.DebugMode();
 			Laya.stage.scaleMode = "full";
 			Laya.stage.screenMode = Stage.SCREEN_HORIZONTAL;
 			//Stat.show();

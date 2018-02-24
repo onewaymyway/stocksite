@@ -1,5 +1,7 @@
-package view {
+package view
+{
 	import laya.events.Event;
+	import laya.stock.StockTools;
 	import laya.tools.WebTools;
 	import laya.ui.Box;
 	import laya.ui.Image;
@@ -12,40 +14,48 @@ package view {
 	 * ...
 	 * @author ww
 	 */
-	public class StockView extends StockViewUI {
+	public class StockView extends StockViewUI
+	{
 		
-		public function StockView() {
+		public function StockView()
+		{
 		
 		}
 		
-		public function init():void {
+		public function init():void
+		{
 			stockList.renderHandler = new Handler(this, stockRender);
 			stockList.array = StockBasicInfo.I.stockList;
 			stockList.mouseHandler = new Handler(this, onMouseList);
 			stockList.scrollBar.touchScrollEnable = true;
 		}
 		
-		public function stockRender(cell:Box, index:int):void {
+		public function stockRender(cell:Box, index:int):void
+		{
 			var item:Object = cell.dataSource;
 			var img:Image;
 			img = cell.getChildByName("img");
-			img.skin = "https://onewaymyway.github.io/stockdata/smallpics/" + item.code + ".png";
-		
+			//img.skin = "https://onewaymyway.github.io/stockdata/smallpics/" + item.code + ".png";
+			img.skin = StockTools.getStockPicPath(item.code);
 		}
 		
-		public function openUrl(path:String):void {
+		public function openUrl(path:String):void
+		{
 			Browser.window.open(path, "_blank");
 		}
 		private var preTime:Number = 0;
-		public function onMouseList(e:Event, index:int):void {
-			if (e.type == Event.MOUSE_UP) {
+		
+		public function onMouseList(e:Event, index:int):void
+		{
+			if (e.type == Event.MOUSE_UP)
+			{
 				var tTime:Number = Browser.now();
 				if (tTime - preTime > 500)
 				{
 					preTime = tTime;
 					return;
 				}
-					
+				
 				preTime = tTime;
 				var tData:Object;
 				tData = stockList.array[index];

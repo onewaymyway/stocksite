@@ -11,6 +11,7 @@ package view {
 	import laya.maths.Point;
 	import laya.stock.analysers.AnalyserBase;
 	import laya.stock.analysers.AverageLineAnalyser;
+	import laya.stock.analysers.NoticeAnalyser;
 	import laya.stock.analysers.bars.VolumeBar;
 	import laya.stock.analysers.BottomAnalyser;
 	import laya.stock.analysers.BreakAnalyser;
@@ -64,6 +65,7 @@ package view {
 			analyserClassList.push(StrongLine);
 			analyserClassList.push(AverageLineAnalyser);
 			analyserClassList.push(DistAnalyser);
+			analyserClassList.push(NoticeAnalyser);
 			
 			analyserList.initAnalysers(analyserClassList);
 			addChild(kLine);
@@ -96,7 +98,9 @@ package view {
 			Notice.listen(MsgConst.Show_Analyser_Prop, this, showAnalyserProp);
 			Notice.listen(MsgConst.Hide_Analyser_Prop, this, updatePropPanelPos);
 			Notice.listen(MsgConst.Set_Analyser_Prop, this, onSetAnalyserProps);
+			Notice.listen(MsgConst.Fresh_KLineView, this, refreshKLine);
 			propPanel.on(PropPanel.MakeChange, this, refreshKLine);
+			
 			this.on(Event.MOUSE_DOWN, this, onMMouseDown);
 			this.on(Event.MOUSE_UP, this, onMMouseUp);
 			enableAnimation.selected = false;
@@ -116,6 +120,8 @@ package view {
 			if (Browser.onMobile) tradeSelect.scaleX = tradeSelect.scaleY = 2;
 			MultiTouchManager.I.on(MultiTouchManager.MultiStart, this, clearAllMouseDown);
 		}
+		
+		
 		
 		
 		private function updateDayLine():void {

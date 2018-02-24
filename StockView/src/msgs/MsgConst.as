@@ -18,6 +18,7 @@ package msgs
 		
 		public static const AnalyserListChange:String = "AnalyserListChange";
 		
+		public static const Fresh_KLineView:String = "Fresh_KLineView";
 		public static const Show_Analyser_Prop:String = "Show_Analyser_Prop";
 		public static const Hide_Analyser_Prop:String = "Hide_Analyser_Prop";
 		
@@ -34,6 +35,10 @@ package msgs
 		public static const Remove_MDLine:String = "Remove_MDLine";
 		
 		public static const RealTimeItem_DoubleClick:String = "RealTimeItem_DoubleClick";
+		
+		
+		public static const Stock_NoticeLoaded:String = "Stock_NoticeLoaded";
+		
 	}
 
 }

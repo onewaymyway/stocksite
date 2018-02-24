@@ -954,6 +954,69 @@ var Laya=window.Laya=(function(window,document){
 			return sum;
 		}
 
+		DataUtils.getUpStopPrice=function(price){
+			var rst=NaN;
+			rst=price *1.1;
+			rst=Math.floor(rst *100+0.5)/ 100;
+			return rst;
+		}
+
+		DataUtils.isUpStopAt=function(dataList,i,once){
+			(once===void 0)&& (once=false);
+			if (!dataList||!dataList[i])return false;
+			var tData;
+			tData=dataList[i];
+			var preData;
+			preData=dataList[i-1];
+			if (!preData)return false;
+			if (once){
+				return tData.high >=DataUtils.getUpStopPrice(preData.close);
+			}
+			return tData.close >=DataUtils.getUpStopPrice(preData.close);
+		}
+
+		DataUtils.isUpStop=function(dataList,i){
+			if (!dataList||!dataList[i])return false;
+			var tData;
+			tData=dataList[i];
+			if (tData.high !=tData.low)return false;
+			var preData;
+			preData=dataList[i-1];
+			if (!preData)return false;
+			return tData.high > preData.close;
+		}
+
+		DataUtils.getContinueUpStops=function(dataList,i){
+			(i===void 0)&& (i=-1);
+			if (i<0||i>=dataList.length)i=dataList.length-1;
+			var count=0;
+			while (i >=0){
+				if (DataUtils.isUpStop(dataList,i)){
+					count++;
+					}else{
+					break ;
+				}
+				i--;
+			}
+			return count;
+		}
+
+		DataUtils.getContinueCounts=function(dataList,i,fun){
+			(i===void 0)&& (i=-1);
+			if (fun==null)return 0;
+			if (i<0||i>=dataList.length)i=dataList.length-1;
+			var count=0;
+			while (i >=0){
+				if (fun(dataList,i)){
+					count++;
+					}else{
+					break ;
+				}
+				i--;
+			}
+			return count;
+		}
+
 		DataUtils.K_Top="top";
 		DataUtils.K_Bottom="bottom";
 		DataUtils.K_Unknow="unknow";
@@ -1077,6 +1140,50 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		return Distribution;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class laya.math.structs.ListDic
+	var ListDic=(function(){
+		function ListDic(){
+			this.dataO=null;
+		}
+
+		__class(ListDic,'laya.math.structs.ListDic');
+		var __proto=ListDic.prototype;
+		__proto.fromList=function(dataList,key){
+			this.dataO={};
+			var i=0,len=0;
+			len=dataList.length;
+			var tData;
+			var tKey;
+			for (i=0;i < len;i++){
+				tData=dataList[i];
+				tKey=tData[key];
+				if (!this.dataO[tKey]){
+					this.dataO[tKey]=[];
+				}
+				this.dataO[tKey].push(tData);
+			}
+		}
+
+		__proto.getData=function(key){
+			if (!this.dataO)return null;
+			return this.dataO[key];
+		}
+
+		ListDic.createByList=function(dataList,key){
+			var listDic;
+			listDic=new ListDic();
+			listDic.fromList(dataList,key);
+			return listDic;
+		}
+
+		return ListDic;
 	})()
 
 
@@ -1919,13 +2026,67 @@ var Laya=window.Laya=(function(window,document){
 	*...
 	*@author ww
 	*/
+	//class laya.stock.StockNoticeManager
+	var StockNoticeManager=(function(){
+		function StockNoticeManager(){}
+		__class(StockNoticeManager,'laya.stock.StockNoticeManager');
+		var __proto=StockNoticeManager.prototype;
+		__proto.loadStockNotice=function(stock){
+			stock=StockTools.getPureStock(stock);
+			if (StockNoticeManager._stockDic[stock])return;
+			var noticeData;
+			noticeData=new StockNoticeData();
+			noticeData.load(stock,Handler.create(this,this.onNoticeLoaded,[noticeData,stock]));
+		}
+
+		__proto.getStockNotice=function(stock){
+			return StockNoticeManager._stockDic[stock];
+		}
+
+		__proto.onNoticeLoaded=function(noticeData,stock){
+			StockNoticeManager._stockDic[stock]=noticeData;
+			Notice.notify("Stock_NoticeLoaded",[stock]);
+			Notice.notify("Fresh_KLineView");
+		}
+
+		StockNoticeManager._stockDic={};
+		StockNoticeManager.noticeTypes=[];
+		__static(StockNoticeManager,
+		['I',function(){return this.I=new StockNoticeManager();}
+		]);
+		return StockNoticeManager;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
 	//class laya.stock.StockTools
 	var StockTools=(function(){
 		function StockTools(){}
 		__class(StockTools,'laya.stock.StockTools');
+		StockTools.DebugMode=function(){
+			StockTools.NoticePath="D:/lovekxy/codes/python/stocknotice.git/trunk/notices/";
+			StockTools.StockPath="D:/lovekxy/codes/python/stockdata.git/trunk/";
+		}
+
+		StockTools.getStockNoticePath=function(stock){
+			stock=StockTools.getPureStock(stock);
+			var stockUrl;
+			stockUrl=StockTools.NoticePath+stock+".csv";
+			return stockUrl;
+		}
+
 		StockTools.getStockCsvPath=function(stock){
 			var stockUrl;
-			stockUrl="https://onewaymyway.github.io/stockdata/stockdatas/"+stock+".csv";
+			stockUrl=StockTools.StockPath+"stockdatas/"+stock+".csv";
+			return stockUrl;
+		}
+
+		StockTools.getStockPicPath=function(stock){
+			var stockUrl;
+			stockUrl=StockTools.StockPath+"smallpics/"+stock+".png";
 			return stockUrl;
 		}
 
@@ -2311,6 +2472,8 @@ var Laya=window.Laya=(function(window,document){
 			return true;
 		}
 
+		StockTools.NoticePath="https://onewaymyway.github.io/stocknotice/notices/";
+		StockTools.StockPath="https://onewaymyway.github.io/stockdata/";
 		__static(StockTools,
 		['highDays',function(){return this.highDays=[7,15,30,45,60];}
 		]);
@@ -3079,6 +3242,7 @@ var Laya=window.Laya=(function(window,document){
 		MsgConst.Show_Next_Select="Show_Next_Select";
 		MsgConst.Show_Pre_Select="Show_Pre_Select";
 		MsgConst.AnalyserListChange="AnalyserListChange";
+		MsgConst.Fresh_KLineView="Fresh_KLineView";
 		MsgConst.Show_Analyser_Prop="Show_Analyser_Prop";
 		MsgConst.Hide_Analyser_Prop="Hide_Analyser_Prop";
 		MsgConst.Set_Analyser_Prop="Set_Analyser_Prop";
@@ -3090,6 +3254,7 @@ var Laya=window.Laya=(function(window,document){
 		MsgConst.Add_MDLine="Add_MDLine";
 		MsgConst.Remove_MDLine="Remove_MDLine";
 		MsgConst.RealTimeItem_DoubleClick="RealTimeItem_DoubleClick";
+		MsgConst.Stock_NoticeLoaded="Stock_NoticeLoaded";
 		return MsgConst;
 	})()
 
@@ -3231,6 +3396,7 @@ var Laya=window.Laya=(function(window,document){
 		function StockMain(){
 			this.stockMainBox=null;
 			Laya.init(1000,900);
+			StockTools.DebugMode();
 			Laya.stage.scaleMode="full";
 			Laya.stage.screenMode="horizontal";
 			var loads;
@@ -17409,36 +17575,6 @@ var Laya=window.Laya=(function(window,document){
 	})()
 
 
-	/**
-	*...
-	*@author dongketao
-	*/
-	//class PathFinding.core.Node
-	var Node$1=(function(){
-		function Node(x,y,walkable){
-			this.x=0;
-			this.y=0;
-			this.g=0;
-			this.f=0;
-			this.h=0;
-			this.by=0;
-			this.parent=null;
-			this.opened=null;
-			this.closed=null;
-			this.tested=null;
-			this.retainCount=null;
-			this.walkable=false;
-			(walkable===void 0)&& (walkable=true);
-			this.x=x;
-			this.y=y;
-			this.walkable=walkable;
-		}
-
-		__class(Node,'PathFinding.core.Node',null,'Node$1');
-		return Node;
-	})()
-
-
 	/**全局配置*/
 	//class UIConfig
 	var UIConfig=(function(){
@@ -18716,6 +18852,109 @@ var Laya=window.Laya=(function(window,document){
 	*...
 	*@author ww
 	*/
+	//class laya.stock.analysers.NoticeAnalyser extends laya.stock.analysers.AnalyserBase
+	var NoticeAnalyser=(function(_super){
+		function NoticeAnalyser(){
+			this.noticeData=null;
+			this.showAll=0;
+			NoticeAnalyser.__super.call(this);
+		}
+
+		__class(NoticeAnalyser,'laya.stock.analysers.NoticeAnalyser',_super);
+		var __proto=NoticeAnalyser.prototype;
+		__proto.initParamKeys=function(){
+			this.paramkeys=["showAll"]
+		}
+
+		__proto.analyseWork=function(){
+			this.noticeAnalyse();
+		}
+
+		__proto.noticeAnalyse=function(){
+			var tStockName;
+			tStockName=this.stockData.stockName;
+			this.noticeData=StockNoticeManager.I.getStockNotice(tStockName);
+			if (!this.noticeData){
+				StockNoticeManager.I.loadStockNotice(tStockName);
+				return;
+			};
+			var dataList;
+			dataList=this.noticeData.noticeData;
+			var i=0,len=0;
+			len=this.disDataList.length;
+			var tData;
+			var tDate;
+			var tNoticeList;
+			var noticeList;
+			var noticeInfoList;
+			noticeList=[];
+			noticeInfoList=[];
+			for (i=0;i < len;i++){
+				tData=this.disDataList[i];
+				tDate=tData["date"];
+				tNoticeList=dataList.getData(tDate);
+				if (tNoticeList){
+					noticeList.push([i,tNoticeList]);
+					this.addNotices(noticeInfoList,i,tNoticeList);
+				}
+			}
+			this.resultData["noticeList"]=noticeList;
+			this.resultData["noticeInfoList"]=noticeInfoList;
+		}
+
+		__proto.isShowTitle=function(title){
+			if (this.showAll > 0)return true;
+			var i=0,len=0;
+			len=NoticeAnalyser.noShowKeyWords.length;
+			for (i=0;i < len;i++){
+				if (title.indexOf(NoticeAnalyser.noShowKeyWords[i])>=0)return false;
+			}
+			len=NoticeAnalyser.showKeyWords.length;
+			for (i=0;i < len;i++){
+				if (title.indexOf(NoticeAnalyser.showKeyWords[i])>=0)return true;
+			}
+			return false;
+		}
+
+		__proto.addNotices=function(infoList,index,noticeList){
+			var i=0,len=0;
+			len=noticeList.length;
+			var tNotice;
+			var tTitle;
+			var tCount=0;
+			tCount=0;
+			for (i=0;i < len;i++){
+				tNotice=noticeList[i];
+				tTitle=tNotice["title"];
+				if (this.isShowTitle(tTitle)){
+					if (tTitle.indexOf("：")>=0){
+						tTitle=tTitle.split("：")[1];
+					}
+					infoList.push([tTitle,index,tCount*20]);
+					tCount++;
+				}
+			}
+		}
+
+		__proto.getDrawCmds=function(){
+			var rst;
+			rst=[];
+			if(this.resultData["noticeInfoList"])
+				rst.push(["drawTexts",[this.resultData["noticeInfoList"],"low",50,"#ff0000",true,"#ff0000",true]]);
+			return rst;
+		}
+
+		__static(NoticeAnalyser,
+		['showKeyWords',function(){return this.showKeyWords=["增","减","融资","核准","重大事项","重要","合同","中标","重大资产","上市流通","补助","重组","股东","达成","冻结","季报","年报","质押","业绩","出售","非公开发行","终止","完成","关联交易","获得","拍卖","业务","解禁","员工持股","担保","股权激励","聘","重组","投资","辞职","收购","激励","分红","合作","购买","转让","募资"];},'noShowKeyWords',function(){return this.noShowKeyWords=["异常波动","回复","意见","说明"];}
+		]);
+		return NoticeAnalyser;
+	})(AnalyserBase)
+
+
+	/**
+	*...
+	*@author ww
+	*/
 	//class laya.stock.models.DownList extends laya.stock.models.OrdedList
 	var DownList=(function(_super){
 		function DownList(){
@@ -19258,6 +19497,47 @@ var Laya=window.Laya=(function(window,document){
 
 		__proto.freshData=function(){}
 		return StockData;
+	})(CSVParser)
+
+
+	/**
+	*ww
+	*@author ...
+	*/
+	//class stock.StockNoticeData extends stock.CSVParser
+	var StockNoticeData=(function(_super){
+		function StockNoticeData(){
+			this._myLoader=null;
+			this.noticeData=null;
+			this._complete=null;
+			StockNoticeData.__super.call(this);
+			this._myLoader=new Loader();
+		}
+
+		__class(StockNoticeData,'stock.StockNoticeData',_super);
+		var __proto=StockNoticeData.prototype;
+		__proto.load=function(stock,complete){
+			this._complete=complete;
+			this._myLoader.once("complete",this,this.dataLoaded);
+			this._myLoader.load(StockTools.getStockNoticePath(stock),"text");
+		}
+
+		__proto.dataLoaded=function(data){
+			if (!data)return;
+			this.init(data);
+			if (this._complete){
+				this._complete.run();
+				this._complete=null;
+			}
+		}
+
+		__proto.init=function(csvStr){
+			_super.prototype.init.call(this,csvStr);
+			this.dataList.sort(MathUtil.sortByKey("date",false,false));
+			this.noticeData=ListDic.createByList(this.dataList,"date");
+		}
+
+		return StockNoticeData;
 	})(CSVParser)
 
 
@@ -22638,6 +22918,7 @@ var Laya=window.Laya=(function(window,document){
 				var prePrice=NaN;
 				var tPrice=NaN;
 				var tIndex=0;
+				lastIndex=tI;
 				tIndex=this.disDataList.length-1;
 				prePrice=StockTools.getStockPriceEx(lastIndex,"close",this);
 				tPrice=StockTools.getStockPriceEx(tIndex,"close",this);
@@ -25139,6 +25420,7 @@ var Laya=window.Laya=(function(window,document){
 			this.lineHeight=400;
 			this.lineWidth=800;
 			this.markO=null;
+			this._autoTexts=null;
 			this.yRate=NaN;
 			this.xRate=NaN;
 			KLine.__super.call(this);
@@ -25179,6 +25461,7 @@ var Laya=window.Laya=(function(window,document){
 		__proto.initByStrData=function(data){
 			var stockData;
 			stockData=new StockData();
+			stockData.stockName=StockTools.getPureStock(this.tStock);
 			stockData.init(data);
 			this.setStockData(stockData);
 		}
@@ -25198,7 +25481,7 @@ var Laya=window.Laya=(function(window,document){
 			if (dataO.date==lastDataO.date){
 				this.dataList[this.dataList.length-1]=dataO;
 			}
-			else {
+			else{
 				if (dataO.date > lastDataO.date){
 					this.dataList.push(dataO);
 				}
@@ -25221,7 +25504,7 @@ var Laya=window.Laya=(function(window,document){
 				this.showMsg("playing K-line Animation");
 				Laya.timer.loop(10,this,this.timeEffect);
 			}
-			else {
+			else{
 				this.showMsg("K-line Showed:"+this.disDataList[this.disDataList.length-1].date);
 				this.cacheAsBitmap=true;
 				this.event("KlineShowed");
@@ -25254,6 +25537,7 @@ var Laya=window.Laya=(function(window,document){
 		__proto.drawdata=function(start,end){
 			(start===void 0)&& (start=0);
 			(end===void 0)&& (end=-1);
+			this._autoTexts=[];
 			if (this.maxShowCount > 0){
 				end=start+this.maxShowCount;
 				if (end > this.dataList.length)
@@ -25268,6 +25552,7 @@ var Laya=window.Laya=(function(window,document){
 			this.drawStockKLine();
 			this.drawGrid();
 			this.drawAnalysers();
+			this.drawAutoTexts();
 		}
 
 		__proto.drawStockKLine=function(){
@@ -25292,7 +25577,7 @@ var Laya=window.Laya=(function(window,document){
 				if (tData["close"] >=tData["open"]){
 					tColor="#ff0000";
 				}
-				else {
+				else{
 					tColor="#00ffff";
 				}
 				if (tData["high"]==tData["low"]){
@@ -25301,12 +25586,12 @@ var Laya=window.Laya=(function(window,document){
 					}
 					this.graphics.drawLine(tPos,this.getAdptYV(tData["open"]),tPos,this.getAdptYV(tData["close"])+1,tColor,this.gridWidth *this.xRate);
 				}
-				else {
+				else{
 					this.graphics.drawLine(tPos,this.getAdptYV(tData["high"]),tPos,this.getAdptYV(tData["low"]),tColor,1 *this.xRate);
 					if (tData["open"]==tData["close"]){
 						this.graphics.drawLine(tPos,this.getAdptYV(tData["open"]),tPos,this.getAdptYV(tData["close"])+0.5,tColor,this.gridWidth *this.xRate);
 					}
-					else {
+					else{
 						this.graphics.drawLine(tPos,this.getAdptYV(tData["open"]),tPos,this.getAdptYV(tData["close"]),tColor,this.gridWidth *this.xRate);
 					}
 				}
@@ -25329,19 +25614,20 @@ var Laya=window.Laya=(function(window,document){
 			if (this.markO && this.markO.date){
 				var buyI=0;
 				buyI=this.drawMark(this.markO.date,"Buy",dataList);
-				if (buyI >=0&&this.markO.sell){
+				if (buyI >=0 && this.markO.sell){
 					var sellI=0;
 					i=buyI+this.markO.sell;
 					if (dataList[i]){
 						prePrice=dataList[buyI]["high"]
 						tData=dataList[i];
-						curPrice=this.markO.sellPrice||tData["close"]
+						curPrice=this.markO.sellPrice || tData["close"]
 						tPos=this.getAdptXV(i *this.gridWidth);
 						this.graphics.drawLine(tPos,this.getAdptYV(tData["low"]),tPos,this.getAdptYV(tData["low"])+30,"#00ff00");
 						var curInfo;
 						if (this.markO.sellReason){
 							curInfo="Sell:"+StockTools.getGoodPercent((curPrice-prePrice)/ prePrice)+"%"+this.markO.sellReason;
-							}else{
+						}
+						else{
 							curInfo="Sell:"+StockTools.getGoodPercent((curPrice-prePrice)/ prePrice)+"%"+tData["date"];
 						}
 						this.graphics.fillText(curInfo,tPos,this.getAdptYV(tData["low"])+30,null,"#00ff00","center");
@@ -25446,16 +25732,28 @@ var Laya=window.Laya=(function(window,document){
 			}
 		}
 
-		__proto.drawTexts=function(texts,sign,dy,color,withLine,lineColor){
+		__proto.drawTexts=function(texts,sign,dy,color,withLine,lineColor,autoPos){
 			(dy===void 0)&& (dy=0);
 			(color===void 0)&& (color="#ff0000");
 			(withLine===void 0)&& (withLine=false);
+			(autoPos===void 0)&& (autoPos=false);
 			var i=0,len=0;
 			len=texts.length;
 			var tArr;
-			for (i=0;i < len;i++){
-				tArr=texts[i];
-				this.drawText(tArr[0],tArr[1],sign,dy,color,withLine,lineColor);
+			var tDy=NaN;
+			if (autoPos){
+				for (i=0;i < len;i++){
+					tArr=texts[i];
+					tDy=tArr[2] || 0;
+					this.drawTextAuto(tArr[0],tArr[1],sign,dy+tDy,color,withLine,lineColor);
+				}
+			}
+			else{
+				for (i=0;i < len;i++){
+					tArr=texts[i];
+					tDy=tArr[2] || 0;
+					this.drawText(tArr[0],tArr[1],sign,dy+tDy,color,withLine,lineColor);
+				}
 			}
 		}
 
@@ -25468,6 +25766,56 @@ var Laya=window.Laya=(function(window,document){
 				if (!lineColor)
 					lineColor=color;
 				this.graphics.drawLine(this.getAdptXV(i *this.gridWidth),this.getAdptYV(this.disDataList[i][sign])+dY,this.getAdptXV(i *this.gridWidth),this.getAdptYV(this.disDataList[i][sign]),lineColor);
+			}
+		}
+
+		__proto.drawAutoTexts=function(){}
+		__proto.isOKPos=function(rect){
+			var i=0,len=0;
+			var tRec;
+			len=this._autoTexts.length;
+			for (i=0;i < len;i++){
+				tRec=this._autoTexts[i];
+				if (tRec.intersects(rect))return false;
+			}
+			return true;
+		}
+
+		__proto.findOKPosForRect=function(rect,startDY){
+			(startDY===void 0)&& (startDY=50);
+			var tY=NaN;
+			tY=rect.y;
+			var tDY=NaN;
+			tDY=startDY;
+			while (!this.isOKPos(rect)){
+				rect.y=tY+tDY;
+				if (this.isOKPos(rect))break ;
+				rect.y=tY-tDY;
+				if (this.isOKPos(rect))break ;
+				tDY+=2;
+			}
+		}
+
+		__proto.drawTextAuto=function(text,i,sign,dY,color,withLine,lineColor){
+			(dY===void 0)&& (dY=0);
+			(color===void 0)&& (color="#ff0000");
+			(withLine===void 0)&& (withLine=false);
+			var tTextRect;
+			tTextRect=new Rectangle();
+			var x=NaN;
+			x=this.getAdptXV(i *this.gridWidth);
+			var y=NaN;
+			y=this.getAdptYV(this.disDataList[i][sign]);
+			var width=Utils.measureText(text,Font.defaultFont).width;
+			tTextRect.setTo(x,y,width,16);
+			tTextRect.x-=tTextRect.width *0.5;
+			this.findOKPosForRect(tTextRect,dY);
+			this._autoTexts.push(tTextRect);
+			this.graphics.fillText(text,tTextRect.x+tTextRect.width *0.5,tTextRect.y,null,color,"center");
+			if (withLine){
+				if (!lineColor)
+					lineColor=color;
+				this.graphics.drawLine(tTextRect.x+tTextRect.width *0.5,tTextRect.y,tTextRect.x+tTextRect.width *0.5,this.getAdptYV(this.disDataList[i][sign]),lineColor);
 			}
 		}
 
@@ -25514,7 +25862,7 @@ var Laya=window.Laya=(function(window,document){
 				if (exTxt){
 					this.drawPoint(tI,tData[tSign],exTxt,KLine.SignDrawDes[tSign]["dy"],KLine.SignDrawDes[tSign]["color"],3);
 				}
-				else {
+				else{
 					this.drawPoint(tI,tData[tSign],tData[tSign],KLine.SignDrawDes[tSign]["dy"],KLine.SignDrawDes[tSign]["color"],3);
 				}
 			}
@@ -40266,6 +40614,7 @@ var Laya=window.Laya=(function(window,document){
 			analyserClassList.push(StrongLine);
 			analyserClassList.push(AverageLineAnalyser);
 			analyserClassList.push(DistAnalyser);
+			analyserClassList.push(NoticeAnalyser);
 			this.analyserList.initAnalysers(analyserClassList);
 			this.addChild(this.kLine);
 			this.kLine.pos(0,this.kLine.lineHeight+90);
@@ -40290,6 +40639,7 @@ var Laya=window.Laya=(function(window,document){
 			Notice.listen("Show_Analyser_Prop",this,this.showAnalyserProp);
 			Notice.listen("Hide_Analyser_Prop",this,this.updatePropPanelPos);
 			Notice.listen("Set_Analyser_Prop",this,this.onSetAnalyserProps);
+			Notice.listen("Fresh_KLineView",this,this.refreshKLine);
 			this.propPanel.on("MakeChange",this,this.refreshKLine);
 			this.on("mousedown",this,this.onMMouseDown);
 			this.on("mouseup",this,this.onMMouseUp);
@@ -41659,7 +42009,7 @@ var Laya=window.Laya=(function(window,document){
 			var item=cell.dataSource;
 			var img;
 			img=cell.getChildByName("img");
-			img.skin="https://onewaymyway.github.io/stockdata/smallpics/"+item.code+".png";
+			img.skin=StockTools.getStockPicPath(item.code);
 		}
 
 		__proto.openUrl=function(path){
@@ -41776,6 +42126,25 @@ var Laya=window.Laya=(function(window,document){
 	*...
 	*@author ww
 	*/
+	//class laya.debug.view.nodeInfo.nodetree.FindNodeSmall extends laya.debug.ui.debugui.FindNodeSmallUI
+	var FindNodeSmall=(function(_super){
+		function FindNodeSmall(){
+			FindNodeSmall.__super.call(this);
+			Base64AtlasManager.replaceRes(FindNodeSmallUI.uiView);
+			this.createView(FindNodeSmallUI.uiView);
+		}
+
+		__class(FindNodeSmall,'laya.debug.view.nodeInfo.nodetree.FindNodeSmall',_super);
+		var __proto=FindNodeSmall.prototype;
+		__proto.createChildren=function(){}
+		return FindNodeSmall;
+	})(FindNodeSmallUI)
+
+
+	/**
+	*...
+	*@author ww
+	*/
 	//class laya.debug.view.nodeInfo.nodetree.FindNode extends laya.debug.ui.debugui.FindNodeUI
 	var FindNode=(function(_super){
 		function FindNode(){
@@ -41792,25 +42161,6 @@ var Laya=window.Laya=(function(window,document){
 
 		return FindNode;
 	})(FindNodeUI)
-
-
-	/**
-	*...
-	*@author ww
-	*/
-	//class laya.debug.view.nodeInfo.nodetree.FindNodeSmall extends laya.debug.ui.debugui.FindNodeSmallUI
-	var FindNodeSmall=(function(_super){
-		function FindNodeSmall(){
-			FindNodeSmall.__super.call(this);
-			Base64AtlasManager.replaceRes(FindNodeSmallUI.uiView);
-			this.createView(FindNodeSmallUI.uiView);
-		}
-
-		__class(FindNodeSmall,'laya.debug.view.nodeInfo.nodetree.FindNodeSmall',_super);
-		var __proto=FindNodeSmall.prototype;
-		__proto.createChildren=function(){}
-		return FindNodeSmall;
-	})(FindNodeSmallUI)
 
 
 	/**
