@@ -31,7 +31,7 @@ package
 		public function StockMain() 
 		{
 			Laya.init(1000, 900);
-			StockTools.DebugMode();
+			//StockTools.DebugMode();
 			Laya.stage.scaleMode = "full";
 			Laya.stage.screenMode = Stage.SCREEN_HORIZONTAL;
 			//Stat.show();

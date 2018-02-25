@@ -3396,7 +3396,6 @@ var Laya=window.Laya=(function(window,document){
 		function StockMain(){
 			this.stockMainBox=null;
 			Laya.init(1000,900);
-			StockTools.DebugMode();
 			Laya.stage.scaleMode="full";
 			Laya.stage.screenMode="horizontal";
 			var loads;
@@ -17572,6 +17571,36 @@ var Laya=window.Laya=(function(window,document){
 		});
 
 		return WordText;
+	})()
+
+
+	/**
+	*...
+	*@author dongketao
+	*/
+	//class PathFinding.core.Node
+	var Node$1=(function(){
+		function Node(x,y,walkable){
+			this.x=0;
+			this.y=0;
+			this.g=0;
+			this.f=0;
+			this.h=0;
+			this.by=0;
+			this.parent=null;
+			this.opened=null;
+			this.closed=null;
+			this.tested=null;
+			this.retainCount=null;
+			this.walkable=false;
+			(walkable===void 0)&& (walkable=true);
+			this.x=x;
+			this.y=y;
+			this.walkable=walkable;
+		}
+
+		__class(Node,'PathFinding.core.Node',null,'Node$1');
+		return Node;
 	})()
 
 
@@ -42271,6 +42300,26 @@ var Laya=window.Laya=(function(window,document){
 	*...
 	*@author ww
 	*/
+	//class laya.debug.view.nodeInfo.nodetree.NodeTreeSetting extends laya.debug.ui.debugui.NodeTreeSettingUI
+	var NodeTreeSetting=(function(_super){
+		function NodeTreeSetting(){
+			NodeTreeSetting.__super.call(this);
+			Base64AtlasManager.replaceRes(NodeTreeSettingUI.uiView);
+			this.createView(NodeTreeSettingUI.uiView);
+		}
+
+		__class(NodeTreeSetting,'laya.debug.view.nodeInfo.nodetree.NodeTreeSetting',_super);
+		var __proto=NodeTreeSetting.prototype;
+		//inits();
+		__proto.createChildren=function(){}
+		return NodeTreeSetting;
+	})(NodeTreeSettingUI)
+
+
+	/**
+	*...
+	*@author ww
+	*/
 	//class laya.debug.view.nodeInfo.nodetree.NodeTree extends laya.debug.ui.debugui.NodeTreeUI
 	var NodeTree=(function(_super){
 		function NodeTree(){
@@ -42508,26 +42557,6 @@ var Laya=window.Laya=(function(window,document){
 		]);
 		return NodeTree;
 	})(NodeTreeUI)
-
-
-	/**
-	*...
-	*@author ww
-	*/
-	//class laya.debug.view.nodeInfo.nodetree.NodeTreeSetting extends laya.debug.ui.debugui.NodeTreeSettingUI
-	var NodeTreeSetting=(function(_super){
-		function NodeTreeSetting(){
-			NodeTreeSetting.__super.call(this);
-			Base64AtlasManager.replaceRes(NodeTreeSettingUI.uiView);
-			this.createView(NodeTreeSettingUI.uiView);
-		}
-
-		__class(NodeTreeSetting,'laya.debug.view.nodeInfo.nodetree.NodeTreeSetting',_super);
-		var __proto=NodeTreeSetting.prototype;
-		//inits();
-		__proto.createChildren=function(){}
-		return NodeTreeSetting;
-	})(NodeTreeSettingUI)
 
 
 	/**
