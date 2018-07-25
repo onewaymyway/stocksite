@@ -1044,7 +1044,8 @@ var Laya=window.Laya=(function(window,document){
 		OSInfo.init=function(){
 			OSInfo.os=Device.require("os");
 			OSInfo.platform=OSInfo.os.platform();
-			OSInfo.tempdir=OSInfo.os.tmpdir();
+			if(OSInfo.os.tmpdir)
+				OSInfo.tempdir=OSInfo.os.tmpdir();
 			OSInfo.type=OSInfo.os.type();
 			var tProcess;
 			tProcess=process;;

@@ -41116,7 +41116,7 @@ var Laya=window.Laya=(function(window,document){
 			LoginView.__super.call(this);
 			this.pwdInput.asPassword=true;
 			this.visible=false;
-			MainSocket.I.serverStr="ws://orzooo.com:9909";
+			MainSocket.I.serverStr="ws://stk.orzooo.com:9909";
 			MainSocket.I.connect();
 			MainSocket.I.socket.on("Logined",this,this.onLogin);
 			MainSocket.I.socket.on("Welcome",this,this.onConnected);

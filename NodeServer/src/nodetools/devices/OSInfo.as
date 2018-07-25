@@ -24,6 +24,7 @@ package nodetools.devices
 			//trace("os:",os);
 			//homedir = os.homedir();
 			platform = os.platform();
+			if(os.tmpdir)
 			tempdir = os.tmpdir();
 			type = os.type();
 			var tProcess:*;
