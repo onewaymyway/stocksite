@@ -1,5 +1,5 @@
 {
-    "nextCMD": "C:/Python34/python.exe findBetterParam.py nodeParam.json nodeRst.json",
+    "nextCMD": "D:/Anaconda3/python.exe findBetterParam.py nodeParam.json nodeRst.json",
     "trader": {
         "Class": "AverageTrader",
         "config": {
