@@ -420,7 +420,7 @@ package laya.ui {
 		protected function loop():void {
 			var mouseY:Number = Laya.stage.mouseY;
 			var mouseX:Number = Laya.stage.mouseX;
-			_lastOffset = isVertical ? (mouseY - _lastPoint.y) : (mouseX - _lastPoint.x);
+			_lastOffset = isVertical ? (mouseY - _lastPoint.y)/_target.globalScaleY : (mouseX - _lastPoint.x)/_target.globalScaleX;
 			
 			if (_clickOnly) {
 				if (Math.abs(_lastOffset * (isVertical ? Laya.stage._canvasTransform.getScaleY() : Laya.stage._canvasTransform.getScaleX())) > 1) {

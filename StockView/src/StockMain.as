@@ -13,6 +13,7 @@ package
 	import laya.tools.SohuDData;
 	import laya.tools.StockJsonP;
 	import laya.ui.Box;
+	import laya.utils.Browser;
 	import laya.utils.Handler;
 	import laya.utils.Stat;
 	import stock.PathConfig;
@@ -87,18 +88,43 @@ package
 			Laya.stage.addChild(kView);
 		}
 		public var stockMainBox:Box;
+		
+		private function onStageResize1(box:Box):void
+		{
+			box.width = Laya.stage.width /scaleRate;
+			box.height = Laya.stage.height / scaleRate;
+			onStageResize();
+			
+		}
+		public static var scaleRate:Number = 2;
+		
+		private var container:Sprite;
 		private function testMainView():void
 		{
 			stockMainBox = new Box();
-			onStageResize();
+			
 			Laya.stage.on(Event.RESIZE, this, onStageResize);
 			var mainView:MainView;
 			mainView = new MainView();
 			mainView.left = mainView.right = mainView.top = mainView.bottom = 10;
 			stockMainBox.addChild(mainView);
 			
-			Laya.stage.addChild(stockMainBox);
 			
+			if (Browser.pixelRatio > 1)
+			{
+				var box:Box;
+				box = new Box();
+				container = box;
+				box.scale(scaleRate, scaleRate);
+				Laya.stage.addChild(box);
+				Laya.stage.on(Event.RESIZE, this, onStageResize1, [box]);
+				onStageResize1(box);
+			}else
+			{
+				container = Laya.stage;
+			}
+			container.addChild(stockMainBox);
+			onStageResize();
 			MultiTouchManager.I.on(MultiTouchManager.Scale, this, onScaleEvent);
 			//DebugTxt.init();
 		}
@@ -135,7 +161,7 @@ package
 		}
 		private function onStageResize():void
 		{
-			stockMainBox.size(Laya.stage.width,Laya.stage.height);
+			stockMainBox.size(container.width,container.height);
 		}
 		private function testStockInfo():void
 		{

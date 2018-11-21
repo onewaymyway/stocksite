@@ -394,6 +394,7 @@ var Laya=window.Laya=(function(window,document){
 	var StockMain=(function(){
 		function StockMain(){
 			this.stockMainBox=null;
+			this.container=null;
 			Laya.init(1000,900);
 			Laya.stage.scaleMode="full";
 			Laya.stage.screenMode="horizontal";
@@ -438,15 +439,32 @@ var Laya=window.Laya=(function(window,document){
 			Laya.stage.addChild(kView);
 		}
 
+		__proto.onStageResize1=function(box){
+			box.width=Laya.stage.width /StockMain.scaleRate;
+			box.height=Laya.stage.height / StockMain.scaleRate;
+			this.onStageResize();
+		}
+
 		__proto.testMainView=function(){
 			this.stockMainBox=new Box();
-			this.onStageResize();
 			Laya.stage.on("resize",this,this.onStageResize);
 			var mainView;
 			mainView=new MainView();
 			mainView.left=mainView.right=mainView.top=mainView.bottom=10;
 			this.stockMainBox.addChild(mainView);
-			Laya.stage.addChild(this.stockMainBox);
+			if (Browser.pixelRatio > 1){
+				var box;
+				box=new Box();
+				this.container=box;
+				box.scale(StockMain.scaleRate,StockMain.scaleRate);
+				Laya.stage.addChild(box);
+				Laya.stage.on("resize",this,this.onStageResize1,[box]);
+				this.onStageResize1(box);
+				}else{
+				this.container=Laya.stage;
+			}
+			this.container.addChild(this.stockMainBox);
+			this.onStageResize();
 			MultiTouchManager.I.on("Scale",this,this.onScaleEvent);
 		}
 
@@ -466,7 +484,7 @@ var Laya=window.Laya=(function(window,document){
 
 		//curPoint.pos(centerPoint.x,centerPoint.y);
 		__proto.onStageResize=function(){
-			this.stockMainBox.size(Laya.stage.width,Laya.stage.height);
+			this.stockMainBox.size(this.container.width,this.container.height);
 		}
 
 		__proto.testStockInfo=function(){
@@ -474,6 +492,7 @@ var Laya=window.Laya=(function(window,document){
 			StockJsonP.I.freshData();
 		}
 
+		StockMain.scaleRate=2;
 		return StockMain;
 	})()
 
@@ -31008,7 +31027,7 @@ var Laya=window.Laya=(function(window,document){
 		__proto.loop=function(){
 			var mouseY=Laya.stage.mouseY;
 			var mouseX=Laya.stage.mouseX;
-			this._lastOffset=this.isVertical ? (mouseY-this._lastPoint.y):(mouseX-this._lastPoint.x);
+			this._lastOffset=this.isVertical ? (mouseY-this._lastPoint.y)/this._target.globalScaleY :(mouseX-this._lastPoint.x)/this._target.globalScaleX;
 			if (this._clickOnly){
 				if (Math.abs(this._lastOffset *(this.isVertical ? Laya.stage._canvasTransform.getScaleY():Laya.stage._canvasTransform.getScaleX()))> 1){
 					this._clickOnly=false;
