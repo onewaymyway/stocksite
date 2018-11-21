@@ -232,11 +232,25 @@ var Laya=window.Laya=(function(window,document){
 
 		__class(NodeServer,'NodeServer');
 		var __proto=NodeServer.prototype;
+		__proto.readFile=function(file){
+			return FileTools.fs.readFileSync(file);
+		}
+
 		__proto.test=function(){
+			var https=Device.require('https');
+			var sslConfig={};
+			sslConfig.key=this.readFile("ca/ssl.key");
+			sslConfig.cert=this.readFile("ca/ssl.crt");
+			console.log(sslConfig);
+			var server=https.createServer(sslConfig,function(req,res){
+				res.writeHead(403);
+				res.end("This is a  WebSockets server!\n");
+			}).listen(9919);
 			var config;
+			config={ssl_key:'ca/ssl.key',ssl_cert:'ca/ssl.crt'};
 			config={};
 			config.perMessageDeflate=false;
-			config.port=9909;
+			config.server=server;
 			var mServer;
 			mServer=new StockServer();
 			mServer.run(config);
@@ -1241,6 +1255,8 @@ var Laya=window.Laya=(function(window,document){
 			var WebSocket=NodeJSTools.require("ws");
 			var _self;
 			_self=this;
+			if (config.ssl){
+			};
 			var serverO=new WebSocket.Server(config);
 			serverO.on('connection',connection=function(ws){
 				_self.onConnection(ws);
@@ -2567,9 +2583,9 @@ var Laya=window.Laya=(function(window,document){
 
 
 /*
-1 file:///D:/stocksite.git/trunk/NodeServer/src/nodetools/devices/FileManager.as (225):warning:XMLElement This variable is not defined.
-2 file:///D:/stocksite.git/trunk/NodeServer/src/nodetools/devices/FileManager.as (237):warning:XMLElement This variable is not defined.
-3 file:///D:/stocksite.git/trunk/NodeServer/src/nodetools/devices/FileTools.as (82):warning:Browser.window.location.href This variable is not defined.
-4 file:///D:/stocksite.git/trunk/NodeServer/src/nodetools/devices/FileTools.as (82):warning:Browser.window.location.href This variable is not defined.
-5 file:///D:/stocksite.git/trunk/NodeServer/src/nodetools/devices/FileTools.as (642):warning:Alert.show This variable is not defined.
+1 file:///E:/onewaymyway/codes/stocksite/NodeServer/src/nodetools/devices/FileManager.as (225):warning:XMLElement This variable is not defined.
+2 file:///E:/onewaymyway/codes/stocksite/NodeServer/src/nodetools/devices/FileManager.as (237):warning:XMLElement This variable is not defined.
+3 file:///E:/onewaymyway/codes/stocksite/NodeServer/src/nodetools/devices/FileTools.as (82):warning:Browser.window.location.href This variable is not defined.
+4 file:///E:/onewaymyway/codes/stocksite/NodeServer/src/nodetools/devices/FileTools.as (82):warning:Browser.window.location.href This variable is not defined.
+5 file:///E:/onewaymyway/codes/stocksite/NodeServer/src/nodetools/devices/FileTools.as (642):warning:Alert.show This variable is not defined.
 */

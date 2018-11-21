@@ -17,6 +17,10 @@ package nodetools.server {
 			var WebSocket:* = NodeJSTools.require("ws");
 			var _self:WSServer;
 			_self = this;
+			if (config.ssl)
+			{
+				
+			}
 			var serverO = new WebSocket.Server(config);
 			serverO.on('connection', function connection(ws) {
 					_self.onConnection(ws);

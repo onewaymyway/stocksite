@@ -1,2 +1,2 @@
-node NodeServer.max.js
+"D:\Program Files\nodejs\node" NodeServer.max.js
 pause
