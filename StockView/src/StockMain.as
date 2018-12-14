@@ -101,7 +101,7 @@ package
 		private var container:Sprite;
 		private function isOKSize(limit:int=900):Boolean
 		{
-			return Browser.clientWidth * Browser.pixelRatio > limit || Browser.clientHeight * Browser.pixelRatio > limit;
+			return Browser.clientWidth / Browser.pixelRatio > limit || Browser.clientHeight / Browser.pixelRatio > limit;
 		}
 		private function testMainView():void
 		{
