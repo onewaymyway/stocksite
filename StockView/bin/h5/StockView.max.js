@@ -390,117 +390,6 @@ var Laya=window.Laya=(function(window,document){
 	*...
 	*@author ww
 	*/
-	//class StockMain
-	var StockMain=(function(){
-		function StockMain(){
-			this.stockMainBox=null;
-			this.container=null;
-			Laya.init(1000,900);
-			Laya.stage.scaleMode="full";
-			Laya.stage.screenMode="horizontal";
-			var loads;
-			loads=[];
-			loads.push({url:PathConfig.stockBasic,type:"text" });
-			loads.push({url:"res/atlas/comp.json",type:"atlas" });
-			Laya.loader.load(loads,new Handler(this,this.start),null);
-		}
-
-		__class(StockMain,'StockMain');
-		var __proto=StockMain.prototype;
-		//DebugTool.init();
-		__proto.start=function(){
-			StockBasicInfo.I.init(Loader.getRes(PathConfig.stockBasic));
-			this.testMainView();
-		}
-
-		//SohuDData.getData("601918",null);
-		__proto.begin=function(){
-			var view;
-			view=new StockView();
-			view.init();
-			view.left=view.right=view.top=view.bottom=10;
-			Laya.stage.addChild(view);
-		}
-
-		__proto.testKLine=function(){
-			var kLine;
-			kLine=new KLine();
-			var stock;
-			stock="300383";
-			stock="002064";
-			kLine.setStock(stock);
-			kLine.pos(200,500);
-			Laya.stage.addChild(kLine);
-		}
-
-		__proto.testKlineView=function(){
-			var kView;
-			kView=new KLineView();
-			Laya.stage.addChild(kView);
-		}
-
-		__proto.onStageResize1=function(box){
-			box.width=Laya.stage.width /StockMain.scaleRate;
-			box.height=Laya.stage.height / StockMain.scaleRate;
-			this.onStageResize();
-		}
-
-		__proto.testMainView=function(){
-			this.stockMainBox=new Box();
-			Laya.stage.on("resize",this,this.onStageResize);
-			var mainView;
-			mainView=new MainView();
-			mainView.left=mainView.right=mainView.top=mainView.bottom=10;
-			this.stockMainBox.addChild(mainView);
-			if (Browser.pixelRatio > 1){
-				var box;
-				box=new Box();
-				this.container=box;
-				box.scale(StockMain.scaleRate,StockMain.scaleRate);
-				Laya.stage.addChild(box);
-				Laya.stage.on("resize",this,this.onStageResize1,[box]);
-				this.onStageResize1(box);
-				}else{
-				this.container=Laya.stage;
-			}
-			this.container.addChild(this.stockMainBox);
-			this.onStageResize();
-			MultiTouchManager.I.on("Scale",this,this.onScaleEvent);
-		}
-
-		//private var curPoint:Sprite;
-		__proto.onScaleEvent=function(scale,centerPoint){
-			this.stockMainBox.globalToLocal(centerPoint);
-			if (scale > 1.5){
-				this.stockMainBox.scaleX=this.stockMainBox.scaleY=2;
-				this.stockMainBox.pivot(centerPoint.x,centerPoint.y);
-				this.stockMainBox.pos(centerPoint.x,centerPoint.y);
-				}else if (scale < 0.6){
-				this.stockMainBox.pivot(0,0);
-				this.stockMainBox.pos(0,0);
-				this.stockMainBox.scaleX=this.stockMainBox.scaleY=1;
-			}
-		}
-
-		//curPoint.pos(centerPoint.x,centerPoint.y);
-		__proto.onStageResize=function(){
-			this.stockMainBox.size(this.container.width,this.container.height);
-		}
-
-		__proto.testStockInfo=function(){
-			StockJsonP.I.addStock("sh601003");
-			StockJsonP.I.freshData();
-		}
-
-		StockMain.scaleRate=2;
-		return StockMain;
-	})()
-
-
-	/**
-	*...
-	*@author ww
-	*/
 	//class laya.math.ArrayMethods
 	var ArrayMethods=(function(){
 		function ArrayMethods(){}
@@ -1158,6 +1047,150 @@ var Laya=window.Laya=(function(window,document){
 	*...
 	*@author ww
 	*/
+	//class laya.math.maps.Distribution
+	var Distribution=(function(){
+		function Distribution(){
+			this.dividCount=30;
+			this.datas=null;
+			this.values=null;
+			this.percents=null;
+			this.min=NaN;
+			this.d=NaN;
+		}
+
+		__class(Distribution,'laya.math.maps.Distribution');
+		var __proto=Distribution.prototype;
+		__proto.getPriceI=function(price){
+			return Math.round((price-this.min)/ this.d);
+		}
+
+		__proto.addDatas=function(dataList){
+			var i=0,len=0;
+			len=dataList.length;
+			var min=NaN,max=NaN;
+			min=max=-1;
+			var tData;
+			var tValue=NaN;
+			var sumCount=NaN;
+			var tCount=NaN;
+			sumCount=0;
+			this.values=[];
+			this.percents=[];
+			for (i=0;i < len;i++){
+				tData=dataList[i];
+				tCount=tData[2];
+				tValue=tData[0];
+				if (min==-1 || tValue < min){
+					min=tValue;
+				}
+				if (max==-1 || tValue > max){
+					max=tValue;
+				}
+				tValue=tData[1];
+				if (min==-1 || tValue < min){
+					min=tValue;
+				}
+				if (max==-1 || tValue > max){
+					max=tValue;
+				}
+				sumCount+=tCount;
+			};
+			var d=NaN;
+			d=(max-min)/ this.dividCount;
+			this.min=min;
+			this.d=d;
+			var valueArr;
+			valueArr=[];
+			valueArr.length=this.dividCount;
+			len=this.dividCount;
+			for (i=0;i < len;i++){
+				valueArr[i]=0;
+				this.values[i]=min+d *i;
+			}
+			len=dataList.length;
+			var startNum=NaN;
+			var endNum=NaN;
+			var sumValue=NaN;
+			sumValue=0;
+			for (i=0;i < len;i++){
+				tData=dataList[i];
+				tValue=tData[0];
+				startNum=Math.round((tValue-min)/ d);
+				tValue=tData[1];
+				endNum=Math.round((tValue-min)/ d);
+				tCount=tData[2];
+				var j=0,jlen=0;
+				var tRange=0;
+				tRange=(endNum-startNum+1);
+				var tRate=NaN;
+				tRate=(tCount/sumCount)/tRange;
+				for (j=startNum;j <=endNum;j++){
+					valueArr[j]+=tRate;
+				}
+			}
+			this.datas=valueArr;
+			len=valueArr.length;
+			this.percents=[];
+			var tPercent=NaN;
+			tPercent=0;
+			for (i=0;i < len;i++){
+				tPercent+=valueArr[i];
+				this.percents[i]=tPercent;
+			}
+		}
+
+		return Distribution;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class laya.math.structs.ListDic
+	var ListDic=(function(){
+		function ListDic(){
+			this.dataO=null;
+		}
+
+		__class(ListDic,'laya.math.structs.ListDic');
+		var __proto=ListDic.prototype;
+		__proto.fromList=function(dataList,key){
+			this.dataO={};
+			var i=0,len=0;
+			len=dataList.length;
+			var tData;
+			var tKey;
+			for (i=0;i < len;i++){
+				tData=dataList[i];
+				tKey=tData[key];
+				if (!this.dataO[tKey]){
+					this.dataO[tKey]=[];
+				}
+				this.dataO[tKey].push(tData);
+			}
+		}
+
+		__proto.getData=function(key){
+			if (!this.dataO)return null;
+			return this.dataO[key];
+		}
+
+		ListDic.createByList=function(dataList,key){
+			var listDic;
+			listDic=new ListDic();
+			listDic.fromList(dataList,key);
+			return listDic;
+		}
+
+		return ListDic;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
 	//class laya.math.ValueTools
 	var ValueTools=(function(){
 		function ValueTools(){}
@@ -1372,670 +1405,6 @@ var Laya=window.Laya=(function(window,document){
 
 		ValueTools.tplArrDic={};
 		return ValueTools;
-	})()
-
-
-	/**
-	*...
-	*@author ww
-	*/
-	//class laya.math.maps.Distribution
-	var Distribution=(function(){
-		function Distribution(){
-			this.dividCount=30;
-			this.datas=null;
-			this.values=null;
-			this.percents=null;
-			this.min=NaN;
-			this.d=NaN;
-		}
-
-		__class(Distribution,'laya.math.maps.Distribution');
-		var __proto=Distribution.prototype;
-		__proto.getPriceI=function(price){
-			return Math.round((price-this.min)/ this.d);
-		}
-
-		__proto.addDatas=function(dataList){
-			var i=0,len=0;
-			len=dataList.length;
-			var min=NaN,max=NaN;
-			min=max=-1;
-			var tData;
-			var tValue=NaN;
-			var sumCount=NaN;
-			var tCount=NaN;
-			sumCount=0;
-			this.values=[];
-			this.percents=[];
-			for (i=0;i < len;i++){
-				tData=dataList[i];
-				tCount=tData[2];
-				tValue=tData[0];
-				if (min==-1 || tValue < min){
-					min=tValue;
-				}
-				if (max==-1 || tValue > max){
-					max=tValue;
-				}
-				tValue=tData[1];
-				if (min==-1 || tValue < min){
-					min=tValue;
-				}
-				if (max==-1 || tValue > max){
-					max=tValue;
-				}
-				sumCount+=tCount;
-			};
-			var d=NaN;
-			d=(max-min)/ this.dividCount;
-			this.min=min;
-			this.d=d;
-			var valueArr;
-			valueArr=[];
-			valueArr.length=this.dividCount;
-			len=this.dividCount;
-			for (i=0;i < len;i++){
-				valueArr[i]=0;
-				this.values[i]=min+d *i;
-			}
-			len=dataList.length;
-			var startNum=NaN;
-			var endNum=NaN;
-			var sumValue=NaN;
-			sumValue=0;
-			for (i=0;i < len;i++){
-				tData=dataList[i];
-				tValue=tData[0];
-				startNum=Math.round((tValue-min)/ d);
-				tValue=tData[1];
-				endNum=Math.round((tValue-min)/ d);
-				tCount=tData[2];
-				var j=0,jlen=0;
-				var tRange=0;
-				tRange=(endNum-startNum+1);
-				var tRate=NaN;
-				tRate=(tCount/sumCount)/tRange;
-				for (j=startNum;j <=endNum;j++){
-					valueArr[j]+=tRate;
-				}
-			}
-			this.datas=valueArr;
-			len=valueArr.length;
-			this.percents=[];
-			var tPercent=NaN;
-			tPercent=0;
-			for (i=0;i < len;i++){
-				tPercent+=valueArr[i];
-				this.percents[i]=tPercent;
-			}
-		}
-
-		return Distribution;
-	})()
-
-
-	/**
-	*...
-	*@author ww
-	*/
-	//class laya.math.structs.ListDic
-	var ListDic=(function(){
-		function ListDic(){
-			this.dataO=null;
-		}
-
-		__class(ListDic,'laya.math.structs.ListDic');
-		var __proto=ListDic.prototype;
-		__proto.fromList=function(dataList,key){
-			this.dataO={};
-			var i=0,len=0;
-			len=dataList.length;
-			var tData;
-			var tKey;
-			for (i=0;i < len;i++){
-				tData=dataList[i];
-				tKey=tData[key];
-				if (!this.dataO[tKey]){
-					this.dataO[tKey]=[];
-				}
-				this.dataO[tKey].push(tData);
-			}
-		}
-
-		__proto.getData=function(key){
-			if (!this.dataO)return null;
-			return this.dataO[key];
-		}
-
-		ListDic.createByList=function(dataList,key){
-			var listDic;
-			listDic=new ListDic();
-			listDic.fromList(dataList,key);
-			return listDic;
-		}
-
-		return ListDic;
-	})()
-
-
-	/**
-	*...
-	*@author ww
-	*/
-	//class laya.stock.StockInfoManager
-	var StockInfoManager=(function(){
-		function StockInfoManager(){}
-		__class(StockInfoManager,'laya.stock.StockInfoManager');
-		StockInfoManager.setStockList=function(stockList){
-			StockInfoManager._stockList=stockList;
-			var i=0,len=0;
-			len=stockList.length;
-			var tStockO;
-			var tCode;
-			for (i=0;i < len;i++){
-				tStockO=stockList[i];
-				tCode=tStockO.code;
-				tCode=StockTools.getPureStock(tCode);
-				StockInfoManager._stockInfoDic[tCode]=tStockO;
-			}
-		}
-
-		StockInfoManager.getStockInfo=function(stock){
-			return StockInfoManager._stockInfoDic[StockTools.getPureStock(stock)];
-		}
-
-		StockInfoManager.getStockName=function(stock){
-			var stockO;
-			stockO=StockJsonP.getStockData(stock);
-			if (!stockO)return "";
-			return stockO.name;
-		}
-
-		StockInfoManager.getStockAvgTrendSign=function(stock,price){
-			var tStockO;
-			tStockO=StockInfoManager.getStockInfo(stock);
-			if (!tStockO||!tStockO.averageO)return "~";
-			var tAvgs;
-			tAvgs=tStockO.averageO.avgs;
-			if (!tAvgs)return "~";
-			var i=0,len=0;
-			len=tAvgs.length;
-			var curCount=0;
-			curCount=0;
-			for (i=0;i < len;i++){
-				if (price >=tAvgs[i])curCount++;
-			};
-			var rst;
-			rst="~";
-			if (StockTools.isSameTrend(tAvgs,true))rst="↗";
-			if (StockTools.isSameTrend(tAvgs,false))rst="↘";
-			rst+=""+curCount;
-			return rst;
-		}
-
-		StockInfoManager._stockList=null
-		StockInfoManager._stockInfoDic={};
-		return StockInfoManager;
-	})()
-
-
-	/**
-	*...
-	*@author ww
-	*/
-	//class laya.stock.StockNoticeManager
-	var StockNoticeManager=(function(){
-		function StockNoticeManager(){}
-		__class(StockNoticeManager,'laya.stock.StockNoticeManager');
-		var __proto=StockNoticeManager.prototype;
-		__proto.loadStockNotice=function(stock){
-			stock=StockTools.getPureStock(stock);
-			if (StockNoticeManager._stockDic[stock])return;
-			var noticeData;
-			noticeData=new StockNoticeData();
-			noticeData.load(stock,Handler.create(this,this.onNoticeLoaded,[noticeData,stock]));
-		}
-
-		__proto.getStockNotice=function(stock){
-			return StockNoticeManager._stockDic[stock];
-		}
-
-		__proto.onNoticeLoaded=function(noticeData,stock){
-			StockNoticeManager._stockDic[stock]=noticeData;
-			Notice.notify("Stock_NoticeLoaded",[stock]);
-			Notice.notify("Fresh_KLineView");
-		}
-
-		StockNoticeManager._stockDic={};
-		StockNoticeManager.noticeTypes=[];
-		__static(StockNoticeManager,
-		['I',function(){return this.I=new StockNoticeManager();}
-		]);
-		return StockNoticeManager;
-	})()
-
-
-	/**
-	*...
-	*@author ww
-	*/
-	//class laya.stock.StockTools
-	var StockTools=(function(){
-		function StockTools(){}
-		__class(StockTools,'laya.stock.StockTools');
-		StockTools.DebugMode=function(){
-			StockTools.NoticePath="D:/lovekxy/codes/python/stocknotice.git/trunk/notices/";
-			StockTools.StockPath="D:/lovekxy/codes/python/stockdata.git/trunk/";
-		}
-
-		StockTools.getStockNoticePath=function(stock){
-			stock=StockTools.getPureStock(stock);
-			var stockUrl;
-			stockUrl=StockTools.NoticePath+stock+".csv";
-			return stockUrl;
-		}
-
-		StockTools.getStockCsvPath=function(stock){
-			var stockUrl;
-			stockUrl=StockTools.StockPath+"stockdatas/"+stock+".csv";
-			return stockUrl;
-		}
-
-		StockTools.getStockPicPath=function(stock){
-			var stockUrl;
-			stockUrl=StockTools.StockPath+"smallpics/"+stock+".png";
-			return stockUrl;
-		}
-
-		StockTools.getAdptStockStr=function(stock){
-			var tChar;
-			tChar=stock.charAt(0);
-			if (tChar=="s")return stock;
-			if (stock.charAt(0)=="6"){
-				return "sh"+stock;
-			}
-			return "sz"+stock;
-		}
-
-		StockTools.getAdptStockCode=function(stock){
-			return StockJsonP.getAdptStockStr(StockTools.getStockCode(stock));
-		}
-
-		StockTools.getStockCode=function(stock){
-			if ((typeof stock=='string'))
-				return stock;
-			return stock.code;
-		}
-
-		StockTools.getPureStock=function(stock){
-			if (stock.length > 6){
-				stock=stock.substr(2,6);
-			}
-			if (stock.length < 6){
-				var count=0;
-				count=6-stock.length;
-				var i=0;
-				for (i=0;i < count;i++){
-					stock="0"+stock;
-				}
-			}
-			return stock;
-		}
-
-		StockTools.getGoodPercent=function(v){
-			return Math.floor(v *10000)/ 100;
-		}
-
-		StockTools.getGoodPercentList=function(arr){
-			var i=0,len=0;
-			len=arr.length;
-			for (i=0;i < len;i++){
-				arr[i]=StockTools.getGoodPercent(arr[i]);
-			}
-			return arr;
-		}
-
-		StockTools.getStockPrice=function(index,type,dataList){
-			return dataList[index][type];
-		}
-
-		StockTools.getContinueDownCount=function(dataList,index,key){
-			(key===void 0)&& (key="close");
-			var rst=0;
-			rst=0;
-			while (dataList[index-1] && dataList[index-1][key] > dataList[index][key]){
-				index--;
-				rst++;
-			}
-			return rst;
-		}
-
-		StockTools.getStockPriceEx=function(index,type,analyser){
-			return StockTools.getStockPrice(index,type,analyser.disDataList);
-		}
-
-		StockTools.getStockKeyRateAtDay=function(dataList,index,key){
-			if (!dataList[index] || !dataList[index-1])return-1;
-			return dataList[index][key] / dataList[index-1][key];
-		}
-
-		StockTools.getStockRateAtDay=function(dataList,index){
-			if (!dataList[index] || !dataList[index-1])return-1;
-			return dataList[index]["close"] / dataList[index-1]["close"];
-		}
-
-		StockTools.getBodyRate=function(dataList,index){
-			if (!dataList[index])return-1;
-			var tData;
-			tData=dataList[index];
-			var totalLen=NaN;
-			totalLen=tData["high"]-tData["low"];
-			if (totalLen==0)return-1;
-			var tBLine=NaN;
-			tBLine=Math.abs(tData["close"]-tData["open"]);
-			var tLineRate=NaN;
-			tLineRate=tBLine / totalLen;
-			return tLineRate;
-		}
-
-		StockTools.getStockFallDownPartRate=function(dataList,index){
-			if (!dataList[index])return-1;
-			var tData;
-			tData=dataList[index];
-			var totalLen=NaN;
-			totalLen=tData["high"]-tData["low"];
-			if (totalLen==0)return-1;
-			var tBLine=NaN;
-			tBLine=Math.max(tData["close"],tData["open"]);
-			var tLineRate=NaN;
-			tLineRate=(tBLine-tData["low"])/ totalLen;
-			return tLineRate;
-		}
-
-		StockTools.getStockBounceUpPartRate=function(dataList,index){
-			if (!dataList[index])return-1;
-			var tData;
-			tData=dataList[index];
-			var totalLen=NaN;
-			totalLen=tData["high"]-tData["low"];
-			if (totalLen==0)return-1;
-			var tBLine=NaN;
-			tBLine=Math.min(tData["close"],tData["open"]);
-			var tLineRate=NaN;
-			tLineRate=(tBLine-tData["low"])/ totalLen;
-			return tLineRate;
-		}
-
-		StockTools.isAttackUpFailAtDay=function(dataList,index){
-			if (!dataList[index])return false;
-			var tData;
-			tData=dataList[index];
-			var bodyLen=NaN;
-			bodyLen=Math.abs((tData["close"]-tData["open"]));
-			var totalLen=NaN;
-			totalLen=tData["high"]-tData["low"];
-			var tBLine=NaN;
-			tBLine=Math.max(tData["close"],tData["open"]);
-			var tLineRate=NaN;
-			tLineRate=(tBLine-tData["low"])/ totalLen;
-			return tLineRate < 0.25;
-		}
-
-		StockTools.isDownTrendAtDay=function(dataList,index){
-			if (!dataList[index-1])return false;
-			var preData;
-			var tData;
-			preData=dataList[index-1];
-			tData=dataList[index];
-			return tData["high"] < preData["high"] && tData["low"] < preData["low"];
-		}
-
-		StockTools.getDayLineRateAtDay=function(dataList,index,dayCount,offset,key){
-			(dayCount===void 0)&& (dayCount=5);
-			(offset===void 0)&& (offset=-1);
-			(key===void 0)&& (key="close");
-			var preValue=NaN;
-			preValue=StockTools.getDayLineAtDay(dataList,index-1,dayCount,offset,key);
-			var curValue=NaN;
-			curValue=StockTools.getDayLineAtDay(dataList,index,dayCount,offset,key);
-			if (preValue==0)return 0;
-			return curValue / preValue;
-		}
-
-		StockTools.getContinueDayLineAngleDownCount=function(dataList,index,dayCount,offset,key){
-			(dayCount===void 0)&& (dayCount=5);
-			(offset===void 0)&& (offset=-1);
-			(key===void 0)&& (key="close");
-			var rst=0;
-			rst=0;
-			while (dataList[index-1] && StockTools.getDayLineAngleDay(dataList,index-1,dayCount,offset,key)> StockTools.getDayLineAngleDay(dataList,index,dayCount,offset,key)){
-				index--;
-				rst++;
-			}
-			return rst;
-		}
-
-		StockTools.getDayLineAngleDay=function(dataList,index,dayCount,offset,key){
-			(dayCount===void 0)&& (dayCount=5);
-			(offset===void 0)&& (offset=-1);
-			(key===void 0)&& (key="close");
-			var preValue=NaN;
-			preValue=StockTools.getDayLineAtDay(dataList,index-1,dayCount,offset,key);
-			var curValue=NaN;
-			curValue=StockTools.getDayLineAtDay(dataList,index,dayCount,offset,key);
-			if (preValue==0)return 0;
-			var dValue=NaN;
-			dValue=curValue-preValue;
-			var angle=NaN;
-			angle=Math.atan2(dValue,1);
-			angle=angle*180 / Math.PI;
-			return angle;
-		}
-
-		StockTools.getDayLineAtDay=function(dataList,index,dayCount,offset,key){
-			(dayCount===void 0)&& (dayCount=5);
-			(offset===void 0)&& (offset=-1);
-			(key===void 0)&& (key="close");
-			if (index==0)
-				return 0;
-			var startI=0;
-			startI=index-dayCount+1+offset;
-			if (startI < 0)
-				startI=0;
-			var average=NaN;
-			average=ArrayMethods.averageKey(dataList,key,startI,index+offset);
-			return average;
-		}
-
-		StockTools.isUpTrendAtDay=function(dataList,index){
-			if (!dataList[index-1])return false;
-			var preData;
-			var tData;
-			preData=dataList[index-1];
-			tData=dataList[index];
-			return tData["high"] > preData["high"] && tData["low"] > preData["low"];
-		}
-
-		StockTools.isTopConer=function(dataList,index){
-			if (!dataList[index-2])return false;
-			return StockTools.isUpTrendAtDay(dataList,index-1)&& StockTools.isDownTrendAtDay(dataList,index);
-		}
-
-		StockTools.isDownBreakContainAtDay=function(dataList,index){
-			if (!dataList[index-1])return false;
-			if (!StockTools.isContainedByBefore(dataList,index-1))return false;
-			return dataList[index]["close"] < dataList[index-2]["low"];
-		}
-
-		StockTools.isContainedByBefore=function(dataList,index){
-			if (!dataList[index-1])return false;
-			var preData;
-			var tData;
-			preData=dataList[index-1];
-			tData=dataList[index];
-			return tData["high"] < preData["high"] && tData["low"] > preData["low"];
-		}
-
-		StockTools.getUpStopValue=function(price){
-			return Math.round(price *1.1 *1000)/ 1000;
-		}
-
-		StockTools.getDownStopValue=function(price){
-			return Math.round(price *0.9 *1000)/ 1000;
-		}
-
-		StockTools.getNoDownUpRateBeforeDay=function(dataList,index){
-			var curHigh=NaN;
-			curHigh=dataList[index]["high"];
-			var dayCount=0;
-			dayCount=0;
-			var tLow=0;
-			while (dataList[index-1] && (dataList[index-1]["low"]<dataList[index]["low"]||StockTools.getChangePriceAtDay(dataList,index-1)> 0 || StockTools.getStockRateAtDay(dataList,index-1)> 1)){
-				index--;
-				dayCount++;
-				if (tLow <=0 || dataList[index]["low"] < tLow){
-					tLow=dataList[index]["low"]
-				}
-			}
-			if (tLow <=0)return 0;
-			return curHigh/tLow;
-		}
-
-		StockTools.findTopPoints=function(dataList,start,end,leftLimit,rightLimit,onlyPrice){
-			(leftLimit===void 0)&& (leftLimit=6);
-			(rightLimit===void 0)&& (rightLimit=6);
-			(onlyPrice===void 0)&& (onlyPrice=false);
-			var rst;
-			rst=[];
-			var i=0,len=0;
-			if (start < 0)start=0;
-			for (i=start+leftLimit;i < end-rightLimit;i++){
-				if (StockTools.isTopPoint(dataList,i,leftLimit,rightLimit)){
-					if (onlyPrice){
-						rst.push(dataList[i]["high"]);
-						}else{
-						rst.push({"index":i,"price":dataList[i]["high"]});
-					}
-				}
-			}
-			return rst;
-		}
-
-		StockTools.isTopPoint=function(dataList,index,leftLimit,rightLimit){
-			var curValue=NaN;
-			var i=0,len=0;
-			var tIndex=0;
-			var tValue=NaN;
-			curValue=dataList[index]["high"];
-			len=leftLimit;
-			for (i=0;i < len;i++){
-				tIndex=index-i-1;
-				tValue=dataList[tIndex]["high"];
-				if (tValue > curValue)return false;
-			}
-			len=rightLimit;
-			for (i=0;i < len;i++){
-				tIndex=index+i+1;
-				tValue=dataList[tIndex]["high"];
-				if (tValue > curValue)return false;
-			}
-			return true;
-		}
-
-		StockTools.getChangePriceAtDay=function(dataList,index){
-			return dataList[index]["close"]-dataList[index]["open"];
-		}
-
-		StockTools.getChangeDownDays=function(dataList,index,len){
-			var rst=NaN;
-			rst=0;
-			var i=0;
-			var tData;
-			for (i=0;i < len;i++){
-				tData=dataList[index-i];
-				if (tData){
-					if (tData["close"] < tData["open"]){
-						rst++;
-					}
-				}
-			}
-			return rst;
-		}
-
-		StockTools.getBuyStaticInfos=function(buyI,dataList,rst){
-			var priceLast=NaN;
-			var len=0;
-			var i=0;
-			len=dataList.length;
-			priceLast=dataList[len-1]["close"];
-			var priceBuy=NaN;
-			priceBuy=dataList[buyI]["high"];
-			rst.changePercent=StockTools.getGoodPercent((priceLast-priceBuy)/ priceBuy);
-			var priceHigh=NaN;
-			priceHigh=-1;
-			for (i=buyI+1;i < len;i++){
-				if (dataList[i]["high"] > priceHigh){
-					priceHigh=dataList[i]["high"];
-				}
-			}
-			rst.highPercent=StockTools.getGoodPercent((priceHigh-priceBuy)/ priceBuy);
-			len=StockTools.highDays.length;
-			var tDayCount=0;
-			for (i=0;i < len;i++){
-				tDayCount=StockTools.highDays[i];
-				priceHigh=StockTools.getHighInDays(buyI+1,tDayCount,dataList)||priceBuy;
-				rst["high"+tDayCount]=StockTools.getGoodPercent((priceHigh-priceBuy)/ priceBuy);
-			}
-		}
-
-		StockTools.getHighInDays=function(start,days,dataList){
-			if (!dataList[start])return 0;
-			var i=0,len=0;
-			var priceHigh=NaN;
-			priceHigh=dataList[start]["low"];
-			len=days+start;
-			if (len > dataList.length)len=dataList.length;
-			for (i=start;i < len;i++){
-				if (dataList[i]["high"] > priceHigh){
-					priceHigh=dataList[i]["high"];
-				}
-			}
-			return priceHigh;
-		}
-
-		StockTools.getLowInDays=function(start,days,dataList){
-			if (!dataList[start])return 0;
-			var i=0,len=0;
-			var priceLow=NaN;
-			priceLow=dataList[start]["low"];
-			len=days+start;
-			if (len > dataList.length)len=dataList.length;
-			for (i=start;i < len;i++){
-				if (dataList[i]["low"] < priceLow){
-					priceLow=dataList[i]["low"];
-				}
-			}
-			return priceLow;
-		}
-
-		StockTools.isSameTrend=function(dataList,up){
-			(up===void 0)&& (up=true);
-			var i=0,len=0;
-			len=dataList.length;
-			for (i=1;i < len;i++){
-				if (up && dataList[i] > dataList[i-1])return false;
-				if ((!up)&& dataList[i] < dataList[i-1])return false;
-			}
-			return true;
-		}
-
-		StockTools.NoticePath="https://onewaymyway.github.io/stocknotice/notices/";
-		StockTools.StockPath="https://onewaymyway.github.io/stockdata/";
-		__static(StockTools,
-		['highDays',function(){return this.highDays=[7,15,30,45,60];}
-		]);
-		return StockTools;
 	})()
 
 
@@ -2589,6 +1958,526 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		return Trend;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class laya.stock.StockInfoManager
+	var StockInfoManager=(function(){
+		function StockInfoManager(){}
+		__class(StockInfoManager,'laya.stock.StockInfoManager');
+		StockInfoManager.setStockList=function(stockList){
+			StockInfoManager._stockList=stockList;
+			var i=0,len=0;
+			len=stockList.length;
+			var tStockO;
+			var tCode;
+			for (i=0;i < len;i++){
+				tStockO=stockList[i];
+				tCode=tStockO.code;
+				tCode=StockTools.getPureStock(tCode);
+				StockInfoManager._stockInfoDic[tCode]=tStockO;
+			}
+		}
+
+		StockInfoManager.getStockInfo=function(stock){
+			return StockInfoManager._stockInfoDic[StockTools.getPureStock(stock)];
+		}
+
+		StockInfoManager.getStockName=function(stock){
+			var stockO;
+			stockO=StockJsonP.getStockData(stock);
+			if (!stockO)return "";
+			return stockO.name;
+		}
+
+		StockInfoManager.getStockAvgTrendSign=function(stock,price){
+			var tStockO;
+			tStockO=StockInfoManager.getStockInfo(stock);
+			if (!tStockO||!tStockO.averageO)return "~";
+			var tAvgs;
+			tAvgs=tStockO.averageO.avgs;
+			if (!tAvgs)return "~";
+			var i=0,len=0;
+			len=tAvgs.length;
+			var curCount=0;
+			curCount=0;
+			for (i=0;i < len;i++){
+				if (price >=tAvgs[i])curCount++;
+			};
+			var rst;
+			rst="~";
+			if (StockTools.isSameTrend(tAvgs,true))rst="↗";
+			if (StockTools.isSameTrend(tAvgs,false))rst="↘";
+			rst+=""+curCount;
+			return rst;
+		}
+
+		StockInfoManager._stockList=null
+		StockInfoManager._stockInfoDic={};
+		return StockInfoManager;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class laya.stock.StockNoticeManager
+	var StockNoticeManager=(function(){
+		function StockNoticeManager(){}
+		__class(StockNoticeManager,'laya.stock.StockNoticeManager');
+		var __proto=StockNoticeManager.prototype;
+		__proto.loadStockNotice=function(stock){
+			stock=StockTools.getPureStock(stock);
+			if (StockNoticeManager._stockDic[stock])return;
+			var noticeData;
+			noticeData=new StockNoticeData();
+			noticeData.load(stock,Handler.create(this,this.onNoticeLoaded,[noticeData,stock]));
+		}
+
+		__proto.getStockNotice=function(stock){
+			return StockNoticeManager._stockDic[stock];
+		}
+
+		__proto.onNoticeLoaded=function(noticeData,stock){
+			StockNoticeManager._stockDic[stock]=noticeData;
+			Notice.notify("Stock_NoticeLoaded",[stock]);
+			Notice.notify("Fresh_KLineView");
+		}
+
+		StockNoticeManager._stockDic={};
+		StockNoticeManager.noticeTypes=[];
+		__static(StockNoticeManager,
+		['I',function(){return this.I=new StockNoticeManager();}
+		]);
+		return StockNoticeManager;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class laya.stock.StockTools
+	var StockTools=(function(){
+		function StockTools(){}
+		__class(StockTools,'laya.stock.StockTools');
+		StockTools.DebugMode=function(){
+			StockTools.NoticePath="D:/lovekxy/codes/python/stocknotice.git/trunk/notices/";
+			StockTools.StockPath="D:/lovekxy/codes/python/stockdata.git/trunk/";
+		}
+
+		StockTools.getStockNoticePath=function(stock){
+			stock=StockTools.getPureStock(stock);
+			var stockUrl;
+			stockUrl=StockTools.NoticePath+stock+".csv";
+			return stockUrl;
+		}
+
+		StockTools.getStockCsvPath=function(stock){
+			var stockUrl;
+			stockUrl=StockTools.StockPath+"stockdatas/"+stock+".csv";
+			return stockUrl;
+		}
+
+		StockTools.getStockPicPath=function(stock){
+			var stockUrl;
+			stockUrl=StockTools.StockPath+"smallpics/"+stock+".png";
+			return stockUrl;
+		}
+
+		StockTools.getAdptStockStr=function(stock){
+			var tChar;
+			tChar=stock.charAt(0);
+			if (tChar=="s")return stock;
+			if (stock.charAt(0)=="6"){
+				return "sh"+stock;
+			}
+			return "sz"+stock;
+		}
+
+		StockTools.getAdptStockCode=function(stock){
+			return StockJsonP.getAdptStockStr(StockTools.getStockCode(stock));
+		}
+
+		StockTools.getStockCode=function(stock){
+			if ((typeof stock=='string'))
+				return stock;
+			return stock.code;
+		}
+
+		StockTools.getPureStock=function(stock){
+			if (stock.length > 6){
+				stock=stock.substr(2,6);
+			}
+			if (stock.length < 6){
+				var count=0;
+				count=6-stock.length;
+				var i=0;
+				for (i=0;i < count;i++){
+					stock="0"+stock;
+				}
+			}
+			return stock;
+		}
+
+		StockTools.getGoodPercent=function(v){
+			return Math.floor(v *10000)/ 100;
+		}
+
+		StockTools.getGoodPercentList=function(arr){
+			var i=0,len=0;
+			len=arr.length;
+			for (i=0;i < len;i++){
+				arr[i]=StockTools.getGoodPercent(arr[i]);
+			}
+			return arr;
+		}
+
+		StockTools.getStockPrice=function(index,type,dataList){
+			return dataList[index][type];
+		}
+
+		StockTools.getContinueDownCount=function(dataList,index,key){
+			(key===void 0)&& (key="close");
+			var rst=0;
+			rst=0;
+			while (dataList[index-1] && dataList[index-1][key] > dataList[index][key]){
+				index--;
+				rst++;
+			}
+			return rst;
+		}
+
+		StockTools.getStockPriceEx=function(index,type,analyser){
+			return StockTools.getStockPrice(index,type,analyser.disDataList);
+		}
+
+		StockTools.getStockKeyRateAtDay=function(dataList,index,key){
+			if (!dataList[index] || !dataList[index-1])return-1;
+			return dataList[index][key] / dataList[index-1][key];
+		}
+
+		StockTools.getStockRateAtDay=function(dataList,index){
+			if (!dataList[index] || !dataList[index-1])return-1;
+			return dataList[index]["close"] / dataList[index-1]["close"];
+		}
+
+		StockTools.getBodyRate=function(dataList,index){
+			if (!dataList[index])return-1;
+			var tData;
+			tData=dataList[index];
+			var totalLen=NaN;
+			totalLen=tData["high"]-tData["low"];
+			if (totalLen==0)return-1;
+			var tBLine=NaN;
+			tBLine=Math.abs(tData["close"]-tData["open"]);
+			var tLineRate=NaN;
+			tLineRate=tBLine / totalLen;
+			return tLineRate;
+		}
+
+		StockTools.getStockFallDownPartRate=function(dataList,index){
+			if (!dataList[index])return-1;
+			var tData;
+			tData=dataList[index];
+			var totalLen=NaN;
+			totalLen=tData["high"]-tData["low"];
+			if (totalLen==0)return-1;
+			var tBLine=NaN;
+			tBLine=Math.max(tData["close"],tData["open"]);
+			var tLineRate=NaN;
+			tLineRate=(tBLine-tData["low"])/ totalLen;
+			return tLineRate;
+		}
+
+		StockTools.getStockBounceUpPartRate=function(dataList,index){
+			if (!dataList[index])return-1;
+			var tData;
+			tData=dataList[index];
+			var totalLen=NaN;
+			totalLen=tData["high"]-tData["low"];
+			if (totalLen==0)return-1;
+			var tBLine=NaN;
+			tBLine=Math.min(tData["close"],tData["open"]);
+			var tLineRate=NaN;
+			tLineRate=(tBLine-tData["low"])/ totalLen;
+			return tLineRate;
+		}
+
+		StockTools.isAttackUpFailAtDay=function(dataList,index){
+			if (!dataList[index])return false;
+			var tData;
+			tData=dataList[index];
+			var bodyLen=NaN;
+			bodyLen=Math.abs((tData["close"]-tData["open"]));
+			var totalLen=NaN;
+			totalLen=tData["high"]-tData["low"];
+			var tBLine=NaN;
+			tBLine=Math.max(tData["close"],tData["open"]);
+			var tLineRate=NaN;
+			tLineRate=(tBLine-tData["low"])/ totalLen;
+			return tLineRate < 0.25;
+		}
+
+		StockTools.isDownTrendAtDay=function(dataList,index){
+			if (!dataList[index-1])return false;
+			var preData;
+			var tData;
+			preData=dataList[index-1];
+			tData=dataList[index];
+			return tData["high"] < preData["high"] && tData["low"] < preData["low"];
+		}
+
+		StockTools.getDayLineRateAtDay=function(dataList,index,dayCount,offset,key){
+			(dayCount===void 0)&& (dayCount=5);
+			(offset===void 0)&& (offset=-1);
+			(key===void 0)&& (key="close");
+			var preValue=NaN;
+			preValue=StockTools.getDayLineAtDay(dataList,index-1,dayCount,offset,key);
+			var curValue=NaN;
+			curValue=StockTools.getDayLineAtDay(dataList,index,dayCount,offset,key);
+			if (preValue==0)return 0;
+			return curValue / preValue;
+		}
+
+		StockTools.getContinueDayLineAngleDownCount=function(dataList,index,dayCount,offset,key){
+			(dayCount===void 0)&& (dayCount=5);
+			(offset===void 0)&& (offset=-1);
+			(key===void 0)&& (key="close");
+			var rst=0;
+			rst=0;
+			while (dataList[index-1] && StockTools.getDayLineAngleDay(dataList,index-1,dayCount,offset,key)> StockTools.getDayLineAngleDay(dataList,index,dayCount,offset,key)){
+				index--;
+				rst++;
+			}
+			return rst;
+		}
+
+		StockTools.getDayLineAngleDay=function(dataList,index,dayCount,offset,key){
+			(dayCount===void 0)&& (dayCount=5);
+			(offset===void 0)&& (offset=-1);
+			(key===void 0)&& (key="close");
+			var preValue=NaN;
+			preValue=StockTools.getDayLineAtDay(dataList,index-1,dayCount,offset,key);
+			var curValue=NaN;
+			curValue=StockTools.getDayLineAtDay(dataList,index,dayCount,offset,key);
+			if (preValue==0)return 0;
+			var dValue=NaN;
+			dValue=curValue-preValue;
+			var angle=NaN;
+			angle=Math.atan2(dValue,1);
+			angle=angle*180 / Math.PI;
+			return angle;
+		}
+
+		StockTools.getDayLineAtDay=function(dataList,index,dayCount,offset,key){
+			(dayCount===void 0)&& (dayCount=5);
+			(offset===void 0)&& (offset=-1);
+			(key===void 0)&& (key="close");
+			if (index==0)
+				return 0;
+			var startI=0;
+			startI=index-dayCount+1+offset;
+			if (startI < 0)
+				startI=0;
+			var average=NaN;
+			average=ArrayMethods.averageKey(dataList,key,startI,index+offset);
+			return average;
+		}
+
+		StockTools.isUpTrendAtDay=function(dataList,index){
+			if (!dataList[index-1])return false;
+			var preData;
+			var tData;
+			preData=dataList[index-1];
+			tData=dataList[index];
+			return tData["high"] > preData["high"] && tData["low"] > preData["low"];
+		}
+
+		StockTools.isTopConer=function(dataList,index){
+			if (!dataList[index-2])return false;
+			return StockTools.isUpTrendAtDay(dataList,index-1)&& StockTools.isDownTrendAtDay(dataList,index);
+		}
+
+		StockTools.isDownBreakContainAtDay=function(dataList,index){
+			if (!dataList[index-1])return false;
+			if (!StockTools.isContainedByBefore(dataList,index-1))return false;
+			return dataList[index]["close"] < dataList[index-2]["low"];
+		}
+
+		StockTools.isContainedByBefore=function(dataList,index){
+			if (!dataList[index-1])return false;
+			var preData;
+			var tData;
+			preData=dataList[index-1];
+			tData=dataList[index];
+			return tData["high"] < preData["high"] && tData["low"] > preData["low"];
+		}
+
+		StockTools.getUpStopValue=function(price){
+			return Math.round(price *1.1 *1000)/ 1000;
+		}
+
+		StockTools.getDownStopValue=function(price){
+			return Math.round(price *0.9 *1000)/ 1000;
+		}
+
+		StockTools.getNoDownUpRateBeforeDay=function(dataList,index){
+			var curHigh=NaN;
+			curHigh=dataList[index]["high"];
+			var dayCount=0;
+			dayCount=0;
+			var tLow=0;
+			while (dataList[index-1] && (dataList[index-1]["low"]<dataList[index]["low"]||StockTools.getChangePriceAtDay(dataList,index-1)> 0 || StockTools.getStockRateAtDay(dataList,index-1)> 1)){
+				index--;
+				dayCount++;
+				if (tLow <=0 || dataList[index]["low"] < tLow){
+					tLow=dataList[index]["low"]
+				}
+			}
+			if (tLow <=0)return 0;
+			return curHigh/tLow;
+		}
+
+		StockTools.findTopPoints=function(dataList,start,end,leftLimit,rightLimit,onlyPrice){
+			(leftLimit===void 0)&& (leftLimit=6);
+			(rightLimit===void 0)&& (rightLimit=6);
+			(onlyPrice===void 0)&& (onlyPrice=false);
+			var rst;
+			rst=[];
+			var i=0,len=0;
+			if (start < 0)start=0;
+			for (i=start+leftLimit;i < end-rightLimit;i++){
+				if (StockTools.isTopPoint(dataList,i,leftLimit,rightLimit)){
+					if (onlyPrice){
+						rst.push(dataList[i]["high"]);
+						}else{
+						rst.push({"index":i,"price":dataList[i]["high"]});
+					}
+				}
+			}
+			return rst;
+		}
+
+		StockTools.isTopPoint=function(dataList,index,leftLimit,rightLimit){
+			var curValue=NaN;
+			var i=0,len=0;
+			var tIndex=0;
+			var tValue=NaN;
+			curValue=dataList[index]["high"];
+			len=leftLimit;
+			for (i=0;i < len;i++){
+				tIndex=index-i-1;
+				tValue=dataList[tIndex]["high"];
+				if (tValue > curValue)return false;
+			}
+			len=rightLimit;
+			for (i=0;i < len;i++){
+				tIndex=index+i+1;
+				tValue=dataList[tIndex]["high"];
+				if (tValue > curValue)return false;
+			}
+			return true;
+		}
+
+		StockTools.getChangePriceAtDay=function(dataList,index){
+			return dataList[index]["close"]-dataList[index]["open"];
+		}
+
+		StockTools.getChangeDownDays=function(dataList,index,len){
+			var rst=NaN;
+			rst=0;
+			var i=0;
+			var tData;
+			for (i=0;i < len;i++){
+				tData=dataList[index-i];
+				if (tData){
+					if (tData["close"] < tData["open"]){
+						rst++;
+					}
+				}
+			}
+			return rst;
+		}
+
+		StockTools.getBuyStaticInfos=function(buyI,dataList,rst){
+			var priceLast=NaN;
+			var len=0;
+			var i=0;
+			len=dataList.length;
+			priceLast=dataList[len-1]["close"];
+			var priceBuy=NaN;
+			priceBuy=dataList[buyI]["high"];
+			rst.changePercent=StockTools.getGoodPercent((priceLast-priceBuy)/ priceBuy);
+			var priceHigh=NaN;
+			priceHigh=-1;
+			for (i=buyI+1;i < len;i++){
+				if (dataList[i]["high"] > priceHigh){
+					priceHigh=dataList[i]["high"];
+				}
+			}
+			rst.highPercent=StockTools.getGoodPercent((priceHigh-priceBuy)/ priceBuy);
+			len=StockTools.highDays.length;
+			var tDayCount=0;
+			for (i=0;i < len;i++){
+				tDayCount=StockTools.highDays[i];
+				priceHigh=StockTools.getHighInDays(buyI+1,tDayCount,dataList)||priceBuy;
+				rst["high"+tDayCount]=StockTools.getGoodPercent((priceHigh-priceBuy)/ priceBuy);
+			}
+		}
+
+		StockTools.getHighInDays=function(start,days,dataList){
+			if (!dataList[start])return 0;
+			var i=0,len=0;
+			var priceHigh=NaN;
+			priceHigh=dataList[start]["low"];
+			len=days+start;
+			if (len > dataList.length)len=dataList.length;
+			for (i=start;i < len;i++){
+				if (dataList[i]["high"] > priceHigh){
+					priceHigh=dataList[i]["high"];
+				}
+			}
+			return priceHigh;
+		}
+
+		StockTools.getLowInDays=function(start,days,dataList){
+			if (!dataList[start])return 0;
+			var i=0,len=0;
+			var priceLow=NaN;
+			priceLow=dataList[start]["low"];
+			len=days+start;
+			if (len > dataList.length)len=dataList.length;
+			for (i=start;i < len;i++){
+				if (dataList[i]["low"] < priceLow){
+					priceLow=dataList[i]["low"];
+				}
+			}
+			return priceLow;
+		}
+
+		StockTools.isSameTrend=function(dataList,up){
+			(up===void 0)&& (up=true);
+			var i=0,len=0;
+			len=dataList.length;
+			for (i=1;i < len;i++){
+				if (up && dataList[i] > dataList[i-1])return false;
+				if ((!up)&& dataList[i] < dataList[i-1])return false;
+			}
+			return true;
+		}
+
+		StockTools.NoticePath="https://onewaymyway.github.io/stocknotice/notices/";
+		StockTools.StockPath="https://onewaymyway.github.io/stockdata/";
+		__static(StockTools,
+		['highDays',function(){return this.highDays=[7,15,30,45,60];}
+		]);
+		return StockTools;
 	})()
 
 
@@ -3502,114 +3391,111 @@ var Laya=window.Laya=(function(window,document){
 	*...
 	*@author ww
 	*/
-	//class view.StockListManager
-	var StockListManager=(function(){
-		function StockListManager(){}
-		__class(StockListManager,'view.StockListManager');
-		StockListManager.setStockList=function(stockList,tI){
-			StockListManager._tI=tI;
-			StockListManager._tStockList=stockList;
+	//class StockMain
+	var StockMain=(function(){
+		function StockMain(){
+			this.stockMainBox=null;
+			this.container=null;
+			Laya.init(1000,900);
+			Laya.stage.scaleMode="full";
+			Laya.stage.screenMode="horizontal";
+			var loads;
+			loads=[];
+			loads.push({url:PathConfig.stockBasic,type:"text" });
+			loads.push({url:"res/atlas/comp.json",type:"atlas" });
+			Laya.loader.load(loads,new Handler(this,this.start),null);
 		}
 
-		StockListManager.next=function(){
-			StockListManager._tI++;
-			StockListManager.showI(StockListManager._tI);
+		__class(StockMain,'StockMain');
+		var __proto=StockMain.prototype;
+		//DebugTool.init();
+		__proto.start=function(){
+			StockBasicInfo.I.init(Loader.getRes(PathConfig.stockBasic));
+			this.testMainView();
 		}
 
-		StockListManager.pre=function(){
-			StockListManager._tI--;
-			StockListManager.showI(StockListManager._tI);
+		//SohuDData.getData("601918",null);
+		__proto.begin=function(){
+			var view;
+			view=new StockView();
+			view.init();
+			view.left=view.right=view.top=view.bottom=10;
+			Laya.stage.addChild(view);
 		}
 
-		StockListManager.showI=function(i){
-			if (!StockListManager._tStockList)
-				return;
-			var index=0;
-			index=i;
-			if (index < 0)
-				index=StockListManager._tStockList.length-1;
-			index=index % StockListManager._tStockList.length;
-			var tData;
-			tData=StockListManager._tStockList[index];
-			StockListManager._tI=index;
-			if (!tData)
-				return;
-			console.log(tData);
-			Notice.notify("Show_Stock_KLine",[StockListManager.getStockCode(tData),tData]);
+		__proto.testKLine=function(){
+			var kLine;
+			kLine=new KLine();
+			var stock;
+			stock="300383";
+			stock="002064";
+			kLine.setStock(stock);
+			kLine.pos(200,500);
+			Laya.stage.addChild(kLine);
 		}
 
-		StockListManager.getStockCode=function(data){
-			if (!data)
-				return "601918";
-			var tStockStr;
-			if ((typeof data=='string')){
-				tStockStr=data;
+		__proto.testKlineView=function(){
+			var kView;
+			kView=new KLineView();
+			Laya.stage.addChild(kView);
+		}
+
+		__proto.onStageResize1=function(box){
+			box.width=Laya.stage.width /StockMain.scaleRate;
+			box.height=Laya.stage.height / StockMain.scaleRate;
+			this.onStageResize();
+		}
+
+		__proto.testMainView=function(){
+			this.stockMainBox=new Box();
+			Laya.stage.on("resize",this,this.onStageResize);
+			var mainView;
+			mainView=new MainView();
+			mainView.left=mainView.right=mainView.top=mainView.bottom=10;
+			this.stockMainBox.addChild(mainView);
+			if (Browser.pixelRatio > 1){
+				StockMain.scaleRate=Browser.pixelRatio;
+				var box;
+				box=new Box();
+				this.container=box;
+				box.scale(StockMain.scaleRate,StockMain.scaleRate);
+				Laya.stage.addChild(box);
+				Laya.stage.on("resize",this,this.onStageResize1,[box]);
+				this.onStageResize1(box);
+				}else{
+				this.container=Laya.stage;
 			}
-			else {
-				tStockStr=data.code;
+			this.container.addChild(this.stockMainBox);
+			this.onStageResize();
+			MultiTouchManager.I.on("Scale",this,this.onScaleEvent);
+		}
+
+		//private var curPoint:Sprite;
+		__proto.onScaleEvent=function(scale,centerPoint){
+			this.stockMainBox.globalToLocal(centerPoint);
+			if (scale > 1.5){
+				this.stockMainBox.scaleX=this.stockMainBox.scaleY=2;
+				this.stockMainBox.pivot(centerPoint.x,centerPoint.y);
+				this.stockMainBox.pos(centerPoint.x,centerPoint.y);
+				}else if (scale < 0.6){
+				this.stockMainBox.pivot(0,0);
+				this.stockMainBox.pos(0,0);
+				this.stockMainBox.scaleX=this.stockMainBox.scaleY=1;
 			}
-			return StockJsonP.getPureStock(tStockStr);
 		}
 
-		StockListManager.setMyStockList=function(arr){
-			StockListManager._myStockList=arr;
+		//curPoint.pos(centerPoint.x,centerPoint.y);
+		__proto.onStageResize=function(){
+			this.stockMainBox.size(this.container.width,this.container.height);
 		}
 
-		StockListManager.hasStock=function(stock){
-			if(!StockListManager._myStockList)return false;
-			stock=StockTools.getAdptStockStr(stock);
-			var i=0,len=0;
-			len=StockListManager._myStockList.length;
-			for (i=0;i < len;i++){
-				var tStockData;
-				tStockData=StockListManager._myStockList[i];
-				if (StockTools.getAdptStockCode(tStockData)==stock){
-					return true;
-				}
-			}
-			return false;
+		__proto.testStockInfo=function(){
+			StockJsonP.I.addStock("sh601003");
+			StockJsonP.I.freshData();
 		}
 
-		StockListManager.getStockLastMark=function(stock){
-			if (!StockListManager._myStockList)return null;
-			stock=StockTools.getAdptStockStr(stock);
-			var i=0,len=0;
-			len=StockListManager._myStockList.length;
-			for (i=0;i < len;i++){
-				var tStockData;
-				tStockData=StockListManager._myStockList[i];
-				if (StockTools.getAdptStockCode(tStockData)==stock){
-					if (tStockData.markTime){
-						return DateTools.getTimeStr(tStockData.markTime,"-");
-					}
-				}
-			}
-			return null;
-		}
-
-		StockListManager._tI=0;
-		StockListManager._tStockList=null
-		StockListManager._myStockList=null
-		return StockListManager;
-	})()
-
-
-	/**
-	*...
-	*@author ww
-	*/
-	//class view.TradeTestManager
-	var TradeTestManager=(function(){
-		function TradeTestManager(){}
-		__class(TradeTestManager,'view.TradeTestManager');
-		var __proto=TradeTestManager.prototype;
-		__proto.resetTrade=function(){}
-		TradeTestManager.isTradeTestOn=false;
-		TradeTestManager.curTradeInfo=null
-		__static(TradeTestManager,
-		['I',function(){return this.I=new TradeTestManager();}
-		]);
-		return TradeTestManager;
+		StockMain.scaleRate=2;
+		return StockMain;
 	})()
 
 
@@ -3776,6 +3662,121 @@ var Laya=window.Laya=(function(window,document){
 	*...
 	*@author ww
 	*/
+	//class view.StockListManager
+	var StockListManager=(function(){
+		function StockListManager(){}
+		__class(StockListManager,'view.StockListManager');
+		StockListManager.setStockList=function(stockList,tI){
+			StockListManager._tI=tI;
+			StockListManager._tStockList=stockList;
+		}
+
+		StockListManager.next=function(){
+			StockListManager._tI++;
+			StockListManager.showI(StockListManager._tI);
+		}
+
+		StockListManager.pre=function(){
+			StockListManager._tI--;
+			StockListManager.showI(StockListManager._tI);
+		}
+
+		StockListManager.showI=function(i){
+			if (!StockListManager._tStockList)
+				return;
+			var index=0;
+			index=i;
+			if (index < 0)
+				index=StockListManager._tStockList.length-1;
+			index=index % StockListManager._tStockList.length;
+			var tData;
+			tData=StockListManager._tStockList[index];
+			StockListManager._tI=index;
+			if (!tData)
+				return;
+			console.log(tData);
+			Notice.notify("Show_Stock_KLine",[StockListManager.getStockCode(tData),tData]);
+		}
+
+		StockListManager.getStockCode=function(data){
+			if (!data)
+				return "601918";
+			var tStockStr;
+			if ((typeof data=='string')){
+				tStockStr=data;
+			}
+			else {
+				tStockStr=data.code;
+			}
+			return StockJsonP.getPureStock(tStockStr);
+		}
+
+		StockListManager.setMyStockList=function(arr){
+			StockListManager._myStockList=arr;
+		}
+
+		StockListManager.hasStock=function(stock){
+			if(!StockListManager._myStockList)return false;
+			stock=StockTools.getAdptStockStr(stock);
+			var i=0,len=0;
+			len=StockListManager._myStockList.length;
+			for (i=0;i < len;i++){
+				var tStockData;
+				tStockData=StockListManager._myStockList[i];
+				if (StockTools.getAdptStockCode(tStockData)==stock){
+					return true;
+				}
+			}
+			return false;
+		}
+
+		StockListManager.getStockLastMark=function(stock){
+			if (!StockListManager._myStockList)return null;
+			stock=StockTools.getAdptStockStr(stock);
+			var i=0,len=0;
+			len=StockListManager._myStockList.length;
+			for (i=0;i < len;i++){
+				var tStockData;
+				tStockData=StockListManager._myStockList[i];
+				if (StockTools.getAdptStockCode(tStockData)==stock){
+					if (tStockData.markTime){
+						return DateTools.getTimeStr(tStockData.markTime,"-");
+					}
+				}
+			}
+			return null;
+		}
+
+		StockListManager._tI=0;
+		StockListManager._tStockList=null
+		StockListManager._myStockList=null
+		return StockListManager;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class view.TradeTestManager
+	var TradeTestManager=(function(){
+		function TradeTestManager(){}
+		__class(TradeTestManager,'view.TradeTestManager');
+		var __proto=TradeTestManager.prototype;
+		__proto.resetTrade=function(){}
+		TradeTestManager.isTradeTestOn=false;
+		TradeTestManager.curTradeInfo=null
+		__static(TradeTestManager,
+		['I',function(){return this.I=new TradeTestManager();}
+		]);
+		return TradeTestManager;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
 	//class wrap.FileSelect
 	var FileSelect=(function(){
 		function FileSelect(target,accept,changeHandler){
@@ -3855,50 +3856,6 @@ var Laya=window.Laya=(function(window,document){
 		Config.isAlpha=false;
 		Config.premultipliedAlpha=false;
 		return Config;
-	})()
-
-
-	/**
-	*...
-	*@author dongketao
-	*/
-	//class PathFinding.core.Node
-	var Node$1=(function(){
-		function Node(x,y,walkable){
-			this.x=0;
-			this.y=0;
-			this.g=0;
-			this.f=0;
-			this.h=0;
-			this.by=0;
-			this.parent=null;
-			this.opened=null;
-			this.closed=null;
-			this.tested=null;
-			this.retainCount=null;
-			this.walkable=false;
-			(walkable===void 0)&& (walkable=true);
-			this.x=x;
-			this.y=y;
-			this.walkable=walkable;
-		}
-
-		__class(Node,'PathFinding.core.Node',null,'Node$1');
-		return Node;
-	})()
-
-
-	/**全局配置*/
-	//class UIConfig
-	var UIConfig=(function(){
-		function UIConfig(){};
-		__class(UIConfig,'UIConfig');
-		UIConfig.touchScrollEnable=true;
-		UIConfig.mouseWheelEnable=true;
-		UIConfig.showButtons=true;
-		UIConfig.popupBgColor="#000000";
-		UIConfig.popupBgAlpha=0.5;
-		return UIConfig;
 	})()
 
 
@@ -4811,6 +4768,21 @@ var Laya=window.Laya=(function(window,document){
 	})()
 
 
+	//class laya.debug.data.Base64AtlasManager
+	var Base64AtlasManager=(function(){
+		function Base64AtlasManager(){}
+		__class(Base64AtlasManager,'laya.debug.data.Base64AtlasManager');
+		Base64AtlasManager.replaceRes=function(uiO){
+			Base64AtlasManager.base64.replaceRes(uiO);
+		}
+
+		__static(Base64AtlasManager,
+		['dataO',function(){return this.dataO={"comp/button1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGIAAABRCAYAAAApS3MNAAABSUlEQVR4Xu3a0QmFMADFUJ1JXM0h3moPZ6qg4AoNeLqAIenFn65jjLE40w2sQkxvcAMI0eggRKSDEEJUDEQ4/COEiBiIYFiEEBEDEQyLECJiIIJhEUJEDEQwLEKIiIEIhkUIETEQwbAIISIGIhgWIUTEQATDIoSIGIhgWIQQEQMRDIsQImIggnEvYvv9IzjfxDiP/XlgJsTcCyDEXP/v14UQImIggmERQkQMRDAsQoiIgQiGRQgRMRDBsAghIgYiGBYhRMRABMMihIgYiGBYhBARAxEMixAiYiCCYRFCRAxEMCxCiIiBCMa7iAjPpzG8fY3kF0KIiIEIhkUIETEQwbAIISIGIhgWIUTEQATDIoSIGIhgWIQQEQMRDIsQImIggmERQkQMRDAsQoiIgQiGRQgRMRDBsAghIgYiGBYhRMRABMMihIgYiGBcGJiOHTRZjZAAAAAASUVORK5CYII=","comp/line2.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAECAYAAACOXx+WAAAAG0lEQVQYV2NkoDJgpLJ5DIxtra3/qWko1V0IAJvgApS1libIAAAAAElFTkSuQmCC","view/create.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAkCAYAAAC9itu8AAAAdElEQVQ4T2NkwAIWLFjwH5t4QkICIyM2CXQxmAHka/j///9mXDYxMjL6YtgwBDUg+w8crIT8MBQ0oEca55JvWNPS9xgu4tISzADyNfz///8MnrRkgmHDENSALWng9fRQ0DA40xLecglbWhpqGoZCMUNKUQkANAHAJVkE5XwAAAAASUVORK5CYII=","view/rendertime.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAkCAYAAAC9itu8AAABeUlEQVQ4T+2Uv0tCURSAvyNdcwiXBlsaaomWFgeHlqAtCPsDJHwIiUtDSxERtErtmQ6CjkHo4FpDBQ0tbVFR0BYE0eQvOnFF7T17QlOTd3m88873OD8+rtA9uVzOBIPBlIisAwvd8B1QajQahXQ63bIx6QHFYrEEJHrv7qeqZhzHOfYA+Xw+Yow5B+YHoGwymdxW1QAQEFWNAk8i8uEDuZM3gUcLZIEJYNcNqWrVcZyd7p9t8jLwYIFTYBx47UHlcjmcSCQ+B5JtpU0LnAFj3br7kE+yTalb4BCYczVqoT3AjteW4T73FlgFNgY+1IGQz4hPLGCAI2DGbweu2Auw1Vmcqk4C+8DsEOgZOBCR9/6mVdU2vgIsAdOuIVwANRFpezatuahpTYVSop1m+y6pasm8NQqSvvW61KwslkSHuCRkgvErr0taiUXaal1Sr0siWRO/9HfpF+RN9nfpB/qqmrXrv7mktVhYVm5GLo1cct9LI5e8d84/3UvfAgdlKH0EO7MAAAAASUVORK5CYII=","view/cache.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA0AAAAkCAYAAABSSLCCAAAAcElEQVQ4T2NcsGDB/4SEBEYGBgYGYtmMxCpENhhsA6mA8f///5tHNTEwkBcQpIYcSD15kUtWigi51vR/jVYdOGUQy2YkViGywWSnvTOkhiAonkY1gZIRqSEHTntkRe4g10RWQIyWe5Bgo2O5R7dkBADztyP+yFzirAAAAABJRU5ErkJggg==","comp/clip_selectBox.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAAAoCAYAAAAIeF9DAAAAsElEQVRoQ+3ZQQ0AMQzEwAuqEgh/Sj2pKObhIrBsrfLonHPu12MMTEGYFg+kIFaPgmA9ClIQzQDG0w0pCGYAw2khBcEMYDgtpCCYAQynhRQEM4DhtJCCYAYwnBZSEMwAhtNCCoIZwHBmd/tTh6IUBIrx/tRbiFWkIFaPFoL1KEhBNAMYTzekIJgBDKeFFAQzgOG0kIJgBjCcFlIQzACG00IKghnAcFpIQTADGE4LwYL8U/BE1dCJ3PsAAAAASUVORK5CYII=","comp/label.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHgAAAASCAYAAACQCxruAAAAmElEQVRoQ+3aMQqAQBBDUef+hx4Zq1mrbPnhWylECHmghVZ397OOqqp97TlugdNzgEXFIaaFuwROt0LmBEay5aXb920+FjIpMJItLy1wvhUyKTCSLS8tcL4VMikwki0vLXC+FTIpMJItLy1wvhUyKTCSLS89wPP1Qeh8M0zy+84gMMbruqjA15OxbtjAu7mPa5bj0fb/A8cLgD4n/wQKNiIAAAAASUVORK5CYII=","comp/clip_tree_arrow.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAQCAYAAAArij59AAAAwUlEQVQoU5WRPRKCMBCFWUt6vYQeB06RUDpoBbFDa7yDwm30FGi9dHnOMiQDBgvT5c3b7+0PRVEUlVV9A3NmzL6T//SRfMz5CgCdtVafjlmzaHAigAbM2tE8YVo1pf0yvABoc9D3wACgBbMKIgD4qqDJsqqlMV8VGL5n/88geCJKlijSMBXFZUNx/CSi9WwX1r7R99thzKKqkxXRbMUWSE2u2sEwHsxHCbrMVSq6N4xRD9HAvJstylEkarhurlqnfQC58YP5+CvQNwAAAABJRU5ErkJggg==","view/bg_panel.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAMUlEQVRYR+3QQREAAAjDMGZk/l2CDD6pgl7SduexGCBAgAABAgQIECBAgAABAgS+BQ4oyStBhXcy5AAAAABJRU5ErkJggg==","view/bg_top.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAMUlEQVRYR+3QQREAAAjDMKZp/rWBDD6pgl7SduexGCBAgAABAgQIECBAgAABAgS+BQ6WyDMhXMLeQgAAAABJRU5ErkJggg==","view/clickselect.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAqCAYAAACDdWrxAAACfElEQVRIS8WVO2iTYRSGn5OWqpMOurg0VRBdVVCsg7GgDjpZECyirl4GEYfSgBlaB5VSpApdxCJIoeKgg7dKC21ALahIiyiKKUjxAiI4qCH1lRP/hPhfAnHpGZPv+c4573nP95ukO/xHmINmtq8RtswsPiipB/gAPAFem5nCbcSWKukIsD84/A2YBh4DL8ysWLkk0qOkDcD5GLF+Ac+Ap35ZHGjAdWB5gtJvgZFYVSWdBHaFwBlg1Mw8K0ngFiAbAm+a2XBij/6HpBbgBrAEmAVeAZ1AFU40QDCWrcBZL0/S4Vq4HtgB7DWzU5XyauDBMhhWz70ryVVdb2ZuhGpI2g1MODjfiMFrxZk3s9WNwJ6snHFxQUlXgXfAPeC5mf2O2Y5oqZLcMceCw1+AseCSSTP7mSiOpM3A7RixfvgYgAd+WUQcSSnfPWBlgtIvgf5YVSVdBA6GQF/mS2bmWcvbERmHJF+payFw0MzO1TWApKXBViwL3h5/Pk4AVTjRAMFY9njJXl6wLccrcD3wAHDUzBwuRw18JtbkbkFJruomM7sf2o4u4Jals/mFRgxeFcfBQm97UyOwM+WMiwums/k3QnMps+HWpuLIRC5TCrcRW2pbT35MRiY4XDRsVmiU5uJQIZfxb0k5Ij229eQPySJ287MLGO8Rd1M0XY6AO3LjzYVSy3fAH+VICL4a6o9VtTWbnzbYGKI+IrtQ6Ns2EFuq/5jOTnWD9f4DikeFvvbqhyg2Yzo3voJSy2fAjfEJMYPRQQ2caAAfC7AW2WkvrzU79dCwnRW4Hjgg6JrrbV9VKbkKw1Csyd2Ca7on1y2krHOub3t16//2n79SarbsH7BKtfejoCjmAAAAAElFTkSuQmCC","view/resize.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAqCAYAAACDdWrxAAABeUlEQVRIS+2UvUpdURCFvxXRKJpIEBURsVAIiiBoaaGCjY2VLyH4MBaCPoWlnQlpI6SxsQmkURQL5eK/6JK57iuRnMPZtxAkuOFUhzWz96xvjcg8tluAT5LOQqJMHba/AgPAD0nOEtruAOaB6Lon6U+ucAoYTLe7Bb5XCm1/BCaAXqAVOAHyOkYn27PA5/TGWmXHxvBeT2i7TVIM4MUp7ZhGPlY3V/pVKUxEjAIjyac74LIAjK70PwCoyfYXYDJwyqDoHtiRdFOfql0naBgIrILF/ZIi1yH6h1XbYXCPpKOq7s34GEX7JB00m445YBzYlPSQ1dF2N7CaWN2W9DNXuJxAj1uGVeuVQtvh32LyuR34DexWCv+CfAXoBzYkHb8Boe1OSRcFkBdfNY18IQiUtFUpTJjNAPEFHVfAaQFyjZ3zNBzbQ8BSWkZViEbk1uIpjXR8AKbT7jwEvpVUqEk6L0pHLN5hSWWxeq7XjI/v6Sgz0vZ7Ov7DdDwCkcb1m86tSukAAAAASUVORK5CYII=","view/clickanalyse.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAqCAYAAACDdWrxAAAC7UlEQVRIS5WWT2hUZxTFfyfGFolkoUVKrHQiEaX+IfgHa54UQzUqpWYhLbQU6ULNwgYXuog6yiiTgK2LgtAu6yqbFkpRBEURQzJEBN200NqKkxoDLnQhFUrizJU7vje8SSbzZr7FwDy+c75z7z3nfU80uMxMDin9JC0zewvYAHwIrAH65wWaWQuwOdy8CVgUHnBd0sUKoJktBbYC24B1QHMVNeck3ZWZrYhtXpUg/3/gS0kzDnT2/cDqpFqBUUnnK5pjZutDgo01Tr0g6XbVrprZypBgO9AUU/EK+ErSyzLQzC5XkTkCfBR7fl/Smeh/qasOlPRp9DAkOgp8H5P9o6SriUAnMrOzgNdswNeSntcL9IYNAQ8kHYuXU5Y6u8ZIupldAO5I+nkOsNb8wjk/ljTZKFCSvMbSMrPSiOpNx9uAz3UP4IbfWSsdrcDH4eZuYHF46LCk47PT8S6wG9gbJmRhlfoPSLrhJvdERJs7E+S73dZKmnagsx8JB50UEHdY3+x0dIUEO2qcekTSr/OlY21I4N5dEJMwA6yX9CKejqkqGn8DemPPb0v6YrZXpyS1xYbsRD3AtZjsk5IuJQKdyMyGAa/ZnbNR0tN6gd6wXwAP8SfV0jGnxki6mV1xyf4ubdTkPue/Jf3TEJCMNZFRMQLtyNwqvaTrSkdHZry1MFM8bLLPgY5U8/SyeYHvncotb5b1A/t8c2QGg3sT2WBLBbD95PiGogr9Ej0Gbap8r4ZJ5kR+MPhW7WdGd5npEFaa15IE+YWW5uklf2S6/1N7OnfasG+Ad5KiAfyVzwYfVDQnlc71YTaA8Ntrvtq/y2eDgapdTZ0a60UMhjdvmcCgWDClJge7npSBqfRYYY5M6U/M/NqO1mQ+G7xf4VUH5rNBOXtviLQfzH0afizop0fZroOJQCdKpcfyUKrZFhTpfDgU/F4nMNcH9gPwLJ8Nls3xarUaI+mp9NhTg5GJbPBZQyb3OReayP17rutmHPga1PpCOk+zrlEAAAAASUVORK5CYII=","view/res.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABYAAAAoCAYAAAD6xArmAAADwUlEQVRIS+3WT2gcdRQH8O/b2SwNC7l4MAEPvbilUkoPOUmLjSDrZn4hxYKH/kGwyB4tQogiu/N+GymyoWguhVBQKKkHQTHsW9fUQwqKp4AgtMXkInhILl4CkoTdmSe/6XZp2pntLli8uMedt9/3mze/33yW8Jw+9Jxy0TeYmV8FcFVVTxPRiwA6AP5U1TvZbHapUqn8nrawxGBVJWvtNVWdJ6K05h1V/dhaW08KT/wRM1sAVQCRqn5JRLdyudw9Iora7faJKIrKqnrBNSWiahAEC0+GHwpm5utEdD+KopsuBMDbzPxt0oqstRdV9Za7lslkzlar1Z8erzsUHATBJhG93C34fmJi4ly5XG6nzTEIgjoRzanqkrX2amowM98F8Fq3wK34PWb+Ii14cXExv7e3V6hWq78+axQrANwt/kVEl5j5h0G2IzMfUdWCtfa3R/VPzvhTAG8AOM/MfwwYehTANwB+ZOYPE4ODIDhJRJvMvD9IqLW2GEXRbSJ6AcBtZr6UGPzoS2Y+lc/nt+bm5v5Oa2CtvaKqywC8bs06M7+eGszMn7nTBqDOzPNpwcvLyyPb29vfAZh2Naq6Za0tpAbXarUzURS53eGKL1trv0oKZ+a3AHytqplMJlOOoui4tfaDvqOw1lZUtabubBOtqOqN0dHRB/v7++62XwHwDoB33dkAUGPmoO92e/yitXZeVT8BkE1acbdpPQiCj4hIBw52hQsLC8c6nc77AN4E8FK3yQ4R/Qzgc2b+Je0ZDPU+fjiZp1eXFD5U8CB7u+/DGybgXxnFMA3/m1GISGwegNMAeuYBuON53lKpVBrePBG5RkTuSPc1b2ZmZnDzRKRnHoDYvIODg3u5XM69/E8AKAO40G1aNcb0N6/ZbF5X1fsAbjpInXnGmETzGo3GRdew+0DPGmPSzRORTQA988bHx89NTk6mmtdoNGLziGjJ9/1085rN5l1VPWSeMSbVvLW1tXwYhoXp6en+5olIbB6A2Dzf9wcyb319/cju7m5hdnY22TwRic3zPO98qVQayLxWq3U0DMPYPGNMsnmrq6snx8bGNqempgYyT0SKzjoAsXnGmP7mNZvNU9lsdqtYLKaaJyJXABwyzxiTbp6IxOYRUd33/VTzNjY2RnZ2dnrmAdgyxqSbJyJnAMTmEdFl3/cTzROR2DzHk6qWiei4Maa/eSJScZY99FRXPM+7MTIy8iAMQ6/dbsfmEVHPPGPM4OaJiBtDqnmuqfuL4Pv+8Oa1Wq1jYRg+ZR6A2DxjzP/mPRupfwAf56Q4urCh6QAAAABJRU5ErkJggg==","view/tab_panel.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABYAAABICAYAAADyMAW8AAAAcUlEQVRYR+3WsQ3AMAhE0TCMeyTvP1tShRQo7lxYegxA8fUPLuac97VhwuKXKhTlFxRQ9GPDClawYvGEDwxIZu7pFRZXr4ACinY1ghWsYMX/NxWQr22edyvGGHt6hcV1NqGAon8QVrCCFYteISDnBuQB3xJuQcDkEngAAAAASUVORK5CYII=","view/btn_close.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAqCAYAAACz+XvQAAACmUlEQVRIS7WWS0/bUBCFz7mJmyZxENm06mNVoVZC7LqGn9FNqy55/BSWSEhs2/4uuqFVoA150JLKJvGdaiIH2TfXNoKQpeP5PHPO3GMTK/5xxTwsAUWkBeBZ+qAByb/Zh4pIA8CL9NqY5Dj7vw9YA/ABwDsAfwB8ITnUIhF5CuATgNcAfgH4RnJSCkwLl6AA/lXBtLZQQxFxoTr6q6LOFl2WmuJAtcY7ZuXIixsczfRyTlPfhpSN7BpwBeBtFdQLFJE2gI8AXi7GBBBl3Fdnv5L87XbpWxuFfQbw3NXM0dQLLdrDIH3ylGTiLLYB8CS9lpCc3tmU+xzL1Z9lEXl/n06KavjowCiK1uM4fqMd1Ov1s3a7fZntZjabtSeTiQYHgiC4aLVavZwpbofT6TQYDAaH1tod3bMwDHc7nc5PLZrNZmG/3z8WkS1jzGm32z1oNBqjUqD+6YM2m81xFWyeNkUaulAAlyKyWdTZbdqUmZKFakEVrLRDV7P5zY6m3rQp6tA1AMC5tXY7he51Op0fdwbGcdwdDodHWc2MMdcL9wGM1tbW9sMw/L6UNm6HChuNRifW2g1XM0dTL3TJZS1KkkTDFbVaLQqCIJcm6k0URRpxuvg39Xo9rtzDh5zt1Z/lXq+32rR5dKC1dt0YM08bAGd65BxN1ZB52ojIBcl82rgdWmsDkocAdgDoW22X5DxtSIZJkhyT3AJwCuCAZD5tfCP7oMaYcRVs/tAiDT1QHX2zqLPbtCkzxYFqjXfM3GKXAR3NtC6nqTccioAeA84BbCuU5B4Af9r4gCLSBXCU1UxErjPuj0Rk3xiznDYuMIWdANhwNXM09UKXXNai9LtQ9y4yxuS/XUijr9L0lXBDMp82j370HhJdWvsftiHJYFPSIqEAAAAASUVORK5CYII=","comp/combobox.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFsAAABCCAYAAAA476rKAAACfElEQVR4Xu3bMYsTURQF4PMmExgIWkgEU5hskyJYxGYKY5VS7NzCylL8Bftj3NbKQjuxTBWbaUwhKdIYLCJotlACA5m8kQTZZZkkeN9dbuNJOXPPu/DN5ZHkMa7dbpfgx0TAEdvEedeE2HbWxDa0JjaxLQUMe3HPJrahQECrNE3RarUOJheLBbIsq9znZAdgJ0mC4XCIer1eSa/Xa4xGI+R5TuwA272RTqeDfr9fuTeZTDCfz/dmONkK/cFggGazebnCcrnEeDw+uCKxFdiNRmO3nURRBO/9bvtYrVbEVpgejXa7XfR6PUynU8xms6O1nGzlU3DO7fbu7V5dlsf/0yO2ElsSJ7ZES1lLbCWgJE5siZaylthKQEmc2BItZS2xlYCSOLElWspaYisBJXFiS7SUtcRWAkrixJZoKWuJrQSUxIkt0VLWElsJKIkTW6L1t5an6wFooRGerofKBeZ4uh4IFxrj6XqoXECOp+sBaJoIT9c1esIsT9eFYFbl/J5tJc13agyliU1sWwHDbtyziW0oYNiKk22JfXJ6xnfXjcDdFttnb43a/b9tovQ5iG30/IltBL1tQ2xiGwoYtuJkE9tQILBV/ugl4rh2MF1sPJJP59fuc7IDsTe37mHz8Bki+MoKHhFqn9+j9vs7sQN9K7G89xRx837levHzG5Lph8p1TrZK3iF//ApxdLVI4YFk/BpA9Uc5sVXYwObOCfyDJ3AoUcIh+vIRtYuve1clthJ7G8/7p4hv30Xx6weSybuDKxL7BrARxcjTF0iyN4AviH0Tpto1ONlaQUGe2AIsbSmxtYKCPLEFWNpSYmsFBXliC7C0pZfY2oWY/zeBP8uaLni/AFTVAAAAAElFTkSuQmCC","comp/textinput.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFsAAAAWCAYAAACv8OArAAAAZElEQVRYR+3UQQkAMAwEwcZI/LtsoSL2NTGwMByZ3b3HJQIDO3H+EdidNezQGjbsUiBs+dmwQ4EwZdmwQ4EwZdmwQ4EwZdmwQ4EwZdmwQ4EwZdmwQ4EwZdmwQ4EwZdmwQ4Ew9QBe0R29X9x+dwAAAABJRU5ErkJggg==","comp/vscroll.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABEAAAAhCAYAAAA/F0BXAAAAOklEQVRIS2N8+OzVf2YWFgYmJiYGcgHjqCEYQTcaJpipaTRMRsOEmDJmNJ2MppPRdEJMCIymE2JCCQAYonwDuu2VMAAAAABJRU5ErkJggg==","comp/vscroll$down.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABEAAAAzCAYAAABxCePHAAAC/klEQVRIS+2WS0wTURSG/zszBcrLFVvjio0LiAqRRDAmGpRodFE1MQQQkOKGqBujRo3ExLjB4MaKgDzUaGQhvoJGYwAjYoioERcuDGxYEIwPkBY6nWvObXuLnXZaSklYOIu5M/fxzZn/nvPPsInJKa5qGhRFQaIH+w8xSbcymtTd+gBFYXAdyjM9sf7ORxgGR0t5/j9jpkhq2t5B0xQwBrgqNsnJ9V0j4BzQdQNtNYXWkKz0NDiaXkBTFTCFoaWmCHVtQ+AGh+4z0HNiO2bmPNYQGiXQvkuPoaqqiIgi8Pl8eHBqtwlA86MKS6Cy8z1gjIFzjqcXHBEBlpBgRNuOd+HVlYqogJiQIChcg/BtW5k8SaSSkxPJ5PRPTttHfkI7kcghIpn8NYfp33NLXp+TnYG1OWvA3ox9499nPSjdkCsgHJxOIjc43VMrugL9dEUD4Oj/PA4CsUfDX/jOjbmisHTDCCzi4t4QgLDrQF+qTYOmqhgYGw9BvLpv0ZNjQwieaU9b7ZCDriFhSt3VBSZNartHA6aUJ7SK+jqO5n5pSp1HiqSw1e3Di0ypwBpiU1XsudwnTanraDEqrg2GmZLbGkJh2jQVZY29JlPqPe03JX/uxLE7Nk3DjjP3pCn1Ne7HrNsjdYoLQsmWYtNQ3NCBgeZKzLrn/foEoogbQgvSUmz4454P7VQikGhpHzGSZdVOUqqYTGli6gemZ9yJ+0lSTalk/TrxtQOYaBnESbTinokev4UG+p+9/xoyJQKQn8x7vf7JjEFZ1FJBBvuC12RINIdAwtkIQuksnxgHhKBUZ6scQtLSNyiWJpav47z9STjbjfJ8k5iVN0eEs911bhZjUTWpbR+RztZ6uFBERNCq1rfS2e43lFhDsjPscDS9lM7W4dyCquuvpbM9PFkq0iHm7mSl2yP+bj05uxdeXZe5FHOL6Xdr17nQ79bziwew4NXFqwUTMiaEtKBPwtZjnRi8WgXPglfqsyQITc60pwpAeNpH1GRZtRM0pWVVcTJM6S+dYaRsIf025wAAAABJRU5ErkJggg==","comp/vscroll$bar.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABEAAAA/CAYAAAAGyyO8AAABYElEQVRYR+2Wv0sDMRTH30tarCg6dRWnQnFT6OiqoP+tk+Cig+AiHayDiNSlg+jgD47K1US+Lwm5s4o/mkElN1xy73KfcF/efTi+Ht3Y0X1Btw8FffdoLy3QSnuZ+HhwZe+exrS13hGGJYsTWSszN0rJ1zHDDbJ0eDYkgHjv5Nxub3TIGEsTY/xDVq6NAN7MfW2u2aCG1nQ0GEZIOXmp7Pw5BPDF+VaGIGQfbM6k0ng5kw8/wF/eJzP5JInZkjg2CSS8zk6vCys7Wb8r5qqsncAP+pdR1Lu9rvgVT4uYg+3F+PCtAzjzu/taKdKKBSS2/wkEMBg/Q+rB50zqzZb7ZPoD/GeZ1HySxGxJHJsEEl5nc22VmCFalpFJTjLKNUtFxlDfP72IogYAP8PPZekWM5OqjErFWpjjbxprABJRA/JYjOOOX4Bgo6bWGYKsfMg5k+lmy5n8uUxm8kkSs6Vw7Cstibc9Fv5vWQAAAABJRU5ErkJggg==","comp/vscroll$up.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABEAAAAzCAYAAABxCePHAAADF0lEQVRIS92WTUhUURTHz31vPv0KKmkXrtxUGNomkCANLdCUpEatJFuIClIEFRl9kGH0BYWQElLpotGKEJXAtKQooYUFpi1axLQZMCyyZJqv926cM2/uTM288emoUHfx3v16v3fuuef+72Hume/c7/cBAwaLKWaLBZjLPc0Zk0CSJGBs4SDOObDP7i9ckuXkIbLJRJDFFrJk2SGNvZNwy7ExoZEJLWnqfQ+4SlUFaHNs0gXpQhq6x0GWGe0Y7oCicGivyYsLigup7XgFJlkCJjFwNm2HqrZR4CqHoKLC3fr8GFAMpPLqEJhMoZjpay6Bnx4vpKfYoLx1kCwKBlXoOV78BygGsudCH1nwtNVBgHBBUFFzL1n0+Gx5YghOxhINiAbFG1uZODESxf+bJShKrulv8HUusp1G/IBz1qTZIGvdamBjU584Aopzs+lbDhwfFFgc2/imLq0fazgAHF5MumBtuh3YwJsPfGdeNqgY1qqqfcSprRLgr7rWZzWbwCTL8HLKFYEEgkrUn+eHIDzNbltBSG33O+jcnxNZmrYcw5Yc7hoXotRenRPyz0IgBzrGYkTp9qEtxiEV10eEKD08Wgh7bzwTonSvIV/soK5jd53rE6I0eGY3/PL5wWYxQ+nFgShRKqK6LqTwhJNEafRKNQHCcWK3WmDHqR5NlMoSQzAWUV+9vkBMsKXYLCSbs3Oe+SGqqupGrIL3h3YclifYkjo7yZ7izIzUUGrhnvXAzA+PURkR8xCwPnMVsCUVpW0bsiCUKOH9S0980JvaLJSQUTal9Q+9/RgRJQSgnvgCgdBkxkCKektSpC9cR0HCOQgiZUMI3njijwYg+COzLP9rkLr7E3Dn4Gbhp7BPDC+n0TkhlK2zJpccuSBIfVdsutVdt9U4pLbjtVC2B0cKYN/N50LZHh0rFGGguztV14aFsvWfLiVhSrVboaSlXyjbk/NlBNKFVLT0k7INX3KAx+sXfkBlKzjpJItGLlcmhmSkptAB83h9MTuCICxBRUkMwUmY5+uFPY7LmJ7GW05SZycsSos9xUsmSr8BfgGeWI6+BgEAAAAASUVORK5CYII=","comp/button.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAE0AAABFCAYAAAAPWmvdAAABA0lEQVR4Xu3ZMRGDUBRFwXwfKSgxFhfRgAbUxEakkCEO3qmX+p9m5w7NW9v7cz18I4EFbeT1fwxtbgYtmEGDVgRC458GLQiExNKgBYGQWBq0IBASS4MWBEJiadCCQEgsDVoQCImlQQsCIbE0aEEgJJZW0Pbj64Q3hFvQhmL3CQ8atLlAKCwNWhAIiaVBCwIhsTRoQSAklgYtCITE0qAFgZBYGrQgEBJLgxYEQmJp0IJASCwNWhAIiaUVtOfrdMIbwi1oQ7H7hAcN2lwgFJYGLQiExNKgBYGQWBq0IBASS4MWBEJiadCCQEgsDVoQCImlQQsCIbE0aEEgJJYGLQiExNIC2g/MxaMp6CSauwAAAABJRU5ErkJggg==","view/bg_tool.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAMklEQVRYR+3QQREAAAjDMCYG/DsEGXxSBb2ke7YeiwECBAgQIECAAAECBAgQIEDgW+AAAeIuAVS/mngAAAAASUVORK5CYII=","comp/minBtn.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABwAAAA8CAYAAAB1odqiAAAArUlEQVRYR+3X0QmAMAwE0GQN19B9nM193CmiIH7ZXOAoRc/fpjl8jVDdOj/eOc8USBcXqUjLAtDQRMSOdHb3JatTYCZUXodIy10bGxTI1Lx6/YA0Ima6W2tKFcjmdpGKtCow7NBAdxozy+804Gfx/cDqbLzWDzs0ekNY4B9nOMEehMKTVIEEyKeFSKmc18+MppRtipJuYPCa1SkwEyqvo6Tlxm8bFEijvBt9n/QA/fOPydLHcUIAAAAASUVORK5CYII=","view/zoom_out.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABYAAAAoCAYAAAD6xArmAAACy0lEQVRIS92WQU8TQRTH/28oQkj0CL0QOMAJQkz4DkS6A+GA+A00Hrhj0uy8NiTwEdBPAOrB0Fnq3U8g6gkOSjxUjpCQCu08M5u2qaVAt7YmOqfNZPa3b9/+Z35L6NOgPnHx98Gbm5sTlUplA0AGQBpACcBBKpXazmaz3+5607YVM/MjEXlNRPdbASJyTkRrzPz+Nvg1MDNPAvgI4AGA10qpvHPuSCk17ZwLAazV4HPM/PUmeDvwSwBPAbxl5sf+RmYWZo7XMvOehwPYYebnScAnAMaVUrNhGH5pBefz+Rnn3GcAJ8w8kQT8E8A9AEMA/HXrqM9fMrO/bjvataJvFdd7/IaZfS9/67ExZpeIngB4xczPklQ8KSKHPmoispdKpXKjo6PHp6enU5VKxXhoV6moVXhnjpVS5wDOwjD81K7qG7e033lXV1cviMjvvDEAP0TkYHBwcKtarT4UkXcALolo1RhTaIV3dVYYY9aIyOfZDw9fMcYUm+FdgWvtYgCmBisrpRbCMPxQh3cNbgM3zJzvCdhDcrncuojMA8gy8/eegTvO8U0Lk87/UY9ve9h/BI6iyJ+1GyLScB4RHQDYDoKgO+dFURSfFQCuOQ9A7LwgCJI5r1gsTlar1YbznHP5crl8NDw8PK2Uip3n4QMDA3OLi4udO89a23Ce1jp2nrVWtNbxh7bWxs4jop0gCDp3XhRFJyIy7pybXV5ejp3XDN7f359RSsXO01p37jxrbey8i4uLoZGRkWvOa5q/1Fp37rx+VtxwntY6dl5zK6Io2hWR2Hla686dV0vFoY+aP8xFJJdOp49LpdIUEZkaNHkqfIWd5JiIzkXkLAiCZM7zO09EYueJyBgRxc4joi0ADeeJyOrS0lJvnBdFkf8xbDhPKbWSyWR647xCocC+53XnAVjQWvfGeS1wo7XunfOstesA5pVS2Uwm8w877xeHf444cscwYAAAAABJRU5ErkJggg==","view/refresh2.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABUAAAA/CAYAAAAPIIPGAAAEIElEQVRYR+2XTUhjVxTH/+fGpBrGT/xoBQdFFMMQLNLNbLooLbaFzqKMUhCSZwsuhGG6KCNd6DuRLgqzmGVxUd8LUrpoYWZTKO1yNi2F1oVtceEHflSLqNEav8bklPuqgsl75sUPSsucTQj33v895+R/7y+XcA1B16CJ/6GoYRiDItKfzWZjExMTv5/XtoLlx2Kxm0qp1wH0AHgTwC4RfWRZ1mdewp6ig4ODN9Lp9CMieh+AchH41Lbtj92EXUUHBgaCh4eH3wJ4zSObGSLqtSzrZ9+ihmF8CODR8YIflFL3MplMNxF9IiJWIBC4Pz4+/ldR5RuG8QuAlwGsAWi3bTsVj8dvAWhOJpPfFPK2a/mGYewDeAHAV7Zt9+aK9PX1VYRCoVcApNxa4CX6J4B6AE9t2341V9QwjO8AvAFg27btytxxL9EvAbynJxNRj2VZX58sjMfjd4joyT9D9NiyrHf9iup+/gggBCALQPfxVwARAO8cWywD4LZt2z/5EtWT+vv774rIBIBSlx/mmT5dyWTyC9+WOpkYi8XalVIPRKQbwItEpHv9PRE9tCzrt6IsVcgyhcYLnv1CAkWXfxFBxzEXXXipq+8imz7P9CJdO3+N754y86A+vYFAIDY8PHw58DHzTQB54DNNs3jwMfONY6R4go+Z/YNvbGwsuLKyci74APQys3/wMfMZ8InIPaVUt4g44AuHw/eHhoaKAx8znwEfM6dGR0dviUizaZoXA59pmvtE5ICPmfPAx8wVABzwubXA1VLM7IBPRJ4mEok88DHzKfiY2R/4mPkUfCLSk0gkTsHHzHdE5Immnog8TiQS/sDHzK7gE5EIEZ2CTyl1e2RkxD/4TNO8S0Su4BORZ0qpftM0iwefaZrtAB4QkQM+AA74ADxk5ufgc78CfV99xdy61yMajUbfAvA5gJeKycZj7gqADygajf5xRYIn+6xoUbmCDM9I/LuidXV1qK2txdzcHPb39ZPAOwpmGgqFUFFRgerqauczm81iaWkJa2v64eLhU6+eKqXQ1NTkZOcWq6urWF5edh1zzZSI0NbWhvLyctdFBwcHmJ2dxe7urn/R+vp6J0sd6XQaCwsLqKysRGNjI9bX17G4uIhMRr8jiig/EokgHA7j6OgIU1NTjkBZWRl0f7e2tgo60LX8rq4u/UjC5uamU2ZuBAIBZ1O9mVsLXEU7OztRUlKCnZ0dTE9P54nqfmsnaNHJycm8cVfRlpYW1NTUOJN1pjrjk6iqqkJra6vzNZVKYWZmxp+oLq2jo8NpgQ7dx729PZSWlkKL6hARpwr9Q+aGp/m12Zubm6H9mhtacH5+HhsbG/4tdTJTZ9bQ0OD0LxgMOm7Y3t6GNv55R7XgMS3oH5cJ/y3Rq775V3X5bx8zSv8DuWzoa2vgb5tumbHGlerDAAAAAElFTkSuQmCC","view/settings2.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABUAAAA/CAYAAAAPIIPGAAAD2ElEQVRYR+1Xz08bRxT+ZjAGYQoH4rS9IBJBQJEsUC8VKNdQtamUE0fLayqhKHeOaGbFkT8gFVLZtXzk1qqKSs4NUg8RXCIQVoOQ2jRFHHCwBRj2VW+zttY/14BXVaPOyR7NfPN9771536xACEOEgImPDHRhYaHv/Pz8kEMVjUbjq6urxVZhayo/lUo9chzndTabfWMYxkMAGx7QrG3bL5LJ5B0p5f1MJvNz7QENQdPp9LdE9CMAZrcHYAaoxJ8AvARwD8AtAI9t2/7JD9wQdH5+/q7jOLzx04DqeCelnFlbW/s9EJQXGIbxq8eQ//4mhPieiJjlEwBf8qQQYtOyLFZRNeqYJpPJWCQSeUBEzz3JrwqFwvT6+vo575ybm4vGYrFNAF8AICnlbKlU2sxms4Uych2oYRh5AJ9UFggxb1mW5aeSTqfTRLTmm3tv2/bAVUCfWpb1zA9qGAaHwD/XGjQU+WVGHU0Ug4ZSUjXFnwMwXVP8nP1RAPG2i5/Z+q9pKpWaFUL8wvNE9FUmk9m48jWtLWavofztNZTb124oN2neH1mTvmoo/pcfHDGtdZ9nLbw4rrW+nvGZpvlISvl6aWnpjWmaD4nINT4hxKxS6sXy8vIdx3HuK6XaMz6ttWt8QohDInKNTwjhJtWzlJdCiHtEdEtK+VgpFWx8Wuu7RMQbWxofEb0TQsxordszPq11Q+MjoidCCNf4AGxqrYONb2VlJVYsFh84jvPck/yKW5/W2jU+rXWUwdj4OBQcYzbCxcXF5sanlMoLIaqMTylVZXymaVYZHxG9N02zufE1AH2qlKoyPqUUh6AyFwgaivzyVehoorxkdL6k/MUPIEdE0/7i5zcUGx8Rxdsufmbrv6ZKqSrjM01z48rXtLbFeA3FNT4At6/dUIJ7V/MV/6HOn0gkvgbwA4DPbyLZ2/sWwHcikUj82SHAMqe3DMrv+I6Ofw9USonJyUlXzfb2NhzHaamsKdPBwUGcnp7i7OwMAwMDGBsbc4H29vaQz+fR09OD3t5eHB8f1x3QEJQBR0dHcXFx4QL39/dXbTw5OXEBI5EIcrlcHXBDUGYxPj6O7u7uljJLpRJ2d3ddNf7RVD6DlhkWCgUcHrof0YjH44jFYu5vnt/Z2QmWz0lhsHIMi8Wiu/HDF6T7mMDExAT6+vjR8iHGHA5/8uqYTk1Noaurq3L6/v4+jo6OqtgMDQ1hZGSkMnd5eYmtra3K/0DQg4ODivTyLg7B8PBw+6ChyC8f39FEMWgoJRVK8TPbjl/T2mruWEO5SYMNo/P/xaDfeB712U3YeXv/ALDwD+TbY8Dbd9BBAAAAAElFTkSuQmCC","view/setting.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAkCAYAAAC9itu8AAACAklEQVQ4T5XUS4iOcRTH8c9xCeVeiiiXhSJRJFIusRO2lEtZKFlgY6GxZDUrk2TFwii22JJLlERRLKRQJmXBkHIb8+hM/2d6ememed93957n93v+55zf9/mHll9VVTNxopTPR8T3piTyT1VVs7AL9zEd+4roOn5gK25HxLfacAjL8A8TWw6ta28jorc2LMLhIu7Ds2Jah4XlRVci4mNUVTUDadiLFF/G5GL4iyOYjxsYMnQ1BDfxujk0VmJPecFAO4bV2Nk05Bqzz3Za6ut86JJDx2vN4Hbj3hjBbcOt4eCaQZXUj5daT4pGoNFimI1zpdYVEf2jsTQX+5MX5NaOFdFFJHzJ2bWI+FJv6SRWYACTWliqa68ioqc2LMWpwtJ7PCymzVhSWOqOiHeZdPachqNIcXdBJV/2B6cLa5cwZLjQYOkqnuNsOeEM1uJgE43xDBsaH9QQfJ21VNBoHfpBaWHLiKGLoeO1ZnAHkpcxgkvOeoeDa0FjTnNLEfF1PJamYkcR3YmIX6OxNA35Kb7BFKwvoqf4jeV4GRE/azQ2Yh4GMaGFpbr2OSKe1Ibse1MRJ84fimkxMqc0Pc55MrjsOYvZRoofNW6/vPUSwEQ+2+tPQ14h9fX4Ap+aQ2MB1pQTB9sx5K24qmnorKWCRvtDF0PHa+0suBaW0ry91O5mus3n/wHmQwUTIH+tVgAAAABJRU5ErkJggg==","view/refresh.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAkCAYAAAC9itu8AAACiElEQVQ4T4WVS4iPYRTGf4/7/X6XcivXcktEUhTKQkqyYCOKjWyUhezFThbIlJ3LYrIRkoWGUhhhTMko4zJujYRpxgxHj9737/P3zfh239c57/uc5/zO+UQ3T0QsBRYCtZI+5jBVx0fEcGA6MA+YCXQCVyXddWwlISL6ARuARcXvhQPrJF3/nRARvYHtwLRuFLYCFyW15ITl6XTHvwIuJzlrgHrgiqSOiqSI2ANMAL4BxyW1R8RYYKSkp8Vb8w2HgD7AE0kXSozoD0wC2nPCAWAw0CyppiRhBzAD6MgJW4D5KdDFNeSkiJgFbEvONeYE698N2K0ArPsDMAZwguN+AmeKfZgLbAb6llj7A7gk6eFfnY6I0cDKpNc1tQFNwG1JvvFPp0sKXQ2sAGokveuJpVHAHGBJ4ul76vLNapbs9dYk6R8oU7driyztA2Z3w5L1n5LUnBPWptMd/xw4l+RscsHAeeNSZMloTAG+AIcltUXERPdB0qMylk4klu5LOlni2ABgqm3Oko4BQ4Fnko6WJOxPzlXg2wV4hv2czuOYhmsBsDf1rD7fYP0HkyyzZN0twHjACZmlI0WWFgM7e2DprKQ71SyNA9YDBnFYcq0RuOZ5/h9LdsVS6yV97YmlgYDn2X3wjUa7QdKLapY8015ePrWMJVtembhewLI0YWU4eZvck/Q525pXo4M/AY+TLMP40u+SuooseVjsitm/IakzItz5QcXhKSZsBCyrpdjlwuZwfSO8mLOkdYAHqFXSrRKWvErtXFdOcJcnp0AX96ZwuldQ5uxtTrD+VUmWWXqfujwk8eQ4f68rsuRG+d/gZVb9eIk9kPS6miXvIv91rNc12TXPc5MkTyO/AFhJCujHqZlCAAAAAElFTkSuQmCC","comp/checkbox.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAqCAYAAACDdWrxAAABbUlEQVRIS+2TP0gCURzHv88GRYsrExyOo5cEQVEtWdQQpE4N0R+HxmirXXCrKYigqMF2IRqCQByaLJqNIFpyUIzu4rIwpExODy88ITD/cJ603Rsf7/OGz+/zI5TSEAE20cZRgBMySKni8XrbwICrWAwG2ESZIadFS53J0R25brCyHZNud1vbcRuPV7fDAOu9GXJatNSZHN2R6wb/PfJCrxOZCR8Gbk6hWc6Xg8PrcgBETMIVPdIGSjYG/NoOSHcfkLqDK3qsBSRIrgRAuBF1quUPEUPhYGMwb2dhywrqQ3F0Dt++jSokJMBdhmDO52pB2WwFP7OK8rgH9os99IgppNf3QWwMFP4RNHKALrmoflIj53l6CaWpRcBkgiIkYHl6gDTrh5JJg57v/kJ1YOUixw7jfWELxMpAKUmAXAR7tg3LZ7am3IbjKDBOvPiDqkUmcoj+9H1d7k3nmHdweBubB70ON9wRzQH8pVVQb+Q/zZAEfpwDCU4AAAAASUVORK5CYII=","comp/btn_close.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABwAAAA8CAYAAAB1odqiAAAE6UlEQVRYR+3Y30+bVRgH8G/T0t/0Jy0USrIsC0E2GMKAVYcRpmSbEzIGZhqyxCxeceGVF3pjvJl/wYyJWZYY4hZBFnBuBBUW2ewYAxlsSMiyLKH8aEt/0vZtSxvM+562We15C6jlxr53zfO8z+ec5z2nOTmCk598tY19fAQs+Hlvz76QX1zpAwd+1NMNXzieU1QtFeKbvn4CXvqgC95wLKegRirC1e8GCPjh+53wMnRwedkG54aLG4yhSI/ycnPawHaKJ5M1MhGuXR8k4MX3OnjBx3NPcLX3DPfepSu3odfrYC4r5X7bVlbhcrnT4kdrjlA7xYLffj9EwJ6udnhCW9TEJ08XUgWTqE6n5XLdbk9G7MjhKmodrbwAfQPDBLxw7h1ecH3dDq/Xm1GYrZqceXIgGo0GJSXFvOCNmz8RsLv9NNyhKO+icTqc8Pl8acDLyWyr1Wo1DEYDbw2dXIz+4TsE7DzbBneQH2SruDZc8Pv9GSiLqVQq6Iv0WVe5TiHG4K1RAnaceguuYCTrCx63G4FAgAoqlUpodbqs7+sVEgyN/ELAs20t2Ajwgz6vF6FgMGtL5QoF1BoNL1qklODW6DgBT518gxcM+P1gQqFdLRqZXA6lSkVFWXDk198I2NZyAs7NMDXR7XRmYBKZjMuNMEzmljHQF46hUIrR8XsEbG228IJ+T/rGFkskkMoVHBgOBRGNRNI2vkpL/5YsODZhJeCbJ47D4WeoM4wyDLai5PsWiCUQJ2aXTN4pnswzqmS4e+8BAZstDbxg1qW3hyALTlinCPh6Uz1C0Rg2w/S/tz3UpaYWSgsgF4twf3IagvOXr297PR5YGuv+bd2s71sfzkCj1ULQe+3u9vraGlg0lw+LlZhMEIzUNu7vmYYFmz/9LJeTS9We+PIymaGl6wLizo2cokJDEawDNxLg+W7EHTkGjUWw/tBPwOMdnYg7nNQZep4/Q2B9jYspS0zQHjyUlrdTPJksNBrwYGiQgE3vtiNup4O2SSuOzk5y7z2ubYKyuBiaAwe5394XzxGw29Pi5iYLdeDCYgMmfxxOgKfPIG53UBNt049SBVNo4g864HRmxMz1x3hAIybv3CZg49ttiK/bqYneFRuCLldGYTY5OfPkQBR6PTRl6cfIVEtLivHw51ECNrS2Ir62zrtKfWtrCHo8acDLyWyrFVot1CYTbw2hqQRTY2MJsLk5K8hW8TkcCPp8GSiHqdVQG41ZtxUHTkwQ8NhrFsRXyUrke3wuF0L+TSooVxVCrc9+iBKWmvDodysB65saEFtZ5cX8Hi+YQDBrS2VKBVRa/jONqKwU05NTBKyrexWxlRUquOnfBBNidrVoZHIZClWF1DqisjLMzPxBwNraasRsdHDD6c7ApDIJVzTMRDJiRQb6EUNkLsPs7DwBa6qrELPZqCNzu/1pG1siEUOhkHK5wWAYkUg0La7T0U9tIrMZc/MLBKw+XImtZTrIMBFEouQkIBEXQJaYXXJ0O8WTeQXlZsw/XSRg1SsVvGDWpbuHIAsu/LlEwMrKCsQDAcQ93j2U2H2qUKuBUKnE4uISBF9f/Hj7wJwVhyordl/hH2Q+W1zCixoLOdNUj98Ei+byYbH5lnPkmJhL6O+18/c0/1m38/c0qVbm72nYVuTvadgu5O9pUtsif0+Tv6dhF8P/657mLz4NfQVdLmZiAAAAAElFTkSuQmCC","comp/textarea.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFsAAAAXCAYAAABkrDOOAAAA4klEQVRoQ+3ZvQrCMBiF4e9rU+sPOErRqxDRe/KG9Fp0EAc3VzuIg1ML4uDmlkaaquDenMUTyJoDD+8W3ZyKlaoshSeogHOy1m1euOmoI1EU+auqQUf/8XHnnBzLp3jsWdaVJEnEGEPsADXU2Ifro8Gej/uSpqnHruvmaVegqirZX+4N9mIy8Nh13XEct7vE18RaK7vzjdiIFoiNUH5vEJvYQAHgFMsmNlAAOMWyiQ0UAE6xbGIDBYBTLJvYQAHgFMsmNlAAOMWyiQ0UAE79lM2fmrDy358a/q6Hhf68ng175QueKdEXxUGVVwAAAABJRU5ErkJggg==","view/re.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABYAAAAoCAYAAAD6xArmAAACpklEQVRIS+WWPUgcQRiG3+8O70QEUwTB1EJgsTGdRRrhOMjOtEtSRbBIBMFKuCtkZleES2uRQoWQJggKKW7Of7GyTRvBLkVShhS73OXMfWGOU85Es7uXs0m2XeZh+OZ95xnCHX10R1ykBvu+P5fP59+VSqVvf9pUarBS6jWAR0Q0rbWOboP3BCaiOQAHAKTW+vtN8L8BW96W4zjPPM/78Ss8FlypVEYajYbHzALAJIAHALJdoDWl1Esi4m74rWBmpiAI5pk5AHAvJj0VrXU5Fmyhvu+/AfA8YRxfaa1LsWDf92eZeSMJlJnXtdYvEo1Ca30G4GEH/ImI1lqt1nE+nz9vNBrLnVTY39uO4zxNdHgrKytjzWbzs13FzKfDw8PFxcXF8HL3Nscd8BEAN3HcgiCYbLVaHyyIiGaUUm+7R9JzQZRSo0T0BUCGmRd831/tBttK53K5zXK5/DV1pZVSG0Q0C2BXa/0kySEmKojWeoiZD4hoKpvNTiwtLX1MC7+1IFrrQWZeJaJxx3EKN5186lF0LwiC4DEz31dKvU+z69i7Ig0stnm9wv4zsDGm7bxCodBf5xlj2s5j5mkpZf+c1wHPEdFBGIbS87z+OO8S3EnAVhRFvTnv8PBwpF6ve0QkiGiSmX9znuu66ZxXq9XmAcQ6j5krUspkzqvVaqmcJ4SId54xxl6ZiZwHYN113WTOq1arZ0R05TwAa5lM5rher5/ncrllAPYl1HZeFEXJnLe3tzd2cXHRdh6A04GBgWKxWLxyXlcqjqIochPHbWdn58p5AGaEENec13NB9vf3R5vNZtt5RLTguu4159lKA9gUQqR3njHGHpx9tOxKKfvnvGq1OmQrC2AKwIQQon/OOzk5GQzD0I5hPIqi/jvPGNN2npTyH3feTzoJOzgswwlqAAAAAElFTkSuQmCC","view/search.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABUAAAAqCAYAAABcOxDuAAABX0lEQVRIS+3VsUrEQBAG4H9HiDZiJQg+gJVaiKAoWClYXWeZ7D6CtbWFr5Ai2ayQxkLQRgsLGwtBUQsRC6sDCxHxEIvIZSRwxRGSu83pNUe23c0H+89kR2AISwzBxAiinuctCSH2AawD+AFwRkR7QRC85CO0ur5SaoOZzwGM54A3IlrJw1aolPIewEJJUY+01jvde31RKeUMgNceXdLSWk9VQl3XnSWiZhnKzF9RFE1WQrPDUsonAHNFsBDiJAzDRmXUdd1tIjoFMJaDW0KI1TAMH61RpdQ0Mx8z8zMzHxLRAYBlAG0Al2ma7hpjHqxbqgNeAJgHcKW1XutEMeE4Ttv3/axXC1dh9XPgbZqmW8aYd9t3ohCVUt4BWARwkyTJZhzHH7Zgdq4MvQbw7ThOw/f9zypgKVoVsS7UX+C+v+kgeI0Oklrvb0Yw03rwlZW8Hnz14OvqjXrw1e/pPyfwCww91CttlMG7AAAAAElFTkSuQmCC","view/save.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABYAAAAoCAYAAAD6xArmAAAA1klEQVRIS+2VzQ3DIAyFwxwdoMMAA/VQ8ZByyEBhmA7QOVxxKLIaOcIoSZUfrlifHw/wM91Ky6zE7SZgANTaDEDhzYJ5odSMC7nA5U7+b4X2dVQr3ic4hHCTlMcY33xPZUUGcwBvdEJwjcfGGIQQ4rd2qenWA3hyAUuABwCP31NtN+i1v02qP4DicRybM885J2ceB/NCyUupfuLxBS4WbmKF9rNUv4p9gq21d0l5SunF91RWZDAH8EYnBNd4nDPPWitnXst0I6Leez+feVowEQ3e+wNk3ge7C/Qp3GfwkgAAAABJRU5ErkJggg=="};},'base64',function(){return this.base64=new Base64Atlas(Base64AtlasManager.dataO);}
+		]);
+		return Base64AtlasManager;
+	})()
+
+
 	/**
 	*
 	*@author ww
@@ -5512,21 +5484,6 @@ var Laya=window.Laya=(function(window,document){
 	})()
 
 
-	//class laya.debug.data.Base64AtlasManager
-	var Base64AtlasManager=(function(){
-		function Base64AtlasManager(){}
-		__class(Base64AtlasManager,'laya.debug.data.Base64AtlasManager');
-		Base64AtlasManager.replaceRes=function(uiO){
-			Base64AtlasManager.base64.replaceRes(uiO);
-		}
-
-		__static(Base64AtlasManager,
-		['dataO',function(){return this.dataO={"comp/button1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGIAAABRCAYAAAApS3MNAAABSUlEQVR4Xu3a0QmFMADFUJ1JXM0h3moPZ6qg4AoNeLqAIenFn65jjLE40w2sQkxvcAMI0eggRKSDEEJUDEQ4/COEiBiIYFiEEBEDEQyLECJiIIJhEUJEDEQwLEKIiIEIhkUIETEQwbAIISIGIhgWIUTEQATDIoSIGIhgWIQQEQMRDIsQImIggnEvYvv9IzjfxDiP/XlgJsTcCyDEXP/v14UQImIggmERQkQMRDAsQoiIgQiGRQgRMRDBsAghIgYiGBYhRMRABMMihIgYiGBYhBARAxEMixAiYiCCYRFCRAxEMCxCiIiBCMa7iAjPpzG8fY3kF0KIiIEIhkUIETEQwbAIISIGIhgWIUTEQATDIoSIGIhgWIQQEQMRDIsQImIggmERQkQMRDAsQoiIgQiGRQgRMRDBsAghIgYiGBYhRMRABMMihIgYiGBcGJiOHTRZjZAAAAAASUVORK5CYII=","comp/line2.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAECAYAAACOXx+WAAAAG0lEQVQYV2NkoDJgpLJ5DIxtra3/qWko1V0IAJvgApS1libIAAAAAElFTkSuQmCC","view/create.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAkCAYAAAC9itu8AAAAdElEQVQ4T2NkwAIWLFjwH5t4QkICIyM2CXQxmAHka/j///9mXDYxMjL6YtgwBDUg+w8crIT8MBQ0oEca55JvWNPS9xgu4tISzADyNfz///8MnrRkgmHDENSALWng9fRQ0DA40xLecglbWhpqGoZCMUNKUQkANAHAJVkE5XwAAAAASUVORK5CYII=","view/rendertime.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAkCAYAAAC9itu8AAABeUlEQVQ4T+2Uv0tCURSAvyNdcwiXBlsaaomWFgeHlqAtCPsDJHwIiUtDSxERtErtmQ6CjkHo4FpDBQ0tbVFR0BYE0eQvOnFF7T17QlOTd3m88873OD8+rtA9uVzOBIPBlIisAwvd8B1QajQahXQ63bIx6QHFYrEEJHrv7qeqZhzHOfYA+Xw+Yow5B+YHoGwymdxW1QAQEFWNAk8i8uEDuZM3gUcLZIEJYNcNqWrVcZyd7p9t8jLwYIFTYBx47UHlcjmcSCQ+B5JtpU0LnAFj3br7kE+yTalb4BCYczVqoT3AjteW4T73FlgFNgY+1IGQz4hPLGCAI2DGbweu2Auw1Vmcqk4C+8DsEOgZOBCR9/6mVdU2vgIsAdOuIVwANRFpezatuahpTYVSop1m+y6pasm8NQqSvvW61KwslkSHuCRkgvErr0taiUXaal1Sr0siWRO/9HfpF+RN9nfpB/qqmrXrv7mktVhYVm5GLo1cct9LI5e8d84/3UvfAgdlKH0EO7MAAAAASUVORK5CYII=","view/cache.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA0AAAAkCAYAAABSSLCCAAAAcElEQVQ4T2NcsGDB/4SEBEYGBgYGYtmMxCpENhhsA6mA8f///5tHNTEwkBcQpIYcSD15kUtWigi51vR/jVYdOGUQy2YkViGywWSnvTOkhiAonkY1gZIRqSEHTntkRe4g10RWQIyWe5Bgo2O5R7dkBADztyP+yFzirAAAAABJRU5ErkJggg==","comp/clip_selectBox.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAAAoCAYAAAAIeF9DAAAAsElEQVRoQ+3ZQQ0AMQzEwAuqEgh/Sj2pKObhIrBsrfLonHPu12MMTEGYFg+kIFaPgmA9ClIQzQDG0w0pCGYAw2khBcEMYDgtpCCYAQynhRQEM4DhtJCCYAYwnBZSEMwAhtNCCoIZwHBmd/tTh6IUBIrx/tRbiFWkIFaPFoL1KEhBNAMYTzekIJgBDKeFFAQzgOG0kIJgBjCcFlIQzACG00IKghnAcFpIQTADGE4LwYL8U/BE1dCJ3PsAAAAASUVORK5CYII=","comp/label.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHgAAAASCAYAAACQCxruAAAAmElEQVRoQ+3aMQqAQBBDUef+hx4Zq1mrbPnhWylECHmghVZ397OOqqp97TlugdNzgEXFIaaFuwROt0LmBEay5aXb920+FjIpMJItLy1wvhUyKTCSLS8tcL4VMikwki0vLXC+FTIpMJItLy1wvhUyKTCSLS89wPP1Qeh8M0zy+84gMMbruqjA15OxbtjAu7mPa5bj0fb/A8cLgD4n/wQKNiIAAAAASUVORK5CYII=","comp/clip_tree_arrow.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAQCAYAAAArij59AAAAwUlEQVQoU5WRPRKCMBCFWUt6vYQeB06RUDpoBbFDa7yDwm30FGi9dHnOMiQDBgvT5c3b7+0PRVEUlVV9A3NmzL6T//SRfMz5CgCdtVafjlmzaHAigAbM2tE8YVo1pf0yvABoc9D3wACgBbMKIgD4qqDJsqqlMV8VGL5n/88geCJKlijSMBXFZUNx/CSi9WwX1r7R99thzKKqkxXRbMUWSE2u2sEwHsxHCbrMVSq6N4xRD9HAvJstylEkarhurlqnfQC58YP5+CvQNwAAAABJRU5ErkJggg==","view/bg_panel.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAMUlEQVRYR+3QQREAAAjDMGZk/l2CDD6pgl7SduexGCBAgAABAgQIECBAgAABAgS+BQ4oyStBhXcy5AAAAABJRU5ErkJggg==","view/bg_top.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAMUlEQVRYR+3QQREAAAjDMKZp/rWBDD6pgl7SduexGCBAgAABAgQIECBAgAABAgS+BQ6WyDMhXMLeQgAAAABJRU5ErkJggg==","view/clickselect.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAqCAYAAACDdWrxAAACfElEQVRIS8WVO2iTYRSGn5OWqpMOurg0VRBdVVCsg7GgDjpZECyirl4GEYfSgBlaB5VSpApdxCJIoeKgg7dKC21ALahIiyiKKUjxAiI4qCH1lRP/hPhfAnHpGZPv+c4573nP95ukO/xHmINmtq8RtswsPiipB/gAPAFem5nCbcSWKukIsD84/A2YBh4DL8ysWLkk0qOkDcD5GLF+Ac+Ap35ZHGjAdWB5gtJvgZFYVSWdBHaFwBlg1Mw8K0ngFiAbAm+a2XBij/6HpBbgBrAEmAVeAZ1AFU40QDCWrcBZL0/S4Vq4HtgB7DWzU5XyauDBMhhWz70ryVVdb2ZuhGpI2g1MODjfiMFrxZk3s9WNwJ6snHFxQUlXgXfAPeC5mf2O2Y5oqZLcMceCw1+AseCSSTP7mSiOpM3A7RixfvgYgAd+WUQcSSnfPWBlgtIvgf5YVSVdBA6GQF/mS2bmWcvbERmHJF+payFw0MzO1TWApKXBViwL3h5/Pk4AVTjRAMFY9njJXl6wLccrcD3wAHDUzBwuRw18JtbkbkFJruomM7sf2o4u4Jals/mFRgxeFcfBQm97UyOwM+WMiwums/k3QnMps+HWpuLIRC5TCrcRW2pbT35MRiY4XDRsVmiU5uJQIZfxb0k5Ij229eQPySJ287MLGO8Rd1M0XY6AO3LjzYVSy3fAH+VICL4a6o9VtTWbnzbYGKI+IrtQ6Ns2EFuq/5jOTnWD9f4DikeFvvbqhyg2Yzo3voJSy2fAjfEJMYPRQQ2caAAfC7AW2WkvrzU79dCwnRW4Hjgg6JrrbV9VKbkKw1Csyd2Ca7on1y2krHOub3t16//2n79SarbsH7BKtfejoCjmAAAAAElFTkSuQmCC","view/resize.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAqCAYAAACDdWrxAAABeUlEQVRIS+2UvUpdURCFvxXRKJpIEBURsVAIiiBoaaGCjY2VLyH4MBaCPoWlnQlpI6SxsQmkURQL5eK/6JK57iuRnMPZtxAkuOFUhzWz96xvjcg8tluAT5LOQqJMHba/AgPAD0nOEtruAOaB6Lon6U+ucAoYTLe7Bb5XCm1/BCaAXqAVOAHyOkYn27PA5/TGWmXHxvBeT2i7TVIM4MUp7ZhGPlY3V/pVKUxEjAIjyac74LIAjK70PwCoyfYXYDJwyqDoHtiRdFOfql0naBgIrILF/ZIi1yH6h1XbYXCPpKOq7s34GEX7JB00m445YBzYlPSQ1dF2N7CaWN2W9DNXuJxAj1uGVeuVQtvh32LyuR34DexWCv+CfAXoBzYkHb8Boe1OSRcFkBdfNY18IQiUtFUpTJjNAPEFHVfAaQFyjZ3zNBzbQ8BSWkZViEbk1uIpjXR8AKbT7jwEvpVUqEk6L0pHLN5hSWWxeq7XjI/v6Sgz0vZ7Ov7DdDwCkcb1m86tSukAAAAASUVORK5CYII=","view/clickanalyse.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAqCAYAAACDdWrxAAAC7UlEQVRIS5WWT2hUZxTFfyfGFolkoUVKrHQiEaX+IfgHa54UQzUqpWYhLbQU6ULNwgYXuog6yiiTgK2LgtAu6yqbFkpRBEURQzJEBN200NqKkxoDLnQhFUrizJU7vje8SSbzZr7FwDy+c75z7z3nfU80uMxMDin9JC0zewvYAHwIrAH65wWaWQuwOdy8CVgUHnBd0sUKoJktBbYC24B1QHMVNeck3ZWZrYhtXpUg/3/gS0kzDnT2/cDqpFqBUUnnK5pjZutDgo01Tr0g6XbVrprZypBgO9AUU/EK+ErSyzLQzC5XkTkCfBR7fl/Smeh/qasOlPRp9DAkOgp8H5P9o6SriUAnMrOzgNdswNeSntcL9IYNAQ8kHYuXU5Y6u8ZIupldAO5I+nkOsNb8wjk/ljTZKFCSvMbSMrPSiOpNx9uAz3UP4IbfWSsdrcDH4eZuYHF46LCk47PT8S6wG9gbJmRhlfoPSLrhJvdERJs7E+S73dZKmnagsx8JB50UEHdY3+x0dIUEO2qcekTSr/OlY21I4N5dEJMwA6yX9CKejqkqGn8DemPPb0v6YrZXpyS1xYbsRD3AtZjsk5IuJQKdyMyGAa/ZnbNR0tN6gd6wXwAP8SfV0jGnxki6mV1xyf4ubdTkPue/Jf3TEJCMNZFRMQLtyNwqvaTrSkdHZry1MFM8bLLPgY5U8/SyeYHvncotb5b1A/t8c2QGg3sT2WBLBbD95PiGogr9Ej0Gbap8r4ZJ5kR+MPhW7WdGd5npEFaa15IE+YWW5uklf2S6/1N7OnfasG+Ad5KiAfyVzwYfVDQnlc71YTaA8Ntrvtq/y2eDgapdTZ0a60UMhjdvmcCgWDClJge7npSBqfRYYY5M6U/M/NqO1mQ+G7xf4VUH5rNBOXtviLQfzH0afizop0fZroOJQCdKpcfyUKrZFhTpfDgU/F4nMNcH9gPwLJ8Nls3xarUaI+mp9NhTg5GJbPBZQyb3OReayP17rutmHPga1PpCOk+zrlEAAAAASUVORK5CYII=","view/res.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABYAAAAoCAYAAAD6xArmAAADwUlEQVRIS+3WT2gcdRQH8O/b2SwNC7l4MAEPvbilUkoPOUmLjSDrZn4hxYKH/kGwyB4tQogiu/N+GymyoWguhVBQKKkHQTHsW9fUQwqKp4AgtMXkInhILl4CkoTdmSe/6XZp2pntLli8uMedt9/3mze/33yW8Jw+9Jxy0TeYmV8FcFVVTxPRiwA6AP5U1TvZbHapUqn8nrawxGBVJWvtNVWdJ6K05h1V/dhaW08KT/wRM1sAVQCRqn5JRLdyudw9Iora7faJKIrKqnrBNSWiahAEC0+GHwpm5utEdD+KopsuBMDbzPxt0oqstRdV9Za7lslkzlar1Z8erzsUHATBJhG93C34fmJi4ly5XG6nzTEIgjoRzanqkrX2amowM98F8Fq3wK34PWb+Ii14cXExv7e3V6hWq78+axQrANwt/kVEl5j5h0G2IzMfUdWCtfa3R/VPzvhTAG8AOM/MfwwYehTANwB+ZOYPE4ODIDhJRJvMvD9IqLW2GEXRbSJ6AcBtZr6UGPzoS2Y+lc/nt+bm5v5Oa2CtvaKqywC8bs06M7+eGszMn7nTBqDOzPNpwcvLyyPb29vfAZh2Naq6Za0tpAbXarUzURS53eGKL1trv0oKZ+a3AHytqplMJlOOoui4tfaDvqOw1lZUtabubBOtqOqN0dHRB/v7++62XwHwDoB33dkAUGPmoO92e/yitXZeVT8BkE1acbdpPQiCj4hIBw52hQsLC8c6nc77AN4E8FK3yQ4R/Qzgc2b+Je0ZDPU+fjiZp1eXFD5U8CB7u+/DGybgXxnFMA3/m1GISGwegNMAeuYBuON53lKpVBrePBG5RkTuSPc1b2ZmZnDzRKRnHoDYvIODg3u5XM69/E8AKAO40G1aNcb0N6/ZbF5X1fsAbjpInXnGmETzGo3GRdew+0DPGmPSzRORTQA988bHx89NTk6mmtdoNGLziGjJ9/1085rN5l1VPWSeMSbVvLW1tXwYhoXp6en+5olIbB6A2Dzf9wcyb319/cju7m5hdnY22TwRic3zPO98qVQayLxWq3U0DMPYPGNMsnmrq6snx8bGNqempgYyT0SKzjoAsXnGmP7mNZvNU9lsdqtYLKaaJyJXABwyzxiTbp6IxOYRUd33/VTzNjY2RnZ2dnrmAdgyxqSbJyJnAMTmEdFl3/cTzROR2DzHk6qWiei4Maa/eSJScZY99FRXPM+7MTIy8iAMQ6/dbsfmEVHPPGPM4OaJiBtDqnmuqfuL4Pv+8Oa1Wq1jYRg+ZR6A2DxjzP/mPRupfwAf56Q4urCh6QAAAABJRU5ErkJggg==","view/tab_panel.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABYAAABICAYAAADyMAW8AAAAcUlEQVRYR+3WsQ3AMAhE0TCMeyTvP1tShRQo7lxYegxA8fUPLuac97VhwuKXKhTlFxRQ9GPDClawYvGEDwxIZu7pFRZXr4ACinY1ghWsYMX/NxWQr22edyvGGHt6hcV1NqGAon8QVrCCFYteISDnBuQB3xJuQcDkEngAAAAASUVORK5CYII=","view/btn_close.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAqCAYAAACz+XvQAAACmUlEQVRIS7WWS0/bUBCFz7mJmyZxENm06mNVoVZC7LqGn9FNqy55/BSWSEhs2/4uuqFVoA150JLKJvGdaiIH2TfXNoKQpeP5PHPO3GMTK/5xxTwsAUWkBeBZ+qAByb/Zh4pIA8CL9NqY5Dj7vw9YA/ABwDsAfwB8ITnUIhF5CuATgNcAfgH4RnJSCkwLl6AA/lXBtLZQQxFxoTr6q6LOFl2WmuJAtcY7ZuXIixsczfRyTlPfhpSN7BpwBeBtFdQLFJE2gI8AXi7GBBBl3Fdnv5L87XbpWxuFfQbw3NXM0dQLLdrDIH3ylGTiLLYB8CS9lpCc3tmU+xzL1Z9lEXl/n06KavjowCiK1uM4fqMd1Ov1s3a7fZntZjabtSeTiQYHgiC4aLVavZwpbofT6TQYDAaH1tod3bMwDHc7nc5PLZrNZmG/3z8WkS1jzGm32z1oNBqjUqD+6YM2m81xFWyeNkUaulAAlyKyWdTZbdqUmZKFakEVrLRDV7P5zY6m3rQp6tA1AMC5tXY7he51Op0fdwbGcdwdDodHWc2MMdcL9wGM1tbW9sMw/L6UNm6HChuNRifW2g1XM0dTL3TJZS1KkkTDFbVaLQqCIJcm6k0URRpxuvg39Xo9rtzDh5zt1Z/lXq+32rR5dKC1dt0YM08bAGd65BxN1ZB52ojIBcl82rgdWmsDkocAdgDoW22X5DxtSIZJkhyT3AJwCuCAZD5tfCP7oMaYcRVs/tAiDT1QHX2zqLPbtCkzxYFqjXfM3GKXAR3NtC6nqTccioAeA84BbCuU5B4Af9r4gCLSBXCU1UxErjPuj0Rk3xiznDYuMIWdANhwNXM09UKXXNai9LtQ9y4yxuS/XUijr9L0lXBDMp82j370HhJdWvsftiHJYFPSIqEAAAAASUVORK5CYII=","comp/combobox.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFsAAABCCAYAAAA476rKAAACfElEQVR4Xu3bMYsTURQF4PMmExgIWkgEU5hskyJYxGYKY5VS7NzCylL8Bftj3NbKQjuxTBWbaUwhKdIYLCJotlACA5m8kQTZZZkkeN9dbuNJOXPPu/DN5ZHkMa7dbpfgx0TAEdvEedeE2HbWxDa0JjaxLQUMe3HPJrahQECrNE3RarUOJheLBbIsq9znZAdgJ0mC4XCIer1eSa/Xa4xGI+R5TuwA272RTqeDfr9fuTeZTDCfz/dmONkK/cFggGazebnCcrnEeDw+uCKxFdiNRmO3nURRBO/9bvtYrVbEVpgejXa7XfR6PUynU8xms6O1nGzlU3DO7fbu7V5dlsf/0yO2ElsSJ7ZES1lLbCWgJE5siZaylthKQEmc2BItZS2xlYCSOLElWspaYisBJXFiS7SUtcRWAkrixJZoKWuJrQSUxIkt0VLWElsJKIkTW6L1t5an6wFooRGerofKBeZ4uh4IFxrj6XqoXECOp+sBaJoIT9c1esIsT9eFYFbl/J5tJc13agyliU1sWwHDbtyziW0oYNiKk22JfXJ6xnfXjcDdFttnb43a/b9tovQ5iG30/IltBL1tQ2xiGwoYtuJkE9tQILBV/ugl4rh2MF1sPJJP59fuc7IDsTe37mHz8Bki+MoKHhFqn9+j9vs7sQN9K7G89xRx837levHzG5Lph8p1TrZK3iF//ApxdLVI4YFk/BpA9Uc5sVXYwObOCfyDJ3AoUcIh+vIRtYuve1clthJ7G8/7p4hv30Xx6weSybuDKxL7BrARxcjTF0iyN4AviH0Tpto1ONlaQUGe2AIsbSmxtYKCPLEFWNpSYmsFBXliC7C0pZfY2oWY/zeBP8uaLni/AFTVAAAAAElFTkSuQmCC","comp/textinput.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFsAAAAWCAYAAACv8OArAAAAZElEQVRYR+3UQQkAMAwEwcZI/LtsoSL2NTGwMByZ3b3HJQIDO3H+EdidNezQGjbsUiBs+dmwQ4EwZdmwQ4EwZdmwQ4EwZdmwQ4EwZdmwQ4EwZdmwQ4EwZdmwQ4EwZdmwQ4Ew9QBe0R29X9x+dwAAAABJRU5ErkJggg==","comp/vscroll.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABEAAAAhCAYAAAA/F0BXAAAAOklEQVRIS2N8+OzVf2YWFgYmJiYGcgHjqCEYQTcaJpipaTRMRsOEmDJmNJ2MppPRdEJMCIymE2JCCQAYonwDuu2VMAAAAABJRU5ErkJggg==","comp/vscroll$down.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABEAAAAzCAYAAABxCePHAAAC/klEQVRIS+2WS0wTURSG/zszBcrLFVvjio0LiAqRRDAmGpRodFE1MQQQkOKGqBujRo3ExLjB4MaKgDzUaGQhvoJGYwAjYoioERcuDGxYEIwPkBY6nWvObXuLnXZaSklYOIu5M/fxzZn/nvPPsInJKa5qGhRFQaIH+w8xSbcymtTd+gBFYXAdyjM9sf7ORxgGR0t5/j9jpkhq2t5B0xQwBrgqNsnJ9V0j4BzQdQNtNYXWkKz0NDiaXkBTFTCFoaWmCHVtQ+AGh+4z0HNiO2bmPNYQGiXQvkuPoaqqiIgi8Pl8eHBqtwlA86MKS6Cy8z1gjIFzjqcXHBEBlpBgRNuOd+HVlYqogJiQIChcg/BtW5k8SaSSkxPJ5PRPTttHfkI7kcghIpn8NYfp33NLXp+TnYG1OWvA3ox9499nPSjdkCsgHJxOIjc43VMrugL9dEUD4Oj/PA4CsUfDX/jOjbmisHTDCCzi4t4QgLDrQF+qTYOmqhgYGw9BvLpv0ZNjQwieaU9b7ZCDriFhSt3VBSZNartHA6aUJ7SK+jqO5n5pSp1HiqSw1e3Di0ypwBpiU1XsudwnTanraDEqrg2GmZLbGkJh2jQVZY29JlPqPe03JX/uxLE7Nk3DjjP3pCn1Ne7HrNsjdYoLQsmWYtNQ3NCBgeZKzLrn/foEoogbQgvSUmz4454P7VQikGhpHzGSZdVOUqqYTGli6gemZ9yJ+0lSTalk/TrxtQOYaBnESbTinokev4UG+p+9/xoyJQKQn8x7vf7JjEFZ1FJBBvuC12RINIdAwtkIQuksnxgHhKBUZ6scQtLSNyiWJpav47z9STjbjfJ8k5iVN0eEs911bhZjUTWpbR+RztZ6uFBERNCq1rfS2e43lFhDsjPscDS9lM7W4dyCquuvpbM9PFkq0iHm7mSl2yP+bj05uxdeXZe5FHOL6Xdr17nQ79bziwew4NXFqwUTMiaEtKBPwtZjnRi8WgXPglfqsyQITc60pwpAeNpH1GRZtRM0pWVVcTJM6S+dYaRsIf025wAAAABJRU5ErkJggg==","comp/vscroll$bar.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABEAAAA/CAYAAAAGyyO8AAABYElEQVRYR+2Wv0sDMRTH30tarCg6dRWnQnFT6OiqoP+tk+Cig+AiHayDiNSlg+jgD47K1US+Lwm5s4o/mkElN1xy73KfcF/efTi+Ht3Y0X1Btw8FffdoLy3QSnuZ+HhwZe+exrS13hGGJYsTWSszN0rJ1zHDDbJ0eDYkgHjv5Nxub3TIGEsTY/xDVq6NAN7MfW2u2aCG1nQ0GEZIOXmp7Pw5BPDF+VaGIGQfbM6k0ng5kw8/wF/eJzP5JInZkjg2CSS8zk6vCys7Wb8r5qqsncAP+pdR1Lu9rvgVT4uYg+3F+PCtAzjzu/taKdKKBSS2/wkEMBg/Q+rB50zqzZb7ZPoD/GeZ1HySxGxJHJsEEl5nc22VmCFalpFJTjLKNUtFxlDfP72IogYAP8PPZekWM5OqjErFWpjjbxprABJRA/JYjOOOX4Bgo6bWGYKsfMg5k+lmy5n8uUxm8kkSs6Vw7Cstibc9Fv5vWQAAAABJRU5ErkJggg==","comp/vscroll$up.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABEAAAAzCAYAAABxCePHAAADF0lEQVRIS92WTUhUURTHz31vPv0KKmkXrtxUGNomkCANLdCUpEatJFuIClIEFRl9kGH0BYWQElLpotGKEJXAtKQooYUFpi1axLQZMCyyZJqv926cM2/uTM288emoUHfx3v16v3fuuef+72Hume/c7/cBAwaLKWaLBZjLPc0Zk0CSJGBs4SDOObDP7i9ckuXkIbLJRJDFFrJk2SGNvZNwy7ExoZEJLWnqfQ+4SlUFaHNs0gXpQhq6x0GWGe0Y7oCicGivyYsLigup7XgFJlkCJjFwNm2HqrZR4CqHoKLC3fr8GFAMpPLqEJhMoZjpay6Bnx4vpKfYoLx1kCwKBlXoOV78BygGsudCH1nwtNVBgHBBUFFzL1n0+Gx5YghOxhINiAbFG1uZODESxf+bJShKrulv8HUusp1G/IBz1qTZIGvdamBjU584Aopzs+lbDhwfFFgc2/imLq0fazgAHF5MumBtuh3YwJsPfGdeNqgY1qqqfcSprRLgr7rWZzWbwCTL8HLKFYEEgkrUn+eHIDzNbltBSG33O+jcnxNZmrYcw5Yc7hoXotRenRPyz0IgBzrGYkTp9qEtxiEV10eEKD08Wgh7bzwTonSvIV/soK5jd53rE6I0eGY3/PL5wWYxQ+nFgShRKqK6LqTwhJNEafRKNQHCcWK3WmDHqR5NlMoSQzAWUV+9vkBMsKXYLCSbs3Oe+SGqqupGrIL3h3YclifYkjo7yZ7izIzUUGrhnvXAzA+PURkR8xCwPnMVsCUVpW0bsiCUKOH9S0980JvaLJSQUTal9Q+9/RgRJQSgnvgCgdBkxkCKektSpC9cR0HCOQgiZUMI3njijwYg+COzLP9rkLr7E3Dn4Gbhp7BPDC+n0TkhlK2zJpccuSBIfVdsutVdt9U4pLbjtVC2B0cKYN/N50LZHh0rFGGguztV14aFsvWfLiVhSrVboaSlXyjbk/NlBNKFVLT0k7INX3KAx+sXfkBlKzjpJItGLlcmhmSkptAB83h9MTuCICxBRUkMwUmY5+uFPY7LmJ7GW05SZycsSos9xUsmSr8BfgGeWI6+BgEAAAAASUVORK5CYII=","comp/button.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAE0AAABFCAYAAAAPWmvdAAABA0lEQVR4Xu3ZMRGDUBRFwXwfKSgxFhfRgAbUxEakkCEO3qmX+p9m5w7NW9v7cz18I4EFbeT1fwxtbgYtmEGDVgRC458GLQiExNKgBYGQWBq0IBASS4MWBEJiadCCQEgsDVoQCImlQQsCIbE0aEEgJJZW0Pbj64Q3hFvQhmL3CQ8atLlAKCwNWhAIiaVBCwIhsTRoQSAklgYtCITE0qAFgZBYGrQgEBJLgxYEQmJp0IJASCwNWhAIiaUVtOfrdMIbwi1oQ7H7hAcN2lwgFJYGLQiExNKgBYGQWBq0IBASS4MWBEJiadCCQEgsDVoQCImlQQsCIbE0aEEgJJYGLQiExNIC2g/MxaMp6CSauwAAAABJRU5ErkJggg==","view/bg_tool.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAMklEQVRYR+3QQREAAAjDMCYG/DsEGXxSBb2ke7YeiwECBAgQIECAAAECBAgQIEDgW+AAAeIuAVS/mngAAAAASUVORK5CYII=","comp/minBtn.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABwAAAA8CAYAAAB1odqiAAAArUlEQVRYR+3X0QmAMAwE0GQN19B9nM193CmiIH7ZXOAoRc/fpjl8jVDdOj/eOc8USBcXqUjLAtDQRMSOdHb3JatTYCZUXodIy10bGxTI1Lx6/YA0Ima6W2tKFcjmdpGKtCow7NBAdxozy+804Gfx/cDqbLzWDzs0ekNY4B9nOMEehMKTVIEEyKeFSKmc18+MppRtipJuYPCa1SkwEyqvo6Tlxm8bFEijvBt9n/QA/fOPydLHcUIAAAAASUVORK5CYII=","view/zoom_out.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABYAAAAoCAYAAAD6xArmAAACy0lEQVRIS92WQU8TQRTH/28oQkj0CL0QOMAJQkz4DkS6A+GA+A00Hrhj0uy8NiTwEdBPAOrB0Fnq3U8g6gkOSjxUjpCQCu08M5u2qaVAt7YmOqfNZPa3b9/+Z35L6NOgPnHx98Gbm5sTlUplA0AGQBpACcBBKpXazmaz3+5607YVM/MjEXlNRPdbASJyTkRrzPz+Nvg1MDNPAvgI4AGA10qpvHPuSCk17ZwLAazV4HPM/PUmeDvwSwBPAbxl5sf+RmYWZo7XMvOehwPYYebnScAnAMaVUrNhGH5pBefz+Rnn3GcAJ8w8kQT8E8A9AEMA/HXrqM9fMrO/bjvataJvFdd7/IaZfS9/67ExZpeIngB4xczPklQ8KSKHPmoispdKpXKjo6PHp6enU5VKxXhoV6moVXhnjpVS5wDOwjD81K7qG7e033lXV1cviMjvvDEAP0TkYHBwcKtarT4UkXcALolo1RhTaIV3dVYYY9aIyOfZDw9fMcYUm+FdgWvtYgCmBisrpRbCMPxQh3cNbgM3zJzvCdhDcrncuojMA8gy8/eegTvO8U0Lk87/UY9ve9h/BI6iyJ+1GyLScB4RHQDYDoKgO+dFURSfFQCuOQ9A7LwgCJI5r1gsTlar1YbznHP5crl8NDw8PK2Uip3n4QMDA3OLi4udO89a23Ce1jp2nrVWtNbxh7bWxs4jop0gCDp3XhRFJyIy7pybXV5ejp3XDN7f359RSsXO01p37jxrbey8i4uLoZGRkWvOa5q/1Fp37rx+VtxwntY6dl5zK6Io2hWR2Hla686dV0vFoY+aP8xFJJdOp49LpdIUEZkaNHkqfIWd5JiIzkXkLAiCZM7zO09EYueJyBgRxc4joi0ADeeJyOrS0lJvnBdFkf8xbDhPKbWSyWR647xCocC+53XnAVjQWvfGeS1wo7XunfOstesA5pVS2Uwm8w877xeHf444cscwYAAAAABJRU5ErkJggg==","view/refresh2.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABUAAAA/CAYAAAAPIIPGAAAEIElEQVRYR+2XTUhjVxTH/+fGpBrGT/xoBQdFFMMQLNLNbLooLbaFzqKMUhCSZwsuhGG6KCNd6DuRLgqzmGVxUd8LUrpoYWZTKO1yNi2F1oVtceEHflSLqNEav8bklPuqgsl75sUPSsucTQj33v895+R/7y+XcA1B16CJ/6GoYRiDItKfzWZjExMTv5/XtoLlx2Kxm0qp1wH0AHgTwC4RfWRZ1mdewp6ig4ODN9Lp9CMieh+AchH41Lbtj92EXUUHBgaCh4eH3wJ4zSObGSLqtSzrZ9+ihmF8CODR8YIflFL3MplMNxF9IiJWIBC4Pz4+/ldR5RuG8QuAlwGsAWi3bTsVj8dvAWhOJpPfFPK2a/mGYewDeAHAV7Zt9+aK9PX1VYRCoVcApNxa4CX6J4B6AE9t2341V9QwjO8AvAFg27btytxxL9EvAbynJxNRj2VZX58sjMfjd4joyT9D9NiyrHf9iup+/gggBCALQPfxVwARAO8cWywD4LZt2z/5EtWT+vv774rIBIBSlx/mmT5dyWTyC9+WOpkYi8XalVIPRKQbwItEpHv9PRE9tCzrt6IsVcgyhcYLnv1CAkWXfxFBxzEXXXipq+8imz7P9CJdO3+N754y86A+vYFAIDY8PHw58DHzTQB54DNNs3jwMfONY6R4go+Z/YNvbGwsuLKyci74APQys3/wMfMZ8InIPaVUt4g44AuHw/eHhoaKAx8znwEfM6dGR0dviUizaZoXA59pmvtE5ICPmfPAx8wVABzwubXA1VLM7IBPRJ4mEok88DHzKfiY2R/4mPkUfCLSk0gkTsHHzHdE5Immnog8TiQS/sDHzK7gE5EIEZ2CTyl1e2RkxD/4TNO8S0Su4BORZ0qpftM0iwefaZrtAB4QkQM+AA74ADxk5ufgc78CfV99xdy61yMajUbfAvA5gJeKycZj7gqADygajf5xRYIn+6xoUbmCDM9I/LuidXV1qK2txdzcHPb39ZPAOwpmGgqFUFFRgerqauczm81iaWkJa2v64eLhU6+eKqXQ1NTkZOcWq6urWF5edh1zzZSI0NbWhvLyctdFBwcHmJ2dxe7urn/R+vp6J0sd6XQaCwsLqKysRGNjI9bX17G4uIhMRr8jiig/EokgHA7j6OgIU1NTjkBZWRl0f7e2tgo60LX8rq4u/UjC5uamU2ZuBAIBZ1O9mVsLXEU7OztRUlKCnZ0dTE9P54nqfmsnaNHJycm8cVfRlpYW1NTUOJN1pjrjk6iqqkJra6vzNZVKYWZmxp+oLq2jo8NpgQ7dx729PZSWlkKL6hARpwr9Q+aGp/m12Zubm6H9mhtacH5+HhsbG/4tdTJTZ9bQ0OD0LxgMOm7Y3t6GNv55R7XgMS3oH5cJ/y3Rq775V3X5bx8zSv8DuWzoa2vgb5tumbHGlerDAAAAAElFTkSuQmCC","view/settings2.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABUAAAA/CAYAAAAPIIPGAAAD2ElEQVRYR+1Xz08bRxT+ZjAGYQoH4rS9IBJBQJEsUC8VKNdQtamUE0fLayqhKHeOaGbFkT8gFVLZtXzk1qqKSs4NUg8RXCIQVoOQ2jRFHHCwBRj2VW+zttY/14BXVaPOyR7NfPN9771536xACEOEgImPDHRhYaHv/Pz8kEMVjUbjq6urxVZhayo/lUo9chzndTabfWMYxkMAGx7QrG3bL5LJ5B0p5f1MJvNz7QENQdPp9LdE9CMAZrcHYAaoxJ8AvARwD8AtAI9t2/7JD9wQdH5+/q7jOLzx04DqeCelnFlbW/s9EJQXGIbxq8eQ//4mhPieiJjlEwBf8qQQYtOyLFZRNeqYJpPJWCQSeUBEzz3JrwqFwvT6+vo575ybm4vGYrFNAF8AICnlbKlU2sxms4Uych2oYRh5AJ9UFggxb1mW5aeSTqfTRLTmm3tv2/bAVUCfWpb1zA9qGAaHwD/XGjQU+WVGHU0Ug4ZSUjXFnwMwXVP8nP1RAPG2i5/Z+q9pKpWaFUL8wvNE9FUmk9m48jWtLWavofztNZTb124oN2neH1mTvmoo/pcfHDGtdZ9nLbw4rrW+nvGZpvlISvl6aWnpjWmaD4nINT4hxKxS6sXy8vIdx3HuK6XaMz6ttWt8QohDInKNTwjhJtWzlJdCiHtEdEtK+VgpFWx8Wuu7RMQbWxofEb0TQsxordszPq11Q+MjoidCCNf4AGxqrYONb2VlJVYsFh84jvPck/yKW5/W2jU+rXWUwdj4OBQcYzbCxcXF5sanlMoLIaqMTylVZXymaVYZHxG9N02zufE1AH2qlKoyPqUUh6AyFwgaivzyVehoorxkdL6k/MUPIEdE0/7i5zcUGx8Rxdsufmbrv6ZKqSrjM01z48rXtLbFeA3FNT4At6/dUIJ7V/MV/6HOn0gkvgbwA4DPbyLZ2/sWwHcikUj82SHAMqe3DMrv+I6Ofw9USonJyUlXzfb2NhzHaamsKdPBwUGcnp7i7OwMAwMDGBsbc4H29vaQz+fR09OD3t5eHB8f1x3QEJQBR0dHcXFx4QL39/dXbTw5OXEBI5EIcrlcHXBDUGYxPj6O7u7uljJLpRJ2d3ddNf7RVD6DlhkWCgUcHrof0YjH44jFYu5vnt/Z2QmWz0lhsHIMi8Wiu/HDF6T7mMDExAT6+vjR8iHGHA5/8uqYTk1Noaurq3L6/v4+jo6OqtgMDQ1hZGSkMnd5eYmtra3K/0DQg4ODivTyLg7B8PBw+6ChyC8f39FEMWgoJRVK8TPbjl/T2mruWEO5SYMNo/P/xaDfeB712U3YeXv/ALDwD+TbY8Dbd9BBAAAAAElFTkSuQmCC","view/setting.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAkCAYAAAC9itu8AAACAklEQVQ4T5XUS4iOcRTH8c9xCeVeiiiXhSJRJFIusRO2lEtZKFlgY6GxZDUrk2TFwii22JJLlERRLKRQJmXBkHIb8+hM/2d6ememed93957n93v+55zf9/mHll9VVTNxopTPR8T3piTyT1VVs7AL9zEd+4roOn5gK25HxLfacAjL8A8TWw6ta28jorc2LMLhIu7Ds2Jah4XlRVci4mNUVTUDadiLFF/G5GL4iyOYjxsYMnQ1BDfxujk0VmJPecFAO4bV2Nk05Bqzz3Za6ut86JJDx2vN4Hbj3hjBbcOt4eCaQZXUj5daT4pGoNFimI1zpdYVEf2jsTQX+5MX5NaOFdFFJHzJ2bWI+FJv6SRWYACTWliqa68ioqc2LMWpwtJ7PCymzVhSWOqOiHeZdPachqNIcXdBJV/2B6cLa5cwZLjQYOkqnuNsOeEM1uJgE43xDBsaH9QQfJ21VNBoHfpBaWHLiKGLoeO1ZnAHkpcxgkvOeoeDa0FjTnNLEfF1PJamYkcR3YmIX6OxNA35Kb7BFKwvoqf4jeV4GRE/azQ2Yh4GMaGFpbr2OSKe1Ibse1MRJ84fimkxMqc0Pc55MrjsOYvZRoofNW6/vPUSwEQ+2+tPQ14h9fX4Ap+aQ2MB1pQTB9sx5K24qmnorKWCRvtDF0PHa+0suBaW0ry91O5mus3n/wHmQwUTIH+tVgAAAABJRU5ErkJggg==","view/refresh.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAkCAYAAAC9itu8AAACiElEQVQ4T4WVS4iPYRTGf4/7/X6XcivXcktEUhTKQkqyYCOKjWyUhezFThbIlJ3LYrIRkoWGUhhhTMko4zJujYRpxgxHj9737/P3zfh239c57/uc5/zO+UQ3T0QsBRYCtZI+5jBVx0fEcGA6MA+YCXQCVyXddWwlISL6ARuARcXvhQPrJF3/nRARvYHtwLRuFLYCFyW15ITl6XTHvwIuJzlrgHrgiqSOiqSI2ANMAL4BxyW1R8RYYKSkp8Vb8w2HgD7AE0kXSozoD0wC2nPCAWAw0CyppiRhBzAD6MgJW4D5KdDFNeSkiJgFbEvONeYE698N2K0ArPsDMAZwguN+AmeKfZgLbAb6llj7A7gk6eFfnY6I0cDKpNc1tQFNwG1JvvFPp0sKXQ2sAGokveuJpVHAHGBJ4ul76vLNapbs9dYk6R8oU7driyztA2Z3w5L1n5LUnBPWptMd/xw4l+RscsHAeeNSZMloTAG+AIcltUXERPdB0qMylk4klu5LOlni2ABgqm3Oko4BQ4Fnko6WJOxPzlXg2wV4hv2czuOYhmsBsDf1rD7fYP0HkyyzZN0twHjACZmlI0WWFgM7e2DprKQ71SyNA9YDBnFYcq0RuOZ5/h9LdsVS6yV97YmlgYDn2X3wjUa7QdKLapY8015ePrWMJVtembhewLI0YWU4eZvck/Q525pXo4M/AY+TLMP40u+SuooseVjsitm/IakzItz5QcXhKSZsBCyrpdjlwuZwfSO8mLOkdYAHqFXSrRKWvErtXFdOcJcnp0AX96ZwuldQ5uxtTrD+VUmWWXqfujwk8eQ4f68rsuRG+d/gZVb9eIk9kPS6miXvIv91rNc12TXPc5MkTyO/AFhJCujHqZlCAAAAAElFTkSuQmCC","comp/checkbox.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAqCAYAAACDdWrxAAABbUlEQVRIS+2TP0gCURzHv88GRYsrExyOo5cEQVEtWdQQpE4N0R+HxmirXXCrKYigqMF2IRqCQByaLJqNIFpyUIzu4rIwpExODy88ITD/cJ603Rsf7/OGz+/zI5TSEAE20cZRgBMySKni8XrbwICrWAwG2ESZIadFS53J0R25brCyHZNud1vbcRuPV7fDAOu9GXJatNSZHN2R6wb/PfJCrxOZCR8Gbk6hWc6Xg8PrcgBETMIVPdIGSjYG/NoOSHcfkLqDK3qsBSRIrgRAuBF1quUPEUPhYGMwb2dhywrqQ3F0Dt++jSokJMBdhmDO52pB2WwFP7OK8rgH9os99IgppNf3QWwMFP4RNHKALrmoflIj53l6CaWpRcBkgiIkYHl6gDTrh5JJg57v/kJ1YOUixw7jfWELxMpAKUmAXAR7tg3LZ7am3IbjKDBOvPiDqkUmcoj+9H1d7k3nmHdweBubB70ON9wRzQH8pVVQb+Q/zZAEfpwDCU4AAAAASUVORK5CYII=","comp/btn_close.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABwAAAA8CAYAAAB1odqiAAAE6UlEQVRYR+3Y30+bVRgH8G/T0t/0Jy0USrIsC0E2GMKAVYcRpmSbEzIGZhqyxCxeceGVF3pjvJl/wYyJWZYY4hZBFnBuBBUW2ewYAxlsSMiyLKH8aEt/0vZtSxvM+562We15C6jlxr53zfO8z+ec5z2nOTmCk598tY19fAQs+Hlvz76QX1zpAwd+1NMNXzieU1QtFeKbvn4CXvqgC95wLKegRirC1e8GCPjh+53wMnRwedkG54aLG4yhSI/ycnPawHaKJ5M1MhGuXR8k4MX3OnjBx3NPcLX3DPfepSu3odfrYC4r5X7bVlbhcrnT4kdrjlA7xYLffj9EwJ6udnhCW9TEJ08XUgWTqE6n5XLdbk9G7MjhKmodrbwAfQPDBLxw7h1ecH3dDq/Xm1GYrZqceXIgGo0GJSXFvOCNmz8RsLv9NNyhKO+icTqc8Pl8acDLyWyr1Wo1DEYDbw2dXIz+4TsE7DzbBneQH2SruDZc8Pv9GSiLqVQq6Iv0WVe5TiHG4K1RAnaceguuYCTrCx63G4FAgAoqlUpodbqs7+sVEgyN/ELAs20t2Ajwgz6vF6FgMGtL5QoF1BoNL1qklODW6DgBT518gxcM+P1gQqFdLRqZXA6lSkVFWXDk198I2NZyAs7NMDXR7XRmYBKZjMuNMEzmljHQF46hUIrR8XsEbG228IJ+T/rGFkskkMoVHBgOBRGNRNI2vkpL/5YsODZhJeCbJ47D4WeoM4wyDLai5PsWiCUQJ2aXTN4pnswzqmS4e+8BAZstDbxg1qW3hyALTlinCPh6Uz1C0Rg2w/S/tz3UpaYWSgsgF4twf3IagvOXr297PR5YGuv+bd2s71sfzkCj1ULQe+3u9vraGlg0lw+LlZhMEIzUNu7vmYYFmz/9LJeTS9We+PIymaGl6wLizo2cokJDEawDNxLg+W7EHTkGjUWw/tBPwOMdnYg7nNQZep4/Q2B9jYspS0zQHjyUlrdTPJksNBrwYGiQgE3vtiNup4O2SSuOzk5y7z2ubYKyuBiaAwe5394XzxGw29Pi5iYLdeDCYgMmfxxOgKfPIG53UBNt049SBVNo4g864HRmxMz1x3hAIybv3CZg49ttiK/bqYneFRuCLldGYTY5OfPkQBR6PTRl6cfIVEtLivHw51ECNrS2Ir62zrtKfWtrCHo8acDLyWyrFVot1CYTbw2hqQRTY2MJsLk5K8hW8TkcCPp8GSiHqdVQG41ZtxUHTkwQ8NhrFsRXyUrke3wuF0L+TSooVxVCrc9+iBKWmvDodysB65saEFtZ5cX8Hi+YQDBrS2VKBVRa/jONqKwU05NTBKyrexWxlRUquOnfBBNidrVoZHIZClWF1DqisjLMzPxBwNraasRsdHDD6c7ApDIJVzTMRDJiRQb6EUNkLsPs7DwBa6qrELPZqCNzu/1pG1siEUOhkHK5wWAYkUg0La7T0U9tIrMZc/MLBKw+XImtZTrIMBFEouQkIBEXQJaYXXJ0O8WTeQXlZsw/XSRg1SsVvGDWpbuHIAsu/LlEwMrKCsQDAcQ93j2U2H2qUKuBUKnE4uISBF9f/Hj7wJwVhyordl/hH2Q+W1zCixoLOdNUj98Ei+byYbH5lnPkmJhL6O+18/c0/1m38/c0qVbm72nYVuTvadgu5O9pUtsif0+Tv6dhF8P/657mLz4NfQVdLmZiAAAAAElFTkSuQmCC","comp/textarea.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFsAAAAXCAYAAABkrDOOAAAA4klEQVRoQ+3ZvQrCMBiF4e9rU+sPOErRqxDRe/KG9Fp0EAc3VzuIg1ML4uDmlkaaquDenMUTyJoDD+8W3ZyKlaoshSeogHOy1m1euOmoI1EU+auqQUf/8XHnnBzLp3jsWdaVJEnEGEPsADXU2Ifro8Gej/uSpqnHruvmaVegqirZX+4N9mIy8Nh13XEct7vE18RaK7vzjdiIFoiNUH5vEJvYQAHgFMsmNlAAOMWyiQ0UAE6xbGIDBYBTLJvYQAHgFMsmNlAAOMWyiQ0UAE79lM2fmrDy358a/q6Hhf68ng175QueKdEXxUGVVwAAAABJRU5ErkJggg==","view/re.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABYAAAAoCAYAAAD6xArmAAACpklEQVRIS+WWPUgcQRiG3+8O70QEUwTB1EJgsTGdRRrhOMjOtEtSRbBIBMFKuCtkZleES2uRQoWQJggKKW7Of7GyTRvBLkVShhS73OXMfWGOU85Es7uXs0m2XeZh+OZ95xnCHX10R1ykBvu+P5fP59+VSqVvf9pUarBS6jWAR0Q0rbWOboP3BCaiOQAHAKTW+vtN8L8BW96W4zjPPM/78Ss8FlypVEYajYbHzALAJIAHALJdoDWl1Esi4m74rWBmpiAI5pk5AHAvJj0VrXU5Fmyhvu+/AfA8YRxfaa1LsWDf92eZeSMJlJnXtdYvEo1Ca30G4GEH/ImI1lqt1nE+nz9vNBrLnVTY39uO4zxNdHgrKytjzWbzs13FzKfDw8PFxcXF8HL3Nscd8BEAN3HcgiCYbLVaHyyIiGaUUm+7R9JzQZRSo0T0BUCGmRd831/tBttK53K5zXK5/DV1pZVSG0Q0C2BXa/0kySEmKojWeoiZD4hoKpvNTiwtLX1MC7+1IFrrQWZeJaJxx3EKN5186lF0LwiC4DEz31dKvU+z69i7Ig0stnm9wv4zsDGm7bxCodBf5xlj2s5j5mkpZf+c1wHPEdFBGIbS87z+OO8S3EnAVhRFvTnv8PBwpF6ve0QkiGiSmX9znuu66ZxXq9XmAcQ6j5krUspkzqvVaqmcJ4SId54xxl6ZiZwHYN113WTOq1arZ0R05TwAa5lM5rher5/ncrllAPYl1HZeFEXJnLe3tzd2cXHRdh6A04GBgWKxWLxyXlcqjqIochPHbWdn58p5AGaEENec13NB9vf3R5vNZtt5RLTguu4159lKA9gUQqR3njHGHpx9tOxKKfvnvGq1OmQrC2AKwIQQon/OOzk5GQzD0I5hPIqi/jvPGNN2npTyH3feTzoJOzgswwlqAAAAAElFTkSuQmCC","view/search.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABUAAAAqCAYAAABcOxDuAAABX0lEQVRIS+3VsUrEQBAG4H9HiDZiJQg+gJVaiKAoWClYXWeZ7D6CtbWFr5Ai2ayQxkLQRgsLGwtBUQsRC6sDCxHxEIvIZSRwxRGSu83pNUe23c0H+89kR2AISwzBxAiinuctCSH2AawD+AFwRkR7QRC85CO0ur5SaoOZzwGM54A3IlrJw1aolPIewEJJUY+01jvde31RKeUMgNceXdLSWk9VQl3XnSWiZhnKzF9RFE1WQrPDUsonAHNFsBDiJAzDRmXUdd1tIjoFMJaDW0KI1TAMH61RpdQ0Mx8z8zMzHxLRAYBlAG0Al2ma7hpjHqxbqgNeAJgHcKW1XutEMeE4Ttv3/axXC1dh9XPgbZqmW8aYd9t3ohCVUt4BWARwkyTJZhzHH7Zgdq4MvQbw7ThOw/f9zypgKVoVsS7UX+C+v+kgeI0Oklrvb0Yw03rwlZW8Hnz14OvqjXrw1e/pPyfwCww91CttlMG7AAAAAElFTkSuQmCC","view/save.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABYAAAAoCAYAAAD6xArmAAAA1klEQVRIS+2VzQ3DIAyFwxwdoMMAA/VQ8ZByyEBhmA7QOVxxKLIaOcIoSZUfrlifHw/wM91Ky6zE7SZgANTaDEDhzYJ5odSMC7nA5U7+b4X2dVQr3ic4hHCTlMcY33xPZUUGcwBvdEJwjcfGGIQQ4rd2qenWA3hyAUuABwCP31NtN+i1v02qP4DicRybM885J2ceB/NCyUupfuLxBS4WbmKF9rNUv4p9gq21d0l5SunF91RWZDAH8EYnBNd4nDPPWitnXst0I6Leez+feVowEQ3e+wNk3ge7C/Qp3GfwkgAAAABJRU5ErkJggg=="};},'base64',function(){return this.base64=new Base64Atlas(Base64AtlasManager.dataO);}
-		]);
-		return Base64AtlasManager;
-	})()
-
-
 	/**
 	*...
 	*@author ww
@@ -6104,52 +6061,6 @@ var Laya=window.Laya=(function(window,document){
 	*@author ww
 	*@version 1.0
 	*
-	*@created 2015-9-28 上午10:39:47
-	*/
-	//class laya.debug.tools.DTrace
-	var DTrace=(function(){
-		function DTrace(){}
-		__class(DTrace,'laya.debug.tools.DTrace');
-		DTrace.getArgArr=function(arg){
-			var rst;
-			rst=[];
-			var i=0,len=arg.length;
-			for(i=0;i<len;i++){
-				rst.push(arg[i]);
-			}
-			return rst;
-		}
-
-		DTrace.dTrace=function(__arg){
-			var arg=arguments;
-			arg=DTrace.getArgArr(arg);
-			arg.push(TraceTool.getCallLoc(2));
-			console.log.apply(console,arg);
-			var str;
-			str=arg.join(" ");
-		}
-
-		DTrace.timeStart=function(sign){
-			console.time(sign);;
-		}
-
-		DTrace.timeEnd=function(sign){
-			console.timeEnd(sign);;
-		}
-
-		DTrace.traceTable=function(data){
-			console.table(data);;
-		}
-
-		return DTrace;
-	})()
-
-
-	/**
-	*
-	*@author ww
-	*@version 1.0
-	*
 	*@created 2015-10-31 下午3:35:16
 	*/
 	//class laya.debug.tools.DebugExport
@@ -6287,6 +6198,81 @@ var Laya=window.Laya=(function(window,document){
 
 		DifferTool._differO={};
 		return DifferTool;
+	})()
+
+
+	/**
+	*
+	*@author ww
+	*@version 1.0
+	*
+	*@created 2016-1-14 下午4:32:47
+	*/
+	//class laya.debug.tools.DisController
+	var DisController=(function(){
+		function DisController(){
+			this.arrowAxis=null;
+			this._target=null;
+			this.recInfo=null;
+			DisController.init();
+			this.arrowAxis=new Axis();
+			this.arrowAxis.mouseEnabled=true;
+		}
+
+		__class(DisController,'laya.debug.tools.DisController');
+		var __proto=DisController.prototype;
+		__proto.switchType=function(){
+			this.arrowAxis.switchType();
+		}
+
+		__proto.updateMe=function(){
+			if(!this._target)return;
+			this.recInfo=RecInfo.getGlobalRecInfo(this._target,0,0,1,0,0,1);
+			console.log("rotation:",this.recInfo.rotation);
+			console.log("pos:",this.recInfo.x,this.recInfo.y);
+			console.log("scale:",this.recInfo.width,this.recInfo.height);
+			this.arrowAxis.x=this.recInfo.x;
+			this.arrowAxis.y=this.recInfo.y;
+			this.arrowAxis.rotation=this.recInfo.rotation;
+			this.arrowAxis.yAxis.rotation=this.recInfo.rotationV-this.recInfo.rotation;
+		}
+
+		__getset(0,__proto,'target',function(){
+			return this._target;
+			},function(target){
+			this._target=target;
+			if(target){
+				DisController._container.addChild(this.arrowAxis);
+				Laya.timer.loop(100,this,this.updateMe);
+				}else{
+				this.arrowAxis.removeSelf();
+				Laya.timer.clear(this,this.updateMe);
+			}
+			this.arrowAxis.target=target;
+			this.updateMe();
+		});
+
+		__getset(0,__proto,'type',function(){
+			return this.arrowAxis.type;
+			},function(lenType){
+			this.arrowAxis.type=lenType;
+		});
+
+		DisController.init=function(){
+			if (DisController._container){
+				DisControlTool.setTop(DisController._container);
+				return;
+			};
+			DisController._container=new Sprite();
+			DisController._container.mouseEnabled=true;
+			Laya.stage.addChild(DisController._container);
+		}
+
+		DisController._container=null
+		__static(DisController,
+		['I',function(){return this.I=new DisController();}
+		]);
+		return DisController;
 	})()
 
 
@@ -6586,81 +6572,6 @@ var Laya=window.Laya=(function(window,document){
 
 
 	/**
-	*
-	*@author ww
-	*@version 1.0
-	*
-	*@created 2016-1-14 下午4:32:47
-	*/
-	//class laya.debug.tools.DisController
-	var DisController=(function(){
-		function DisController(){
-			this.arrowAxis=null;
-			this._target=null;
-			this.recInfo=null;
-			DisController.init();
-			this.arrowAxis=new Axis();
-			this.arrowAxis.mouseEnabled=true;
-		}
-
-		__class(DisController,'laya.debug.tools.DisController');
-		var __proto=DisController.prototype;
-		__proto.switchType=function(){
-			this.arrowAxis.switchType();
-		}
-
-		__proto.updateMe=function(){
-			if(!this._target)return;
-			this.recInfo=RecInfo.getGlobalRecInfo(this._target,0,0,1,0,0,1);
-			console.log("rotation:",this.recInfo.rotation);
-			console.log("pos:",this.recInfo.x,this.recInfo.y);
-			console.log("scale:",this.recInfo.width,this.recInfo.height);
-			this.arrowAxis.x=this.recInfo.x;
-			this.arrowAxis.y=this.recInfo.y;
-			this.arrowAxis.rotation=this.recInfo.rotation;
-			this.arrowAxis.yAxis.rotation=this.recInfo.rotationV-this.recInfo.rotation;
-		}
-
-		__getset(0,__proto,'target',function(){
-			return this._target;
-			},function(target){
-			this._target=target;
-			if(target){
-				DisController._container.addChild(this.arrowAxis);
-				Laya.timer.loop(100,this,this.updateMe);
-				}else{
-				this.arrowAxis.removeSelf();
-				Laya.timer.clear(this,this.updateMe);
-			}
-			this.arrowAxis.target=target;
-			this.updateMe();
-		});
-
-		__getset(0,__proto,'type',function(){
-			return this.arrowAxis.type;
-			},function(lenType){
-			this.arrowAxis.type=lenType;
-		});
-
-		DisController.init=function(){
-			if (DisController._container){
-				DisControlTool.setTop(DisController._container);
-				return;
-			};
-			DisController._container=new Sprite();
-			DisController._container.mouseEnabled=true;
-			Laya.stage.addChild(DisController._container);
-		}
-
-		DisController._container=null
-		__static(DisController,
-		['I',function(){return this.I=new DisController();}
-		]);
-		return DisController;
-	})()
-
-
-	/**
 	*调试拾取显示对象类
 	*@author ww
 	*/
@@ -6829,6 +6740,574 @@ var Laya=window.Laya=(function(window,document){
 		DisplayHook.instance=null
 		DisplayHook.isFirst=false;
 		return DisplayHook;
+	})()
+
+
+	/**
+	*
+	*@author ww
+	*@version 1.0
+	*
+	*@created 2015-9-28 上午10:39:47
+	*/
+	//class laya.debug.tools.DTrace
+	var DTrace=(function(){
+		function DTrace(){}
+		__class(DTrace,'laya.debug.tools.DTrace');
+		DTrace.getArgArr=function(arg){
+			var rst;
+			rst=[];
+			var i=0,len=arg.length;
+			for(i=0;i<len;i++){
+				rst.push(arg[i]);
+			}
+			return rst;
+		}
+
+		DTrace.dTrace=function(__arg){
+			var arg=arguments;
+			arg=DTrace.getArgArr(arg);
+			arg.push(TraceTool.getCallLoc(2));
+			console.log.apply(console,arg);
+			var str;
+			str=arg.join(" ");
+		}
+
+		DTrace.timeStart=function(sign){
+			console.time(sign);;
+		}
+
+		DTrace.timeEnd=function(sign){
+			console.timeEnd(sign);;
+		}
+
+		DTrace.traceTable=function(data){
+			console.table(data);;
+		}
+
+		return DTrace;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class laya.debug.tools.enginehook.ClassCreateHook
+	var ClassCreateHook=(function(){
+		function ClassCreateHook(){
+			this.createInfo={};
+		}
+
+		__class(ClassCreateHook,'laya.debug.tools.enginehook.ClassCreateHook');
+		var __proto=ClassCreateHook.prototype;
+		__proto.hookClass=function(clz){
+			var _$this=this;
+			var createFun=function (sp){
+				_$this.classCreated(sp,clz);
+			}
+			FunHook.hook(clz,"call",createFun);
+		}
+
+		__proto.classCreated=function(clz,oClass){
+			var key;
+			key=ClassTool.getNodeClassAndName(clz);
+			var depth=0;
+			var tClz;
+			tClz=clz;
+			while (tClz && tClz !=oClass){
+				tClz=tClz.__super;
+				depth++;
+			}
+			if (!ClassCreateHook.I.createInfo[key]){
+				ClassCreateHook.I.createInfo[key]=0;
+			}
+			ClassCreateHook.I.createInfo[key]=ClassCreateHook.I.createInfo[key]+1;
+			RunProfile.run(key,depth+6);
+		}
+
+		__proto.getClassCreateInfo=function(clz){
+			var key;
+			key=ClassTool.getClassName(clz);
+			return RunProfile.getRunInfo(key);
+		}
+
+		__static(ClassCreateHook,
+		['I',function(){return this.I=new ClassCreateHook();}
+		]);
+		return ClassCreateHook;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class laya.debug.tools.enginehook.RenderSpriteHook
+	var RenderSpriteHook=(function(){
+		function RenderSpriteHook(){
+			//this._next=null;
+			//this._fun=null;
+			//this._oldCanvas=null;
+		}
+
+		__class(RenderSpriteHook,'laya.debug.tools.enginehook.RenderSpriteHook');
+		var __proto=RenderSpriteHook.prototype;
+		__proto.createRenderSprite=function(type,next){
+			var rst;
+			rst=new RenderSprite(type,next);
+			if (type==0x10){
+				rst["_oldCanvas"]=rst._fun;
+				rst._fun=RenderSpriteHook.I._canvas;
+			}
+			return rst;
+		}
+
+		__proto._canvas=function(sprite,context,x,y){
+			if (!SpriteRenderForVisibleAnalyse.allowRendering)return;
+			var _cacheCanvas=sprite._$P.cacheCanvas;
+			var _next=this._next;
+			if (!_cacheCanvas||SpriteRenderForVisibleAnalyse.isVisibleTesting){
+				_next._fun.call(_next,sprite,context,x,y);
+				return;
+			};
+			var preTime;
+			preTime=Browser.now();
+			var tx=_cacheCanvas.ctx;
+			var _repaint=sprite._needRepaint()|| (!tx);
+			this._oldCanvas(sprite,context,x,y);
+			if (Config.showCanvasMark){
+			}
+			if (_repaint){
+				CacheAnalyser.I.reCacheCanvas(sprite,Browser.now()-preTime);
+				}else{
+				CacheAnalyser.I.renderCanvas(sprite,Browser.now()-preTime);
+			}
+		}
+
+		RenderSpriteHook.init=function(){
+			RenderSpriteHook.I=new RenderSpriteHook();
+			RunDriver.createRenderSprite=RenderSpriteHook.I.createRenderSprite;
+		}
+
+		RenderSpriteHook.IMAGE=0x01;
+		RenderSpriteHook.FILTERS=0x02;
+		RenderSpriteHook.ALPHA=0x04;
+		RenderSpriteHook.TRANSFORM=0x08;
+		RenderSpriteHook.CANVAS=0x10;
+		RenderSpriteHook.BLEND=0x20;
+		RenderSpriteHook.CLIP=0x40;
+		RenderSpriteHook.STYLE=0x80;
+		RenderSpriteHook.GRAPHICS=0x100;
+		RenderSpriteHook.CUSTOM=0x200;
+		RenderSpriteHook.ENABLERENDERMERGE=0x400;
+		RenderSpriteHook.CHILDS=0x800;
+		RenderSpriteHook.INIT=0x11111;
+		RenderSpriteHook.renders=[];
+		RenderSpriteHook.I=null
+		return RenderSpriteHook;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class laya.debug.tools.enginehook.SpriteRenderForVisibleAnalyse
+	var SpriteRenderForVisibleAnalyse=(function(){
+		function SpriteRenderForVisibleAnalyse(){
+			this._repaint=1;
+			this._renderType=1;
+			this._x=0;
+			this._y=0;
+			this.target=null;
+			this.isTargetRenderd=false;
+			this.preFun=null;
+			this._next=null;
+			this.pgraphic=RenderSprite["prototype"]["_graphics"];
+			this.pimage=RenderSprite["prototype"]["_image"];
+			this.pimage2=RenderSprite["prototype"]["_image2"];
+		}
+
+		__class(SpriteRenderForVisibleAnalyse,'laya.debug.tools.enginehook.SpriteRenderForVisibleAnalyse');
+		var __proto=SpriteRenderForVisibleAnalyse.prototype;
+		__proto.setRenderHook=function(){
+			Sprite["prototype"]["render"]=SpriteRenderForVisibleAnalyse.I.render;
+		}
+
+		/**
+		*更新、呈现显示对象。
+		*@param context 渲染的上下文引用。
+		*@param x X轴坐标。
+		*@param y Y轴坐标。
+		*/
+		__proto.render=function(context,x,y){
+			var me;
+			me=this;
+			if (DebugInfoLayer.I.isDebugItem(me))return;
+			if (me==laya.debug.tools.enginehook.SpriteRenderForVisibleAnalyse.I.target){
+				laya.debug.tools.enginehook.SpriteRenderForVisibleAnalyse.allowRendering=true;
+				laya.debug.tools.enginehook.SpriteRenderForVisibleAnalyse.I.isTargetRenderd=true;
+				CanvasTools.clearCanvas(SpriteRenderForVisibleAnalyse.mainCanvas);
+			}
+			RenderSprite.renders[this._renderType]._fun(this,context,x+this._x,y+this._y);
+			if (me==laya.debug.tools.enginehook.SpriteRenderForVisibleAnalyse.I.target){
+				SpriteRenderForVisibleAnalyse.tarRec=CanvasTools.getCanvasDisRec(laya.debug.tools.enginehook.SpriteRenderForVisibleAnalyse.mainCanvas);
+				console.log("rec",SpriteRenderForVisibleAnalyse.tarRec.toString());
+				if (SpriteRenderForVisibleAnalyse.tarRec.width >0&& SpriteRenderForVisibleAnalyse.tarRec.height > 0){
+					SpriteRenderForVisibleAnalyse.isTarRecOK=true;
+					SpriteRenderForVisibleAnalyse.preImageData=CanvasTools.getImageDataFromCanvasByRec(SpriteRenderForVisibleAnalyse.mainCanvas,SpriteRenderForVisibleAnalyse.tarRec);
+					SpriteRenderForVisibleAnalyse.tarImageData=CanvasTools.getImageDataFromCanvasByRec(SpriteRenderForVisibleAnalyse.mainCanvas,SpriteRenderForVisibleAnalyse.tarRec);
+					}else{
+					console.log("tarRec Not OK:",SpriteRenderForVisibleAnalyse.tarRec);
+				}
+				}else{
+				if (SpriteRenderForVisibleAnalyse.isTarRecOK){
+					SpriteRenderForVisibleAnalyse.tImageData=CanvasTools.getImageDataFromCanvasByRec(SpriteRenderForVisibleAnalyse.mainCanvas,SpriteRenderForVisibleAnalyse.tarRec);
+					var dRate=NaN;
+					dRate=CanvasTools.getDifferRate(SpriteRenderForVisibleAnalyse.preImageData,SpriteRenderForVisibleAnalyse.tImageData);
+					SpriteRenderForVisibleAnalyse.preImageData=SpriteRenderForVisibleAnalyse.tImageData;
+					if (dRate > 0){
+						VisibleAnalyser.addCoverNode(me,dRate);
+					}
+				}
+			}
+		}
+
+		__proto.analyseNode=function(node){
+			VisibleAnalyser.resetCoverList();
+			if (Sprite["prototype"]["render"] !=SpriteRenderForVisibleAnalyse.I.render){
+				this.preFun=Sprite["prototype"]["render"];
+			}
+			this.target=node;
+			Sprite["prototype"]["render"]=this.render;
+			if (!SpriteRenderForVisibleAnalyse.tarCanvas)
+				SpriteRenderForVisibleAnalyse.tarCanvas=CanvasTools.createCanvas(Laya.stage.width,Laya.stage.height);
+			if (!SpriteRenderForVisibleAnalyse.mainCanvas)
+				SpriteRenderForVisibleAnalyse.mainCanvas=CanvasTools.createCanvas(Laya.stage.width,Laya.stage.height);
+			this.isTargetRenderd=false;
+			SpriteRenderForVisibleAnalyse.isVisibleTesting=true;
+			SpriteRenderForVisibleAnalyse.allowRendering=false;
+			CanvasTools.clearCanvas(SpriteRenderForVisibleAnalyse.mainCanvas);
+			CanvasTools.clearCanvas(SpriteRenderForVisibleAnalyse.tarCanvas);
+			SpriteRenderForVisibleAnalyse.isTarRecOK=false;
+			var ctx=new RenderContext(SpriteRenderForVisibleAnalyse.mainCanvas.width,SpriteRenderForVisibleAnalyse.mainCanvas.height,SpriteRenderForVisibleAnalyse.mainCanvas);
+			SpriteRenderForVisibleAnalyse.mainCanvas=ctx.canvas;
+			this.render.call(Laya.stage,ctx,0,0);
+			if (!SpriteRenderForVisibleAnalyse.isTarRecOK){
+				SpriteRenderForVisibleAnalyse.coverRate=0;
+				}else{
+				SpriteRenderForVisibleAnalyse.coverRate=CanvasTools.getDifferRate(SpriteRenderForVisibleAnalyse.preImageData,SpriteRenderForVisibleAnalyse.tarImageData);
+			}
+			VisibleAnalyser.coverRate=SpriteRenderForVisibleAnalyse.coverRate;
+			VisibleAnalyser.isTarRecOK=SpriteRenderForVisibleAnalyse.isTarRecOK;
+			console.log("coverRate:",SpriteRenderForVisibleAnalyse.coverRate);
+			this.isTargetRenderd=false;
+			SpriteRenderForVisibleAnalyse.isVisibleTesting=false;
+			SpriteRenderForVisibleAnalyse.allowRendering=true;
+			Sprite["prototype"]["render"]=this.preFun;
+		}
+
+		__proto.noRenderMode=function(){
+			return;
+			RenderSprite["prototype"]["_graphics"]=this.m_graphics;
+			RenderSprite["prototype"]["_image"]=this.m_image;
+			RenderSprite["prototype"]["_image2"]=this.m_image2;
+		}
+
+		__proto.normalMode=function(){
+			RenderSprite["prototype"]["_graphics"]=this.pgraphic;
+			RenderSprite["prototype"]["_image"]=this.pimage;
+			RenderSprite["prototype"]["_image2"]=this.pimage2;
+		}
+
+		__proto.inits=function(){
+			this.noRenderMode();
+		}
+
+		__proto.m_graphics=function(sprite,context,x,y){
+			if (laya.debug.tools.enginehook.SpriteRenderForVisibleAnalyse.allowRendering){
+				var tf=sprite._style._tf;
+				sprite._graphics && sprite._graphics._render(sprite,context,x-tf.translateX,y-tf.translateY);
+			};
+			var next=this._next;
+			next._fun.call(next,sprite,context,x,y);
+		}
+
+		__proto.m_image=function(sprite,context,x,y){
+			if (laya.debug.tools.enginehook.SpriteRenderForVisibleAnalyse.allowRendering){
+				var style=sprite._style;
+				context.ctx.drawTexture2(x,y,style._tf.translateX,style._tf.translateY,sprite.transform,style.alpha,style.blendMode,sprite._graphics._one);
+			}
+		}
+
+		__proto.m_image2=function(sprite,context,x,y){
+			if (laya.debug.tools.enginehook.SpriteRenderForVisibleAnalyse.allowRendering){
+				var tf=sprite._style._tf;
+				context.ctx.drawTexture2(x,y,tf.translateX,tf.translateY,sprite.transform,1,null,sprite._graphics._one);
+			}
+		}
+
+		SpriteRenderForVisibleAnalyse.tarCanvas=null
+		SpriteRenderForVisibleAnalyse.mainCanvas=null
+		SpriteRenderForVisibleAnalyse.preImageData=null
+		SpriteRenderForVisibleAnalyse.tImageData=null
+		SpriteRenderForVisibleAnalyse.tarImageData=null
+		SpriteRenderForVisibleAnalyse.tarRec=null
+		SpriteRenderForVisibleAnalyse.isTarRecOK=false;
+		SpriteRenderForVisibleAnalyse.isVisibleTesting=false;
+		SpriteRenderForVisibleAnalyse.allowRendering=true;
+		SpriteRenderForVisibleAnalyse.coverRate=NaN
+		__static(SpriteRenderForVisibleAnalyse,
+		['I',function(){return this.I=new SpriteRenderForVisibleAnalyse();}
+		]);
+		return SpriteRenderForVisibleAnalyse;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class laya.debug.tools.enginehook.SpriteRenderHook
+	var SpriteRenderHook=(function(){
+		function SpriteRenderHook(){
+			this._repaint=1;
+			this._renderType=1;
+			this._x=0;
+			this._y=0;
+		}
+
+		__class(SpriteRenderHook,'laya.debug.tools.enginehook.SpriteRenderHook');
+		var __proto=SpriteRenderHook.prototype;
+		/**
+		*更新、呈现显示对象。
+		*@param context 渲染的上下文引用。
+		*@param x X轴坐标。
+		*@param y Y轴坐标。
+		*/
+		__proto.render=function(context,x,y){
+			if ((this)==Laya.stage){
+				CacheAnalyser.renderLoopBegin();
+			};
+			var preTime=0;
+			preTime=Browser.now();
+			Stat.spriteCount++;
+			RenderSprite.renders[this._renderType]._fun(this,context,x+this._x,y+this._y);
+			this._repaint=0;
+			RenderAnalyser.I.render(this,Browser.now()-preTime);
+		}
+
+		SpriteRenderHook.init=function(){
+			SpriteRenderHook.I=new SpriteRenderHook();
+			SpriteRenderHook.setRenderHook();
+		}
+
+		SpriteRenderHook.setRenderHook=function(){
+			Sprite["prototype"]["render"]=SpriteRenderHook.I.render;
+		}
+
+		SpriteRenderHook.I=null
+		return SpriteRenderHook;
+	})()
+
+
+	/**
+	*本类用于在对象的函数上挂钩子
+	*@author ww
+	*@version 1.0
+	*
+	*@created 2015-10-23 下午1:13:13
+	*/
+	//class laya.debug.tools.hook.FunHook
+	var FunHook=(function(){
+		function FunHook(){}
+		__class(FunHook,'laya.debug.tools.hook.FunHook');
+		FunHook.hook=function(obj,funName,preFun,aftFun){
+			FunHook.hookFuns(obj,funName,[preFun,obj[funName],aftFun],1);
+		}
+
+		FunHook.hookAllFun=function(obj){
+			var key;
+			var arr;
+			arr=ClassTool.getOwnPropertyNames(obj);
+			for(key in arr){
+				key=arr[key];
+				if (FunHook.special[key])continue ;
+				console.log("try hook:",key);
+				if((typeof (obj[key])=='function')){
+					console.log("hook:",key);
+					FunHook.hookFuns(obj,key,[FunHook.getTraceMsg("call:"+key),obj[key]],1);
+				}
+			}
+			if(obj["__proto__"]){
+				FunHook.hookAllFun(obj["__proto__"]);
+				}else{
+				console.log("end:",obj);
+			}
+		}
+
+		FunHook.getTraceMsg=function(msg){
+			var rst;
+			rst=function (){
+				console.log(msg);
+			}
+			return rst;
+		}
+
+		FunHook.hookFuns=function(obj,funName,funList,rstI){
+			(rstI===void 0)&& (rstI=-1);
+			var _preFun=obj[funName];
+			var newFun;
+			newFun=function (__args){
+				var args=arguments;
+				var rst;
+				var i=0;
+				var len=0;
+				len=funList.length;
+				for(i=0;i<len;i++){
+					if(!funList[i])continue ;
+					if(i==rstI){
+						rst=funList[i].apply(this,args);
+						}else{
+						funList[i].apply(this,args);
+					}
+				}
+				return rst;
+			};
+			newFun["pre"]=_preFun;
+			obj[funName]=newFun;
+		}
+
+		FunHook.removeHook=function(obj,funName){
+			if(obj[funName].pre!=null){
+				obj[funName]=obj[funName].pre;
+			}
+		}
+
+		FunHook.debugHere=function(){
+			debugger;;
+		}
+
+		FunHook.traceLoc=function(level,msg){
+			(level===void 0)&& (level=0);
+			(msg===void 0)&& (msg="");
+			console.log(msg,"fun loc:",TraceTool.getCallLoc(3+level));
+		}
+
+		FunHook.getLocFun=function(level,msg){
+			(level===void 0)&& (level=0);
+			(msg===void 0)&& (msg="");
+			level+=1;
+			var rst;
+			rst=function (){
+				FunHook.traceLoc(level,msg);
+			}
+			return rst;
+		}
+
+		__static(FunHook,
+		['special',function(){return this.special={
+				"length":true,
+				"name":true,
+				"arguments":true,
+				"caller":true,
+				"prototype":true,
+				"is":true,
+				"isExtensible":true,
+				"isFrozen":true,
+				"isSealed":true,
+				"preventExtensions":true,
+				"seal":true,
+				"unobserve":true,
+				"apply":true,
+				"call":true,
+				"bind":true,
+				"freeze":true,
+				"unobserve":true
+		};}
+
+		]);
+		return FunHook;
+	})()
+
+
+	/**
+	*本类用于监控对象 set get 函数的调用
+	*@author ww
+	*@version 1.0
+	*
+	*@created 2015-10-23 下午2:52:48
+	*/
+	//class laya.debug.tools.hook.VarHook
+	var VarHook=(function(){
+		function VarHook(){}
+		__class(VarHook,'laya.debug.tools.hook.VarHook');
+		VarHook.hookVar=function(obj,name,setHook,getHook){
+			if(!setHook)setHook=[];
+			if(!getHook)getHook=[];
+			var preO=obj;
+			var preValue=obj[name];
+			var des;
+			des=ClassTool.getOwnPropertyDescriptor(obj,name);
+			var ndes={};
+			var mSet=function (value){
+				console.log("var hook set "+name+":",value);
+				preValue=value;
+			};
+			var mGet=function (){
+				console.log("var hook get"+name+":",preValue);
+				return preValue;
+			}
+			if(des){
+				ndes.set=mSet;
+				ndes.get=mGet;
+				ndes.enumerable=des.enumerable;
+				setHook.push(ndes.set);
+				getHook.push(ndes.get);
+				FunHook.hookFuns(ndes,"set",setHook);
+				FunHook.hookFuns(ndes,"get",getHook,getHook.length-1);
+				ClassTool.defineProperty(obj,name,ndes);
+				return;
+			}
+			while(!des&&obj["__proto__"]){
+				obj=obj["__proto__"];
+				des=ClassTool.getOwnPropertyDescriptor(obj,name);
+			}
+			if (des){
+				ndes.set=des.set?des.set:mSet;
+				ndes.get=des.get?des.get:mGet;
+				ndes.enumerable=des.enumerable;
+				setHook.push(ndes.set);
+				getHook.push(ndes.get);
+				FunHook.hookFuns(ndes,"set",setHook);
+				FunHook.hookFuns(ndes,"get",getHook,getHook.length-1);
+				ClassTool.defineProperty(preO,name,ndes);
+			}
+			if(!des){
+				console.log("get des fail add directly");
+				ndes.set=mSet;
+				ndes.get=mGet;
+				setHook.push(ndes.set);
+				getHook.push(ndes.get);
+				FunHook.hookFuns(ndes,"set",setHook);
+				FunHook.hookFuns(ndes,"get",getHook,getHook.length-1);
+				ClassTool.defineProperty(obj,name,ndes);
+			}
+		}
+
+		VarHook.getLocFun=function(msg,level){
+			(msg===void 0)&& (msg="");
+			(level===void 0)&& (level=0);
+			level+=1;
+			var rst;
+			rst=function (){
+				FunHook.traceLoc(level,msg);
+			}
+			return rst;
+		}
+
+		return VarHook;
 	})()
 
 
@@ -7290,75 +7769,6 @@ var Laya=window.Laya=(function(window,document){
 
 
 	/**
-	*...
-	*@author ww
-	*/
-	//class laya.debug.tools.ObjTimeCountTool
-	var ObjTimeCountTool=(function(){
-		function ObjTimeCountTool(){
-			this.timeDic={};
-			this.resultDic={};
-			this.countDic={};
-			this.resultCountDic={};
-			this.nodeDic={};
-			this.resultNodeDic={};
-		}
-
-		__class(ObjTimeCountTool,'laya.debug.tools.ObjTimeCountTool');
-		var __proto=ObjTimeCountTool.prototype;
-		__proto.addTime=function(sprite,time){
-			IDTools.idObj(sprite);
-			var key=0;
-			key=IDTools.getObjID(sprite);
-			if (!this.timeDic.hasOwnProperty(key)){
-				this.timeDic[key]=0;
-			}
-			this.timeDic[key]=this.timeDic[key]+time;
-			if (!this.countDic.hasOwnProperty(key)){
-				this.countDic[key]=0;
-			}
-			this.countDic[key]=this.countDic[key]+1;
-			this.nodeDic[key]=sprite;
-		}
-
-		__proto.getTime=function(sprite){
-			IDTools.idObj(sprite);
-			var key=0;
-			key=IDTools.getObjID(sprite);
-			if (!this.resultDic[key])return 0;
-			return this.resultDic[key];
-		}
-
-		__proto.getCount=function(sprite){
-			IDTools.idObj(sprite);
-			var key=0;
-			key=IDTools.getObjID(sprite);
-			return this.resultCountDic[key];
-		}
-
-		__proto.reset=function(){
-			var key;
-			for (key in this.timeDic){
-				this.timeDic[key]=0;
-				this.countDic[key]=0;
-			}
-			ObjectTools.clearObj(this.nodeDic);
-		}
-
-		__proto.updates=function(){
-			ObjectTools.clearObj(this.resultDic);
-			ObjectTools.insertValue(this.resultDic,this.timeDic);
-			ObjectTools.clearObj(this.resultCountDic);
-			ObjectTools.insertValue(this.resultCountDic,this.countDic);
-			ObjectTools.insertValue(this.resultNodeDic,this.nodeDic);
-			this.reset();
-		}
-
-		return ObjTimeCountTool;
-	})()
-
-
-	/**
 	*本类提供obj相关的一些操作
 	*@author ww
 	*@version 1.0
@@ -7740,6 +8150,75 @@ var Laya=window.Laya=(function(window,document){
 
 
 	/**
+	*...
+	*@author ww
+	*/
+	//class laya.debug.tools.ObjTimeCountTool
+	var ObjTimeCountTool=(function(){
+		function ObjTimeCountTool(){
+			this.timeDic={};
+			this.resultDic={};
+			this.countDic={};
+			this.resultCountDic={};
+			this.nodeDic={};
+			this.resultNodeDic={};
+		}
+
+		__class(ObjTimeCountTool,'laya.debug.tools.ObjTimeCountTool');
+		var __proto=ObjTimeCountTool.prototype;
+		__proto.addTime=function(sprite,time){
+			IDTools.idObj(sprite);
+			var key=0;
+			key=IDTools.getObjID(sprite);
+			if (!this.timeDic.hasOwnProperty(key)){
+				this.timeDic[key]=0;
+			}
+			this.timeDic[key]=this.timeDic[key]+time;
+			if (!this.countDic.hasOwnProperty(key)){
+				this.countDic[key]=0;
+			}
+			this.countDic[key]=this.countDic[key]+1;
+			this.nodeDic[key]=sprite;
+		}
+
+		__proto.getTime=function(sprite){
+			IDTools.idObj(sprite);
+			var key=0;
+			key=IDTools.getObjID(sprite);
+			if (!this.resultDic[key])return 0;
+			return this.resultDic[key];
+		}
+
+		__proto.getCount=function(sprite){
+			IDTools.idObj(sprite);
+			var key=0;
+			key=IDTools.getObjID(sprite);
+			return this.resultCountDic[key];
+		}
+
+		__proto.reset=function(){
+			var key;
+			for (key in this.timeDic){
+				this.timeDic[key]=0;
+				this.countDic[key]=0;
+			}
+			ObjectTools.clearObj(this.nodeDic);
+		}
+
+		__proto.updates=function(){
+			ObjectTools.clearObj(this.resultDic);
+			ObjectTools.insertValue(this.resultDic,this.timeDic);
+			ObjectTools.clearObj(this.resultCountDic);
+			ObjectTools.insertValue(this.resultCountDic,this.countDic);
+			ObjectTools.insertValue(this.resultNodeDic,this.nodeDic);
+			this.reset();
+		}
+
+		return ObjTimeCountTool;
+	})()
+
+
+	/**
 	*
 	*@author ww
 	*@version 1.0
@@ -7911,6 +8390,240 @@ var Laya=window.Laya=(function(window,document){
 		['I',function(){return this.I=new RenderAnalyser();}
 		]);
 		return RenderAnalyser;
+	})()
+
+
+	/**
+	*本类用于调整对象的宽高以及坐标
+	*@author ww
+	*/
+	//class laya.debug.tools.resizer.DisResizer
+	var DisResizer=(function(){
+		function DisResizer(){}
+		__class(DisResizer,'laya.debug.tools.resizer.DisResizer');
+		DisResizer.init=function(){
+			if (DisResizer._up)return;
+			DisResizer._up=new AutoFillRec("T");
+			DisResizer._up.height=2;
+			DisResizer._up.type=0;
+			DisResizer._down=new AutoFillRec("T");
+			DisResizer._down.height=2;
+			DisResizer._down.type=0;
+			DisResizer._left=new AutoFillRec("R");
+			DisResizer._left.width=2;
+			DisResizer._left.type=1;
+			DisResizer._right=new AutoFillRec("R");
+			DisResizer._right.width=2;
+			DisResizer._right.type=1;
+			DisResizer._barList=[DisResizer._up,DisResizer._down,DisResizer._left,DisResizer._right];
+			DisResizer.addEvent();
+		}
+
+		DisResizer.stageDown=function(e){
+			var target;
+			target=e.target;
+			if (DisResizer._tar && DisControlTool.isInTree(DisResizer._tar,target)){
+				return;
+			}
+			DisResizer.clear();
+		}
+
+		DisResizer.clear=function(){
+			DisResizer._tar=null;
+			Laya.stage.off("mouseup",null,DisResizer.stageDown);
+			DisControlTool.removeItems(DisResizer._barList);
+			DisResizer.clearDragEvents();
+		}
+
+		DisResizer.addEvent=function(){
+			var i=0,len=0;
+			var tBar;
+			len=DisResizer._barList.length;
+			for (i=0;i < len;i++){
+				tBar=DisResizer._barList[i];
+				tBar.on("mousedown",null,DisResizer.barDown);
+			}
+		}
+
+		DisResizer.barDown=function(e){
+			DisResizer.clearDragEvents();
+			DisResizer.tBar=e.target;
+			if (!DisResizer.tBar)return;
+			var area;
+			area=new Rectangle();
+			if (DisResizer.tBar.type==0){
+				area.x=DisResizer.tBar.x;
+				area.width=0;
+				area.y=DisResizer.tBar.y-200;
+				area.height=400;
+				}else{
+				area.x=DisResizer.tBar.x-200;
+				area.width=400;
+				area.y=0;
+				area.height=0;
+			};
+			var option;
+			option={};
+			option.area=area;
+			DisResizer.tBar.record();
+			DisResizer.tBar.startDrag(area);
+			DisResizer.tBar.on("dragmove",null,DisResizer.draging);
+			DisResizer.tBar.on("dragend",null,DisResizer.dragEnd);
+		}
+
+		DisResizer.draging=function(e){
+			console.log("draging");
+			if (!DisResizer.tBar)return;
+			if (!DisResizer._tar)return;
+			switch(DisResizer.tBar){
+				case DisResizer._left:
+					DisResizer._tar.x+=DisResizer.tBar.getDx();
+					DisResizer._tar.width-=DisResizer.tBar.getDx();
+					DisResizer._up.width-=DisResizer.tBar.getDx();
+					DisResizer._down.width-=DisResizer.tBar.getDx();
+					DisResizer._right.x-=DisResizer.tBar.getDx();
+					DisResizer.tBar.x-=DisResizer.tBar.getDx();
+					break ;
+				case DisResizer._right:
+					DisResizer._tar.width+=DisResizer.tBar.getDx();
+					DisResizer._up.width+=DisResizer.tBar.getDx();
+					DisResizer._down.width+=DisResizer.tBar.getDx();
+					break ;
+				case DisResizer._up:
+					DisResizer._tar.y+=DisResizer.tBar.getDy();
+					DisResizer._tar.height-=DisResizer.tBar.getDy();
+					DisResizer._right.height-=DisResizer.tBar.getDy();
+					DisResizer._left.height-=DisResizer.tBar.getDy();
+					DisResizer._down.y-=DisResizer.tBar.getDy();
+					DisResizer.tBar.y-=DisResizer.tBar.getDy();
+					break ;
+				case DisResizer._down:
+					DisResizer._tar.height+=DisResizer.tBar.getDy();
+					DisResizer._right.height+=DisResizer.tBar.getDy();
+					DisResizer._left.height+=DisResizer.tBar.getDy();
+					break ;
+				}
+			DisResizer.tBar.record();
+		}
+
+		DisResizer.dragEnd=function(e){
+			console.log("dragEnd");
+			DisResizer.clearDragEvents();
+			DisResizer.updates();
+		}
+
+		DisResizer.clearDragEvents=function(){
+			if (!DisResizer.tBar)return;
+			DisResizer.tBar.off("dragmove",null,DisResizer.draging);
+			DisResizer.tBar.off("dragend",null,DisResizer.dragEnd);
+		}
+
+		DisResizer.setUp=function(dis,force){
+			(force===void 0)&& (force=false);
+			if (force && dis==DisResizer._tar){
+				return;
+			};
+			DisControlTool.removeItems(DisResizer._barList);
+			if (DisResizer._tar==dis){
+				DisResizer._tar=null;
+				DisResizer.clearDragEvents();
+				if(!force)
+					return;
+			}
+			DisResizer._tar=dis;
+			DisResizer.updates();
+			DisControlTool.addItems(DisResizer._barList,dis);
+			Laya.stage.off("mouseup",null,DisResizer.stageDown);
+			Laya.stage.on("mouseup",null,DisResizer.stageDown);
+		}
+
+		DisResizer.updates=function(){
+			var dis;
+			dis=DisResizer._tar;
+			if(!dis)return;
+			var bounds;
+			bounds=new Rectangle(0,0,dis.width,dis.height);
+			DisResizer._up.x=bounds.x;
+			DisResizer._up.y=bounds.y;
+			DisResizer._up.width=bounds.width;
+			DisResizer._down.x=bounds.x;
+			DisResizer._down.y=bounds.y+bounds.height-2;
+			DisResizer._down.width=bounds.width;
+			DisResizer._left.x=bounds.x;
+			DisResizer._left.y=bounds.y;
+			DisResizer._left.height=bounds.height;
+			DisResizer._right.x=bounds.x+bounds.width-2;
+			DisResizer._right.y=bounds.y;
+			DisResizer._right.height=bounds.height;
+		}
+
+		DisResizer.Side=2;
+		DisResizer.Vertical=1;
+		DisResizer.Horizon=0;
+		DisResizer._up=null
+		DisResizer._down=null
+		DisResizer._left=null
+		DisResizer._right=null
+		DisResizer._barList=null
+		DisResizer._tar=null
+		DisResizer.barWidth=2;
+		DisResizer.useGetBounds=false;
+		DisResizer.tBar=null
+		return DisResizer;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class laya.debug.tools.resizer.SimpleResizer
+	var SimpleResizer=(function(){
+		function SimpleResizer(){}
+		__class(SimpleResizer,'laya.debug.tools.resizer.SimpleResizer');
+		SimpleResizer.setResizeAble=function(clickItem,tar,minWidth,minHeight){
+			(minWidth===void 0)&& (minWidth=150);
+			(minHeight===void 0)&& (minHeight=150);
+			clickItem.on("mousedown",null,SimpleResizer.onMouseDown,[tar,minWidth,minHeight]);
+		}
+
+		SimpleResizer.onMouseDown=function(tar,minWidth,minHeight,e){
+			SimpleResizer.clearEvents();
+			if (!tar)return;
+			SimpleResizer.preMousePoint.setTo(Laya.stage.mouseX,Laya.stage.mouseY);
+			SimpleResizer.preTarSize.setTo(tar.width,tar.height);
+			SimpleResizer.preScale.setTo(1,1);
+			var rTar;
+			rTar=tar;
+			while (rTar&&rTar!=Laya.stage){
+				SimpleResizer.preScale.x *=rTar.scaleX;
+				SimpleResizer.preScale.y *=rTar.scaleY;
+				rTar=rTar.parent;
+			}
+			Laya.stage.on("mouseup",null,SimpleResizer.onMouseMoveEnd);
+			Laya.timer.loop(100,null,SimpleResizer.onMouseMoving,[tar,minWidth,minHeight]);
+		}
+
+		SimpleResizer.onMouseMoving=function(tar,minWidth,minHeight,e){
+			var tWidth=(Laya.stage.mouseX-SimpleResizer.preMousePoint.x)/ SimpleResizer.preScale.x+SimpleResizer.preTarSize.x;
+			var tHeight=(Laya.stage.mouseY-SimpleResizer.preMousePoint.y)/SimpleResizer.preScale.y+SimpleResizer.preTarSize.y;
+			tar.width=tWidth > minWidth?tWidth:minWidth;
+			tar.height=tHeight>minHeight?tHeight:minHeight;
+		}
+
+		SimpleResizer.onMouseMoveEnd=function(e){
+			SimpleResizer.clearEvents();
+		}
+
+		SimpleResizer.clearEvents=function(){
+			Laya.timer.clear(null,SimpleResizer.onMouseMoving);
+			Laya.stage.off("mouseup",null,SimpleResizer.onMouseMoveEnd);
+		}
+
+		__static(SimpleResizer,
+		['preMousePoint',function(){return this.preMousePoint=new Point();},'preTarSize',function(){return this.preTarSize=new Point();},'preScale',function(){return this.preScale=new Point();}
+		]);
+		return SimpleResizer;
 	})()
 
 
@@ -9085,774 +9798,158 @@ var Laya=window.Laya=(function(window,document){
 	*...
 	*@author ww
 	*/
-	//class laya.debug.tools.enginehook.ClassCreateHook
-	var ClassCreateHook=(function(){
-		function ClassCreateHook(){
-			this.createInfo={};
+	//class laya.debug.view.nodeInfo.menus.NodeMenu
+	var NodeMenu=(function(){
+		function NodeMenu(){
+			this._tar=null;
+			this._menu=null;
+			this._shareBtns=[
+			"信息面板",
+			"边框",
+			"进入节点",
+			"树定位",
+			"Enable链",
+			"Size链",
+			"节点工具",
+			"可见分析",
+			"输出到控制台"];
+			this._menuItems=["隐藏节点"];
+			this._menuHide=null;
+			this._menuItemsHide=["显示节点"];
+			this._menu1=null;
+			this._menuItems1=["输出到控制台"];
 		}
 
-		__class(ClassCreateHook,'laya.debug.tools.enginehook.ClassCreateHook');
-		var __proto=ClassCreateHook.prototype;
-		__proto.hookClass=function(clz){
-			var _$this=this;
-			var createFun=function (sp){
-				_$this.classCreated(sp,clz);
-			}
-			FunHook.hook(clz,"call",createFun);
-		}
-
-		__proto.classCreated=function(clz,oClass){
-			var key;
-			key=ClassTool.getNodeClassAndName(clz);
-			var depth=0;
-			var tClz;
-			tClz=clz;
-			while (tClz && tClz !=oClass){
-				tClz=tClz.__super;
-				depth++;
-			}
-			if (!ClassCreateHook.I.createInfo[key]){
-				ClassCreateHook.I.createInfo[key]=0;
-			}
-			ClassCreateHook.I.createInfo[key]=ClassCreateHook.I.createInfo[key]+1;
-			RunProfile.run(key,depth+6);
-		}
-
-		__proto.getClassCreateInfo=function(clz){
-			var key;
-			key=ClassTool.getClassName(clz);
-			return RunProfile.getRunInfo(key);
-		}
-
-		__static(ClassCreateHook,
-		['I',function(){return this.I=new ClassCreateHook();}
-		]);
-		return ClassCreateHook;
-	})()
-
-
-	/**
-	*...
-	*@author ww
-	*/
-	//class laya.debug.tools.enginehook.RenderSpriteHook
-	var RenderSpriteHook=(function(){
-		function RenderSpriteHook(){
-			//this._next=null;
-			//this._fun=null;
-			//this._oldCanvas=null;
-		}
-
-		__class(RenderSpriteHook,'laya.debug.tools.enginehook.RenderSpriteHook');
-		var __proto=RenderSpriteHook.prototype;
-		__proto.createRenderSprite=function(type,next){
-			var rst;
-			rst=new RenderSprite(type,next);
-			if (type==0x10){
-				rst["_oldCanvas"]=rst._fun;
-				rst._fun=RenderSpriteHook.I._canvas;
-			}
-			return rst;
-		}
-
-		__proto._canvas=function(sprite,context,x,y){
-			if (!SpriteRenderForVisibleAnalyse.allowRendering)return;
-			var _cacheCanvas=sprite._$P.cacheCanvas;
-			var _next=this._next;
-			if (!_cacheCanvas||SpriteRenderForVisibleAnalyse.isVisibleTesting){
-				_next._fun.call(_next,sprite,context,x,y);
+		__class(NodeMenu,'laya.debug.view.nodeInfo.menus.NodeMenu');
+		var __proto=NodeMenu.prototype;
+		__proto.showNodeMenu=function(node){
+			if (!node._style){
+				DebugTool.log("该节点已不存在，请刷新列表");
 				return;
-			};
-			var preTime;
-			preTime=Browser.now();
-			var tx=_cacheCanvas.ctx;
-			var _repaint=sprite._needRepaint()|| (!tx);
-			this._oldCanvas(sprite,context,x,y);
-			if (Config.showCanvasMark){
 			}
-			if (_repaint){
-				CacheAnalyser.I.reCacheCanvas(sprite,Browser.now()-preTime);
-				}else{
-				CacheAnalyser.I.renderCanvas(sprite,Browser.now()-preTime);
+			this._tar=node;
+			if (!this._menu){
+				this._menuItems=this._menuItems.concat(this._shareBtns);
+				this._menu=ContextMenu.createMenuByArray(this._menuItems);
+				this._menu.on("select",this,this.onEmunSelect);
+				this._menuItemsHide=this._menuItemsHide.concat(this._shareBtns);
+				this._menuHide=ContextMenu.createMenuByArray(this._menuItemsHide);
+				this._menuHide.on("select",this,this.onEmunSelect);
+			}
+			if (node.visible){
+				this._menu.show();
+			}
+			else{
+				this._menuHide.show();
 			}
 		}
 
-		RenderSpriteHook.init=function(){
-			RenderSpriteHook.I=new RenderSpriteHook();
-			RunDriver.createRenderSprite=RenderSpriteHook.I.createRenderSprite;
+		__proto.nodeDoubleClick=function(node){
+			NodeToolView.I.showByNode(node);
 		}
 
-		RenderSpriteHook.IMAGE=0x01;
-		RenderSpriteHook.FILTERS=0x02;
-		RenderSpriteHook.ALPHA=0x04;
-		RenderSpriteHook.TRANSFORM=0x08;
-		RenderSpriteHook.CANVAS=0x10;
-		RenderSpriteHook.BLEND=0x20;
-		RenderSpriteHook.CLIP=0x40;
-		RenderSpriteHook.STYLE=0x80;
-		RenderSpriteHook.GRAPHICS=0x100;
-		RenderSpriteHook.CUSTOM=0x200;
-		RenderSpriteHook.ENABLERENDERMERGE=0x400;
-		RenderSpriteHook.CHILDS=0x800;
-		RenderSpriteHook.INIT=0x11111;
-		RenderSpriteHook.renders=[];
-		RenderSpriteHook.I=null
-		return RenderSpriteHook;
-	})()
-
-
-	/**
-	*...
-	*@author ww
-	*/
-	//class laya.debug.tools.enginehook.SpriteRenderForVisibleAnalyse
-	var SpriteRenderForVisibleAnalyse=(function(){
-		function SpriteRenderForVisibleAnalyse(){
-			this._repaint=1;
-			this._renderType=1;
-			this._x=0;
-			this._y=0;
-			this.target=null;
-			this.isTargetRenderd=false;
-			this.preFun=null;
-			this._next=null;
-			this.pgraphic=RenderSprite["prototype"]["_graphics"];
-			this.pimage=RenderSprite["prototype"]["_image"];
-			this.pimage2=RenderSprite["prototype"]["_image2"];
+		__proto.setNodeListDoubleClickAction=function(list){
+			if (Browser.onMobile)return;
+			list.on("doubleclick",this,this.onListDoubleClick,[list]);
 		}
 
-		__class(SpriteRenderForVisibleAnalyse,'laya.debug.tools.enginehook.SpriteRenderForVisibleAnalyse');
-		var __proto=SpriteRenderForVisibleAnalyse.prototype;
-		__proto.setRenderHook=function(){
-			Sprite["prototype"]["render"]=SpriteRenderForVisibleAnalyse.I.render;
-		}
-
-		/**
-		*更新、呈现显示对象。
-		*@param context 渲染的上下文引用。
-		*@param x X轴坐标。
-		*@param y Y轴坐标。
-		*/
-		__proto.render=function(context,x,y){
-			var me;
-			me=this;
-			if (DebugInfoLayer.I.isDebugItem(me))return;
-			if (me==laya.debug.tools.enginehook.SpriteRenderForVisibleAnalyse.I.target){
-				laya.debug.tools.enginehook.SpriteRenderForVisibleAnalyse.allowRendering=true;
-				laya.debug.tools.enginehook.SpriteRenderForVisibleAnalyse.I.isTargetRenderd=true;
-				CanvasTools.clearCanvas(SpriteRenderForVisibleAnalyse.mainCanvas);
+		__proto.onListDoubleClick=function(list){
+			if (list.selectedItem){
+				var tarNode;
+				tarNode=list.selectedItem.path;
+				laya.debug.view.nodeInfo.menus.NodeMenu.I.nodeDoubleClick(tarNode);
 			}
-			RenderSprite.renders[this._renderType]._fun(this,context,x+this._x,y+this._y);
-			if (me==laya.debug.tools.enginehook.SpriteRenderForVisibleAnalyse.I.target){
-				SpriteRenderForVisibleAnalyse.tarRec=CanvasTools.getCanvasDisRec(laya.debug.tools.enginehook.SpriteRenderForVisibleAnalyse.mainCanvas);
-				console.log("rec",SpriteRenderForVisibleAnalyse.tarRec.toString());
-				if (SpriteRenderForVisibleAnalyse.tarRec.width >0&& SpriteRenderForVisibleAnalyse.tarRec.height > 0){
-					SpriteRenderForVisibleAnalyse.isTarRecOK=true;
-					SpriteRenderForVisibleAnalyse.preImageData=CanvasTools.getImageDataFromCanvasByRec(SpriteRenderForVisibleAnalyse.mainCanvas,SpriteRenderForVisibleAnalyse.tarRec);
-					SpriteRenderForVisibleAnalyse.tarImageData=CanvasTools.getImageDataFromCanvasByRec(SpriteRenderForVisibleAnalyse.mainCanvas,SpriteRenderForVisibleAnalyse.tarRec);
-					}else{
-					console.log("tarRec Not OK:",SpriteRenderForVisibleAnalyse.tarRec);
-				}
-				}else{
-				if (SpriteRenderForVisibleAnalyse.isTarRecOK){
-					SpriteRenderForVisibleAnalyse.tImageData=CanvasTools.getImageDataFromCanvasByRec(SpriteRenderForVisibleAnalyse.mainCanvas,SpriteRenderForVisibleAnalyse.tarRec);
-					var dRate=NaN;
-					dRate=CanvasTools.getDifferRate(SpriteRenderForVisibleAnalyse.preImageData,SpriteRenderForVisibleAnalyse.tImageData);
-					SpriteRenderForVisibleAnalyse.preImageData=SpriteRenderForVisibleAnalyse.tImageData;
-					if (dRate > 0){
-						VisibleAnalyser.addCoverNode(me,dRate);
+		}
+
+		__proto.setNodeListAction=function(list){
+			list.on(DebugTool.getMenuShowEvent(),this,this.onListRightClick,[list]);
+		}
+
+		//setNodeListDoubleClickAction(list);
+		__proto.onListRightClick=function(list){
+			if (list.selectedItem){
+				var tarNode;
+				tarNode=list.selectedItem.path;
+				laya.debug.view.nodeInfo.menus.NodeMenu.I.objRightClick(tarNode);
+			}
+		}
+
+		__proto.objRightClick=function(obj){
+			if ((obj instanceof laya.display.Sprite )){
+				laya.debug.view.nodeInfo.menus.NodeMenu.I.showNodeMenu(obj);
+			}
+			else if ((typeof obj=='object')){
+				laya.debug.view.nodeInfo.menus.NodeMenu.I.showObjectMenu(obj);
+			}
+		}
+
+		__proto.showObjectMenu=function(obj){
+			this._tar=obj;
+			if (!this._menu1){
+				this._menu1=ContextMenu.createMenuByArray(this._menuItems1);
+				this._menu1.on("select",this,this.onEmunSelect);
+			}
+			this._menu1.show();
+		}
+
+		__proto.onEmunSelect=function(e){
+			var data=(e.target).data;
+			if ((typeof data=='string')){
+				var key;
+				key=data;
+				switch (key){
+					case "信息面板":
+						ObjectInfoView.showObject(this._tar);
+						break ;
+					case "边框":
+						DebugTool.showDisBound(this._tar);
+						break ;
+					case "输出到控制台":
+						console.log(this._tar);
+						break ;
+					case "树节点":
+						ToolPanel.I.showNodeTree(this._tar);
+						break ;
+					case "进入节点":
+						ToolPanel.I.showNodeTree(this._tar);
+						break ;
+					case "树定位":
+						ToolPanel.I.showSelectInStage(this._tar);
+						break ;
+					case "Enable链":
+						OutPutView.I.dTrace(DebugTool.traceDisMouseEnable(this._tar));
+						SelectInfosView.I.setSelectList(DebugTool.selectedNodes);
+						break ;
+					case "Size链":
+						OutPutView.I.dTrace(DebugTool.traceDisSizeChain(this._tar));
+						SelectInfosView.I.setSelectList(DebugTool.selectedNodes);
+						break ;
+					case "节点工具":
+						NodeToolView.I.showByNode(this._tar);
+						break ;
+					case "显示节点":
+						this._tar.visible=true;
+						break ;
+					case "隐藏节点":
+						this._tar.visible=false;
+						break ;
+					case "可见分析":
+						if (this._tar){
+							VisibleAnalyser.analyseTarget(this._tar);
+						}
+						break ;
 					}
-				}
 			}
 		}
 
-		__proto.analyseNode=function(node){
-			VisibleAnalyser.resetCoverList();
-			if (Sprite["prototype"]["render"] !=SpriteRenderForVisibleAnalyse.I.render){
-				this.preFun=Sprite["prototype"]["render"];
-			}
-			this.target=node;
-			Sprite["prototype"]["render"]=this.render;
-			if (!SpriteRenderForVisibleAnalyse.tarCanvas)
-				SpriteRenderForVisibleAnalyse.tarCanvas=CanvasTools.createCanvas(Laya.stage.width,Laya.stage.height);
-			if (!SpriteRenderForVisibleAnalyse.mainCanvas)
-				SpriteRenderForVisibleAnalyse.mainCanvas=CanvasTools.createCanvas(Laya.stage.width,Laya.stage.height);
-			this.isTargetRenderd=false;
-			SpriteRenderForVisibleAnalyse.isVisibleTesting=true;
-			SpriteRenderForVisibleAnalyse.allowRendering=false;
-			CanvasTools.clearCanvas(SpriteRenderForVisibleAnalyse.mainCanvas);
-			CanvasTools.clearCanvas(SpriteRenderForVisibleAnalyse.tarCanvas);
-			SpriteRenderForVisibleAnalyse.isTarRecOK=false;
-			var ctx=new RenderContext(SpriteRenderForVisibleAnalyse.mainCanvas.width,SpriteRenderForVisibleAnalyse.mainCanvas.height,SpriteRenderForVisibleAnalyse.mainCanvas);
-			SpriteRenderForVisibleAnalyse.mainCanvas=ctx.canvas;
-			this.render.call(Laya.stage,ctx,0,0);
-			if (!SpriteRenderForVisibleAnalyse.isTarRecOK){
-				SpriteRenderForVisibleAnalyse.coverRate=0;
-				}else{
-				SpriteRenderForVisibleAnalyse.coverRate=CanvasTools.getDifferRate(SpriteRenderForVisibleAnalyse.preImageData,SpriteRenderForVisibleAnalyse.tarImageData);
-			}
-			VisibleAnalyser.coverRate=SpriteRenderForVisibleAnalyse.coverRate;
-			VisibleAnalyser.isTarRecOK=SpriteRenderForVisibleAnalyse.isTarRecOK;
-			console.log("coverRate:",SpriteRenderForVisibleAnalyse.coverRate);
-			this.isTargetRenderd=false;
-			SpriteRenderForVisibleAnalyse.isVisibleTesting=false;
-			SpriteRenderForVisibleAnalyse.allowRendering=true;
-			Sprite["prototype"]["render"]=this.preFun;
-		}
+		__getset(1,NodeMenu,'I',function(){
+			if (!NodeMenu._I)
+				NodeMenu._I=new NodeMenu();
+			return NodeMenu._I;
+		});
 
-		__proto.noRenderMode=function(){
-			return;
-			RenderSprite["prototype"]["_graphics"]=this.m_graphics;
-			RenderSprite["prototype"]["_image"]=this.m_image;
-			RenderSprite["prototype"]["_image2"]=this.m_image2;
-		}
-
-		__proto.normalMode=function(){
-			RenderSprite["prototype"]["_graphics"]=this.pgraphic;
-			RenderSprite["prototype"]["_image"]=this.pimage;
-			RenderSprite["prototype"]["_image2"]=this.pimage2;
-		}
-
-		__proto.inits=function(){
-			this.noRenderMode();
-		}
-
-		__proto.m_graphics=function(sprite,context,x,y){
-			if (laya.debug.tools.enginehook.SpriteRenderForVisibleAnalyse.allowRendering){
-				var tf=sprite._style._tf;
-				sprite._graphics && sprite._graphics._render(sprite,context,x-tf.translateX,y-tf.translateY);
-			};
-			var next=this._next;
-			next._fun.call(next,sprite,context,x,y);
-		}
-
-		__proto.m_image=function(sprite,context,x,y){
-			if (laya.debug.tools.enginehook.SpriteRenderForVisibleAnalyse.allowRendering){
-				var style=sprite._style;
-				context.ctx.drawTexture2(x,y,style._tf.translateX,style._tf.translateY,sprite.transform,style.alpha,style.blendMode,sprite._graphics._one);
-			}
-		}
-
-		__proto.m_image2=function(sprite,context,x,y){
-			if (laya.debug.tools.enginehook.SpriteRenderForVisibleAnalyse.allowRendering){
-				var tf=sprite._style._tf;
-				context.ctx.drawTexture2(x,y,tf.translateX,tf.translateY,sprite.transform,1,null,sprite._graphics._one);
-			}
-		}
-
-		SpriteRenderForVisibleAnalyse.tarCanvas=null
-		SpriteRenderForVisibleAnalyse.mainCanvas=null
-		SpriteRenderForVisibleAnalyse.preImageData=null
-		SpriteRenderForVisibleAnalyse.tImageData=null
-		SpriteRenderForVisibleAnalyse.tarImageData=null
-		SpriteRenderForVisibleAnalyse.tarRec=null
-		SpriteRenderForVisibleAnalyse.isTarRecOK=false;
-		SpriteRenderForVisibleAnalyse.isVisibleTesting=false;
-		SpriteRenderForVisibleAnalyse.allowRendering=true;
-		SpriteRenderForVisibleAnalyse.coverRate=NaN
-		__static(SpriteRenderForVisibleAnalyse,
-		['I',function(){return this.I=new SpriteRenderForVisibleAnalyse();}
-		]);
-		return SpriteRenderForVisibleAnalyse;
-	})()
-
-
-	/**
-	*...
-	*@author ww
-	*/
-	//class laya.debug.tools.enginehook.SpriteRenderHook
-	var SpriteRenderHook=(function(){
-		function SpriteRenderHook(){
-			this._repaint=1;
-			this._renderType=1;
-			this._x=0;
-			this._y=0;
-		}
-
-		__class(SpriteRenderHook,'laya.debug.tools.enginehook.SpriteRenderHook');
-		var __proto=SpriteRenderHook.prototype;
-		/**
-		*更新、呈现显示对象。
-		*@param context 渲染的上下文引用。
-		*@param x X轴坐标。
-		*@param y Y轴坐标。
-		*/
-		__proto.render=function(context,x,y){
-			if ((this)==Laya.stage){
-				CacheAnalyser.renderLoopBegin();
-			};
-			var preTime=0;
-			preTime=Browser.now();
-			Stat.spriteCount++;
-			RenderSprite.renders[this._renderType]._fun(this,context,x+this._x,y+this._y);
-			this._repaint=0;
-			RenderAnalyser.I.render(this,Browser.now()-preTime);
-		}
-
-		SpriteRenderHook.init=function(){
-			SpriteRenderHook.I=new SpriteRenderHook();
-			SpriteRenderHook.setRenderHook();
-		}
-
-		SpriteRenderHook.setRenderHook=function(){
-			Sprite["prototype"]["render"]=SpriteRenderHook.I.render;
-		}
-
-		SpriteRenderHook.I=null
-		return SpriteRenderHook;
-	})()
-
-
-	/**
-	*本类用于在对象的函数上挂钩子
-	*@author ww
-	*@version 1.0
-	*
-	*@created 2015-10-23 下午1:13:13
-	*/
-	//class laya.debug.tools.hook.FunHook
-	var FunHook=(function(){
-		function FunHook(){}
-		__class(FunHook,'laya.debug.tools.hook.FunHook');
-		FunHook.hook=function(obj,funName,preFun,aftFun){
-			FunHook.hookFuns(obj,funName,[preFun,obj[funName],aftFun],1);
-		}
-
-		FunHook.hookAllFun=function(obj){
-			var key;
-			var arr;
-			arr=ClassTool.getOwnPropertyNames(obj);
-			for(key in arr){
-				key=arr[key];
-				if (FunHook.special[key])continue ;
-				console.log("try hook:",key);
-				if((typeof (obj[key])=='function')){
-					console.log("hook:",key);
-					FunHook.hookFuns(obj,key,[FunHook.getTraceMsg("call:"+key),obj[key]],1);
-				}
-			}
-			if(obj["__proto__"]){
-				FunHook.hookAllFun(obj["__proto__"]);
-				}else{
-				console.log("end:",obj);
-			}
-		}
-
-		FunHook.getTraceMsg=function(msg){
-			var rst;
-			rst=function (){
-				console.log(msg);
-			}
-			return rst;
-		}
-
-		FunHook.hookFuns=function(obj,funName,funList,rstI){
-			(rstI===void 0)&& (rstI=-1);
-			var _preFun=obj[funName];
-			var newFun;
-			newFun=function (__args){
-				var args=arguments;
-				var rst;
-				var i=0;
-				var len=0;
-				len=funList.length;
-				for(i=0;i<len;i++){
-					if(!funList[i])continue ;
-					if(i==rstI){
-						rst=funList[i].apply(this,args);
-						}else{
-						funList[i].apply(this,args);
-					}
-				}
-				return rst;
-			};
-			newFun["pre"]=_preFun;
-			obj[funName]=newFun;
-		}
-
-		FunHook.removeHook=function(obj,funName){
-			if(obj[funName].pre!=null){
-				obj[funName]=obj[funName].pre;
-			}
-		}
-
-		FunHook.debugHere=function(){
-			debugger;;
-		}
-
-		FunHook.traceLoc=function(level,msg){
-			(level===void 0)&& (level=0);
-			(msg===void 0)&& (msg="");
-			console.log(msg,"fun loc:",TraceTool.getCallLoc(3+level));
-		}
-
-		FunHook.getLocFun=function(level,msg){
-			(level===void 0)&& (level=0);
-			(msg===void 0)&& (msg="");
-			level+=1;
-			var rst;
-			rst=function (){
-				FunHook.traceLoc(level,msg);
-			}
-			return rst;
-		}
-
-		__static(FunHook,
-		['special',function(){return this.special={
-				"length":true,
-				"name":true,
-				"arguments":true,
-				"caller":true,
-				"prototype":true,
-				"is":true,
-				"isExtensible":true,
-				"isFrozen":true,
-				"isSealed":true,
-				"preventExtensions":true,
-				"seal":true,
-				"unobserve":true,
-				"apply":true,
-				"call":true,
-				"bind":true,
-				"freeze":true,
-				"unobserve":true
-		};}
-
-		]);
-		return FunHook;
-	})()
-
-
-	/**
-	*本类用于监控对象 set get 函数的调用
-	*@author ww
-	*@version 1.0
-	*
-	*@created 2015-10-23 下午2:52:48
-	*/
-	//class laya.debug.tools.hook.VarHook
-	var VarHook=(function(){
-		function VarHook(){}
-		__class(VarHook,'laya.debug.tools.hook.VarHook');
-		VarHook.hookVar=function(obj,name,setHook,getHook){
-			if(!setHook)setHook=[];
-			if(!getHook)getHook=[];
-			var preO=obj;
-			var preValue=obj[name];
-			var des;
-			des=ClassTool.getOwnPropertyDescriptor(obj,name);
-			var ndes={};
-			var mSet=function (value){
-				console.log("var hook set "+name+":",value);
-				preValue=value;
-			};
-			var mGet=function (){
-				console.log("var hook get"+name+":",preValue);
-				return preValue;
-			}
-			if(des){
-				ndes.set=mSet;
-				ndes.get=mGet;
-				ndes.enumerable=des.enumerable;
-				setHook.push(ndes.set);
-				getHook.push(ndes.get);
-				FunHook.hookFuns(ndes,"set",setHook);
-				FunHook.hookFuns(ndes,"get",getHook,getHook.length-1);
-				ClassTool.defineProperty(obj,name,ndes);
-				return;
-			}
-			while(!des&&obj["__proto__"]){
-				obj=obj["__proto__"];
-				des=ClassTool.getOwnPropertyDescriptor(obj,name);
-			}
-			if (des){
-				ndes.set=des.set?des.set:mSet;
-				ndes.get=des.get?des.get:mGet;
-				ndes.enumerable=des.enumerable;
-				setHook.push(ndes.set);
-				getHook.push(ndes.get);
-				FunHook.hookFuns(ndes,"set",setHook);
-				FunHook.hookFuns(ndes,"get",getHook,getHook.length-1);
-				ClassTool.defineProperty(preO,name,ndes);
-			}
-			if(!des){
-				console.log("get des fail add directly");
-				ndes.set=mSet;
-				ndes.get=mGet;
-				setHook.push(ndes.set);
-				getHook.push(ndes.get);
-				FunHook.hookFuns(ndes,"set",setHook);
-				FunHook.hookFuns(ndes,"get",getHook,getHook.length-1);
-				ClassTool.defineProperty(obj,name,ndes);
-			}
-		}
-
-		VarHook.getLocFun=function(msg,level){
-			(msg===void 0)&& (msg="");
-			(level===void 0)&& (level=0);
-			level+=1;
-			var rst;
-			rst=function (){
-				FunHook.traceLoc(level,msg);
-			}
-			return rst;
-		}
-
-		return VarHook;
-	})()
-
-
-	/**
-	*本类用于调整对象的宽高以及坐标
-	*@author ww
-	*/
-	//class laya.debug.tools.resizer.DisResizer
-	var DisResizer=(function(){
-		function DisResizer(){}
-		__class(DisResizer,'laya.debug.tools.resizer.DisResizer');
-		DisResizer.init=function(){
-			if (DisResizer._up)return;
-			DisResizer._up=new AutoFillRec("T");
-			DisResizer._up.height=2;
-			DisResizer._up.type=0;
-			DisResizer._down=new AutoFillRec("T");
-			DisResizer._down.height=2;
-			DisResizer._down.type=0;
-			DisResizer._left=new AutoFillRec("R");
-			DisResizer._left.width=2;
-			DisResizer._left.type=1;
-			DisResizer._right=new AutoFillRec("R");
-			DisResizer._right.width=2;
-			DisResizer._right.type=1;
-			DisResizer._barList=[DisResizer._up,DisResizer._down,DisResizer._left,DisResizer._right];
-			DisResizer.addEvent();
-		}
-
-		DisResizer.stageDown=function(e){
-			var target;
-			target=e.target;
-			if (DisResizer._tar && DisControlTool.isInTree(DisResizer._tar,target)){
-				return;
-			}
-			DisResizer.clear();
-		}
-
-		DisResizer.clear=function(){
-			DisResizer._tar=null;
-			Laya.stage.off("mouseup",null,DisResizer.stageDown);
-			DisControlTool.removeItems(DisResizer._barList);
-			DisResizer.clearDragEvents();
-		}
-
-		DisResizer.addEvent=function(){
-			var i=0,len=0;
-			var tBar;
-			len=DisResizer._barList.length;
-			for (i=0;i < len;i++){
-				tBar=DisResizer._barList[i];
-				tBar.on("mousedown",null,DisResizer.barDown);
-			}
-		}
-
-		DisResizer.barDown=function(e){
-			DisResizer.clearDragEvents();
-			DisResizer.tBar=e.target;
-			if (!DisResizer.tBar)return;
-			var area;
-			area=new Rectangle();
-			if (DisResizer.tBar.type==0){
-				area.x=DisResizer.tBar.x;
-				area.width=0;
-				area.y=DisResizer.tBar.y-200;
-				area.height=400;
-				}else{
-				area.x=DisResizer.tBar.x-200;
-				area.width=400;
-				area.y=0;
-				area.height=0;
-			};
-			var option;
-			option={};
-			option.area=area;
-			DisResizer.tBar.record();
-			DisResizer.tBar.startDrag(area);
-			DisResizer.tBar.on("dragmove",null,DisResizer.draging);
-			DisResizer.tBar.on("dragend",null,DisResizer.dragEnd);
-		}
-
-		DisResizer.draging=function(e){
-			console.log("draging");
-			if (!DisResizer.tBar)return;
-			if (!DisResizer._tar)return;
-			switch(DisResizer.tBar){
-				case DisResizer._left:
-					DisResizer._tar.x+=DisResizer.tBar.getDx();
-					DisResizer._tar.width-=DisResizer.tBar.getDx();
-					DisResizer._up.width-=DisResizer.tBar.getDx();
-					DisResizer._down.width-=DisResizer.tBar.getDx();
-					DisResizer._right.x-=DisResizer.tBar.getDx();
-					DisResizer.tBar.x-=DisResizer.tBar.getDx();
-					break ;
-				case DisResizer._right:
-					DisResizer._tar.width+=DisResizer.tBar.getDx();
-					DisResizer._up.width+=DisResizer.tBar.getDx();
-					DisResizer._down.width+=DisResizer.tBar.getDx();
-					break ;
-				case DisResizer._up:
-					DisResizer._tar.y+=DisResizer.tBar.getDy();
-					DisResizer._tar.height-=DisResizer.tBar.getDy();
-					DisResizer._right.height-=DisResizer.tBar.getDy();
-					DisResizer._left.height-=DisResizer.tBar.getDy();
-					DisResizer._down.y-=DisResizer.tBar.getDy();
-					DisResizer.tBar.y-=DisResizer.tBar.getDy();
-					break ;
-				case DisResizer._down:
-					DisResizer._tar.height+=DisResizer.tBar.getDy();
-					DisResizer._right.height+=DisResizer.tBar.getDy();
-					DisResizer._left.height+=DisResizer.tBar.getDy();
-					break ;
-				}
-			DisResizer.tBar.record();
-		}
-
-		DisResizer.dragEnd=function(e){
-			console.log("dragEnd");
-			DisResizer.clearDragEvents();
-			DisResizer.updates();
-		}
-
-		DisResizer.clearDragEvents=function(){
-			if (!DisResizer.tBar)return;
-			DisResizer.tBar.off("dragmove",null,DisResizer.draging);
-			DisResizer.tBar.off("dragend",null,DisResizer.dragEnd);
-		}
-
-		DisResizer.setUp=function(dis,force){
-			(force===void 0)&& (force=false);
-			if (force && dis==DisResizer._tar){
-				return;
-			};
-			DisControlTool.removeItems(DisResizer._barList);
-			if (DisResizer._tar==dis){
-				DisResizer._tar=null;
-				DisResizer.clearDragEvents();
-				if(!force)
-					return;
-			}
-			DisResizer._tar=dis;
-			DisResizer.updates();
-			DisControlTool.addItems(DisResizer._barList,dis);
-			Laya.stage.off("mouseup",null,DisResizer.stageDown);
-			Laya.stage.on("mouseup",null,DisResizer.stageDown);
-		}
-
-		DisResizer.updates=function(){
-			var dis;
-			dis=DisResizer._tar;
-			if(!dis)return;
-			var bounds;
-			bounds=new Rectangle(0,0,dis.width,dis.height);
-			DisResizer._up.x=bounds.x;
-			DisResizer._up.y=bounds.y;
-			DisResizer._up.width=bounds.width;
-			DisResizer._down.x=bounds.x;
-			DisResizer._down.y=bounds.y+bounds.height-2;
-			DisResizer._down.width=bounds.width;
-			DisResizer._left.x=bounds.x;
-			DisResizer._left.y=bounds.y;
-			DisResizer._left.height=bounds.height;
-			DisResizer._right.x=bounds.x+bounds.width-2;
-			DisResizer._right.y=bounds.y;
-			DisResizer._right.height=bounds.height;
-		}
-
-		DisResizer.Side=2;
-		DisResizer.Vertical=1;
-		DisResizer.Horizon=0;
-		DisResizer._up=null
-		DisResizer._down=null
-		DisResizer._left=null
-		DisResizer._right=null
-		DisResizer._barList=null
-		DisResizer._tar=null
-		DisResizer.barWidth=2;
-		DisResizer.useGetBounds=false;
-		DisResizer.tBar=null
-		return DisResizer;
-	})()
-
-
-	/**
-	*...
-	*@author ww
-	*/
-	//class laya.debug.tools.resizer.SimpleResizer
-	var SimpleResizer=(function(){
-		function SimpleResizer(){}
-		__class(SimpleResizer,'laya.debug.tools.resizer.SimpleResizer');
-		SimpleResizer.setResizeAble=function(clickItem,tar,minWidth,minHeight){
-			(minWidth===void 0)&& (minWidth=150);
-			(minHeight===void 0)&& (minHeight=150);
-			clickItem.on("mousedown",null,SimpleResizer.onMouseDown,[tar,minWidth,minHeight]);
-		}
-
-		SimpleResizer.onMouseDown=function(tar,minWidth,minHeight,e){
-			SimpleResizer.clearEvents();
-			if (!tar)return;
-			SimpleResizer.preMousePoint.setTo(Laya.stage.mouseX,Laya.stage.mouseY);
-			SimpleResizer.preTarSize.setTo(tar.width,tar.height);
-			SimpleResizer.preScale.setTo(1,1);
-			var rTar;
-			rTar=tar;
-			while (rTar&&rTar!=Laya.stage){
-				SimpleResizer.preScale.x *=rTar.scaleX;
-				SimpleResizer.preScale.y *=rTar.scaleY;
-				rTar=rTar.parent;
-			}
-			Laya.stage.on("mouseup",null,SimpleResizer.onMouseMoveEnd);
-			Laya.timer.loop(100,null,SimpleResizer.onMouseMoving,[tar,minWidth,minHeight]);
-		}
-
-		SimpleResizer.onMouseMoving=function(tar,minWidth,minHeight,e){
-			var tWidth=(Laya.stage.mouseX-SimpleResizer.preMousePoint.x)/ SimpleResizer.preScale.x+SimpleResizer.preTarSize.x;
-			var tHeight=(Laya.stage.mouseY-SimpleResizer.preMousePoint.y)/SimpleResizer.preScale.y+SimpleResizer.preTarSize.y;
-			tar.width=tWidth > minWidth?tWidth:minWidth;
-			tar.height=tHeight>minHeight?tHeight:minHeight;
-		}
-
-		SimpleResizer.onMouseMoveEnd=function(e){
-			SimpleResizer.clearEvents();
-		}
-
-		SimpleResizer.clearEvents=function(){
-			Laya.timer.clear(null,SimpleResizer.onMouseMoving);
-			Laya.stage.off("mouseup",null,SimpleResizer.onMouseMoveEnd);
-		}
-
-		__static(SimpleResizer,
-		['preMousePoint',function(){return this.preMousePoint=new Point();},'preTarSize',function(){return this.preTarSize=new Point();},'preScale',function(){return this.preScale=new Point();}
-		]);
-		return SimpleResizer;
-	})()
-
-
-	/**
-	*...
-	*@author ww
-	*/
-	//class laya.debug.view.StyleConsts
-	var StyleConsts=(function(){
-		function StyleConsts(){}
-		__class(StyleConsts,'laya.debug.view.StyleConsts');
-		StyleConsts.setViewScale=function(view){
-			view.scaleX=view.scaleY=StyleConsts.PanelScale;
-		}
-
-		__static(StyleConsts,
-		['PanelScale',function(){return this.PanelScale=Browser.onPC?1:Browser.pixelRatio;}
-		]);
-		return StyleConsts;
+		NodeMenu._I=null
+		return NodeMenu;
 	})()
 
 
@@ -10174,158 +10271,18 @@ var Laya=window.Laya=(function(window,document){
 	*...
 	*@author ww
 	*/
-	//class laya.debug.view.nodeInfo.menus.NodeMenu
-	var NodeMenu=(function(){
-		function NodeMenu(){
-			this._tar=null;
-			this._menu=null;
-			this._shareBtns=[
-			"信息面板",
-			"边框",
-			"进入节点",
-			"树定位",
-			"Enable链",
-			"Size链",
-			"节点工具",
-			"可见分析",
-			"输出到控制台"];
-			this._menuItems=["隐藏节点"];
-			this._menuHide=null;
-			this._menuItemsHide=["显示节点"];
-			this._menu1=null;
-			this._menuItems1=["输出到控制台"];
+	//class laya.debug.view.StyleConsts
+	var StyleConsts=(function(){
+		function StyleConsts(){}
+		__class(StyleConsts,'laya.debug.view.StyleConsts');
+		StyleConsts.setViewScale=function(view){
+			view.scaleX=view.scaleY=StyleConsts.PanelScale;
 		}
 
-		__class(NodeMenu,'laya.debug.view.nodeInfo.menus.NodeMenu');
-		var __proto=NodeMenu.prototype;
-		__proto.showNodeMenu=function(node){
-			if (!node._style){
-				DebugTool.log("该节点已不存在，请刷新列表");
-				return;
-			}
-			this._tar=node;
-			if (!this._menu){
-				this._menuItems=this._menuItems.concat(this._shareBtns);
-				this._menu=ContextMenu.createMenuByArray(this._menuItems);
-				this._menu.on("select",this,this.onEmunSelect);
-				this._menuItemsHide=this._menuItemsHide.concat(this._shareBtns);
-				this._menuHide=ContextMenu.createMenuByArray(this._menuItemsHide);
-				this._menuHide.on("select",this,this.onEmunSelect);
-			}
-			if (node.visible){
-				this._menu.show();
-			}
-			else{
-				this._menuHide.show();
-			}
-		}
-
-		__proto.nodeDoubleClick=function(node){
-			NodeToolView.I.showByNode(node);
-		}
-
-		__proto.setNodeListDoubleClickAction=function(list){
-			if (Browser.onMobile)return;
-			list.on("doubleclick",this,this.onListDoubleClick,[list]);
-		}
-
-		__proto.onListDoubleClick=function(list){
-			if (list.selectedItem){
-				var tarNode;
-				tarNode=list.selectedItem.path;
-				laya.debug.view.nodeInfo.menus.NodeMenu.I.nodeDoubleClick(tarNode);
-			}
-		}
-
-		__proto.setNodeListAction=function(list){
-			list.on(DebugTool.getMenuShowEvent(),this,this.onListRightClick,[list]);
-		}
-
-		//setNodeListDoubleClickAction(list);
-		__proto.onListRightClick=function(list){
-			if (list.selectedItem){
-				var tarNode;
-				tarNode=list.selectedItem.path;
-				laya.debug.view.nodeInfo.menus.NodeMenu.I.objRightClick(tarNode);
-			}
-		}
-
-		__proto.objRightClick=function(obj){
-			if ((obj instanceof laya.display.Sprite )){
-				laya.debug.view.nodeInfo.menus.NodeMenu.I.showNodeMenu(obj);
-			}
-			else if ((typeof obj=='object')){
-				laya.debug.view.nodeInfo.menus.NodeMenu.I.showObjectMenu(obj);
-			}
-		}
-
-		__proto.showObjectMenu=function(obj){
-			this._tar=obj;
-			if (!this._menu1){
-				this._menu1=ContextMenu.createMenuByArray(this._menuItems1);
-				this._menu1.on("select",this,this.onEmunSelect);
-			}
-			this._menu1.show();
-		}
-
-		__proto.onEmunSelect=function(e){
-			var data=(e.target).data;
-			if ((typeof data=='string')){
-				var key;
-				key=data;
-				switch (key){
-					case "信息面板":
-						ObjectInfoView.showObject(this._tar);
-						break ;
-					case "边框":
-						DebugTool.showDisBound(this._tar);
-						break ;
-					case "输出到控制台":
-						console.log(this._tar);
-						break ;
-					case "树节点":
-						ToolPanel.I.showNodeTree(this._tar);
-						break ;
-					case "进入节点":
-						ToolPanel.I.showNodeTree(this._tar);
-						break ;
-					case "树定位":
-						ToolPanel.I.showSelectInStage(this._tar);
-						break ;
-					case "Enable链":
-						OutPutView.I.dTrace(DebugTool.traceDisMouseEnable(this._tar));
-						SelectInfosView.I.setSelectList(DebugTool.selectedNodes);
-						break ;
-					case "Size链":
-						OutPutView.I.dTrace(DebugTool.traceDisSizeChain(this._tar));
-						SelectInfosView.I.setSelectList(DebugTool.selectedNodes);
-						break ;
-					case "节点工具":
-						NodeToolView.I.showByNode(this._tar);
-						break ;
-					case "显示节点":
-						this._tar.visible=true;
-						break ;
-					case "隐藏节点":
-						this._tar.visible=false;
-						break ;
-					case "可见分析":
-						if (this._tar){
-							VisibleAnalyser.analyseTarget(this._tar);
-						}
-						break ;
-					}
-			}
-		}
-
-		__getset(1,NodeMenu,'I',function(){
-			if (!NodeMenu._I)
-				NodeMenu._I=new NodeMenu();
-			return NodeMenu._I;
-		});
-
-		NodeMenu._I=null
-		return NodeMenu;
+		__static(StyleConsts,
+		['PanelScale',function(){return this.PanelScale=Browser.onPC?1:Browser.pixelRatio;}
+		]);
+		return StyleConsts;
 	})()
 
 
@@ -11036,58 +10993,6 @@ var Laya=window.Laya=(function(window,document){
 
 
 	/**
-	*<p><code>KeyBoardManager</code> 是键盘事件管理类。</p>
-	*<p>该类从浏览器中接收键盘事件，并派发该事件。
-	*派发事件时若 Stage.focus 为空则只从 Stage 上派发该事件，否则将从 Stage.focus 对象开始一直冒泡派发该事件。
-	*所以在 Laya.stage 上监听键盘事件一定能够收到，如果在其他地方监听，则必须处在Stage.focus的冒泡链上才能收到该事件。</p>
-	*<p>用户可以通过代码 Laya.stage.focus=someNode 的方式来设置focus对象。</p>
-	*<p>用户可统一的根据事件对象中 e.keyCode 来判断按键类型，该属性兼容了不同浏览器的实现。</p>
-	*/
-	//class laya.events.KeyBoardManager
-	var KeyBoardManager=(function(){
-		function KeyBoardManager(){};
-		__class(KeyBoardManager,'laya.events.KeyBoardManager');
-		KeyBoardManager.__init__=function(){
-			KeyBoardManager._addEvent("keydown");
-			KeyBoardManager._addEvent("keypress");
-			KeyBoardManager._addEvent("keyup");
-		}
-
-		KeyBoardManager._addEvent=function(type){
-			Browser.document.addEventListener(type,function(e){
-				laya.events.KeyBoardManager._dispatch(e,type);
-			},true);
-		}
-
-		KeyBoardManager._dispatch=function(e,type){
-			if (!KeyBoardManager.enabled)return;
-			KeyBoardManager._event._stoped=false;
-			KeyBoardManager._event.nativeEvent=e;
-			KeyBoardManager._event.keyCode=e.keyCode || e.which || e.charCode;
-			if (type==="keydown")KeyBoardManager._pressKeys[KeyBoardManager._event.keyCode]=true;
-			else if (type==="keyup")KeyBoardManager._pressKeys[KeyBoardManager._event.keyCode]=null;
-			var target=(Laya.stage.focus && (Laya.stage.focus.event !=null))? Laya.stage.focus :Laya.stage;
-			var ct=target;
-			while (ct){
-				ct.event(type,KeyBoardManager._event.setTo(type,ct,target));
-				ct=ct.parent;
-			}
-		}
-
-		KeyBoardManager.hasKeyDown=function(key){
-			return KeyBoardManager._pressKeys[key];
-		}
-
-		KeyBoardManager._pressKeys={};
-		KeyBoardManager.enabled=true;
-		__static(KeyBoardManager,
-		['_event',function(){return this._event=new Event();}
-		]);
-		return KeyBoardManager;
-	})()
-
-
-	/**
 	*<code>Keyboard</code> 类的属性是一些常数，这些常数表示控制游戏时最常用的键。
 	*/
 	//class laya.events.Keyboard
@@ -11194,6 +11099,58 @@ var Laya=window.Laya=(function(window,document){
 		Keyboard.TAB=9;
 		Keyboard.INSERT=45;
 		return Keyboard;
+	})()
+
+
+	/**
+	*<p><code>KeyBoardManager</code> 是键盘事件管理类。</p>
+	*<p>该类从浏览器中接收键盘事件，并派发该事件。
+	*派发事件时若 Stage.focus 为空则只从 Stage 上派发该事件，否则将从 Stage.focus 对象开始一直冒泡派发该事件。
+	*所以在 Laya.stage 上监听键盘事件一定能够收到，如果在其他地方监听，则必须处在Stage.focus的冒泡链上才能收到该事件。</p>
+	*<p>用户可以通过代码 Laya.stage.focus=someNode 的方式来设置focus对象。</p>
+	*<p>用户可统一的根据事件对象中 e.keyCode 来判断按键类型，该属性兼容了不同浏览器的实现。</p>
+	*/
+	//class laya.events.KeyBoardManager
+	var KeyBoardManager=(function(){
+		function KeyBoardManager(){};
+		__class(KeyBoardManager,'laya.events.KeyBoardManager');
+		KeyBoardManager.__init__=function(){
+			KeyBoardManager._addEvent("keydown");
+			KeyBoardManager._addEvent("keypress");
+			KeyBoardManager._addEvent("keyup");
+		}
+
+		KeyBoardManager._addEvent=function(type){
+			Browser.document.addEventListener(type,function(e){
+				laya.events.KeyBoardManager._dispatch(e,type);
+			},true);
+		}
+
+		KeyBoardManager._dispatch=function(e,type){
+			if (!KeyBoardManager.enabled)return;
+			KeyBoardManager._event._stoped=false;
+			KeyBoardManager._event.nativeEvent=e;
+			KeyBoardManager._event.keyCode=e.keyCode || e.which || e.charCode;
+			if (type==="keydown")KeyBoardManager._pressKeys[KeyBoardManager._event.keyCode]=true;
+			else if (type==="keyup")KeyBoardManager._pressKeys[KeyBoardManager._event.keyCode]=null;
+			var target=(Laya.stage.focus && (Laya.stage.focus.event !=null))? Laya.stage.focus :Laya.stage;
+			var ct=target;
+			while (ct){
+				ct.event(type,KeyBoardManager._event.setTo(type,ct,target));
+				ct=ct.parent;
+			}
+		}
+
+		KeyBoardManager.hasKeyDown=function(key){
+			return KeyBoardManager._pressKeys[key];
+		}
+
+		KeyBoardManager._pressKeys={};
+		KeyBoardManager.enabled=true;
+		__static(KeyBoardManager,
+		['_event',function(){return this._event=new Event();}
+		]);
+		return KeyBoardManager;
 	})()
 
 
@@ -16303,108 +16260,6 @@ var Laya=window.Laya=(function(window,document){
 
 
 	/**
-	*<code>HTMLChar</code> 是一个 HTML 字符类。
-	*/
-	//class laya.utils.HTMLChar
-	var HTMLChar=(function(){
-		function HTMLChar(char,w,h,style){
-			//this._sprite=null;
-			//this._x=NaN;
-			//this._y=NaN;
-			//this._w=NaN;
-			//this._h=NaN;
-			//this.isWord=false;
-			//this.char=null;
-			//this.charNum=NaN;
-			//this.style=null;
-			this.char=char;
-			this.charNum=char.charCodeAt(0);
-			this._x=this._y=0;
-			this.width=w;
-			this.height=h;
-			this.style=style;
-			this.isWord=!HTMLChar._isWordRegExp.test(char);
-		}
-
-		__class(HTMLChar,'laya.utils.HTMLChar');
-		var __proto=HTMLChar.prototype;
-		Laya.imps(__proto,{"laya.display.ILayout":true})
-		/**
-		*设置与此对象绑定的显示对象 <code>Sprite</code> 。
-		*@param sprite 显示对象 <code>Sprite</code> 。
-		*/
-		__proto.setSprite=function(sprite){
-			this._sprite=sprite;
-		}
-
-		/**
-		*获取与此对象绑定的显示对象 <code>Sprite</code>。
-		*@return
-		*/
-		__proto.getSprite=function(){
-			return this._sprite;
-		}
-
-		/**@private */
-		__proto._isChar=function(){
-			return true;
-		}
-
-		/**@private */
-		__proto._getCSSStyle=function(){
-			return this.style;
-		}
-
-		/**
-		*宽度。
-		*/
-		__getset(0,__proto,'width',function(){
-			return this._w;
-			},function(value){
-			this._w=value;
-		});
-
-		/**
-		*此对象存储的 X 轴坐标值。
-		*当设置此值时，如果此对象有绑定的 Sprite 对象，则改变 Sprite 对象的属性 x 的值。
-		*/
-		__getset(0,__proto,'x',function(){
-			return this._x;
-			},function(value){
-			if (this._sprite){
-				this._sprite.x=value;
-			}
-			this._x=value;
-		});
-
-		/**
-		*此对象存储的 Y 轴坐标值。
-		*当设置此值时，如果此对象有绑定的 Sprite 对象，则改变 Sprite 对象的属性 y 的值。
-		*/
-		__getset(0,__proto,'y',function(){
-			return this._y;
-			},function(value){
-			if (this._sprite){
-				this._sprite.y=value;
-			}
-			this._y=value;
-		});
-
-		/**
-		*高度。
-		*/
-		__getset(0,__proto,'height',function(){
-			return this._h;
-			},function(value){
-			this._h=value;
-		});
-
-		HTMLChar._isWordRegExp=new RegExp("[\\w\.]","");
-		return HTMLChar;
-	})()
-
-
-	/**
 	*鼠标点击区域，可以设置绘制一系列矢量图作为点击区域和非点击区域（目前只支持圆形，矩形，多边形）
 	*/
 	//class laya.utils.HitArea
@@ -16549,6 +16404,108 @@ var Laya=window.Laya=(function(window,document){
 		['_rec',function(){return this._rec=new Rectangle();},'_ptPoint',function(){return this._ptPoint=new Point();}
 		]);
 		return HitArea;
+	})()
+
+
+	/**
+	*<code>HTMLChar</code> 是一个 HTML 字符类。
+	*/
+	//class laya.utils.HTMLChar
+	var HTMLChar=(function(){
+		function HTMLChar(char,w,h,style){
+			//this._sprite=null;
+			//this._x=NaN;
+			//this._y=NaN;
+			//this._w=NaN;
+			//this._h=NaN;
+			//this.isWord=false;
+			//this.char=null;
+			//this.charNum=NaN;
+			//this.style=null;
+			this.char=char;
+			this.charNum=char.charCodeAt(0);
+			this._x=this._y=0;
+			this.width=w;
+			this.height=h;
+			this.style=style;
+			this.isWord=!HTMLChar._isWordRegExp.test(char);
+		}
+
+		__class(HTMLChar,'laya.utils.HTMLChar');
+		var __proto=HTMLChar.prototype;
+		Laya.imps(__proto,{"laya.display.ILayout":true})
+		/**
+		*设置与此对象绑定的显示对象 <code>Sprite</code> 。
+		*@param sprite 显示对象 <code>Sprite</code> 。
+		*/
+		__proto.setSprite=function(sprite){
+			this._sprite=sprite;
+		}
+
+		/**
+		*获取与此对象绑定的显示对象 <code>Sprite</code>。
+		*@return
+		*/
+		__proto.getSprite=function(){
+			return this._sprite;
+		}
+
+		/**@private */
+		__proto._isChar=function(){
+			return true;
+		}
+
+		/**@private */
+		__proto._getCSSStyle=function(){
+			return this.style;
+		}
+
+		/**
+		*宽度。
+		*/
+		__getset(0,__proto,'width',function(){
+			return this._w;
+			},function(value){
+			this._w=value;
+		});
+
+		/**
+		*此对象存储的 X 轴坐标值。
+		*当设置此值时，如果此对象有绑定的 Sprite 对象，则改变 Sprite 对象的属性 x 的值。
+		*/
+		__getset(0,__proto,'x',function(){
+			return this._x;
+			},function(value){
+			if (this._sprite){
+				this._sprite.x=value;
+			}
+			this._x=value;
+		});
+
+		/**
+		*此对象存储的 Y 轴坐标值。
+		*当设置此值时，如果此对象有绑定的 Sprite 对象，则改变 Sprite 对象的属性 y 的值。
+		*/
+		__getset(0,__proto,'y',function(){
+			return this._y;
+			},function(value){
+			if (this._sprite){
+				this._sprite.y=value;
+			}
+			this._y=value;
+		});
+
+		/**
+		*高度。
+		*/
+		__getset(0,__proto,'height',function(){
+			return this._h;
+			},function(value){
+			this._h=value;
+		});
+
+		HTMLChar._isWordRegExp=new RegExp("[\\w\.]","");
+		return HTMLChar;
 	})()
 
 
@@ -17638,6 +17595,50 @@ var Laya=window.Laya=(function(window,document){
 
 
 	/**
+	*...
+	*@author dongketao
+	*/
+	//class PathFinding.core.Node
+	var Node$1=(function(){
+		function Node(x,y,walkable){
+			this.x=0;
+			this.y=0;
+			this.g=0;
+			this.f=0;
+			this.h=0;
+			this.by=0;
+			this.parent=null;
+			this.opened=null;
+			this.closed=null;
+			this.tested=null;
+			this.retainCount=null;
+			this.walkable=false;
+			(walkable===void 0)&& (walkable=true);
+			this.x=x;
+			this.y=y;
+			this.walkable=walkable;
+		}
+
+		__class(Node,'PathFinding.core.Node',null,'Node$1');
+		return Node;
+	})()
+
+
+	/**全局配置*/
+	//class UIConfig
+	var UIConfig=(function(){
+		function UIConfig(){};
+		__class(UIConfig,'UIConfig');
+		UIConfig.touchScrollEnable=true;
+		UIConfig.mouseWheelEnable=true;
+		UIConfig.showButtons=true;
+		UIConfig.popupBgColor="#000000";
+		UIConfig.popupBgAlpha=0.5;
+		return UIConfig;
+	})()
+
+
+	/**
 	*
 	*@author ww
 	*@version 1.0
@@ -17945,6 +17946,96 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		return AverageLine;
+	})(AnalyserBase)
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class laya.stock.analysers.bars.VolumeBar extends laya.stock.analysers.AnalyserBase
+	var VolumeBar=(function(_super){
+		function VolumeBar(){
+			this.barHeight=100;
+			this.offY=0;
+			this.color="#ffff00";
+			this.buyDownCount=3;
+			this.showSign=0;
+			this.sign="volume";
+			VolumeBar.__super.call(this);
+		}
+
+		__class(VolumeBar,'laya.stock.analysers.bars.VolumeBar',_super);
+		var __proto=VolumeBar.prototype;
+		__proto.initParamKeys=function(){
+			this.paramkeys=["barHeight","offY","color","buyDownCount","showSign"];
+		}
+
+		__proto.analyseWork=function(){
+			this.sign="amount";
+			this.sign="volume";
+			var i=0,len=0;
+			var dataList;
+			dataList=this.disDataList;
+			len=dataList.length;
+			var tData;
+			var max=NaN;
+			max=DataUtils.getKeyMax(dataList,this.sign);
+			var MRate=NaN;
+			MRate=this.barHeight / max;
+			var barsData;
+			barsData=[];
+			for (i=0;i < len;i++){
+				barsData.push([i,-dataList[i][this.sign] *MRate]);
+			}
+			this.resultData["bars"]=barsData;
+			this.doBuyPoints(false,"down");
+			this.doBuyPoints(true,"up");
+		}
+
+		__proto.doBuyPoints=function(isBigger,markSign){
+			(isBigger===void 0)&& (isBigger=false);
+			(markSign===void 0)&& (markSign="down");
+			var i=0,len=0;
+			var tDownCount=0;
+			var preValue=0;
+			var dataList;
+			dataList=this.disDataList;
+			len=dataList.length;
+			var tData;
+			var tValue=NaN;
+			tDownCount=0;
+			var buyList;
+			buyList=[];
+			for (i=0;i < len;i++){
+				tData=dataList[i];
+				tValue=tData[this.sign];
+				if (tValue==preValue || (isBigger==(tValue > preValue))){
+					tDownCount++;
+				}
+				else {
+					if (tDownCount >=this.buyDownCount){
+						buyList.push([markSign+":"+tDownCount,i]);
+					}
+					tDownCount=0;
+				}
+				preValue=tValue;
+			}
+			this.resultData[markSign]=buyList;
+		}
+
+		__proto.getDrawCmds=function(){
+			var rst;
+			rst=[];
+			rst.push(["drawBars",[this.resultData["bars"],this.offY,this.color]]);
+			if (this.showSign){
+				rst.push(["drawTexts",[this.resultData["up"],"low",30,"#00ff00",true,"#00ff00"]]);
+				rst.push(["drawTexts",[this.resultData["down"],"low",50,"#ffff00",true,"#00ff00"]]);
+			}
+			return rst;
+		}
+
+		return VolumeBar;
 	})(AnalyserBase)
 
 
@@ -18624,199 +18715,6 @@ var Laya=window.Laya=(function(window,document){
 	*...
 	*@author ww
 	*/
-	//class laya.stock.analysers.NoticeAnalyser extends laya.stock.analysers.AnalyserBase
-	var NoticeAnalyser=(function(_super){
-		function NoticeAnalyser(){
-			this.noticeData=null;
-			this.showAll=0;
-			NoticeAnalyser.__super.call(this);
-		}
-
-		__class(NoticeAnalyser,'laya.stock.analysers.NoticeAnalyser',_super);
-		var __proto=NoticeAnalyser.prototype;
-		__proto.initParamKeys=function(){
-			this.paramkeys=["showAll"]
-		}
-
-		__proto.analyseWork=function(){
-			this.noticeAnalyse();
-		}
-
-		__proto.noticeAnalyse=function(){
-			var tStockName;
-			tStockName=this.stockData.stockName;
-			this.noticeData=StockNoticeManager.I.getStockNotice(tStockName);
-			if (!this.noticeData){
-				StockNoticeManager.I.loadStockNotice(tStockName);
-				return;
-			};
-			var dataList;
-			dataList=this.noticeData.noticeData;
-			var i=0,len=0;
-			len=this.disDataList.length;
-			var tData;
-			var tDate;
-			var tNoticeList;
-			var noticeList;
-			var noticeInfoList;
-			noticeList=[];
-			noticeInfoList=[];
-			for (i=0;i < len;i++){
-				tData=this.disDataList[i];
-				tDate=tData["date"];
-				tNoticeList=dataList.getData(tDate);
-				if (tNoticeList){
-					noticeList.push([i,tNoticeList]);
-					this.addNotices(noticeInfoList,i,tNoticeList);
-				}
-			}
-			this.resultData["noticeList"]=noticeList;
-			this.resultData["noticeInfoList"]=noticeInfoList;
-		}
-
-		__proto.isShowTitle=function(title){
-			if (this.showAll > 0)return true;
-			var i=0,len=0;
-			len=NoticeAnalyser.noShowKeyWords.length;
-			for (i=0;i < len;i++){
-				if (title.indexOf(NoticeAnalyser.noShowKeyWords[i])>=0)return false;
-			}
-			len=NoticeAnalyser.showKeyWords.length;
-			for (i=0;i < len;i++){
-				if (title.indexOf(NoticeAnalyser.showKeyWords[i])>=0)return true;
-			}
-			return false;
-		}
-
-		__proto.addNotices=function(infoList,index,noticeList){
-			var i=0,len=0;
-			len=noticeList.length;
-			var tNotice;
-			var tTitle;
-			var tCount=0;
-			tCount=0;
-			for (i=0;i < len;i++){
-				tNotice=noticeList[i];
-				tTitle=tNotice["title"];
-				if (this.isShowTitle(tTitle)){
-					if (tTitle.indexOf("：")>=0){
-						tTitle=tTitle.split("：")[1];
-					}
-					infoList.push([tTitle,index,tCount*20]);
-					tCount++;
-				}
-			}
-		}
-
-		__proto.getDrawCmds=function(){
-			var rst;
-			rst=[];
-			if(this.resultData["noticeInfoList"])
-				rst.push(["drawTexts",[this.resultData["noticeInfoList"],"low",50,"#ff0000",true,"#ff0000",true]]);
-			return rst;
-		}
-
-		__static(NoticeAnalyser,
-		['showKeyWords',function(){return this.showKeyWords=["增","减","融资","核准","重大事项","重要","合同","中标","重大资产","上市流通","补助","重组","股东","达成","冻结","季报","年报","质押","业绩","出售","非公开发行","终止","完成","关联交易","获得","拍卖","业务","解禁","员工持股","担保","股权激励","聘","重组","投资","辞职","收购","激励","分红","合作","购买","转让","募资"];},'noShowKeyWords',function(){return this.noShowKeyWords=["异常波动","回复","意见","说明"];}
-		]);
-		return NoticeAnalyser;
-	})(AnalyserBase)
-
-
-	/**
-	*...
-	*@author ww
-	*/
-	//class laya.stock.analysers.bars.VolumeBar extends laya.stock.analysers.AnalyserBase
-	var VolumeBar=(function(_super){
-		function VolumeBar(){
-			this.barHeight=100;
-			this.offY=0;
-			this.color="#ffff00";
-			this.buyDownCount=3;
-			this.showSign=0;
-			this.sign="volume";
-			VolumeBar.__super.call(this);
-		}
-
-		__class(VolumeBar,'laya.stock.analysers.bars.VolumeBar',_super);
-		var __proto=VolumeBar.prototype;
-		__proto.initParamKeys=function(){
-			this.paramkeys=["barHeight","offY","color","buyDownCount","showSign"];
-		}
-
-		__proto.analyseWork=function(){
-			this.sign="amount";
-			this.sign="volume";
-			var i=0,len=0;
-			var dataList;
-			dataList=this.disDataList;
-			len=dataList.length;
-			var tData;
-			var max=NaN;
-			max=DataUtils.getKeyMax(dataList,this.sign);
-			var MRate=NaN;
-			MRate=this.barHeight / max;
-			var barsData;
-			barsData=[];
-			for (i=0;i < len;i++){
-				barsData.push([i,-dataList[i][this.sign] *MRate]);
-			}
-			this.resultData["bars"]=barsData;
-			this.doBuyPoints(false,"down");
-			this.doBuyPoints(true,"up");
-		}
-
-		__proto.doBuyPoints=function(isBigger,markSign){
-			(isBigger===void 0)&& (isBigger=false);
-			(markSign===void 0)&& (markSign="down");
-			var i=0,len=0;
-			var tDownCount=0;
-			var preValue=0;
-			var dataList;
-			dataList=this.disDataList;
-			len=dataList.length;
-			var tData;
-			var tValue=NaN;
-			tDownCount=0;
-			var buyList;
-			buyList=[];
-			for (i=0;i < len;i++){
-				tData=dataList[i];
-				tValue=tData[this.sign];
-				if (tValue==preValue || (isBigger==(tValue > preValue))){
-					tDownCount++;
-				}
-				else {
-					if (tDownCount >=this.buyDownCount){
-						buyList.push([markSign+":"+tDownCount,i]);
-					}
-					tDownCount=0;
-				}
-				preValue=tValue;
-			}
-			this.resultData[markSign]=buyList;
-		}
-
-		__proto.getDrawCmds=function(){
-			var rst;
-			rst=[];
-			rst.push(["drawBars",[this.resultData["bars"],this.offY,this.color]]);
-			if (this.showSign){
-				rst.push(["drawTexts",[this.resultData["up"],"low",30,"#00ff00",true,"#00ff00"]]);
-				rst.push(["drawTexts",[this.resultData["down"],"low",50,"#ffff00",true,"#00ff00"]]);
-			}
-			return rst;
-		}
-
-		return VolumeBar;
-	})(AnalyserBase)
-
-
-	/**
-	*...
-	*@author ww
-	*/
 	//class laya.stock.analysers.lines.PositionLine extends laya.stock.analysers.AnalyserBase
 	var PositionLine=(function(_super){
 		function PositionLine(){
@@ -18996,6 +18894,109 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		return PositionLine;
+	})(AnalyserBase)
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class laya.stock.analysers.NoticeAnalyser extends laya.stock.analysers.AnalyserBase
+	var NoticeAnalyser=(function(_super){
+		function NoticeAnalyser(){
+			this.noticeData=null;
+			this.showAll=0;
+			NoticeAnalyser.__super.call(this);
+		}
+
+		__class(NoticeAnalyser,'laya.stock.analysers.NoticeAnalyser',_super);
+		var __proto=NoticeAnalyser.prototype;
+		__proto.initParamKeys=function(){
+			this.paramkeys=["showAll"]
+		}
+
+		__proto.analyseWork=function(){
+			this.noticeAnalyse();
+		}
+
+		__proto.noticeAnalyse=function(){
+			var tStockName;
+			tStockName=this.stockData.stockName;
+			this.noticeData=StockNoticeManager.I.getStockNotice(tStockName);
+			if (!this.noticeData){
+				StockNoticeManager.I.loadStockNotice(tStockName);
+				return;
+			};
+			var dataList;
+			dataList=this.noticeData.noticeData;
+			var i=0,len=0;
+			len=this.disDataList.length;
+			var tData;
+			var tDate;
+			var tNoticeList;
+			var noticeList;
+			var noticeInfoList;
+			noticeList=[];
+			noticeInfoList=[];
+			for (i=0;i < len;i++){
+				tData=this.disDataList[i];
+				tDate=tData["date"];
+				tNoticeList=dataList.getData(tDate);
+				if (tNoticeList){
+					noticeList.push([i,tNoticeList]);
+					this.addNotices(noticeInfoList,i,tNoticeList);
+				}
+			}
+			this.resultData["noticeList"]=noticeList;
+			this.resultData["noticeInfoList"]=noticeInfoList;
+		}
+
+		__proto.isShowTitle=function(title){
+			if (this.showAll > 0)return true;
+			var i=0,len=0;
+			len=NoticeAnalyser.noShowKeyWords.length;
+			for (i=0;i < len;i++){
+				if (title.indexOf(NoticeAnalyser.noShowKeyWords[i])>=0)return false;
+			}
+			len=NoticeAnalyser.showKeyWords.length;
+			for (i=0;i < len;i++){
+				if (title.indexOf(NoticeAnalyser.showKeyWords[i])>=0)return true;
+			}
+			return false;
+		}
+
+		__proto.addNotices=function(infoList,index,noticeList){
+			var i=0,len=0;
+			len=noticeList.length;
+			var tNotice;
+			var tTitle;
+			var tCount=0;
+			tCount=0;
+			for (i=0;i < len;i++){
+				tNotice=noticeList[i];
+				tTitle=tNotice["title"];
+				if (this.isShowTitle(tTitle)){
+					if (tTitle.indexOf("：")>=0){
+						tTitle=tTitle.split("：")[1];
+					}
+					infoList.push([tTitle,index,tCount*20]);
+					tCount++;
+				}
+			}
+		}
+
+		__proto.getDrawCmds=function(){
+			var rst;
+			rst=[];
+			if(this.resultData["noticeInfoList"])
+				rst.push(["drawTexts",[this.resultData["noticeInfoList"],"low",50,"#ff0000",true,"#ff0000",true]]);
+			return rst;
+		}
+
+		__static(NoticeAnalyser,
+		['showKeyWords',function(){return this.showKeyWords=["增","减","融资","核准","重大事项","重要","合同","中标","重大资产","上市流通","补助","重组","股东","达成","冻结","季报","年报","质押","业绩","出售","非公开发行","终止","完成","关联交易","获得","拍卖","业务","解禁","员工持股","担保","股权激励","聘","重组","投资","辞职","收购","激励","分红","合作","购买","转让","募资"];},'noShowKeyWords',function(){return this.noShowKeyWords=["异常波动","回复","意见","说明"];}
+		]);
+		return NoticeAnalyser;
 	})(AnalyserBase)
 
 
@@ -19833,38 +19834,6 @@ var Laya=window.Laya=(function(window,document){
 
 
 	/**
-	*本类用于模块间消息传递
-	*@author ww
-	*/
-	//class laya.debug.tools.Notice extends laya.events.EventDispatcher
-	var Notice=(function(_super){
-		function Notice(){
-			Notice.__super.call(this);
-		}
-
-		__class(Notice,'laya.debug.tools.Notice',_super);
-		Notice.notify=function(type,data){
-			Notice.I.event(type,data);
-		}
-
-		Notice.listen=function(type,_scope,fun,args,cancelBefore){
-			(cancelBefore===void 0)&& (cancelBefore=false);
-			if(cancelBefore)Notice.cancel(type,_scope,fun);
-			Notice.I.on(type,_scope,fun,args);
-		}
-
-		Notice.cancel=function(type,_scope,fun){
-			Notice.I.off(type,_scope,fun);
-		}
-
-		__static(Notice,
-		['I',function(){return this.I=new Notice();}
-		]);
-		return Notice;
-	})(EventDispatcher)
-
-
-	/**
 	*<p> <code>LoaderManager</code> 类用于用于批量加载资源、数据。</p>
 	*<p>批量加载器，单例，可以通过Laya.loader访问。</p>
 	*多线程(默认5个线程)，5个优先级(0最快，4最慢,默认为1)
@@ -20201,6 +20170,38 @@ var Laya=window.Laya=(function(window,document){
 
 
 	/**
+	*本类用于模块间消息传递
+	*@author ww
+	*/
+	//class laya.debug.tools.Notice extends laya.events.EventDispatcher
+	var Notice=(function(_super){
+		function Notice(){
+			Notice.__super.call(this);
+		}
+
+		__class(Notice,'laya.debug.tools.Notice',_super);
+		Notice.notify=function(type,data){
+			Notice.I.event(type,data);
+		}
+
+		Notice.listen=function(type,_scope,fun,args,cancelBefore){
+			(cancelBefore===void 0)&& (cancelBefore=false);
+			if(cancelBefore)Notice.cancel(type,_scope,fun);
+			Notice.I.on(type,_scope,fun,args);
+		}
+
+		Notice.cancel=function(type,_scope,fun){
+			Notice.I.off(type,_scope,fun);
+		}
+
+		__static(Notice,
+		['I',function(){return this.I=new Notice();}
+		]);
+		return Notice;
+	})(EventDispatcher)
+
+
+	/**
 	*...
 	*@author ...
 	*/
@@ -20314,110 +20315,6 @@ var Laya=window.Laya=(function(window,document){
 
 
 	/**
-	*<code>Sound</code> 类是用来播放控制声音的类。
-	*/
-	//class laya.media.Sound extends laya.events.EventDispatcher
-	var Sound=(function(_super){
-		function Sound(){Sound.__super.call(this);;
-		};
-
-		__class(Sound,'laya.media.Sound',_super);
-		var __proto=Sound.prototype;
-		/**
-		*加载声音。
-		*@param url 地址。
-		*
-		*/
-		__proto.load=function(url){}
-		/**
-		*播放声音。
-		*@param startTime 开始时间,单位秒
-		*@param loops 循环次数,0表示一直循环
-		*@return 声道 SoundChannel 对象。
-		*
-		*/
-		__proto.play=function(startTime,loops){
-			(startTime===void 0)&& (startTime=0);
-			(loops===void 0)&& (loops=0);
-			return null;
-		}
-
-		/**
-		*释放声音资源。
-		*
-		*/
-		__proto.dispose=function(){}
-		/**
-		*获取总时间。
-		*/
-		__getset(0,__proto,'duration',function(){
-			return 0;
-		});
-
-		return Sound;
-	})(EventDispatcher)
-
-
-	/**
-	*<code>SoundChannel</code> 用来控制程序中的声音。
-	*/
-	//class laya.media.SoundChannel extends laya.events.EventDispatcher
-	var SoundChannel=(function(_super){
-		function SoundChannel(){
-			this.url=null;
-			this.loops=0;
-			this.startTime=NaN;
-			this.isStopped=false;
-			this.completeHandler=null;
-			SoundChannel.__super.call(this);
-		}
-
-		__class(SoundChannel,'laya.media.SoundChannel',_super);
-		var __proto=SoundChannel.prototype;
-		/**
-		*播放。
-		*/
-		__proto.play=function(){}
-		/**
-		*停止。
-		*/
-		__proto.stop=function(){}
-		/**
-		*private
-		*/
-		__proto.__runComplete=function(handler){
-			if (handler){
-				handler.run();
-			}
-		}
-
-		/**
-		*音量。
-		*/
-		__getset(0,__proto,'volume',function(){
-			return 1;
-			},function(v){
-		});
-
-		/**
-		*获取当前播放时间。
-		*/
-		__getset(0,__proto,'position',function(){
-			return 0;
-		});
-
-		/**
-		*获取总时间。
-		*/
-		__getset(0,__proto,'duration',function(){
-			return 0;
-		});
-
-		return SoundChannel;
-	})(EventDispatcher)
-
-
-	/**
 	*@private
 	*使用Audio标签播放声音
 	*/
@@ -20524,6 +20421,110 @@ var Laya=window.Laya=(function(window,document){
 
 		AudioSound._audioCache={};
 		return AudioSound;
+	})(EventDispatcher)
+
+
+	/**
+	*<code>SoundChannel</code> 用来控制程序中的声音。
+	*/
+	//class laya.media.SoundChannel extends laya.events.EventDispatcher
+	var SoundChannel=(function(_super){
+		function SoundChannel(){
+			this.url=null;
+			this.loops=0;
+			this.startTime=NaN;
+			this.isStopped=false;
+			this.completeHandler=null;
+			SoundChannel.__super.call(this);
+		}
+
+		__class(SoundChannel,'laya.media.SoundChannel',_super);
+		var __proto=SoundChannel.prototype;
+		/**
+		*播放。
+		*/
+		__proto.play=function(){}
+		/**
+		*停止。
+		*/
+		__proto.stop=function(){}
+		/**
+		*private
+		*/
+		__proto.__runComplete=function(handler){
+			if (handler){
+				handler.run();
+			}
+		}
+
+		/**
+		*音量。
+		*/
+		__getset(0,__proto,'volume',function(){
+			return 1;
+			},function(v){
+		});
+
+		/**
+		*获取当前播放时间。
+		*/
+		__getset(0,__proto,'position',function(){
+			return 0;
+		});
+
+		/**
+		*获取总时间。
+		*/
+		__getset(0,__proto,'duration',function(){
+			return 0;
+		});
+
+		return SoundChannel;
+	})(EventDispatcher)
+
+
+	/**
+	*<code>Sound</code> 类是用来播放控制声音的类。
+	*/
+	//class laya.media.Sound extends laya.events.EventDispatcher
+	var Sound=(function(_super){
+		function Sound(){Sound.__super.call(this);;
+		};
+
+		__class(Sound,'laya.media.Sound',_super);
+		var __proto=Sound.prototype;
+		/**
+		*加载声音。
+		*@param url 地址。
+		*
+		*/
+		__proto.load=function(url){}
+		/**
+		*播放声音。
+		*@param startTime 开始时间,单位秒
+		*@param loops 循环次数,0表示一直循环
+		*@return 声道 SoundChannel 对象。
+		*
+		*/
+		__proto.play=function(startTime,loops){
+			(startTime===void 0)&& (startTime=0);
+			(loops===void 0)&& (loops=0);
+			return null;
+		}
+
+		/**
+		*释放声音资源。
+		*
+		*/
+		__proto.dispose=function(){}
+		/**
+		*获取总时间。
+		*/
+		__getset(0,__proto,'duration',function(){
+			return 0;
+		});
+
+		return Sound;
 	})(EventDispatcher)
 
 
@@ -27631,6 +27632,65 @@ var Laya=window.Laya=(function(window,document){
 	*...
 	*@author ww
 	*/
+	//class laya.debug.view.nodeInfo.recinfos.NodeRecInfo extends laya.display.Sprite
+	var NodeRecInfo=(function(_super){
+		function NodeRecInfo(){
+			this.txt=null;
+			this._tar=null;
+			this.recColor="#00ff00";
+			NodeRecInfo.__super.call(this);
+			this.txt=new Text();
+			this.txt.color="#ff0000";
+			this.txt.bgColor="#00ff00";
+			this.txt.fontSize=12;
+			this.addChild(this.txt);
+		}
+
+		__class(NodeRecInfo,'laya.debug.view.nodeInfo.recinfos.NodeRecInfo',_super);
+		var __proto=NodeRecInfo.prototype;
+		__proto.setInfo=function(str){
+			this.txt.text=str;
+		}
+
+		__proto.setTarget=function(tar){
+			this._tar=tar;
+		}
+
+		__proto.showInfo=function(node){
+			this._tar=node;
+			if (!node)return;
+			if(!node._$P)return;
+			this.graphics.clear();
+			var pointList;
+			pointList=node._getBoundPointsM(true);
+			if(!pointList||pointList.length<1)return;
+			pointList=GrahamScan.pListToPointList(pointList,true);
+			WalkTools.walkArr(pointList,node.localToGlobal,node);
+			pointList=GrahamScan.pointListToPlist(pointList);
+			NodeRecInfo._disBoundRec=Rectangle._getWrapRec(pointList,NodeRecInfo._disBoundRec);
+			this.graphics.drawRect(0,0,NodeRecInfo._disBoundRec.width,NodeRecInfo._disBoundRec.height,null,this.recColor,2);
+			this.pos(NodeRecInfo._disBoundRec.x,NodeRecInfo._disBoundRec.y);
+		}
+
+		__proto.fresh=function(){
+			this.showInfo(this._tar);
+		}
+
+		__proto.clearMe=function(){
+			this._tar=null;
+		}
+
+		__static(NodeRecInfo,
+		['_disBoundRec',function(){return this._disBoundRec=new Rectangle();}
+		]);
+		return NodeRecInfo;
+	})(Sprite)
+
+
+	/**
+	*...
+	*@author ww
+	*/
 	//class laya.debug.view.nodeInfo.ToolPanel extends laya.display.Sprite
 	var ToolPanel=(function(_super){
 		function ToolPanel(){
@@ -27708,65 +27768,6 @@ var Laya=window.Laya=(function(window,document){
 
 		]);
 		return ToolPanel;
-	})(Sprite)
-
-
-	/**
-	*...
-	*@author ww
-	*/
-	//class laya.debug.view.nodeInfo.recinfos.NodeRecInfo extends laya.display.Sprite
-	var NodeRecInfo=(function(_super){
-		function NodeRecInfo(){
-			this.txt=null;
-			this._tar=null;
-			this.recColor="#00ff00";
-			NodeRecInfo.__super.call(this);
-			this.txt=new Text();
-			this.txt.color="#ff0000";
-			this.txt.bgColor="#00ff00";
-			this.txt.fontSize=12;
-			this.addChild(this.txt);
-		}
-
-		__class(NodeRecInfo,'laya.debug.view.nodeInfo.recinfos.NodeRecInfo',_super);
-		var __proto=NodeRecInfo.prototype;
-		__proto.setInfo=function(str){
-			this.txt.text=str;
-		}
-
-		__proto.setTarget=function(tar){
-			this._tar=tar;
-		}
-
-		__proto.showInfo=function(node){
-			this._tar=node;
-			if (!node)return;
-			if(!node._$P)return;
-			this.graphics.clear();
-			var pointList;
-			pointList=node._getBoundPointsM(true);
-			if(!pointList||pointList.length<1)return;
-			pointList=GrahamScan.pListToPointList(pointList,true);
-			WalkTools.walkArr(pointList,node.localToGlobal,node);
-			pointList=GrahamScan.pointListToPlist(pointList);
-			NodeRecInfo._disBoundRec=Rectangle._getWrapRec(pointList,NodeRecInfo._disBoundRec);
-			this.graphics.drawRect(0,0,NodeRecInfo._disBoundRec.width,NodeRecInfo._disBoundRec.height,null,this.recColor,2);
-			this.pos(NodeRecInfo._disBoundRec.x,NodeRecInfo._disBoundRec.y);
-		}
-
-		__proto.fresh=function(){
-			this.showInfo(this._tar);
-		}
-
-		__proto.clearMe=function(){
-			this._tar=null;
-		}
-
-		__static(NodeRecInfo,
-		['_disBoundRec',function(){return this._disBoundRec=new Rectangle();}
-		]);
-		return NodeRecInfo;
 	})(Sprite)
 
 
@@ -28853,6 +28854,46 @@ var Laya=window.Laya=(function(window,document){
 	})(DrawBoard)
 
 
+	/**
+	*自动根据大小填充自己全部区域的显示对象
+	*@author ww
+	*/
+	//class laya.debug.tools.resizer.AutoFillRec extends laya.ui.Component
+	var AutoFillRec=(function(_super){
+		function AutoFillRec(type){
+			this.type=0;
+			this.preX=NaN;
+			this.preY=NaN;
+			AutoFillRec.__super.call(this);
+		}
+
+		__class(AutoFillRec,'laya.debug.tools.resizer.AutoFillRec',_super);
+		var __proto=AutoFillRec.prototype;
+		//super(type);
+		__proto.changeSize=function(){
+			_super.prototype.changeSize.call(this);
+			var g=this.graphics;
+			g.clear();
+			g.drawRect(0,0,this.width,this.height,"#33c5f5");
+		}
+
+		__proto.record=function(){
+			this.preX=this.x;
+			this.preY=this.y;
+		}
+
+		__proto.getDx=function(){
+			return this.x-this.preX;
+		}
+
+		__proto.getDy=function(){
+			return this.y-this.preY;
+		}
+
+		return AutoFillRec;
+	})(Component)
+
+
 	/**鼠标提示管理类*/
 	//class laya.debug.tools.TipManagerForDebug extends laya.ui.Component
 	var TipManagerForDebug=(function(_super){
@@ -28959,46 +29000,6 @@ var Laya=window.Laya=(function(window,document){
 		TipManagerForDebug.tipBackColor="#111111";
 		TipManagerForDebug.tipDelay=200;
 		return TipManagerForDebug;
-	})(Component)
-
-
-	/**
-	*自动根据大小填充自己全部区域的显示对象
-	*@author ww
-	*/
-	//class laya.debug.tools.resizer.AutoFillRec extends laya.ui.Component
-	var AutoFillRec=(function(_super){
-		function AutoFillRec(type){
-			this.type=0;
-			this.preX=NaN;
-			this.preY=NaN;
-			AutoFillRec.__super.call(this);
-		}
-
-		__class(AutoFillRec,'laya.debug.tools.resizer.AutoFillRec',_super);
-		var __proto=AutoFillRec.prototype;
-		//super(type);
-		__proto.changeSize=function(){
-			_super.prototype.changeSize.call(this);
-			var g=this.graphics;
-			g.clear();
-			g.drawRect(0,0,this.width,this.height,"#33c5f5");
-		}
-
-		__proto.record=function(){
-			this.preX=this.x;
-			this.preY=this.y;
-		}
-
-		__proto.getDx=function(){
-			return this.x-this.preX;
-		}
-
-		__proto.getDy=function(){
-			return this.y-this.preY;
-		}
-
-		return AutoFillRec;
 	})(Component)
 
 
@@ -31300,6 +31301,27 @@ var Laya=window.Laya=(function(window,document){
 
 
 	/**
+	*
+	*@author ww
+	*@version 1.0
+	*
+	*@created 2015-9-29 上午11:17:35
+	*/
+	//class laya.debug.tools.debugUI.DButton extends laya.display.Text
+	var DButton=(function(_super){
+		function DButton(){
+			DButton.__super.call(this);
+			this.bgColor="#ffff00";
+			this.wordWrap=false;
+			this.mouseEnabled=true;
+		}
+
+		__class(DButton,'laya.debug.tools.debugUI.DButton',_super);
+		return DButton;
+	})(Text)
+
+
+	/**
 	*使用 <code>Slider</code> 控件，用户可以通过在滑块轨道的终点之间移动滑块来选择值。
 	*<p>滑块的当前值由滑块端点（对应于滑块的最小值和最大值）之间滑块的相对位置确定。</p>
 	*<p>滑块允许最小值和最大值之间特定间隔内的值。滑块还可以使用数据提示显示其当前值。</p>
@@ -31626,6 +31648,496 @@ var Laya=window.Laya=(function(window,document){
 		]);
 		return Slider;
 	})(Component)
+
+
+	/**
+	*<p><code>Input</code> 类用于创建显示对象以显示和输入文本。</p>
+	*/
+	//class laya.display.Input extends laya.display.Text
+	var Input=(function(_super){
+		function Input(){
+			this._focus=false;
+			this._multiline=false;
+			this._editable=true;
+			this._restrictPattern=null;
+			this._type="text";
+			this._prompt='';
+			this._promptColor="#A9A9A9";
+			this._originColor="#000000";
+			this._content='';
+			Input.__super.call(this);
+			this._maxChars=1E5;
+			this._width=100;
+			this._height=20;
+			this.multiline=false;
+			this.overflow=Text.SCROLL;
+			this.on("mousedown",this,this._onMouseDown);
+			this.on("undisplay",this,this._onUnDisplay);
+		}
+
+		__class(Input,'laya.display.Input',_super);
+		var __proto=Input.prototype;
+		/**
+		*设置光标位置和选取字符。
+		*@param startIndex 光标起始位置。
+		*@param endIndex 光标结束位置。
+		*/
+		__proto.setSelection=function(startIndex,endIndex){
+			laya.display.Input.inputElement.selectionStart=startIndex;
+			laya.display.Input.inputElement.selectionEnd=endIndex;
+		}
+
+		/**@private */
+		__proto._onUnDisplay=function(e){
+			this.focus=false;
+		}
+
+		/**@private */
+		__proto._onMouseDown=function(e){
+			this.focus=true;
+			Laya.stage.on("mousedown",this,this._checkBlur);
+		}
+
+		/**@private */
+		__proto._checkBlur=function(e){
+			if (e.nativeEvent.target !=laya.display.Input.input && e.nativeEvent.target !=laya.display.Input.area && e.target !=this)
+				this.focus=false;
+		}
+
+		/**@inheritDoc*/
+		__proto.render=function(context,x,y){
+			laya.display.Sprite.prototype.render.call(this,context,x,y);
+		}
+
+		/**
+		*在输入期间，如果 Input 实例的位置改变，调用该方法同步输入框的位置。
+		*/
+		__proto._syncInputTransform=function(){
+			var style=this.nativeInput.style;
+			var stage=Laya.stage;
+			var rec;
+			rec=Utils.getGlobalPosAndScale(this);
+			var m=stage._canvasTransform.clone();
+			var tm=m.clone();
+			tm.rotate(-Math.PI / 180 *Laya.stage.canvasDegree);
+			tm.scale(Laya.stage.clientScaleX,Laya.stage.clientScaleY);
+			var perpendicular=(Laya.stage.canvasDegree % 180 !=0);
+			var sx=perpendicular ? tm.d :tm.a;
+			var sy=perpendicular ? tm.a :tm.d;
+			tm.destroy();
+			var tx=this.padding[3];
+			var ty=this.padding[0];
+			if (Laya.stage.canvasDegree==0){
+				tx+=rec.x;
+				ty+=rec.y;
+				tx *=sx;
+				ty *=sy;
+				tx+=m.tx;
+				ty+=m.ty;
+				}else if (Laya.stage.canvasDegree==90){
+				tx+=rec.y;
+				ty+=rec.x;
+				tx *=sx;
+				ty *=sy;
+				tx=m.tx-tx;
+				ty+=m.ty;
+				}else{
+				tx+=rec.y;
+				ty+=rec.x;
+				tx *=sx;
+				ty *=sy;
+				tx+=m.tx;
+				ty=m.ty-ty;
+			};
+			var quarter=0.785;
+			var r=Math.atan2(rec.height,rec.width)-quarter;
+			var sin=Math.sin(r),cos=Math.cos(r);
+			var tsx=cos *rec.width+sin *rec.height;
+			var tsy=cos *rec.height-sin *rec.width;
+			sx *=(perpendicular ? tsy :tsx);
+			sy *=(perpendicular ? tsx :tsy);
+			m.tx=0;
+			m.ty=0;
+			r *=180 / 3.1415;
+			Input.inputContainer.style.transform="scale("+sx+","+sy+") rotate("+(Laya.stage.canvasDegree+r)+"deg)";
+			Input.inputContainer.style.webkitTransform="scale("+sx+","+sy+") rotate("+(Laya.stage.canvasDegree+r)+"deg)";
+			Input.inputContainer.setPos(tx,ty);
+			m.destroy();
+			var inputWid=this._width-this.padding[1]-this.padding[3];
+			var inputHei=this._height-this.padding[0]-this.padding[2];
+			this.nativeInput.setSize(inputWid,inputHei);
+			if (Render.isConchApp){
+				this.nativeInput.setPos(tx,ty);
+				this.nativeInput.setScale(sx,sy);
+			}
+		}
+
+		/**选中所有文本。*/
+		__proto.select=function(){
+			this.nativeInput.select();
+		}
+
+		/**@private 设置输入法（textarea或input）*/
+		__proto._setInputMethod=function(){
+			Input.input.parentElement && (Input.inputContainer.removeChild(Input.input));
+			Input.area.parentElement && (Input.inputContainer.removeChild(Input.area));
+			Input.inputElement=(this._multiline ? Input.area :Input.input);
+			Input.inputContainer.appendChild(Input.inputElement);
+		}
+
+		/**@private */
+		__proto._focusIn=function(){
+			laya.display.Input.isInputting=true;
+			var input=this.nativeInput;
+			this._focus=true;
+			var cssStyle=input.style;
+			cssStyle.whiteSpace=(this.wordWrap ? "pre-wrap" :"nowrap");
+			this._setPromptColor();
+			input.readOnly=!this._editable;
+			input.maxLength=this._maxChars;
+			var padding=this.padding;
+			input.type=this._type;
+			input.value=this._content;
+			input.placeholder=this._prompt;
+			Laya.stage.off("keydown",this,this._onKeyDown);
+			Laya.stage.on("keydown",this,this._onKeyDown);
+			Laya.stage.focus=this;
+			this.event("focus");
+			if (Browser.onPC)input.focus();
+			var temp=this._text;
+			this._text=null;
+			this.typeset();
+			input.setColor(this._originColor);
+			input.setFontSize(this.fontSize);
+			input.setFontFace(this.font);
+			if (Render.isConchApp){
+				input.setMultiAble && input.setMultiAble(this._multiline);
+			}
+			cssStyle.lineHeight=(this.leading+this.fontSize)+"px";
+			cssStyle.fontStyle=(this.italic ? "italic" :"normal");
+			cssStyle.fontWeight=(this.bold ? "bold" :"normal");
+			cssStyle.textAlign=this.align;
+			cssStyle.padding="0 0";
+			this._syncInputTransform();
+			if (!Render.isConchApp && Browser.onPC)
+				Laya.timer.frameLoop(1,this,this._syncInputTransform);
+		}
+
+		// 设置DOM输入框提示符颜色。
+		__proto._setPromptColor=function(){
+			Input.promptStyleDOM=Browser.getElementById("promptStyle");
+			if (!Input.promptStyleDOM){
+				Input.promptStyleDOM=Browser.createElement("style");
+				Browser.document.head.appendChild(Input.promptStyleDOM);
+			}
+			Input.promptStyleDOM.innerText="input::-webkit-input-placeholder, textarea::-webkit-input-placeholder {"+"color:"+this._promptColor+"}"+"input:-moz-placeholder, textarea:-moz-placeholder {"+"color:"+this._promptColor+"}"+"input::-moz-placeholder, textarea::-moz-placeholder {"+"color:"+this._promptColor+"}"+"input:-ms-input-placeholder, textarea:-ms-input-placeholder {"+"color:"+this._promptColor+"}";
+		}
+
+		/**@private */
+		__proto._focusOut=function(){
+			laya.display.Input.isInputting=false;
+			this._focus=false;
+			this._text=null;
+			this._content=this.nativeInput.value;
+			if (!this._content){
+				_super.prototype._$set_text.call(this,this._prompt);
+				_super.prototype._$set_color.call(this,this._promptColor);
+				}else {
+				_super.prototype._$set_text.call(this,this._content);
+				_super.prototype._$set_color.call(this,this._originColor);
+			}
+			Laya.stage.off("keydown",this,this._onKeyDown);
+			Laya.stage.focus=null;
+			this.event("blur");
+			if (Render.isConchApp)this.nativeInput.blur();
+			Browser.onPC && Laya.timer.clear(this,this._syncInputTransform);
+			Laya.stage.off("mousedown",this,this._checkBlur);
+		}
+
+		/**@private */
+		__proto._onKeyDown=function(e){
+			if (e.keyCode===13){
+				if (Browser.onMobile && !this._multiline)
+					this.focus=false;
+				this.event("enter");
+			}
+		}
+
+		__proto.changeText=function(text){
+			this._content=text;
+			if (this._focus){
+				this.nativeInput.value=text || '';
+				this.event("change");
+			}else
+			_super.prototype.changeText.call(this,text);
+		}
+
+		/**@inheritDoc */
+		__getset(0,__proto,'color',_super.prototype._$get_color,function(value){
+			if (this._focus)
+				this.nativeInput.setColor(value);
+			_super.prototype._$set_color.call(this,this._content?value:this._promptColor);
+			this._originColor=value;
+		});
+
+		//[Deprecated]
+		__getset(0,__proto,'inputElementYAdjuster',function(){
+			console.warn("deprecated: 由于即使设置了该值，在各平台和浏览器之间也不一定一致，inputElementYAdjuster已弃用。");
+			return 0;
+			},function(value){
+			console.warn("deprecated: 由于即使设置了该值，在各平台和浏览器之间也不一定一致，inputElementYAdjuster已弃用。");
+		});
+
+		/**表示是否是多行输入框。*/
+		__getset(0,__proto,'multiline',function(){
+			return this._multiline;
+			},function(value){
+			this._multiline=value;
+			this.valign=value ? "top" :"middle";
+		});
+
+		/**
+		*字符数量限制，默认为10000。
+		*设置字符数量限制时，小于等于0的值将会限制字符数量为10000。
+		*/
+		__getset(0,__proto,'maxChars',function(){
+			return this._maxChars;
+			},function(value){
+			if (value <=0)
+				value=1E5;
+			this._maxChars=value;
+		});
+
+		/**@inheritDoc */
+		__getset(0,__proto,'text',function(){
+			if (this._focus)
+				return this.nativeInput.value;
+			else
+			return this._content || "";
+			},function(value){
+			_super.prototype._$set_color.call(this,this._originColor);
+			value+='';
+			if (this._focus){
+				this.nativeInput.value=value || '';
+				this.event("change");
+				}else {
+				if (!this._multiline)
+					value=value.replace(/\r?\n/g,'');
+				this._content=value;
+				if (value)
+					_super.prototype._$set_text.call(this,value);
+				else {
+					_super.prototype._$set_text.call(this,this._prompt);
+					_super.prototype._$set_color.call(this,this.promptColor);
+				}
+			}
+		});
+
+		/**
+		*获取对输入框的引用实例。
+		*/
+		__getset(0,__proto,'nativeInput',function(){
+			return this._multiline ? Input.area :Input.input;
+		});
+
+		/**
+		*设置输入提示符。
+		*/
+		__getset(0,__proto,'prompt',function(){
+			return this._prompt;
+			},function(value){
+			if (!this._text && value)
+				_super.prototype._$set_color.call(this,this._promptColor);
+			this.promptColor=this._promptColor;
+			if (this._text)
+				_super.prototype._$set_text.call(this,(this._text==this._prompt)?value:this._text);
+			else
+			_super.prototype._$set_text.call(this,value);
+			this._prompt=value;
+		});
+
+		// 因此 调用focus接口是无法都在移动平台立刻弹出键盘的
+		/**
+		*表示焦点是否在显示对象上。
+		*/
+		__getset(0,__proto,'focus',function(){
+			return this._focus;
+			},function(value){
+			var input=this.nativeInput;
+			if (this._focus!==value){
+				if (value){
+					input.target && (input.target.focus=false);
+					input.target=this;
+					this._setInputMethod();
+					this._focusIn();
+					}else {
+					input.target=null;
+					this._focusOut();
+					input.blur();
+					if (Render.isConchApp){
+						input.setPos(-10000,-10000);
+					}else if (Input.inputContainer.contains(input))
+					Input.inputContainer.removeChild(input);
+				}
+			}
+		});
+
+		/**限制输入的字符。*/
+		__getset(0,__proto,'restrict',function(){
+			if (this._restrictPattern){
+				return this._restrictPattern.source;
+			}
+			return "";
+			},function(pattern){
+			if (pattern){
+				pattern="[^"+pattern+"]";
+				if (pattern.indexOf("^^")>-1)
+					pattern=pattern.replace("^^","");
+				this._restrictPattern=new RegExp(pattern,"g");
+			}else
+			this._restrictPattern=null;
+		});
+
+		/**
+		*是否可编辑。
+		*/
+		__getset(0,__proto,'editable',function(){
+			return this._editable;
+			},function(value){
+			this._editable=value;
+		});
+
+		/**
+		*设置输入提示符颜色。
+		*/
+		__getset(0,__proto,'promptColor',function(){
+			return this._promptColor;
+			},function(value){
+			this._promptColor=value;
+			if (!this._content)_super.prototype._$set_color.call(this,value);
+		});
+
+		/**
+		*输入框类型为Input静态常量之一。
+		*平台兼容性参见http://www.w3school.com.cn/html5/html_5_form_input_types.asp。
+		*/
+		__getset(0,__proto,'type',function(){
+			return this._type;
+			},function(value){
+			if (value=="password")
+				this._getCSSStyle().password=true;
+			else
+			this._getCSSStyle().password=false;
+			this._type=value;
+		});
+
+		//[Deprecated]
+		__getset(0,__proto,'inputElementXAdjuster',function(){
+			console.warn("deprecated: 由于即使设置了该值，在各平台和浏览器之间也不一定一致，inputElementXAdjuster已弃用。");
+			return 0;
+			},function(value){
+			console.warn("deprecated: 由于即使设置了该值，在各平台和浏览器之间也不一定一致，inputElementXAdjuster已弃用。");
+		});
+
+		//[Deprecated(replacement="Input.type")]
+		__getset(0,__proto,'asPassword',function(){
+			return this._getCSSStyle().password;
+			},function(value){
+			this._getCSSStyle().password=value;
+			this._type="password";
+			console.warn("deprecated: 使用type=\"password\"替代设置asPassword, asPassword将在下次重大更新时删去");
+			this.isChanged=true;
+		});
+
+		Input.__init__=function(){
+			Input._createInputElement();
+			if (Browser.onMobile)
+				Render.canvas.addEventListener(Input.IOS_IFRAME ? "click" :"touchend",Input._popupInputMethod);
+		}
+
+		Input._popupInputMethod=function(e){
+			if (!laya.display.Input.isInputting)return;
+			var input=laya.display.Input.inputElement;
+			input.focus();
+		}
+
+		Input._createInputElement=function(){
+			Input._initInput(Input.area=Browser.createElement("textarea"));
+			Input._initInput(Input.input=Browser.createElement("input"));
+			Input.inputContainer=Browser.createElement("div");
+			Input.inputContainer.style.position="absolute";
+			Input.inputContainer.style.zIndex=1E5;
+			Browser.container.appendChild(Input.inputContainer);
+			Input.inputContainer.setPos=function (x,y){Input.inputContainer.style.left=x+'px';Input.inputContainer.style.top=y+'px';};
+		}
+
+		Input._initInput=function(input){
+			var style=input.style;
+			style.cssText="position:absolute;overflow:hidden;resize:none;transform-origin:0 0;-webkit-transform-origin:0 0;-moz-transform-origin:0 0;-o-transform-origin:0 0;";
+			style.resize='none';
+			style.backgroundColor='transparent';
+			style.border='none';
+			style.outline='none';
+			style.zIndex=1;
+			input.addEventListener('input',Input._processInputting);
+			input.addEventListener('mousemove',Input._stopEvent);
+			input.addEventListener('mousedown',Input._stopEvent);
+			input.addEventListener('touchmove',Input._stopEvent);
+			if(!Render.isConchApp){
+				input.setColor=function (color){input.style.color=color;};
+				input.setFontSize=function (fontSize){input.style.fontSize=fontSize+'px';};
+				input.setSize=function (w,h){input.style.width=w+'px';input.style.height=h+'px';};
+			}
+			input.setFontFace=function (fontFace){input.style.fontFamily=fontFace;};
+		}
+
+		Input._processInputting=function(e){
+			var input=laya.display.Input.inputElement.target;
+			if (!input)return;
+			var value=laya.display.Input.inputElement.value;
+			if (input._restrictPattern){
+				value=value.replace(/\u2006|\x27/g,"");
+				if (input._restrictPattern.test(value)){
+					value=value.replace(input._restrictPattern,"");
+					laya.display.Input.inputElement.value=value;
+				}
+			}
+			input._text=value;
+			input.event("input");
+		}
+
+		Input._stopEvent=function(e){
+			if (e.type=='touchmove')
+				e.preventDefault();
+			e.stopPropagation && e.stopPropagation();
+		}
+
+		Input.TYPE_TEXT="text";
+		Input.TYPE_PASSWORD="password";
+		Input.TYPE_EMAIL="email";
+		Input.TYPE_URL="url";
+		Input.TYPE_NUMBER="number";
+		Input.TYPE_RANGE="range";
+		Input.TYPE_DATE="date";
+		Input.TYPE_MONTH="month";
+		Input.TYPE_WEEK="week";
+		Input.TYPE_TIME="time";
+		Input.TYPE_DATE_TIME="datetime";
+		Input.TYPE_DATE_TIME_LOCAL="datetime-local";
+		Input.TYPE_SEARCH="search";
+		Input.input=null
+		Input.area=null
+		Input.inputElement=null
+		Input.inputContainer=null
+		Input.confirmButton=null
+		Input.promptStyleDOM=null
+		Input.inputHeight=45;
+		Input.isInputting=false;
+		__static(Input,
+		['IOS_IFRAME',function(){return this.IOS_IFRAME=(Browser.onIOS && Browser.window.top !=Browser.window.self);}
+		]);
+		return Input;
+	})(Text)
 
 
 	/**
@@ -32461,517 +32973,6 @@ var Laya=window.Laya=(function(window,document){
 
 		return ProgressBar;
 	})(Component)
-
-
-	/**
-	*
-	*@author ww
-	*@version 1.0
-	*
-	*@created 2015-9-29 上午11:17:35
-	*/
-	//class laya.debug.tools.debugUI.DButton extends laya.display.Text
-	var DButton=(function(_super){
-		function DButton(){
-			DButton.__super.call(this);
-			this.bgColor="#ffff00";
-			this.wordWrap=false;
-			this.mouseEnabled=true;
-		}
-
-		__class(DButton,'laya.debug.tools.debugUI.DButton',_super);
-		return DButton;
-	})(Text)
-
-
-	/**
-	*<p><code>Input</code> 类用于创建显示对象以显示和输入文本。</p>
-	*/
-	//class laya.display.Input extends laya.display.Text
-	var Input=(function(_super){
-		function Input(){
-			this._focus=false;
-			this._multiline=false;
-			this._editable=true;
-			this._restrictPattern=null;
-			this._type="text";
-			this._prompt='';
-			this._promptColor="#A9A9A9";
-			this._originColor="#000000";
-			this._content='';
-			Input.__super.call(this);
-			this._maxChars=1E5;
-			this._width=100;
-			this._height=20;
-			this.multiline=false;
-			this.overflow=Text.SCROLL;
-			this.on("mousedown",this,this._onMouseDown);
-			this.on("undisplay",this,this._onUnDisplay);
-		}
-
-		__class(Input,'laya.display.Input',_super);
-		var __proto=Input.prototype;
-		/**
-		*设置光标位置和选取字符。
-		*@param startIndex 光标起始位置。
-		*@param endIndex 光标结束位置。
-		*/
-		__proto.setSelection=function(startIndex,endIndex){
-			laya.display.Input.inputElement.selectionStart=startIndex;
-			laya.display.Input.inputElement.selectionEnd=endIndex;
-		}
-
-		/**@private */
-		__proto._onUnDisplay=function(e){
-			this.focus=false;
-		}
-
-		/**@private */
-		__proto._onMouseDown=function(e){
-			this.focus=true;
-			Laya.stage.on("mousedown",this,this._checkBlur);
-		}
-
-		/**@private */
-		__proto._checkBlur=function(e){
-			if (e.nativeEvent.target !=laya.display.Input.input && e.nativeEvent.target !=laya.display.Input.area && e.target !=this)
-				this.focus=false;
-		}
-
-		/**@inheritDoc*/
-		__proto.render=function(context,x,y){
-			laya.display.Sprite.prototype.render.call(this,context,x,y);
-		}
-
-		/**
-		*在输入期间，如果 Input 实例的位置改变，调用该方法同步输入框的位置。
-		*/
-		__proto._syncInputTransform=function(){
-			var style=this.nativeInput.style;
-			var stage=Laya.stage;
-			var rec;
-			rec=Utils.getGlobalPosAndScale(this);
-			var m=stage._canvasTransform.clone();
-			var tm=m.clone();
-			tm.rotate(-Math.PI / 180 *Laya.stage.canvasDegree);
-			tm.scale(Laya.stage.clientScaleX,Laya.stage.clientScaleY);
-			var perpendicular=(Laya.stage.canvasDegree % 180 !=0);
-			var sx=perpendicular ? tm.d :tm.a;
-			var sy=perpendicular ? tm.a :tm.d;
-			tm.destroy();
-			var tx=this.padding[3];
-			var ty=this.padding[0];
-			if (Laya.stage.canvasDegree==0){
-				tx+=rec.x;
-				ty+=rec.y;
-				tx *=sx;
-				ty *=sy;
-				tx+=m.tx;
-				ty+=m.ty;
-				}else if (Laya.stage.canvasDegree==90){
-				tx+=rec.y;
-				ty+=rec.x;
-				tx *=sx;
-				ty *=sy;
-				tx=m.tx-tx;
-				ty+=m.ty;
-				}else{
-				tx+=rec.y;
-				ty+=rec.x;
-				tx *=sx;
-				ty *=sy;
-				tx+=m.tx;
-				ty=m.ty-ty;
-			};
-			var quarter=0.785;
-			var r=Math.atan2(rec.height,rec.width)-quarter;
-			var sin=Math.sin(r),cos=Math.cos(r);
-			var tsx=cos *rec.width+sin *rec.height;
-			var tsy=cos *rec.height-sin *rec.width;
-			sx *=(perpendicular ? tsy :tsx);
-			sy *=(perpendicular ? tsx :tsy);
-			m.tx=0;
-			m.ty=0;
-			r *=180 / 3.1415;
-			Input.inputContainer.style.transform="scale("+sx+","+sy+") rotate("+(Laya.stage.canvasDegree+r)+"deg)";
-			Input.inputContainer.style.webkitTransform="scale("+sx+","+sy+") rotate("+(Laya.stage.canvasDegree+r)+"deg)";
-			Input.inputContainer.setPos(tx,ty);
-			m.destroy();
-			var inputWid=this._width-this.padding[1]-this.padding[3];
-			var inputHei=this._height-this.padding[0]-this.padding[2];
-			this.nativeInput.setSize(inputWid,inputHei);
-			if (Render.isConchApp){
-				this.nativeInput.setPos(tx,ty);
-				this.nativeInput.setScale(sx,sy);
-			}
-		}
-
-		/**选中所有文本。*/
-		__proto.select=function(){
-			this.nativeInput.select();
-		}
-
-		/**@private 设置输入法（textarea或input）*/
-		__proto._setInputMethod=function(){
-			Input.input.parentElement && (Input.inputContainer.removeChild(Input.input));
-			Input.area.parentElement && (Input.inputContainer.removeChild(Input.area));
-			Input.inputElement=(this._multiline ? Input.area :Input.input);
-			Input.inputContainer.appendChild(Input.inputElement);
-		}
-
-		/**@private */
-		__proto._focusIn=function(){
-			laya.display.Input.isInputting=true;
-			var input=this.nativeInput;
-			this._focus=true;
-			var cssStyle=input.style;
-			cssStyle.whiteSpace=(this.wordWrap ? "pre-wrap" :"nowrap");
-			this._setPromptColor();
-			input.readOnly=!this._editable;
-			input.maxLength=this._maxChars;
-			var padding=this.padding;
-			input.type=this._type;
-			input.value=this._content;
-			input.placeholder=this._prompt;
-			Laya.stage.off("keydown",this,this._onKeyDown);
-			Laya.stage.on("keydown",this,this._onKeyDown);
-			Laya.stage.focus=this;
-			this.event("focus");
-			if (Browser.onPC)input.focus();
-			var temp=this._text;
-			this._text=null;
-			this.typeset();
-			input.setColor(this._originColor);
-			input.setFontSize(this.fontSize);
-			input.setFontFace(this.font);
-			if (Render.isConchApp){
-				input.setMultiAble && input.setMultiAble(this._multiline);
-			}
-			cssStyle.lineHeight=(this.leading+this.fontSize)+"px";
-			cssStyle.fontStyle=(this.italic ? "italic" :"normal");
-			cssStyle.fontWeight=(this.bold ? "bold" :"normal");
-			cssStyle.textAlign=this.align;
-			cssStyle.padding="0 0";
-			this._syncInputTransform();
-			if (!Render.isConchApp && Browser.onPC)
-				Laya.timer.frameLoop(1,this,this._syncInputTransform);
-		}
-
-		// 设置DOM输入框提示符颜色。
-		__proto._setPromptColor=function(){
-			Input.promptStyleDOM=Browser.getElementById("promptStyle");
-			if (!Input.promptStyleDOM){
-				Input.promptStyleDOM=Browser.createElement("style");
-				Browser.document.head.appendChild(Input.promptStyleDOM);
-			}
-			Input.promptStyleDOM.innerText="input::-webkit-input-placeholder, textarea::-webkit-input-placeholder {"+"color:"+this._promptColor+"}"+"input:-moz-placeholder, textarea:-moz-placeholder {"+"color:"+this._promptColor+"}"+"input::-moz-placeholder, textarea::-moz-placeholder {"+"color:"+this._promptColor+"}"+"input:-ms-input-placeholder, textarea:-ms-input-placeholder {"+"color:"+this._promptColor+"}";
-		}
-
-		/**@private */
-		__proto._focusOut=function(){
-			laya.display.Input.isInputting=false;
-			this._focus=false;
-			this._text=null;
-			this._content=this.nativeInput.value;
-			if (!this._content){
-				_super.prototype._$set_text.call(this,this._prompt);
-				_super.prototype._$set_color.call(this,this._promptColor);
-				}else {
-				_super.prototype._$set_text.call(this,this._content);
-				_super.prototype._$set_color.call(this,this._originColor);
-			}
-			Laya.stage.off("keydown",this,this._onKeyDown);
-			Laya.stage.focus=null;
-			this.event("blur");
-			if (Render.isConchApp)this.nativeInput.blur();
-			Browser.onPC && Laya.timer.clear(this,this._syncInputTransform);
-			Laya.stage.off("mousedown",this,this._checkBlur);
-		}
-
-		/**@private */
-		__proto._onKeyDown=function(e){
-			if (e.keyCode===13){
-				if (Browser.onMobile && !this._multiline)
-					this.focus=false;
-				this.event("enter");
-			}
-		}
-
-		__proto.changeText=function(text){
-			this._content=text;
-			if (this._focus){
-				this.nativeInput.value=text || '';
-				this.event("change");
-			}else
-			_super.prototype.changeText.call(this,text);
-		}
-
-		/**@inheritDoc */
-		__getset(0,__proto,'color',_super.prototype._$get_color,function(value){
-			if (this._focus)
-				this.nativeInput.setColor(value);
-			_super.prototype._$set_color.call(this,this._content?value:this._promptColor);
-			this._originColor=value;
-		});
-
-		//[Deprecated]
-		__getset(0,__proto,'inputElementYAdjuster',function(){
-			console.warn("deprecated: 由于即使设置了该值，在各平台和浏览器之间也不一定一致，inputElementYAdjuster已弃用。");
-			return 0;
-			},function(value){
-			console.warn("deprecated: 由于即使设置了该值，在各平台和浏览器之间也不一定一致，inputElementYAdjuster已弃用。");
-		});
-
-		/**表示是否是多行输入框。*/
-		__getset(0,__proto,'multiline',function(){
-			return this._multiline;
-			},function(value){
-			this._multiline=value;
-			this.valign=value ? "top" :"middle";
-		});
-
-		/**
-		*字符数量限制，默认为10000。
-		*设置字符数量限制时，小于等于0的值将会限制字符数量为10000。
-		*/
-		__getset(0,__proto,'maxChars',function(){
-			return this._maxChars;
-			},function(value){
-			if (value <=0)
-				value=1E5;
-			this._maxChars=value;
-		});
-
-		/**@inheritDoc */
-		__getset(0,__proto,'text',function(){
-			if (this._focus)
-				return this.nativeInput.value;
-			else
-			return this._content || "";
-			},function(value){
-			_super.prototype._$set_color.call(this,this._originColor);
-			value+='';
-			if (this._focus){
-				this.nativeInput.value=value || '';
-				this.event("change");
-				}else {
-				if (!this._multiline)
-					value=value.replace(/\r?\n/g,'');
-				this._content=value;
-				if (value)
-					_super.prototype._$set_text.call(this,value);
-				else {
-					_super.prototype._$set_text.call(this,this._prompt);
-					_super.prototype._$set_color.call(this,this.promptColor);
-				}
-			}
-		});
-
-		/**
-		*获取对输入框的引用实例。
-		*/
-		__getset(0,__proto,'nativeInput',function(){
-			return this._multiline ? Input.area :Input.input;
-		});
-
-		/**
-		*设置输入提示符。
-		*/
-		__getset(0,__proto,'prompt',function(){
-			return this._prompt;
-			},function(value){
-			if (!this._text && value)
-				_super.prototype._$set_color.call(this,this._promptColor);
-			this.promptColor=this._promptColor;
-			if (this._text)
-				_super.prototype._$set_text.call(this,(this._text==this._prompt)?value:this._text);
-			else
-			_super.prototype._$set_text.call(this,value);
-			this._prompt=value;
-		});
-
-		// 因此 调用focus接口是无法都在移动平台立刻弹出键盘的
-		/**
-		*表示焦点是否在显示对象上。
-		*/
-		__getset(0,__proto,'focus',function(){
-			return this._focus;
-			},function(value){
-			var input=this.nativeInput;
-			if (this._focus!==value){
-				if (value){
-					input.target && (input.target.focus=false);
-					input.target=this;
-					this._setInputMethod();
-					this._focusIn();
-					}else {
-					input.target=null;
-					this._focusOut();
-					input.blur();
-					if (Render.isConchApp){
-						input.setPos(-10000,-10000);
-					}else if (Input.inputContainer.contains(input))
-					Input.inputContainer.removeChild(input);
-				}
-			}
-		});
-
-		/**限制输入的字符。*/
-		__getset(0,__proto,'restrict',function(){
-			if (this._restrictPattern){
-				return this._restrictPattern.source;
-			}
-			return "";
-			},function(pattern){
-			if (pattern){
-				pattern="[^"+pattern+"]";
-				if (pattern.indexOf("^^")>-1)
-					pattern=pattern.replace("^^","");
-				this._restrictPattern=new RegExp(pattern,"g");
-			}else
-			this._restrictPattern=null;
-		});
-
-		/**
-		*是否可编辑。
-		*/
-		__getset(0,__proto,'editable',function(){
-			return this._editable;
-			},function(value){
-			this._editable=value;
-		});
-
-		/**
-		*设置输入提示符颜色。
-		*/
-		__getset(0,__proto,'promptColor',function(){
-			return this._promptColor;
-			},function(value){
-			this._promptColor=value;
-			if (!this._content)_super.prototype._$set_color.call(this,value);
-		});
-
-		/**
-		*输入框类型为Input静态常量之一。
-		*平台兼容性参见http://www.w3school.com.cn/html5/html_5_form_input_types.asp。
-		*/
-		__getset(0,__proto,'type',function(){
-			return this._type;
-			},function(value){
-			if (value=="password")
-				this._getCSSStyle().password=true;
-			else
-			this._getCSSStyle().password=false;
-			this._type=value;
-		});
-
-		//[Deprecated]
-		__getset(0,__proto,'inputElementXAdjuster',function(){
-			console.warn("deprecated: 由于即使设置了该值，在各平台和浏览器之间也不一定一致，inputElementXAdjuster已弃用。");
-			return 0;
-			},function(value){
-			console.warn("deprecated: 由于即使设置了该值，在各平台和浏览器之间也不一定一致，inputElementXAdjuster已弃用。");
-		});
-
-		//[Deprecated(replacement="Input.type")]
-		__getset(0,__proto,'asPassword',function(){
-			return this._getCSSStyle().password;
-			},function(value){
-			this._getCSSStyle().password=value;
-			this._type="password";
-			console.warn("deprecated: 使用type=\"password\"替代设置asPassword, asPassword将在下次重大更新时删去");
-			this.isChanged=true;
-		});
-
-		Input.__init__=function(){
-			Input._createInputElement();
-			if (Browser.onMobile)
-				Render.canvas.addEventListener(Input.IOS_IFRAME ? "click" :"touchend",Input._popupInputMethod);
-		}
-
-		Input._popupInputMethod=function(e){
-			if (!laya.display.Input.isInputting)return;
-			var input=laya.display.Input.inputElement;
-			input.focus();
-		}
-
-		Input._createInputElement=function(){
-			Input._initInput(Input.area=Browser.createElement("textarea"));
-			Input._initInput(Input.input=Browser.createElement("input"));
-			Input.inputContainer=Browser.createElement("div");
-			Input.inputContainer.style.position="absolute";
-			Input.inputContainer.style.zIndex=1E5;
-			Browser.container.appendChild(Input.inputContainer);
-			Input.inputContainer.setPos=function (x,y){Input.inputContainer.style.left=x+'px';Input.inputContainer.style.top=y+'px';};
-		}
-
-		Input._initInput=function(input){
-			var style=input.style;
-			style.cssText="position:absolute;overflow:hidden;resize:none;transform-origin:0 0;-webkit-transform-origin:0 0;-moz-transform-origin:0 0;-o-transform-origin:0 0;";
-			style.resize='none';
-			style.backgroundColor='transparent';
-			style.border='none';
-			style.outline='none';
-			style.zIndex=1;
-			input.addEventListener('input',Input._processInputting);
-			input.addEventListener('mousemove',Input._stopEvent);
-			input.addEventListener('mousedown',Input._stopEvent);
-			input.addEventListener('touchmove',Input._stopEvent);
-			if(!Render.isConchApp){
-				input.setColor=function (color){input.style.color=color;};
-				input.setFontSize=function (fontSize){input.style.fontSize=fontSize+'px';};
-				input.setSize=function (w,h){input.style.width=w+'px';input.style.height=h+'px';};
-			}
-			input.setFontFace=function (fontFace){input.style.fontFamily=fontFace;};
-		}
-
-		Input._processInputting=function(e){
-			var input=laya.display.Input.inputElement.target;
-			if (!input)return;
-			var value=laya.display.Input.inputElement.value;
-			if (input._restrictPattern){
-				value=value.replace(/\u2006|\x27/g,"");
-				if (input._restrictPattern.test(value)){
-					value=value.replace(input._restrictPattern,"");
-					laya.display.Input.inputElement.value=value;
-				}
-			}
-			input._text=value;
-			input.event("input");
-		}
-
-		Input._stopEvent=function(e){
-			if (e.type=='touchmove')
-				e.preventDefault();
-			e.stopPropagation && e.stopPropagation();
-		}
-
-		Input.TYPE_TEXT="text";
-		Input.TYPE_PASSWORD="password";
-		Input.TYPE_EMAIL="email";
-		Input.TYPE_URL="url";
-		Input.TYPE_NUMBER="number";
-		Input.TYPE_RANGE="range";
-		Input.TYPE_DATE="date";
-		Input.TYPE_MONTH="month";
-		Input.TYPE_WEEK="week";
-		Input.TYPE_TIME="time";
-		Input.TYPE_DATE_TIME="datetime";
-		Input.TYPE_DATE_TIME_LOCAL="datetime-local";
-		Input.TYPE_SEARCH="search";
-		Input.input=null
-		Input.area=null
-		Input.inputElement=null
-		Input.inputContainer=null
-		Input.confirmButton=null
-		Input.promptStyleDOM=null
-		Input.inputHeight=45;
-		Input.isInputting=false;
-		__static(Input,
-		['IOS_IFRAME',function(){return this.IOS_IFRAME=(Browser.onIOS && Browser.window.top !=Browser.window.self);}
-		]);
-		return Input;
-	})(Text)
 
 
 	/**
@@ -37893,6 +37894,22 @@ var Laya=window.Laya=(function(window,document){
 
 
 	/**
+	*...
+	*@author ww
+	*/
+	//class laya.debug.tools.debugUI.DInput extends laya.display.Input
+	var DInput=(function(_super){
+		function DInput(){
+			DInput.__super.call(this);
+			this.bgColor="#11ff00";
+		}
+
+		__class(DInput,'laya.debug.tools.debugUI.DInput',_super);
+		return DInput;
+	})(Input)
+
+
+	/**
 	*<code>CheckBox</code> 组件显示一个小方框，该方框内可以有选中标记。
 	*<code>CheckBox</code> 组件还可以显示可选的文本标签，默认该标签位于 CheckBox 右侧。
 	*<p><code>CheckBox</code> 使用 <code>dataSource</code>赋值时的的默认属性是：<code>selected</code>。</p>
@@ -38070,22 +38087,6 @@ var Laya=window.Laya=(function(window,document){
 
 		return Radio;
 	})(Button)
-
-
-	/**
-	*...
-	*@author ww
-	*/
-	//class laya.debug.tools.debugUI.DInput extends laya.display.Input
-	var DInput=(function(_super){
-		function DInput(){
-			DInput.__super.call(this);
-			this.bgColor="#11ff00";
-		}
-
-		__class(DInput,'laya.debug.tools.debugUI.DInput',_super);
-		return DInput;
-	})(Input)
 
 
 	/**
@@ -38377,107 +38378,6 @@ var Laya=window.Laya=(function(window,document){
 		__class(VScrollBar,'laya.ui.VScrollBar',_super);
 		return VScrollBar;
 	})(ScrollBar)
-
-
-	/**
-	*使用 <code>VSlider</code> 控件，用户可以通过在滑块轨道的终点之间移动滑块来选择值。
-	*<p> <code>VSlider</code> 控件采用垂直方向。滑块轨道从下往上扩展，而标签位于轨道的左右两侧。</p>
-	*
-	*@example 以下示例代码，创建了一个 <code>VSlider</code> 实例。
-	*<listing version="3.0">
-	*package
-	*{
-		*import laya.ui.HSlider;
-		*import laya.ui.VSlider;
-		*import laya.utils.Handler;
-		*public class VSlider_Example
-		*{
-			*private var vSlider:VSlider;
-			*public function VSlider_Example()
-			*{
-				*Laya.init(640,800);//设置游戏画布宽高。
-				*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
-				*Laya.loader.load(["resource/ui/vslider.png","resource/ui/vslider$bar.png"],Handler.create(this,onLoadComplete));//加载资源。
-				*}
-			*private function onLoadComplete():void
-			*{
-				*vSlider=new VSlider();//创建一个 VSlider 类的实例对象 vSlider 。
-				*vSlider.skin="resource/ui/vslider.png";//设置 vSlider 的皮肤。
-				*vSlider.min=0;//设置 vSlider 最低位置值。
-				*vSlider.max=10;//设置 vSlider 最高位置值。
-				*vSlider.value=2;//设置 vSlider 当前位置值。
-				*vSlider.tick=1;//设置 vSlider 刻度值。
-				*vSlider.x=100;//设置 vSlider 对象的属性 x 的值，用于控制 vSlider 对象的显示位置。
-				*vSlider.y=100;//设置 vSlider 对象的属性 y 的值，用于控制 vSlider 对象的显示位置。
-				*vSlider.changeHandler=new Handler(this,onChange);//设置 vSlider 位置变化处理器。
-				*Laya.stage.addChild(vSlider);//把 vSlider 添加到显示列表。
-				*}
-			*private function onChange(value:Number):void
-			*{
-				*trace("滑块的位置： value="+value);
-				*}
-			*}
-		*}
-	*</listing>
-	*<listing version="3.0">
-	*Laya.init(640,800);//设置游戏画布宽高
-	*Laya.stage.bgColor="#efefef";//设置画布的背景颜色
-	*var vSlider;
-	*Laya.loader.load(["resource/ui/vslider.png","resource/ui/vslider$bar.png"],laya.utils.Handler.create(this,onLoadComplete));//加载资源。
-	*function onLoadComplete(){
-		*vSlider=new laya.ui.VSlider();//创建一个 VSlider 类的实例对象 vSlider 。
-		*vSlider.skin="resource/ui/vslider.png";//设置 vSlider 的皮肤。
-		*vSlider.min=0;//设置 vSlider 最低位置值。
-		*vSlider.max=10;//设置 vSlider 最高位置值。
-		*vSlider.value=2;//设置 vSlider 当前位置值。
-		*vSlider.tick=1;//设置 vSlider 刻度值。
-		*vSlider.x=100;//设置 vSlider 对象的属性 x 的值，用于控制 vSlider 对象的显示位置。
-		*vSlider.y=100;//设置 vSlider 对象的属性 y 的值，用于控制 vSlider 对象的显示位置。
-		*vSlider.changeHandler=new laya.utils.Handler(this,onChange);//设置 vSlider 位置变化处理器。
-		*Laya.stage.addChild(vSlider);//把 vSlider 添加到显示列表。
-		*}
-	*function onChange(value){
-		*console.log("滑块的位置： value="+value);
-		*}
-	*</listing>
-	*<listing version="3.0">
-	*import HSlider=laya.ui.HSlider;
-	*import VSlider=laya.ui.VSlider;
-	*import Handler=laya.utils.Handler;
-	*class VSlider_Example {
-		*private vSlider:VSlider;
-		*constructor(){
-			*Laya.init(640,800);//设置游戏画布宽高。
-			*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
-			*Laya.loader.load(["resource/ui/vslider.png","resource/ui/vslider$bar.png"],Handler.create(this,this.onLoadComplete));//加载资源。
-			*}
-		*private onLoadComplete():void {
-			*this.vSlider=new VSlider();//创建一个 VSlider 类的实例对象 vSlider 。
-			*this.vSlider.skin="resource/ui/vslider.png";//设置 vSlider 的皮肤。
-			*this.vSlider.min=0;//设置 vSlider 最低位置值。
-			*this.vSlider.max=10;//设置 vSlider 最高位置值。
-			*this.vSlider.value=2;//设置 vSlider 当前位置值。
-			*this.vSlider.tick=1;//设置 vSlider 刻度值。
-			*this.vSlider.x=100;//设置 vSlider 对象的属性 x 的值，用于控制 vSlider 对象的显示位置。
-			*this.vSlider.y=100;//设置 vSlider 对象的属性 y 的值，用于控制 vSlider 对象的显示位置。
-			*this.vSlider.changeHandler=new Handler(this,this.onChange);//设置 vSlider 位置变化处理器。
-			*Laya.stage.addChild(this.vSlider);//把 vSlider 添加到显示列表。
-			*}
-		*private onChange(value:number):void {
-			*console.log("滑块的位置： value="+value);
-			*}
-		*}
-	*</listing>
-	*@see laya.ui.Slider
-	*/
-	//class laya.ui.VSlider extends laya.ui.Slider
-	var VSlider=(function(_super){
-		function VSlider(){VSlider.__super.call(this);;
-		};
-
-		__class(VSlider,'laya.ui.VSlider',_super);
-		return VSlider;
-	})(Slider)
 
 
 	/**
@@ -38793,6 +38693,107 @@ var Laya=window.Laya=(function(window,document){
 
 		return TextInput;
 	})(Label)
+
+
+	/**
+	*使用 <code>VSlider</code> 控件，用户可以通过在滑块轨道的终点之间移动滑块来选择值。
+	*<p> <code>VSlider</code> 控件采用垂直方向。滑块轨道从下往上扩展，而标签位于轨道的左右两侧。</p>
+	*
+	*@example 以下示例代码，创建了一个 <code>VSlider</code> 实例。
+	*<listing version="3.0">
+	*package
+	*{
+		*import laya.ui.HSlider;
+		*import laya.ui.VSlider;
+		*import laya.utils.Handler;
+		*public class VSlider_Example
+		*{
+			*private var vSlider:VSlider;
+			*public function VSlider_Example()
+			*{
+				*Laya.init(640,800);//设置游戏画布宽高。
+				*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
+				*Laya.loader.load(["resource/ui/vslider.png","resource/ui/vslider$bar.png"],Handler.create(this,onLoadComplete));//加载资源。
+				*}
+			*private function onLoadComplete():void
+			*{
+				*vSlider=new VSlider();//创建一个 VSlider 类的实例对象 vSlider 。
+				*vSlider.skin="resource/ui/vslider.png";//设置 vSlider 的皮肤。
+				*vSlider.min=0;//设置 vSlider 最低位置值。
+				*vSlider.max=10;//设置 vSlider 最高位置值。
+				*vSlider.value=2;//设置 vSlider 当前位置值。
+				*vSlider.tick=1;//设置 vSlider 刻度值。
+				*vSlider.x=100;//设置 vSlider 对象的属性 x 的值，用于控制 vSlider 对象的显示位置。
+				*vSlider.y=100;//设置 vSlider 对象的属性 y 的值，用于控制 vSlider 对象的显示位置。
+				*vSlider.changeHandler=new Handler(this,onChange);//设置 vSlider 位置变化处理器。
+				*Laya.stage.addChild(vSlider);//把 vSlider 添加到显示列表。
+				*}
+			*private function onChange(value:Number):void
+			*{
+				*trace("滑块的位置： value="+value);
+				*}
+			*}
+		*}
+	*</listing>
+	*<listing version="3.0">
+	*Laya.init(640,800);//设置游戏画布宽高
+	*Laya.stage.bgColor="#efefef";//设置画布的背景颜色
+	*var vSlider;
+	*Laya.loader.load(["resource/ui/vslider.png","resource/ui/vslider$bar.png"],laya.utils.Handler.create(this,onLoadComplete));//加载资源。
+	*function onLoadComplete(){
+		*vSlider=new laya.ui.VSlider();//创建一个 VSlider 类的实例对象 vSlider 。
+		*vSlider.skin="resource/ui/vslider.png";//设置 vSlider 的皮肤。
+		*vSlider.min=0;//设置 vSlider 最低位置值。
+		*vSlider.max=10;//设置 vSlider 最高位置值。
+		*vSlider.value=2;//设置 vSlider 当前位置值。
+		*vSlider.tick=1;//设置 vSlider 刻度值。
+		*vSlider.x=100;//设置 vSlider 对象的属性 x 的值，用于控制 vSlider 对象的显示位置。
+		*vSlider.y=100;//设置 vSlider 对象的属性 y 的值，用于控制 vSlider 对象的显示位置。
+		*vSlider.changeHandler=new laya.utils.Handler(this,onChange);//设置 vSlider 位置变化处理器。
+		*Laya.stage.addChild(vSlider);//把 vSlider 添加到显示列表。
+		*}
+	*function onChange(value){
+		*console.log("滑块的位置： value="+value);
+		*}
+	*</listing>
+	*<listing version="3.0">
+	*import HSlider=laya.ui.HSlider;
+	*import VSlider=laya.ui.VSlider;
+	*import Handler=laya.utils.Handler;
+	*class VSlider_Example {
+		*private vSlider:VSlider;
+		*constructor(){
+			*Laya.init(640,800);//设置游戏画布宽高。
+			*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
+			*Laya.loader.load(["resource/ui/vslider.png","resource/ui/vslider$bar.png"],Handler.create(this,this.onLoadComplete));//加载资源。
+			*}
+		*private onLoadComplete():void {
+			*this.vSlider=new VSlider();//创建一个 VSlider 类的实例对象 vSlider 。
+			*this.vSlider.skin="resource/ui/vslider.png";//设置 vSlider 的皮肤。
+			*this.vSlider.min=0;//设置 vSlider 最低位置值。
+			*this.vSlider.max=10;//设置 vSlider 最高位置值。
+			*this.vSlider.value=2;//设置 vSlider 当前位置值。
+			*this.vSlider.tick=1;//设置 vSlider 刻度值。
+			*this.vSlider.x=100;//设置 vSlider 对象的属性 x 的值，用于控制 vSlider 对象的显示位置。
+			*this.vSlider.y=100;//设置 vSlider 对象的属性 y 的值，用于控制 vSlider 对象的显示位置。
+			*this.vSlider.changeHandler=new Handler(this,this.onChange);//设置 vSlider 位置变化处理器。
+			*Laya.stage.addChild(this.vSlider);//把 vSlider 添加到显示列表。
+			*}
+		*private onChange(value:number):void {
+			*console.log("滑块的位置： value="+value);
+			*}
+		*}
+	*</listing>
+	*@see laya.ui.Slider
+	*/
+	//class laya.ui.VSlider extends laya.ui.Slider
+	var VSlider=(function(_super){
+		function VSlider(){VSlider.__super.call(this);;
+		};
+
+		__class(VSlider,'laya.ui.VSlider',_super);
+		return VSlider;
+	})(Slider)
 
 
 	/**
@@ -39149,47 +39150,6 @@ var Laya=window.Laya=(function(window,document){
 	})(View)
 
 
-	//class ui.SelectStockViewUI extends laya.ui.View
-	var SelectStockViewUI=(function(_super){
-		function SelectStockViewUI(){
-			this.list=null;
-			this.tip=null;
-			this.typeSelect=null;
-			this.autoFresh=null;
-			SelectStockViewUI.__super.call(this);
-		}
-
-		__class(SelectStockViewUI,'ui.SelectStockViewUI',_super);
-		var __proto=SelectStockViewUI.prototype;
-		__proto.createChildren=function(){
-			laya.ui.Component.prototype.createChildren.call(this);
-			this.createView(SelectStockViewUI.uiView);
-		}
-
-		SelectStockViewUI.uiView={"type":"View","props":{"width":445,"height":400},"child":[{"type":"List","props":{"var":"list","vScrollBarSkin":"comp/vscroll.png","top":30,"right":10,"left":10,"bottom":10},"child":[{"type":"Box","props":{"y":0,"x":0,"width":168,"name":"render","height":61},"child":[{"type":"Label","props":{"wordWrap":true,"top":0,"text":"this is a list","skin":"comp/label.png","right":0,"name":"label","left":0,"fontSize":14,"color":"#efe82f","bottom":0,"borderColor":"#fb125d"}},{"type":"Label","props":{"y":39,"x":72,"wordWrap":true,"width":96,"text":"this is a list","skin":"comp/label.png","name":"info","height":22,"fontSize":14,"color":"#efe82f","align":"right"}}]}]},{"type":"Label","props":{"y":-11,"width":271,"var":"tip","text":"股票代码:当前盈利:最高盈利","right":150,"height":38,"color":"#f33713"}},{"type":"ComboBox","props":{"y":3,"visibleNum":15,"var":"typeSelect","skin":"comp/combobox.png","selectedIndex":0,"scrollBarSkin":"comp/vscroll.png","right":20,"labels":"KLine,Position","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"CheckBox","props":{"y":10,"x":11,"width":75,"var":"autoFresh","skin":"comp/checkbox.png","selected":false,"label":"自动刷新","height":14,"labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}}]};
-		return SelectStockViewUI;
-	})(View)
-
-
-	//class ui.StockViewUI extends laya.ui.View
-	var StockViewUI=(function(_super){
-		function StockViewUI(){
-			this.stockList=null;
-			StockViewUI.__super.call(this);
-		}
-
-		__class(StockViewUI,'ui.StockViewUI',_super);
-		var __proto=StockViewUI.prototype;
-		__proto.createChildren=function(){
-			laya.ui.Component.prototype.createChildren.call(this);
-			this.createView(StockViewUI.uiView);
-		}
-
-		StockViewUI.uiView={"type":"View","props":{"width":445,"height":400},"child":[{"type":"List","props":{"x":20,"width":405,"var":"stockList","vScrollBarSkin":"comp/vscroll.png","top":30,"right":20,"left":20,"height":360,"bottom":20},"child":[{"type":"Box","props":{"width":120,"renderType":"render","height":80},"child":[{"type":"Image","props":{"width":100,"skin":"comp/image.png","name":"img","height":75}}]}]},{"type":"Label","props":{"y":7,"x":8,"width":149,"text":"点击查看详情，注意不要屏蔽弹窗","height":12,"color":"#f3ecec"}}]};
-		return StockViewUI;
-	})(View)
-
-
 	//class ui.netcomps.LoginViewUI extends laya.ui.View
 	var LoginViewUI=(function(_super){
 		function LoginViewUI(){
@@ -39309,6 +39269,91 @@ var Laya=window.Laya=(function(window,document){
 
 		StockRealTimeItemUI.uiView={"type":"View","props":{"width":546,"height":25},"child":[{"type":"Box","props":{"y":0,"x":0,"width":546,"height":25},"child":[{"type":"Label","props":{"wordWrap":true,"var":"txt","top":0,"text":"this is a list","skin":"comp/label.png","right":0,"name":"label","left":0,"fontSize":14,"color":"#efe82f","bottom":0,"borderColor":"#fb125d"}}]},{"type":"Button","props":{"y":0,"x":457,"width":42,"var":"delBtn","skin":"comp/button.png","label":"删除","height":24,"labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"CheckBox","props":{"y":5,"x":410,"var":"showLine","skin":"comp/checkbox.png","label":"分时","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"Button","props":{"y":0,"x":500,"width":42,"var":"markBtn","skin":"comp/button.png","label":"Mark","height":24,"labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}}]};
 		return StockRealTimeItemUI;
+	})(View)
+
+
+	//class ui.SelectStockViewUI extends laya.ui.View
+	var SelectStockViewUI=(function(_super){
+		function SelectStockViewUI(){
+			this.list=null;
+			this.tip=null;
+			this.typeSelect=null;
+			this.autoFresh=null;
+			SelectStockViewUI.__super.call(this);
+		}
+
+		__class(SelectStockViewUI,'ui.SelectStockViewUI',_super);
+		var __proto=SelectStockViewUI.prototype;
+		__proto.createChildren=function(){
+			laya.ui.Component.prototype.createChildren.call(this);
+			this.createView(SelectStockViewUI.uiView);
+		}
+
+		SelectStockViewUI.uiView={"type":"View","props":{"width":445,"height":400},"child":[{"type":"List","props":{"var":"list","vScrollBarSkin":"comp/vscroll.png","top":30,"right":10,"left":10,"bottom":10},"child":[{"type":"Box","props":{"y":0,"x":0,"width":168,"name":"render","height":61},"child":[{"type":"Label","props":{"wordWrap":true,"top":0,"text":"this is a list","skin":"comp/label.png","right":0,"name":"label","left":0,"fontSize":14,"color":"#efe82f","bottom":0,"borderColor":"#fb125d"}},{"type":"Label","props":{"y":39,"x":72,"wordWrap":true,"width":96,"text":"this is a list","skin":"comp/label.png","name":"info","height":22,"fontSize":14,"color":"#efe82f","align":"right"}}]}]},{"type":"Label","props":{"y":-11,"width":271,"var":"tip","text":"股票代码:当前盈利:最高盈利","right":150,"height":38,"color":"#f33713"}},{"type":"ComboBox","props":{"y":3,"visibleNum":15,"var":"typeSelect","skin":"comp/combobox.png","selectedIndex":0,"scrollBarSkin":"comp/vscroll.png","right":20,"labels":"KLine,Position","labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}},{"type":"CheckBox","props":{"y":10,"x":11,"width":75,"var":"autoFresh","skin":"comp/checkbox.png","selected":false,"label":"自动刷新","height":14,"labelColors":"#efefef,#ffffff,#c5c5c5,#c5c5c5"}}]};
+		return SelectStockViewUI;
+	})(View)
+
+
+	//class ui.StockViewUI extends laya.ui.View
+	var StockViewUI=(function(_super){
+		function StockViewUI(){
+			this.stockList=null;
+			StockViewUI.__super.call(this);
+		}
+
+		__class(StockViewUI,'ui.StockViewUI',_super);
+		var __proto=StockViewUI.prototype;
+		__proto.createChildren=function(){
+			laya.ui.Component.prototype.createChildren.call(this);
+			this.createView(StockViewUI.uiView);
+		}
+
+		StockViewUI.uiView={"type":"View","props":{"width":445,"height":400},"child":[{"type":"List","props":{"x":20,"width":405,"var":"stockList","vScrollBarSkin":"comp/vscroll.png","top":30,"right":20,"left":20,"height":360,"bottom":20},"child":[{"type":"Box","props":{"width":120,"renderType":"render","height":80},"child":[{"type":"Image","props":{"width":100,"skin":"comp/image.png","name":"img","height":75}}]}]},{"type":"Label","props":{"y":7,"x":8,"width":149,"text":"点击查看详情，注意不要屏蔽弹窗","height":12,"color":"#f3ecec"}}]};
+		return StockViewUI;
+	})(View)
+
+
+	//class laya.debug.ui.debugui.comps.ListItemUI extends laya.ui.View
+	var ListItemUI=(function(_super){
+		function ListItemUI(){
+			ListItemUI.__super.call(this);
+		}
+
+		__class(ListItemUI,'laya.debug.ui.debugui.comps.ListItemUI',_super);
+		var __proto=ListItemUI.prototype;
+		__proto.createChildren=function(){
+			this.viewMapRegists();
+			laya.ui.Component.prototype.createChildren.call(this);
+			this.createView(ListItemUI.uiView);
+		}
+
+		__proto.viewMapRegists=function(){}
+		__static(ListItemUI,
+		['uiView',function(){return this.uiView={"type":"View","props":{"base64pic":true,"width":244,"height":19},"child":[{"type":"Clip","props":{"y":-1,"skin":"comp/clip_selectBox.png","clipY":2,"height":19,"name":"selectBox","left":2,"right":2,"x":0}},{"type":"Label","props":{"x":25,"text":"render","color":"#dcea36","width":77,"height":17,"name":"label","y":2,"fontSize":12}},{"type":"Clip","props":{"skin":"comp/clip_tree_arrow.png","clipY":2,"name":"arrow","x":8,"y":4,"mouseEnabled":false}}]};}
+		]);
+		return ListItemUI;
+	})(View)
+
+
+	//class laya.debug.ui.debugui.comps.RankListItemUI extends laya.ui.View
+	var RankListItemUI=(function(_super){
+		function RankListItemUI(){
+			RankListItemUI.__super.call(this);
+		}
+
+		__class(RankListItemUI,'laya.debug.ui.debugui.comps.RankListItemUI',_super);
+		var __proto=RankListItemUI.prototype;
+		__proto.createChildren=function(){
+			this.viewMapRegists();
+			laya.ui.Component.prototype.createChildren.call(this);
+			this.createView(RankListItemUI.uiView);
+		}
+
+		__proto.viewMapRegists=function(){}
+		__static(RankListItemUI,
+		['uiView',function(){return this.uiView={"type":"View","child":[{"props":{"y":-1,"skin":"comp/clip_selectBox.png","clipY":2,"height":19,"name":"selectBox","left":0,"right":0,"x":0},"type":"Clip"},{"props":{"text":"render","color":"#a0a0a0","height":15,"name":"label","y":2,"left":11,"right":5,"fontSize":12,"x":11,"width":163},"type":"Label"}],"props":{"width":179,"height":19}};}
+		]);
+		return RankListItemUI;
 	})(View)
 
 
@@ -39760,50 +39805,6 @@ var Laya=window.Laya=(function(window,document){
 		['uiView',function(){return this.uiView={"type":"View","props":{"base64pic":true,"width":250,"height":30},"child":[{"type":"Image","props":{"x":195,"y":244,"skin":"view/bg_panel.png","left":0,"right":0,"top":0,"bottom":0,"var":"bg","sizeGrid":"5,5,5,5"}},{"type":"Button","props":{"x":2,"y":6,"skin":"view/save.png","stateNum":2,"var":"treeBtn","toolTip":"节点树"}},{"type":"Button","props":{"x":25,"y":6,"skin":"view/save.png","stateNum":2,"var":"findBtn","toolTip":"查找面板"}},{"type":"MinBtnComp","props":{"x":218,"y":-3,"var":"minBtn","runtime":"laya.debug.view.nodeInfo.nodetree.MinBtnComp"}},{"type":"CheckBox","props":{"x":124,"y":8,"skin":"comp/checkbox.png","label":"点击选取","var":"selectWhenClick","labelColors":"#a0a0a0,#fffff,#ffffff,#fffff"}},{"type":"Button","props":{"x":193,"y":5,"skin":"view/res.png","stateNum":2,"toolTip":"清除边框","var":"clearBtn"}},{"type":"Button","props":{"x":49,"y":6,"skin":"view/save.png","stateNum":2,"var":"rankBtn","toolTip":"渲染用时排行"}},{"type":"Button","props":{"x":72,"y":6,"skin":"view/save.png","stateNum":2,"var":"nodeRankBtn","toolTip":"创建对象排行"}},{"type":"Button","props":{"x":94,"y":6,"skin":"view/save.png","stateNum":2,"var":"cacheBtn","toolTip":"cache对象"}}]};}
 		]);
 		return ToolBarUI;
-	})(View)
-
-
-	//class laya.debug.ui.debugui.comps.ListItemUI extends laya.ui.View
-	var ListItemUI=(function(_super){
-		function ListItemUI(){
-			ListItemUI.__super.call(this);
-		}
-
-		__class(ListItemUI,'laya.debug.ui.debugui.comps.ListItemUI',_super);
-		var __proto=ListItemUI.prototype;
-		__proto.createChildren=function(){
-			this.viewMapRegists();
-			laya.ui.Component.prototype.createChildren.call(this);
-			this.createView(ListItemUI.uiView);
-		}
-
-		__proto.viewMapRegists=function(){}
-		__static(ListItemUI,
-		['uiView',function(){return this.uiView={"type":"View","props":{"base64pic":true,"width":244,"height":19},"child":[{"type":"Clip","props":{"y":-1,"skin":"comp/clip_selectBox.png","clipY":2,"height":19,"name":"selectBox","left":2,"right":2,"x":0}},{"type":"Label","props":{"x":25,"text":"render","color":"#dcea36","width":77,"height":17,"name":"label","y":2,"fontSize":12}},{"type":"Clip","props":{"skin":"comp/clip_tree_arrow.png","clipY":2,"name":"arrow","x":8,"y":4,"mouseEnabled":false}}]};}
-		]);
-		return ListItemUI;
-	})(View)
-
-
-	//class laya.debug.ui.debugui.comps.RankListItemUI extends laya.ui.View
-	var RankListItemUI=(function(_super){
-		function RankListItemUI(){
-			RankListItemUI.__super.call(this);
-		}
-
-		__class(RankListItemUI,'laya.debug.ui.debugui.comps.RankListItemUI',_super);
-		var __proto=RankListItemUI.prototype;
-		__proto.createChildren=function(){
-			this.viewMapRegists();
-			laya.ui.Component.prototype.createChildren.call(this);
-			this.createView(RankListItemUI.uiView);
-		}
-
-		__proto.viewMapRegists=function(){}
-		__static(RankListItemUI,
-		['uiView',function(){return this.uiView={"type":"View","child":[{"props":{"y":-1,"skin":"comp/clip_selectBox.png","clipY":2,"height":19,"name":"selectBox","left":0,"right":0,"x":0},"type":"Clip"},{"props":{"text":"render","color":"#a0a0a0","height":15,"name":"label","y":2,"left":11,"right":5,"fontSize":12,"x":11,"width":163},"type":"Label"}],"props":{"width":179,"height":19}};}
-		]);
-		return RankListItemUI;
 	})(View)
 
 
@@ -41128,575 +41129,6 @@ var Laya=window.Laya=(function(window,document){
 	*...
 	*@author ww
 	*/
-	//class view.SelectStockView extends ui.SelectStockViewUI
-	var SelectStockView=(function(_super){
-		function SelectStockView(){
-			this.dataUrl="last.json";
-			this.tType="kline";
-			this.stockDataGetter=null;
-			this.configO=null;
-			this.tDatas=null;
-			this.typeDic={};
-			this.tDataKey=null;
-			this.tTpl=null;
-			this.tI=0;
-			this.preTime=0;
-			SelectStockView.__super.call(this);
-			this.init();
-		}
-
-		__class(SelectStockView,'view.SelectStockView',_super);
-		var __proto=SelectStockView.prototype;
-		__proto.init=function(){
-			this.list.renderHandler=new Handler(this,this.stockRender);
-			this.list.array=[];
-			this.list.mouseHandler=new Handler(this,this.onMouseList);
-			this.list.scrollBar.touchScrollEnable=true;
-			Laya.loader.load(this.dataUrl,new Handler(this,this.dataLoaded),null,"json");
-			Notice.listen("Show_Next_Select",this,this.next);
-			Notice.listen("Show_Pre_Select",this,this.pre);
-			this.tip.text="股票:当前盈利:最高盈利\n7天最大盈利,15天最大盈利,30天最大盈利,45天最大盈利\n买入日期";
-			this.typeSelect.on("change",this,this.onTypeChange);
-			this.stockDataGetter=new StockJsonP();
-			this.stockDataGetter.completeNotice="SelectStockDataChange";
-			Notice.listen("SelectStockDataChange",this,this.onStockDataChange);
-			this.autoFresh.on("change",this,this.onAutoFreshChange);
-			this.on("display",this,this.onAutoFreshChange);
-			this.on("undisplay",this,this.onAutoFreshChange);
-		}
-
-		__proto.onAutoFreshChange=function(){
-			if (this.autoFresh.selected&&this.displayedInStage){
-				this.stockDataGetter.freshData();
-				this.stockDataGetter.startFresh();
-				}else{
-				this.stockDataGetter.stopFresh();
-			}
-		}
-
-		__proto.onStockDataChange=function(){
-			this.reRenderCells();
-		}
-
-		__proto.onTypeChange=function(){
-			this.tType=this.typeSelect.selectedLabel;
-			this.refreshData();
-		}
-
-		__proto.dataLoaded=function(){
-			var data;
-			this.configO=Loader.getRes(this.dataUrl);
-			this.tDatas=this.configO["stocks"];
-			StockInfoManager.setStockList(this.configO["stocks"]);
-			this.initByConfigO();
-			this.refreshData();
-			StockListManager.setStockList(this.list.array,this.tI);
-		}
-
-		__proto.initByConfigO=function(){
-			var types;
-			types=this.configO["types"];
-			if (!types)
-				return;
-			this.typeDic={};
-			var typesStr;
-			typesStr=[];
-			var tTypeO;
-			var i=0,len=0;
-			len=types.length;
-			for (i=0;i < len;i++){
-				tTypeO=types[i];
-				typesStr.push(tTypeO.label);
-				this.typeDic[tTypeO.label]=tTypeO;
-			}
-			this.typeSelect.labels=typesStr.join(",");
-			this.typeSelect.selectedIndex=0;
-			this.tType=this.typeSelect.selectedLabel;
-		}
-
-		__proto.refreshData=function(){
-			if (!this.tDatas)
-				return;
-			if (this.typeDic[this.tType]){
-				this.tDataKey=this.typeDic[this.tType].dataKey;
-				this.tip.text=this.typeDic[this.tType].tip;
-				this.tTpl=this.typeDic[this.tType].tpl;
-				this.tDatas.sort(ValueTools.sortByKeyEX.apply(null,this.typeDic[this.tType]["sortParams"]));
-			}
-			else {
-				this.tDataKey=null;
-				this.tip.text="股票列表";
-				this.tDatas.sort(MathUtil.sortByKey("code",true,false));
-			}
-			this.list.array=this.tDatas;
-		}
-
-		__proto.getStockChanges=function(stockO){
-			var i=0,len=0;
-			len=SelectStockView.signList.length;
-			var rst;
-			rst=[];
-			var tSign;
-			for (i=0;i < len;i++){
-				tSign=SelectStockView.signList[i];
-				rst.push(Math.floor(stockO[tSign] *100)+"%")
-			}
-			return rst;
-		}
-
-		__proto.stockRender=function(cell,index){
-			this.callLater(this.resetStocks);
-			var item=cell.dataSource;
-			var label;
-			label=cell.getChildByName("label");
-			var dataO;
-			dataO=ValueTools.getFlatKeyValue(item,this.tDataKey);
-			if (!this.tTpl)this.tTpl=SelectStockView.DefalutTpl;
-			label.text=ValueTools.getTplStr(this.tTpl,dataO);
-			this.renderStockRealTimeInfo(cell);
-		}
-
-		//label.text=dataO.code+":"+Math.floor(dataO.changePercent *100)+"%"+":"+Math.floor(dataO.highPercent *100)+"%"+"\n"+getStockChanges(dataO).join(",")+"\n"+dataO.lastDate;
-		__proto.renderStockRealTimeInfo=function(cell){
-			var item=cell.dataSource;
-			var label;
-			label=cell.getChildByName("info");
-			if (!item){
-				label.text="";
-				return;
-			};
-			var stockData;
-			stockData=StockJsonP.getStockData(item.code)
-			if (stockData){
-				label.text=""+StockTools.getGoodPercent((stockData.price-stockData.close)/ stockData.close)+"%";
-				if (stockData.price-stockData.close >=0){
-					label.color="#ff0000";
-					}else{
-					label.color="#00ff00";
-				}
-				}else{
-				label.text="";
-			}
-		}
-
-		__proto.reRenderCells=function(){
-			var cells;
-			cells=this.list.cells;
-			if (!cells)return;
-			var i=0,len=0;
-			len=cells.length;
-			var tCell;
-			for (i=0;i < len;i++){
-				tCell=cells[i];
-				if (tCell.dataSource && tCell.dataSource.code){
-					this.renderStockRealTimeInfo(tCell);
-				}
-			}
-		}
-
-		__proto.resetStocks=function(){
-			var cells;
-			cells=this.list.cells;
-			if (!cells)return;
-			var i=0,len=0;
-			len=cells.length;
-			this.stockDataGetter.reset();
-			var tCell;
-			for (i=0;i < len;i++){
-				tCell=cells[i];
-				if (tCell.dataSource && tCell.dataSource.code){
-					var adptCode;
-					adptCode=StockJsonP.getAdptStockStr(tCell.dataSource.code);
-					this.stockDataGetter.addStock(adptCode);
-				}
-			}
-			if (this.autoFresh.selected)this.stockDataGetter.freshData();
-		}
-
-		__proto.onMouseList=function(e,index){
-			if (e.type=="mouseup"){
-				var tTime=Browser.now();
-				if (tTime-this.preTime > 500){
-					this.preTime=tTime;
-					return;
-				}
-				this.preTime=tTime;
-				var tData;
-				tData=this.list.array[index];
-				this.tI=index;
-				if (!tData)
-					return;
-				console.log(tData);
-				this.setUpAnalyserData();
-				StockListManager.setStockList(this.list.array,this.tI);
-				Notice.notify("Show_Stock_KLine",tData.code);
-			}
-		}
-
-		__proto.setUpAnalyserData=function(){
-			if (this.typeDic[this.tType]){
-				var analyserInfos;
-				analyserInfos=this.typeDic[this.tType]["analyserInfo"];
-				if (!analyserInfos)
-					return;
-				var i=0,len=0;
-				len=analyserInfos.length;
-				for (i=0;i < len;i++){
-					Notice.notify("Set_Analyser_Prop",analyserInfos[i]);
-				}
-			}
-		}
-
-		__proto.next=function(){
-			this.tI++;
-			this.showI(this.tI);
-		}
-
-		__proto.pre=function(){
-			this.tI--;
-			this.showI(this.tI);
-		}
-
-		__proto.showI=function(i){
-			var index=0;
-			index=i;
-			if (index < 0)
-				index=this.list.array.length-1;
-			index=index % this.list.array.length;
-			var tData;
-			tData=this.list.array[index];
-			this.tI=index;
-			if (!tData)
-				return;
-			console.log(tData);
-			Notice.notify("Show_Stock_KLine",tData.code);
-		}
-
-		SelectStockView.SelectStockDataChange="SelectStockDataChange";
-		SelectStockView.DefalutTpl="{#code#}";
-		__static(SelectStockView,
-		['signList',function(){return this.signList=["high7","high15","high30","high45"];}
-		]);
-		return SelectStockView;
-	})(SelectStockViewUI)
-
-
-	/**
-	*...
-	*@author ww
-	*/
-	//class view.StockView extends ui.StockViewUI
-	var StockView=(function(_super){
-		function StockView(){
-			this.preTime=0;
-			StockView.__super.call(this);
-		}
-
-		__class(StockView,'view.StockView',_super);
-		var __proto=StockView.prototype;
-		__proto.init=function(){
-			this.stockList.renderHandler=new Handler(this,this.stockRender);
-			this.stockList.array=StockBasicInfo.I.stockList;
-			this.stockList.mouseHandler=new Handler(this,this.onMouseList);
-			this.stockList.scrollBar.touchScrollEnable=true;
-		}
-
-		__proto.stockRender=function(cell,index){
-			var item=cell.dataSource;
-			var img;
-			img=cell.getChildByName("img");
-			img.skin=StockTools.getStockPicPath(item.code);
-		}
-
-		__proto.openUrl=function(path){
-			Browser.window.open(path,"_blank");
-		}
-
-		__proto.onMouseList=function(e,index){
-			if (e.type=="mouseup"){
-				var tTime=Browser.now();
-				if (tTime-this.preTime > 500){
-					this.preTime=tTime;
-					return;
-				}
-				this.preTime=tTime;
-				var tData;
-				tData=this.stockList.array[index];
-				if (!tData)
-					return;
-				console.log(tData);
-				WebTools.openStockDetail(tData.code);
-			}
-		}
-
-		return StockView;
-	})(StockViewUI)
-
-
-	/**
-	*...
-	*@author ww
-	*/
-	//class view.RealTimeView extends ui.realtime.RealTimeUI
-	var RealTimeView=(function(_super){
-		function RealTimeView(){
-			this.mdView=null;
-			this.stockList=[];
-			RealTimeView.__super.call(this);
-			this.list.renderHandler=new Handler(this,this.stockRenderHandler);
-			this.mdView=new MDLine();
-			this.recoverData();
-			this.fresh();
-			Notice.listen("StockFresh",this,this.fresh);
-			StockJsonP.I.freshData();
-			this.checkAuto();
-			this.on("display",this,this.mDisplayChanged);
-			this.on("undisplay",this,this.mDisplayChanged);
-			this.addBtn.on("mousedown",this,this.onAddClick);
-			this.autoFresh.on("change",this,this.checkAuto);
-			Notice.listen("AddMyStock",this,this.addStockAndSave);
-			Notice.listen("Remove_MyStock",this,this.removeStockAndSave);
-			Notice.listen("Mark_MyStock",this,this.markStock);
-			Notice.listen("Add_MDLine",this,this.addMdStock);
-			Notice.listen("Remove_MDLine",this,this.removeMdStock);
-			this.showMDCheck.on("change",this,this.showMDChange);
-			this.showListCheck.selected=true;
-			this.showListCheck.on("change",this,this.showListChange);
-			this.netBox.visible=false;
-			MainSocket.I.socket.on("Logined",this,this.onLogin);
-			MainSocket.I.socket.on("stocks",this,this.onServerStock);
-			this.saveBtn.on("mousedown",this,this.onSaveStocks);
-			this.loadBtn.on("mousedown",this,this.onLoadStocks);
-			Notice.listen("RealTimeItem_DoubleClick",this,this.onRealTimeDoubleClick);
-		}
-
-		__class(RealTimeView,'view.RealTimeView',_super);
-		var __proto=RealTimeView.prototype;
-		__proto.onRealTimeDoubleClick=function(index){
-			StockListManager.setStockList(this.list.array,index);
-		}
-
-		__proto.onServerStock=function(dataO){
-			console.log("onServerStock:",dataO);
-			MessageManager.I.show("get stock success");
-			if (dataO.data){
-				var tArr;
-				tArr=dataO.data;
-				this.switchStockList(tArr);
-				this.fresh();
-			}
-		}
-
-		__proto.onSaveStocks=function(){
-			MainSocket.I.socket.saveUserData("stocks",this.stockList);
-		}
-
-		__proto.onLoadStocks=function(){
-			MainSocket.I.socket.getUserData("stocks");
-		}
-
-		__proto.onLogin=function(){
-			this.updateUIState();
-		}
-
-		__proto.updateUIState=function(){
-			if (MainSocket.I.socket.isLogined){
-				this.netBox.visible=true;
-			}
-			else {
-				this.netBox.visible=false;
-			}
-		}
-
-		__proto.showListChange=function(){
-			this.list.visible=this.showListCheck.selected;
-		}
-
-		__proto.showMDChange=function(){
-			this.showMDView(this.showMDCheck.selected);
-		}
-
-		__proto.addMdStock=function(stock){
-			this.mdView.addStock(stock);
-		}
-
-		__proto.removeMdStock=function(stock){
-			this.mdView.removeStock(stock);
-		}
-
-		__proto.changeSize=function(){
-			laya.ui.Component.prototype.changeSize.call(this);
-			this.mdView.lineHeight=this.height;
-			this.mdView.lineWidth=this.width;
-			this.mdView.pos(0,this.mdView.lineHeight);
-			this.mdView.setUpGrids();
-		}
-
-		__proto.showMDView=function(show){
-			if (show){
-				this.addChildAt(this.mdView,0);
-				this.mdView.startFresh();
-			}
-			else {
-				this.mdView.removeSelf();
-				this.mdView.stopFresh();
-			}
-		}
-
-		__proto.recoverData=function(){
-			var data;
-			data=LocalStorage.getJSON("Mystocks");
-			if (data && (data instanceof Array)){
-				this.stockList=data;
-			}
-			else {
-				this.addStock("000912");
-			};
-			var i=0,len=0;
-			len=this.stockList.length;
-			for (i=0;i < len;i++){
-				this.addStock(this.stockList[i]);
-			}
-		}
-
-		__proto.switchStockList=function(newList){
-			var i=0,len=0;
-			len=this.stockList.length;
-			for (i=len-1;i >=0;i--){
-				this.removeStock(this.stockList[i]);
-			}
-			this.stockList.length=0;
-			len=newList.length;
-			for (i=0;i < len;i++){
-				this.addStock(newList[i]);
-			}
-			this.fresh();
-			StockJsonP.I.freshData();
-		}
-
-		__proto.saveData=function(){
-			LocalStorage.setJSON("Mystocks",this.stockList);
-		}
-
-		__proto.onAddClick=function(){
-			this.addStockAndSave(this.stockInput.text);
-		}
-
-		__proto.addStockAndSave=function(stock){
-			this.addStock(stock);
-			this.saveData();
-			StockJsonP.I.freshData();
-		}
-
-		//debugger;
-		__proto.markStock=function(stock){
-			var i=0,len=0;
-			len=this.stockList.length;
-			for (i=0;i < len;i++){
-				if (RealTimeView.getStockCode(this.stockList[i])==stock){
-					var tData;
-					tData={};
-					tData.code=stock;
-					tData.markTime=Browser.now();
-					var dataO;
-					dataO=StockJsonP.getStockData(stock);
-					if (dataO){
-						tData.markPrice=dataO.price;
-						MessageManager.I.show("Mark stock success:"+stock);
-					}
-					this.stockList[i]=tData;
-					break ;
-				}
-			}
-			this.saveData();
-			this.fresh();
-		}
-
-		__proto.removeStockAndSave=function(stock){
-			this.removeStock(stock);
-			this.saveData();
-			this.fresh();
-		}
-
-		__proto.mDisplayChanged=function(){
-			this.checkAuto();
-		}
-
-		__proto.checkAuto=function(){
-			if (this.autoFresh.selected && this.displayedInStage){
-				StockJsonP.I.startFresh();
-			}
-			else {
-				StockJsonP.I.stopFresh();
-			}
-		}
-
-		__proto.addStock=function(stock){
-			if (!stock)
-				return;
-			var stockCode;
-			stockCode=RealTimeView.getStockCode(stock);
-			stockCode=StockJsonP.getAdptStockStr(stockCode);
-			StockJsonP.I.addStock(stockCode);
-			if (!this.hasStock(stockCode))
-				this.stockList.push(stock);
-		}
-
-		__proto.hasStock=function(stock){
-			stock=RealTimeView.getStockCode(stock);
-			stock=StockJsonP.getAdptStockStr(stock);
-			var i=0,len=0;
-			len=this.stockList.length;
-			for (i=0;i < len;i++){
-				if (RealTimeView.getAdptStockCode(this.stockList[i])==stock){
-					return true;
-				}
-			}
-			return false;
-		}
-
-		__proto.removeStock=function(stock){
-			if (!stock)return;
-			stock=RealTimeView.getStockCode(stock);
-			stock=StockJsonP.getAdptStockStr(stock);
-			StockJsonP.I.removeStock(stock);
-			var i=0,len=0;
-			len=this.stockList.length;
-			for (i=len-1;i >=0;i--){
-				if (RealTimeView.getAdptStockCode(this.stockList[i])==stock){
-					this.stockList.splice(i,1);
-				}
-			}
-		}
-
-		__proto.fresh=function(){
-			StockListManager.setMyStockList(this.stockList);
-			this.list.array=this.stockList;
-		}
-
-		__proto.stockRenderHandler=function(box,index){
-			box.index=index;
-		}
-
-		RealTimeView.getAdptStockCode=function(stock){
-			return StockJsonP.getAdptStockStr(RealTimeView.getStockCode(stock));
-		}
-
-		RealTimeView.getStockCode=function(stock){
-			if ((typeof stock=='string'))
-				return stock;
-			return stock.code;
-		}
-
-		RealTimeView.DataSign="Mystocks";
-		return RealTimeView;
-	})(RealTimeUI)
-
-
-	/**
-	*...
-	*@author ww
-	*/
 	//class view.netcomps.LoginView extends ui.netcomps.LoginViewUI
 	var LoginView=(function(_super){
 		function LoginView(){
@@ -42092,6 +41524,613 @@ var Laya=window.Laya=(function(window,document){
 	*...
 	*@author ww
 	*/
+	//class view.RealTimeView extends ui.realtime.RealTimeUI
+	var RealTimeView=(function(_super){
+		function RealTimeView(){
+			this.mdView=null;
+			this.stockList=[];
+			RealTimeView.__super.call(this);
+			this.list.renderHandler=new Handler(this,this.stockRenderHandler);
+			this.mdView=new MDLine();
+			this.recoverData();
+			this.fresh();
+			Notice.listen("StockFresh",this,this.fresh);
+			StockJsonP.I.freshData();
+			this.checkAuto();
+			this.on("display",this,this.mDisplayChanged);
+			this.on("undisplay",this,this.mDisplayChanged);
+			this.addBtn.on("mousedown",this,this.onAddClick);
+			this.autoFresh.on("change",this,this.checkAuto);
+			Notice.listen("AddMyStock",this,this.addStockAndSave);
+			Notice.listen("Remove_MyStock",this,this.removeStockAndSave);
+			Notice.listen("Mark_MyStock",this,this.markStock);
+			Notice.listen("Add_MDLine",this,this.addMdStock);
+			Notice.listen("Remove_MDLine",this,this.removeMdStock);
+			this.showMDCheck.on("change",this,this.showMDChange);
+			this.showListCheck.selected=true;
+			this.showListCheck.on("change",this,this.showListChange);
+			this.netBox.visible=false;
+			MainSocket.I.socket.on("Logined",this,this.onLogin);
+			MainSocket.I.socket.on("stocks",this,this.onServerStock);
+			this.saveBtn.on("mousedown",this,this.onSaveStocks);
+			this.loadBtn.on("mousedown",this,this.onLoadStocks);
+			Notice.listen("RealTimeItem_DoubleClick",this,this.onRealTimeDoubleClick);
+		}
+
+		__class(RealTimeView,'view.RealTimeView',_super);
+		var __proto=RealTimeView.prototype;
+		__proto.onRealTimeDoubleClick=function(index){
+			StockListManager.setStockList(this.list.array,index);
+		}
+
+		__proto.onServerStock=function(dataO){
+			console.log("onServerStock:",dataO);
+			MessageManager.I.show("get stock success");
+			if (dataO.data){
+				var tArr;
+				tArr=dataO.data;
+				this.switchStockList(tArr);
+				this.fresh();
+			}
+		}
+
+		__proto.onSaveStocks=function(){
+			MainSocket.I.socket.saveUserData("stocks",this.stockList);
+		}
+
+		__proto.onLoadStocks=function(){
+			MainSocket.I.socket.getUserData("stocks");
+		}
+
+		__proto.onLogin=function(){
+			this.updateUIState();
+		}
+
+		__proto.updateUIState=function(){
+			if (MainSocket.I.socket.isLogined){
+				this.netBox.visible=true;
+			}
+			else {
+				this.netBox.visible=false;
+			}
+		}
+
+		__proto.showListChange=function(){
+			this.list.visible=this.showListCheck.selected;
+		}
+
+		__proto.showMDChange=function(){
+			this.showMDView(this.showMDCheck.selected);
+		}
+
+		__proto.addMdStock=function(stock){
+			this.mdView.addStock(stock);
+		}
+
+		__proto.removeMdStock=function(stock){
+			this.mdView.removeStock(stock);
+		}
+
+		__proto.changeSize=function(){
+			laya.ui.Component.prototype.changeSize.call(this);
+			this.mdView.lineHeight=this.height;
+			this.mdView.lineWidth=this.width;
+			this.mdView.pos(0,this.mdView.lineHeight);
+			this.mdView.setUpGrids();
+		}
+
+		__proto.showMDView=function(show){
+			if (show){
+				this.addChildAt(this.mdView,0);
+				this.mdView.startFresh();
+			}
+			else {
+				this.mdView.removeSelf();
+				this.mdView.stopFresh();
+			}
+		}
+
+		__proto.recoverData=function(){
+			var data;
+			data=LocalStorage.getJSON("Mystocks");
+			if (data && (data instanceof Array)){
+				this.stockList=data;
+			}
+			else {
+				this.addStock("000912");
+			};
+			var i=0,len=0;
+			len=this.stockList.length;
+			for (i=0;i < len;i++){
+				this.addStock(this.stockList[i]);
+			}
+		}
+
+		__proto.switchStockList=function(newList){
+			var i=0,len=0;
+			len=this.stockList.length;
+			for (i=len-1;i >=0;i--){
+				this.removeStock(this.stockList[i]);
+			}
+			this.stockList.length=0;
+			len=newList.length;
+			for (i=0;i < len;i++){
+				this.addStock(newList[i]);
+			}
+			this.fresh();
+			StockJsonP.I.freshData();
+		}
+
+		__proto.saveData=function(){
+			LocalStorage.setJSON("Mystocks",this.stockList);
+		}
+
+		__proto.onAddClick=function(){
+			this.addStockAndSave(this.stockInput.text);
+		}
+
+		__proto.addStockAndSave=function(stock){
+			this.addStock(stock);
+			this.saveData();
+			StockJsonP.I.freshData();
+		}
+
+		//debugger;
+		__proto.markStock=function(stock){
+			var i=0,len=0;
+			len=this.stockList.length;
+			for (i=0;i < len;i++){
+				if (RealTimeView.getStockCode(this.stockList[i])==stock){
+					var tData;
+					tData={};
+					tData.code=stock;
+					tData.markTime=Browser.now();
+					var dataO;
+					dataO=StockJsonP.getStockData(stock);
+					if (dataO){
+						tData.markPrice=dataO.price;
+						MessageManager.I.show("Mark stock success:"+stock);
+					}
+					this.stockList[i]=tData;
+					break ;
+				}
+			}
+			this.saveData();
+			this.fresh();
+		}
+
+		__proto.removeStockAndSave=function(stock){
+			this.removeStock(stock);
+			this.saveData();
+			this.fresh();
+		}
+
+		__proto.mDisplayChanged=function(){
+			this.checkAuto();
+		}
+
+		__proto.checkAuto=function(){
+			if (this.autoFresh.selected && this.displayedInStage){
+				StockJsonP.I.startFresh();
+			}
+			else {
+				StockJsonP.I.stopFresh();
+			}
+		}
+
+		__proto.addStock=function(stock){
+			if (!stock)
+				return;
+			var stockCode;
+			stockCode=RealTimeView.getStockCode(stock);
+			stockCode=StockJsonP.getAdptStockStr(stockCode);
+			StockJsonP.I.addStock(stockCode);
+			if (!this.hasStock(stockCode))
+				this.stockList.push(stock);
+		}
+
+		__proto.hasStock=function(stock){
+			stock=RealTimeView.getStockCode(stock);
+			stock=StockJsonP.getAdptStockStr(stock);
+			var i=0,len=0;
+			len=this.stockList.length;
+			for (i=0;i < len;i++){
+				if (RealTimeView.getAdptStockCode(this.stockList[i])==stock){
+					return true;
+				}
+			}
+			return false;
+		}
+
+		__proto.removeStock=function(stock){
+			if (!stock)return;
+			stock=RealTimeView.getStockCode(stock);
+			stock=StockJsonP.getAdptStockStr(stock);
+			StockJsonP.I.removeStock(stock);
+			var i=0,len=0;
+			len=this.stockList.length;
+			for (i=len-1;i >=0;i--){
+				if (RealTimeView.getAdptStockCode(this.stockList[i])==stock){
+					this.stockList.splice(i,1);
+				}
+			}
+		}
+
+		__proto.fresh=function(){
+			StockListManager.setMyStockList(this.stockList);
+			this.list.array=this.stockList;
+		}
+
+		__proto.stockRenderHandler=function(box,index){
+			box.index=index;
+		}
+
+		RealTimeView.getAdptStockCode=function(stock){
+			return StockJsonP.getAdptStockStr(RealTimeView.getStockCode(stock));
+		}
+
+		RealTimeView.getStockCode=function(stock){
+			if ((typeof stock=='string'))
+				return stock;
+			return stock.code;
+		}
+
+		RealTimeView.DataSign="Mystocks";
+		return RealTimeView;
+	})(RealTimeUI)
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class view.SelectStockView extends ui.SelectStockViewUI
+	var SelectStockView=(function(_super){
+		function SelectStockView(){
+			this.dataUrl="last.json";
+			this.tType="kline";
+			this.stockDataGetter=null;
+			this.configO=null;
+			this.tDatas=null;
+			this.typeDic={};
+			this.tDataKey=null;
+			this.tTpl=null;
+			this.tI=0;
+			this.preTime=0;
+			SelectStockView.__super.call(this);
+			this.init();
+		}
+
+		__class(SelectStockView,'view.SelectStockView',_super);
+		var __proto=SelectStockView.prototype;
+		__proto.init=function(){
+			this.list.renderHandler=new Handler(this,this.stockRender);
+			this.list.array=[];
+			this.list.mouseHandler=new Handler(this,this.onMouseList);
+			this.list.scrollBar.touchScrollEnable=true;
+			Laya.loader.load(this.dataUrl,new Handler(this,this.dataLoaded),null,"json");
+			Notice.listen("Show_Next_Select",this,this.next);
+			Notice.listen("Show_Pre_Select",this,this.pre);
+			this.tip.text="股票:当前盈利:最高盈利\n7天最大盈利,15天最大盈利,30天最大盈利,45天最大盈利\n买入日期";
+			this.typeSelect.on("change",this,this.onTypeChange);
+			this.stockDataGetter=new StockJsonP();
+			this.stockDataGetter.completeNotice="SelectStockDataChange";
+			Notice.listen("SelectStockDataChange",this,this.onStockDataChange);
+			this.autoFresh.on("change",this,this.onAutoFreshChange);
+			this.on("display",this,this.onAutoFreshChange);
+			this.on("undisplay",this,this.onAutoFreshChange);
+		}
+
+		__proto.onAutoFreshChange=function(){
+			if (this.autoFresh.selected&&this.displayedInStage){
+				this.stockDataGetter.freshData();
+				this.stockDataGetter.startFresh();
+				}else{
+				this.stockDataGetter.stopFresh();
+			}
+		}
+
+		__proto.onStockDataChange=function(){
+			this.reRenderCells();
+		}
+
+		__proto.onTypeChange=function(){
+			this.tType=this.typeSelect.selectedLabel;
+			this.refreshData();
+		}
+
+		__proto.dataLoaded=function(){
+			var data;
+			this.configO=Loader.getRes(this.dataUrl);
+			this.tDatas=this.configO["stocks"];
+			StockInfoManager.setStockList(this.configO["stocks"]);
+			this.initByConfigO();
+			this.refreshData();
+			StockListManager.setStockList(this.list.array,this.tI);
+		}
+
+		__proto.initByConfigO=function(){
+			var types;
+			types=this.configO["types"];
+			if (!types)
+				return;
+			this.typeDic={};
+			var typesStr;
+			typesStr=[];
+			var tTypeO;
+			var i=0,len=0;
+			len=types.length;
+			for (i=0;i < len;i++){
+				tTypeO=types[i];
+				typesStr.push(tTypeO.label);
+				this.typeDic[tTypeO.label]=tTypeO;
+			}
+			this.typeSelect.labels=typesStr.join(",");
+			this.typeSelect.selectedIndex=0;
+			this.tType=this.typeSelect.selectedLabel;
+		}
+
+		__proto.refreshData=function(){
+			if (!this.tDatas)
+				return;
+			if (this.typeDic[this.tType]){
+				this.tDataKey=this.typeDic[this.tType].dataKey;
+				this.tip.text=this.typeDic[this.tType].tip;
+				this.tTpl=this.typeDic[this.tType].tpl;
+				this.tDatas.sort(ValueTools.sortByKeyEX.apply(null,this.typeDic[this.tType]["sortParams"]));
+			}
+			else {
+				this.tDataKey=null;
+				this.tip.text="股票列表";
+				this.tDatas.sort(MathUtil.sortByKey("code",true,false));
+			}
+			this.list.array=this.tDatas;
+		}
+
+		__proto.getStockChanges=function(stockO){
+			var i=0,len=0;
+			len=SelectStockView.signList.length;
+			var rst;
+			rst=[];
+			var tSign;
+			for (i=0;i < len;i++){
+				tSign=SelectStockView.signList[i];
+				rst.push(Math.floor(stockO[tSign] *100)+"%")
+			}
+			return rst;
+		}
+
+		__proto.stockRender=function(cell,index){
+			this.callLater(this.resetStocks);
+			var item=cell.dataSource;
+			var label;
+			label=cell.getChildByName("label");
+			var dataO;
+			dataO=ValueTools.getFlatKeyValue(item,this.tDataKey);
+			if (!this.tTpl)this.tTpl=SelectStockView.DefalutTpl;
+			label.text=ValueTools.getTplStr(this.tTpl,dataO);
+			this.renderStockRealTimeInfo(cell);
+		}
+
+		//label.text=dataO.code+":"+Math.floor(dataO.changePercent *100)+"%"+":"+Math.floor(dataO.highPercent *100)+"%"+"\n"+getStockChanges(dataO).join(",")+"\n"+dataO.lastDate;
+		__proto.renderStockRealTimeInfo=function(cell){
+			var item=cell.dataSource;
+			var label;
+			label=cell.getChildByName("info");
+			if (!item){
+				label.text="";
+				return;
+			};
+			var stockData;
+			stockData=StockJsonP.getStockData(item.code)
+			if (stockData){
+				label.text=""+StockTools.getGoodPercent((stockData.price-stockData.close)/ stockData.close)+"%";
+				if (stockData.price-stockData.close >=0){
+					label.color="#ff0000";
+					}else{
+					label.color="#00ff00";
+				}
+				}else{
+				label.text="";
+			}
+		}
+
+		__proto.reRenderCells=function(){
+			var cells;
+			cells=this.list.cells;
+			if (!cells)return;
+			var i=0,len=0;
+			len=cells.length;
+			var tCell;
+			for (i=0;i < len;i++){
+				tCell=cells[i];
+				if (tCell.dataSource && tCell.dataSource.code){
+					this.renderStockRealTimeInfo(tCell);
+				}
+			}
+		}
+
+		__proto.resetStocks=function(){
+			var cells;
+			cells=this.list.cells;
+			if (!cells)return;
+			var i=0,len=0;
+			len=cells.length;
+			this.stockDataGetter.reset();
+			var tCell;
+			for (i=0;i < len;i++){
+				tCell=cells[i];
+				if (tCell.dataSource && tCell.dataSource.code){
+					var adptCode;
+					adptCode=StockJsonP.getAdptStockStr(tCell.dataSource.code);
+					this.stockDataGetter.addStock(adptCode);
+				}
+			}
+			if (this.autoFresh.selected)this.stockDataGetter.freshData();
+		}
+
+		__proto.onMouseList=function(e,index){
+			if (e.type=="mouseup"){
+				var tTime=Browser.now();
+				if (tTime-this.preTime > 500){
+					this.preTime=tTime;
+					return;
+				}
+				this.preTime=tTime;
+				var tData;
+				tData=this.list.array[index];
+				this.tI=index;
+				if (!tData)
+					return;
+				console.log(tData);
+				this.setUpAnalyserData();
+				StockListManager.setStockList(this.list.array,this.tI);
+				Notice.notify("Show_Stock_KLine",tData.code);
+			}
+		}
+
+		__proto.setUpAnalyserData=function(){
+			if (this.typeDic[this.tType]){
+				var analyserInfos;
+				analyserInfos=this.typeDic[this.tType]["analyserInfo"];
+				if (!analyserInfos)
+					return;
+				var i=0,len=0;
+				len=analyserInfos.length;
+				for (i=0;i < len;i++){
+					Notice.notify("Set_Analyser_Prop",analyserInfos[i]);
+				}
+			}
+		}
+
+		__proto.next=function(){
+			this.tI++;
+			this.showI(this.tI);
+		}
+
+		__proto.pre=function(){
+			this.tI--;
+			this.showI(this.tI);
+		}
+
+		__proto.showI=function(i){
+			var index=0;
+			index=i;
+			if (index < 0)
+				index=this.list.array.length-1;
+			index=index % this.list.array.length;
+			var tData;
+			tData=this.list.array[index];
+			this.tI=index;
+			if (!tData)
+				return;
+			console.log(tData);
+			Notice.notify("Show_Stock_KLine",tData.code);
+		}
+
+		SelectStockView.SelectStockDataChange="SelectStockDataChange";
+		SelectStockView.DefalutTpl="{#code#}";
+		__static(SelectStockView,
+		['signList',function(){return this.signList=["high7","high15","high30","high45"];}
+		]);
+		return SelectStockView;
+	})(SelectStockViewUI)
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class view.StockView extends ui.StockViewUI
+	var StockView=(function(_super){
+		function StockView(){
+			this.preTime=0;
+			StockView.__super.call(this);
+		}
+
+		__class(StockView,'view.StockView',_super);
+		var __proto=StockView.prototype;
+		__proto.init=function(){
+			this.stockList.renderHandler=new Handler(this,this.stockRender);
+			this.stockList.array=StockBasicInfo.I.stockList;
+			this.stockList.mouseHandler=new Handler(this,this.onMouseList);
+			this.stockList.scrollBar.touchScrollEnable=true;
+		}
+
+		__proto.stockRender=function(cell,index){
+			var item=cell.dataSource;
+			var img;
+			img=cell.getChildByName("img");
+			img.skin=StockTools.getStockPicPath(item.code);
+		}
+
+		__proto.openUrl=function(path){
+			Browser.window.open(path,"_blank");
+		}
+
+		__proto.onMouseList=function(e,index){
+			if (e.type=="mouseup"){
+				var tTime=Browser.now();
+				if (tTime-this.preTime > 500){
+					this.preTime=tTime;
+					return;
+				}
+				this.preTime=tTime;
+				var tData;
+				tData=this.stockList.array[index];
+				if (!tData)
+					return;
+				console.log(tData);
+				WebTools.openStockDetail(tData.code);
+			}
+		}
+
+		return StockView;
+	})(StockViewUI)
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class laya.debug.uicomps.RankListItem extends laya.debug.ui.debugui.comps.RankListItemUI
+	var RankListItem=(function(_super){
+		function RankListItem(){
+			RankListItem.__super.call(this);
+			Base64AtlasManager.replaceRes(RankListItemUI.uiView);
+			this.createView(RankListItemUI.uiView);
+		}
+
+		__class(RankListItem,'laya.debug.uicomps.RankListItem',_super);
+		var __proto=RankListItem.prototype;
+		__proto.createChildren=function(){}
+		return RankListItem;
+	})(RankListItemUI)
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class laya.debug.uicomps.TreeListItem extends laya.debug.ui.debugui.comps.ListItemUI
+	var TreeListItem=(function(_super){
+		function TreeListItem(){
+			TreeListItem.__super.call(this);
+			Base64AtlasManager.replaceRes(ListItemUI.uiView);
+			this.createView(ListItemUI.uiView);
+		}
+
+		__class(TreeListItem,'laya.debug.uicomps.TreeListItem',_super);
+		var __proto=TreeListItem.prototype;
+		__proto.createChildren=function(){}
+		return TreeListItem;
+	})(ListItemUI)
+
+
+	/**
+	*...
+	*@author ww
+	*/
 	//class laya.debug.view.nodeInfo.nodetree.DebugPanel extends laya.debug.ui.debugui.DebugPanelUI
 	var DebugPanel=(function(_super){
 		function DebugPanel(){
@@ -42139,28 +42178,6 @@ var Laya=window.Laya=(function(window,document){
 	*...
 	*@author ww
 	*/
-	//class laya.debug.view.nodeInfo.nodetree.FindNode extends laya.debug.ui.debugui.FindNodeUI
-	var FindNode=(function(_super){
-		function FindNode(){
-			FindNode.__super.call(this);
-			Base64AtlasManager.replaceRes(FindNodeUI.uiView);
-			this.createView(FindNodeUI.uiView);
-		}
-
-		__class(FindNode,'laya.debug.view.nodeInfo.nodetree.FindNode',_super);
-		var __proto=FindNode.prototype;
-		__proto.createChildren=function(){
-			this.viewMapRegists();
-		}
-
-		return FindNode;
-	})(FindNodeUI)
-
-
-	/**
-	*...
-	*@author ww
-	*/
 	//class laya.debug.view.nodeInfo.nodetree.FindNodeSmall extends laya.debug.ui.debugui.FindNodeSmallUI
 	var FindNodeSmall=(function(_super){
 		function FindNodeSmall(){
@@ -42180,38 +42197,22 @@ var Laya=window.Laya=(function(window,document){
 	*...
 	*@author ww
 	*/
-	//class laya.debug.uicomps.RankListItem extends laya.debug.ui.debugui.comps.RankListItemUI
-	var RankListItem=(function(_super){
-		function RankListItem(){
-			RankListItem.__super.call(this);
-			Base64AtlasManager.replaceRes(RankListItemUI.uiView);
-			this.createView(RankListItemUI.uiView);
+	//class laya.debug.view.nodeInfo.nodetree.FindNode extends laya.debug.ui.debugui.FindNodeUI
+	var FindNode=(function(_super){
+		function FindNode(){
+			FindNode.__super.call(this);
+			Base64AtlasManager.replaceRes(FindNodeUI.uiView);
+			this.createView(FindNodeUI.uiView);
 		}
 
-		__class(RankListItem,'laya.debug.uicomps.RankListItem',_super);
-		var __proto=RankListItem.prototype;
-		__proto.createChildren=function(){}
-		return RankListItem;
-	})(RankListItemUI)
-
-
-	/**
-	*...
-	*@author ww
-	*/
-	//class laya.debug.uicomps.TreeListItem extends laya.debug.ui.debugui.comps.ListItemUI
-	var TreeListItem=(function(_super){
-		function TreeListItem(){
-			TreeListItem.__super.call(this);
-			Base64AtlasManager.replaceRes(ListItemUI.uiView);
-			this.createView(ListItemUI.uiView);
+		__class(FindNode,'laya.debug.view.nodeInfo.nodetree.FindNode',_super);
+		var __proto=FindNode.prototype;
+		__proto.createChildren=function(){
+			this.viewMapRegists();
 		}
 
-		__class(TreeListItem,'laya.debug.uicomps.TreeListItem',_super);
-		var __proto=TreeListItem.prototype;
-		__proto.createChildren=function(){}
-		return TreeListItem;
-	})(ListItemUI)
+		return FindNode;
+	})(FindNodeUI)
 
 
 	/**
@@ -42316,6 +42317,26 @@ var Laya=window.Laya=(function(window,document){
 		__proto.createChildren=function(){}
 		return NodeTool;
 	})(NodeToolUI)
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class laya.debug.view.nodeInfo.nodetree.NodeTreeSetting extends laya.debug.ui.debugui.NodeTreeSettingUI
+	var NodeTreeSetting=(function(_super){
+		function NodeTreeSetting(){
+			NodeTreeSetting.__super.call(this);
+			Base64AtlasManager.replaceRes(NodeTreeSettingUI.uiView);
+			this.createView(NodeTreeSettingUI.uiView);
+		}
+
+		__class(NodeTreeSetting,'laya.debug.view.nodeInfo.nodetree.NodeTreeSetting',_super);
+		var __proto=NodeTreeSetting.prototype;
+		//inits();
+		__proto.createChildren=function(){}
+		return NodeTreeSetting;
+	})(NodeTreeSettingUI)
 
 
 	/**
@@ -42565,26 +42586,6 @@ var Laya=window.Laya=(function(window,document){
 	*...
 	*@author ww
 	*/
-	//class laya.debug.view.nodeInfo.nodetree.NodeTreeSetting extends laya.debug.ui.debugui.NodeTreeSettingUI
-	var NodeTreeSetting=(function(_super){
-		function NodeTreeSetting(){
-			NodeTreeSetting.__super.call(this);
-			Base64AtlasManager.replaceRes(NodeTreeSettingUI.uiView);
-			this.createView(NodeTreeSettingUI.uiView);
-		}
-
-		__class(NodeTreeSetting,'laya.debug.view.nodeInfo.nodetree.NodeTreeSetting',_super);
-		var __proto=NodeTreeSetting.prototype;
-		//inits();
-		__proto.createChildren=function(){}
-		return NodeTreeSetting;
-	})(NodeTreeSettingUI)
-
-
-	/**
-	*...
-	*@author ww
-	*/
 	//class laya.debug.view.nodeInfo.nodetree.ObjectCreate extends laya.debug.ui.debugui.ObjectCreateUI
 	var ObjectCreate=(function(_super){
 		function ObjectCreate(){
@@ -42735,7 +42736,7 @@ var Laya=window.Laya=(function(window,document){
 	})(ToolBarUI)
 
 
-	Laya.__init([EventDispatcher,LoaderManager,Browser,Render,LocalStorage,Timer,View]);
+	Laya.__init([EventDispatcher,LoaderManager,Render,Browser,LocalStorage,View,Timer]);
 	new StockMain();
 
 })(window,document,Laya);

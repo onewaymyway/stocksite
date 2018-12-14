@@ -112,6 +112,7 @@ package
 			
 			if (Browser.pixelRatio > 1)
 			{
+				scaleRate = Browser.pixelRatio;
 				var box:Box;
 				box = new Box();
 				container = box;
