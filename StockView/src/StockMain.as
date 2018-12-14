@@ -99,6 +99,10 @@ package
 		public static var scaleRate:Number = 2;
 		
 		private var container:Sprite;
+		private function isOKSize(limit:int=900):Boolean
+		{
+			return Browser.clientWidth * Browser.pixelRatio > limit || Browser.clientHeight * Browser.pixelRatio > limit;
+		}
 		private function testMainView():void
 		{
 			stockMainBox = new Box();
@@ -110,7 +114,7 @@ package
 			stockMainBox.addChild(mainView);
 			
 			
-			if (Browser.pixelRatio > 1)
+			if (Browser.pixelRatio > 1&&isOKSize())
 			{
 				scaleRate = Browser.pixelRatio;
 				var box:Box;
